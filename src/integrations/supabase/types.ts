@@ -14,6 +14,84 @@ export type Database = {
   }
   public: {
     Tables: {
+      analytics_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      app_points_config: {
+        Row: {
+          action_key: string
+          created_at: string | null
+          description: string | null
+          id: string
+          points: number
+          updated_at: string | null
+        }
+        Insert: {
+          action_key: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          points: number
+          updated_at?: string | null
+        }
+        Update: {
+          action_key?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          points?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      badges: {
+        Row: {
+          created_at: string | null
+          criteria: Json
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          criteria: Json
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          criteria?: Json
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       banners: {
         Row: {
           created_at: string | null
@@ -139,6 +217,36 @@ export type Database = {
         }
         Relationships: []
       }
+      missions: {
+        Row: {
+          created_at: string | null
+          criteria: Json
+          description: string | null
+          id: string
+          is_active: boolean | null
+          reward_points: number | null
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          criteria: Json
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          reward_points?: number | null
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          criteria?: Json
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          reward_points?: number | null
+          title?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           body: string
@@ -179,6 +287,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      point_transactions: {
+        Row: {
+          created_at: string | null
+          event_reference_id: string | null
+          id: string
+          points: number
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_reference_id?: string | null
+          id?: string
+          points: number
+          reason: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          event_reference_id?: string | null
+          id?: string
+          points?: number
+          reason?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       price_history: {
         Row: {
@@ -329,6 +464,70 @@ export type Database = {
         }
         Relationships: []
       }
+      user_badges: {
+        Row: {
+          badge_id: string
+          earned_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          badge_id: string
+          earned_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          badge_id?: string
+          earned_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "badges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_missions: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          mission_id: string
+          progress: Json | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          mission_id: string
+          progress?: Json | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          mission_id?: string
+          progress?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_missions_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_points: {
         Row: {
           id: string
@@ -356,12 +555,109 @@ export type Database = {
         }
         Relationships: []
       }
+      user_preferences: {
+        Row: {
+          created_at: string
+          id: string
+          preferred_categories: string[] | null
+          preferred_marketplaces: string[] | null
+          price_range_max: number | null
+          price_range_min: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          preferred_categories?: string[] | null
+          preferred_marketplaces?: string[] | null
+          price_range_max?: number | null
+          price_range_min?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          preferred_categories?: string[] | null
+          preferred_marketplaces?: string[] | null
+          price_range_max?: number | null
+          price_range_min?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      videos: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string | null
+          status: string
+          thumbnail_url: string | null
+          title: string
+          video_url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id?: string | null
+          status?: string
+          thumbnail_url?: string | null
+          title: string
+          video_url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string | null
+          status?: string
+          thumbnail_url?: string | null
+          title?: string
+          video_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "videos_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       _try: { Args: { q: string }; Returns: string }
+      grant_points: {
+        Args: { _action_key: string; _ref_id?: string; _user_id: string }
+        Returns: undefined
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "owner" | "admin" | "user"
