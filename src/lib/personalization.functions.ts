@@ -55,19 +55,52 @@ export const getPersonalizedFeed = createServerFn({ method: "GET" })
       const relevantProducts: any[] = [];
       const relatedProducts: any[] = [];
       const discoveryProducts: any[] = [];
-      if (userId && categoryIds.length && relevantCount > 0) {
-        const { data } = await active(supabaseAdmin.from("products").select(select).in("category_id", categoryIds).limit(relevantCount + used.size));
-        for (const product of data || []) if (!used.has(product.id) && relevantProducts.length < relevantCount) { relevantProducts.push(product); used.add(product.id); }
+
+      const collect = async (bucket: any[], count: number, query: any) => {
+        if (count <= 0) return;
+        const { data } = await query;
+        for (const product of data || []) {
+          if (!used.has(product.id) && bucket.length < count) {
+            bucket.push(product);
+            used.add(product.id);
+          }
+        }
+      };
+
+      if (userId && categoryIds.length) {
+        await collect(relevantProducts, relevantCount, active(supabaseAdmin.from("products").select(select).in("category_id", categoryIds).order("offer_score", { ascending: false, nullsFirst: false }).limit(relevantCount + used.size)));
       }
-      if (userId && relatedCount > 0) {
-        const { data } = await active(supabaseAdmin.from("products").select(select).order("offer_score", { ascending: false, nullsFirst: false }).limit(relatedCount + used.size));
-        for (const product of data || []) if (!used.has(product.id) && relatedProducts.length < relatedCount) { relatedProducts.push(product); used.add(product.id); }
+      await collect(relatedProducts, relatedCount, active(supabaseAdmin.from("products").select(select).order("offer_score", { ascending: false, nullsFirst: false }).limit(relatedCount + used.size)));
+      await collect(discoveryProducts, discoveryCount, active(supabaseAdmin.from("products").select(select).order("rating", { ascending: false, nullsFirst: false }).limit(discoveryCount + used.size)));
+
+      // Anti-repetition must never turn the feed into an empty page. If the catalog is
+      // smaller than the recent-history window, allow controlled recycling after the
+      // first pass while still preserving category/context ordering.
+      const missing = limit - (relevantProducts.length + relatedProducts.length + discoveryProducts.length);
+      if (missing > 0) {
+        const fallbackUsed = new Set<string>([...relevantProducts, ...relatedProducts, ...discoveryProducts].map(p => p.id));
+        const { data: fallback } = await active(supabaseAdmin.from("products").select(select).order("offer_score", { ascending: false, nullsFirst: false }).order("rating", { ascending: false, nullsFirst: false }).limit(limit));
+        for (const product of fallback || []) {
+          if (!fallbackUsed.has(product.id)) {
+            discoveryProducts.push(product);
+            fallbackUsed.add(product.id);
+          }
+          if (discoveryProducts.length >= discoveryCount + missing) break;
+        }
+        if (discoveryProducts.length < discoveryCount + missing && recentlyShownIds.length) {
+          const { data: recycle } = await active(supabaseAdmin.from("products").select(select).order("offer_score", { ascending: false, nullsFirst: false }).order("rating", { ascending: false, nullsFirst: false }).limit(limit));
+          const existingIds = new Set([...relevantProducts, ...relatedProducts, ...discoveryProducts].map(p => p.id));
+          for (const product of recycle || []) {
+            if (existingIds.size >= limit) break;
+            if (!existingIds.has(product.id)) {
+              discoveryProducts.push(product);
+              existingIds.add(product.id);
+            }
+          }
+        }
       }
-      if (discoveryCount > 0) {
-        const { data } = await active(supabaseAdmin.from("products").select(select).order("rating", { ascending: false }).limit(discoveryCount + used.size));
-        for (const product of data || []) if (!used.has(product.id) && discoveryProducts.length < discoveryCount) { discoveryProducts.push(product); used.add(product.id); }
-      }
-      const finalProducts = [...relevantProducts, ...relatedProducts, ...discoveryProducts];
+
+      const finalProducts = [...relevantProducts, ...relatedProducts, ...discoveryProducts].slice(0, limit);
       if (userId && finalProducts.length) await supabaseAdmin.from("recently_shown").insert(finalProducts.map(p => ({ user_id: userId, product_id: p.id, shown_at: new Date().toISOString() })));
       return finalProducts.map(p => ({
         id: p.id, title: p.title, price: p.current_price, previousPrice: p.previous_price, discount: p.discount,
