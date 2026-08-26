@@ -288,6 +288,27 @@ export type Database = {
           },
         ]
       }
+      personalization_weights: {
+        Row: {
+          id: string
+          signal_key: string
+          updated_at: string
+          weight: number | null
+        }
+        Insert: {
+          id?: string
+          signal_key: string
+          updated_at?: string
+          weight?: number | null
+        }
+        Update: {
+          id?: string
+          signal_key?: string
+          updated_at?: string
+          weight?: number | null
+        }
+        Relationships: []
+      }
       point_transactions: {
         Row: {
           created_at: string | null
@@ -493,6 +514,38 @@ export type Database = {
           },
         ]
       }
+      user_interests: {
+        Row: {
+          category_id: string
+          id: string
+          score: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category_id: string
+          id?: string
+          score?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category_id?: string
+          id?: string
+          score?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_interests_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_missions: {
         Row: {
           completed_at: string | null
@@ -647,6 +700,24 @@ export type Database = {
     }
     Functions: {
       _try: { Args: { q: string }; Returns: string }
+      get_personalized_recommendations: {
+        Args: { p_limit?: number; p_offset?: number; p_user_id: string }
+        Returns: {
+          category_id: string
+          current_price: number
+          description: string
+          discount: number
+          id: string
+          images: string[]
+          marketplace_id: string
+          previous_price: number
+          rating: number
+          recommendation_score: number
+          review_count: number
+          slug: string
+          title: string
+        }[]
+      }
       grant_points: {
         Args: { _action_key: string; _ref_id?: string; _user_id: string }
         Returns: undefined
