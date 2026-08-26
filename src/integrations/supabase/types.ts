@@ -361,7 +361,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      _try: { Args: { q: string }; Returns: string }
     }
     Enums: {
       app_role: "owner" | "admin" | "user"
