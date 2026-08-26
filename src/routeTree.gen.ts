@@ -10,33 +10,461 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AlertsRouteImport } from './routes/alerts'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as DealsRouteImport } from './routes/deals'
+import { Route as FavoritesRouteImport } from './routes/favorites'
+import { Route as FeedRouteImport } from './routes/feed'
+import { Route as ProductsRouteImport } from './routes/products'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SearchRouteImport } from './routes/search'
+import { Route as TrendingRouteImport } from './routes/trending'
+import { Route as VideosRouteImport } from './routes/videos'
+import { Route as AdminAnalyticsRouteImport } from './routes/admin/analytics'
+import { Route as AdminAutomationsRouteImport } from './routes/admin/automations'
+import { Route as AdminBundlesRouteImport } from './routes/admin/bundles'
+import { Route as AdminCampaignsRouteImport } from './routes/admin/campaigns'
+import { Route as AdminCategoriesRouteImport } from './routes/admin/categories'
+import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
+import { Route as AdminIntegrationsRouteImport } from './routes/admin/integrations'
+import { Route as AdminMarketplacesRouteImport } from './routes/admin/marketplaces'
+import { Route as AdminNotificationsRouteImport } from './routes/admin/notifications'
+import { Route as AdminOffersRouteImport } from './routes/admin/offers'
+import { Route as AdminProductsRouteImport } from './routes/admin/products'
+import { Route as AdminRecommendationsRouteImport } from './routes/admin/recommendations'
+import { Route as AdminReferralsRouteImport } from './routes/admin/referrals'
+import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
+import { Route as AdminSocialProofRouteImport } from './routes/admin/social-proof'
+import { Route as AdminTelegramRouteImport } from './routes/admin/telegram'
+import { Route as AdminUsersRouteImport } from './routes/admin/users'
+import { Route as AdminVideosRouteImport } from './routes/admin/videos'
+import { Route as BundleSlugRouteImport } from './routes/bundle/$slug'
+import { Route as CategorySlugRouteImport } from './routes/category/$slug'
+import { Route as ProductSlugRouteImport } from './routes/product/$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AlertsRoute = AlertsRouteImport.update({
+  id: '/alerts',
+  path: '/alerts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DealsRoute = DealsRouteImport.update({
+  id: '/deals',
+  path: '/deals',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FavoritesRoute = FavoritesRouteImport.update({
+  id: '/favorites',
+  path: '/favorites',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FeedRoute = FeedRouteImport.update({
+  id: '/feed',
+  path: '/feed',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProductsRoute = ProductsRouteImport.update({
+  id: '/products',
+  path: '/products',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrendingRoute = TrendingRouteImport.update({
+  id: '/trending',
+  path: '/trending',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VideosRoute = VideosRouteImport.update({
+  id: '/videos',
+  path: '/videos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAutomationsRoute = AdminAutomationsRouteImport.update({
+  id: '/automations',
+  path: '/automations',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBundlesRoute = AdminBundlesRouteImport.update({
+  id: '/bundles',
+  path: '/bundles',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCampaignsRoute = AdminCampaignsRouteImport.update({
+  id: '/campaigns',
+  path: '/campaigns',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCategoriesRoute = AdminCategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDashboardRoute = AdminDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminIntegrationsRoute = AdminIntegrationsRouteImport.update({
+  id: '/integrations',
+  path: '/integrations',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMarketplacesRoute = AdminMarketplacesRouteImport.update({
+  id: '/marketplaces',
+  path: '/marketplaces',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminNotificationsRoute = AdminNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminOffersRoute = AdminOffersRouteImport.update({
+  id: '/offers',
+  path: '/offers',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminProductsRoute = AdminProductsRouteImport.update({
+  id: '/products',
+  path: '/products',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminRecommendationsRoute = AdminRecommendationsRouteImport.update({
+  id: '/recommendations',
+  path: '/recommendations',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminReferralsRoute = AdminReferralsRouteImport.update({
+  id: '/referrals',
+  path: '/referrals',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSocialProofRoute = AdminSocialProofRouteImport.update({
+  id: '/social-proof',
+  path: '/social-proof',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminTelegramRoute = AdminTelegramRouteImport.update({
+  id: '/telegram',
+  path: '/telegram',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminVideosRoute = AdminVideosRouteImport.update({
+  id: '/videos',
+  path: '/videos',
+  getParentRoute: () => AdminRoute,
+} as any)
+const BundleSlugRoute = BundleSlugRouteImport.update({
+  id: '/bundle/$slug',
+  path: '/bundle/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CategorySlugRoute = CategorySlugRouteImport.update({
+  id: '/category/$slug',
+  path: '/category/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProductSlugRoute = ProductSlugRouteImport.update({
+  id: '/product/$slug',
+  path: '/product/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/alerts': typeof AlertsRoute
+  '/auth': typeof AuthRoute
+  '/deals': typeof DealsRoute
+  '/favorites': typeof FavoritesRoute
+  '/feed': typeof FeedRoute
+  '/products': typeof ProductsRoute
+  '/profile': typeof ProfileRoute
+  '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/search': typeof SearchRoute
+  '/trending': typeof TrendingRoute
+  '/videos': typeof VideosRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/automations': typeof AdminAutomationsRoute
+  '/admin/bundles': typeof AdminBundlesRoute
+  '/admin/campaigns': typeof AdminCampaignsRoute
+  '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/integrations': typeof AdminIntegrationsRoute
+  '/admin/marketplaces': typeof AdminMarketplacesRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
+  '/admin/offers': typeof AdminOffersRoute
+  '/admin/products': typeof AdminProductsRoute
+  '/admin/recommendations': typeof AdminRecommendationsRoute
+  '/admin/referrals': typeof AdminReferralsRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/social-proof': typeof AdminSocialProofRoute
+  '/admin/telegram': typeof AdminTelegramRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/admin/videos': typeof AdminVideosRoute
+  '/bundle/$slug': typeof BundleSlugRoute
+  '/category/$slug': typeof CategorySlugRoute
+  '/product/$slug': typeof ProductSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/alerts': typeof AlertsRoute
+  '/auth': typeof AuthRoute
+  '/deals': typeof DealsRoute
+  '/favorites': typeof FavoritesRoute
+  '/feed': typeof FeedRoute
+  '/products': typeof ProductsRoute
+  '/profile': typeof ProfileRoute
+  '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/search': typeof SearchRoute
+  '/trending': typeof TrendingRoute
+  '/videos': typeof VideosRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/automations': typeof AdminAutomationsRoute
+  '/admin/bundles': typeof AdminBundlesRoute
+  '/admin/campaigns': typeof AdminCampaignsRoute
+  '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/integrations': typeof AdminIntegrationsRoute
+  '/admin/marketplaces': typeof AdminMarketplacesRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
+  '/admin/offers': typeof AdminOffersRoute
+  '/admin/products': typeof AdminProductsRoute
+  '/admin/recommendations': typeof AdminRecommendationsRoute
+  '/admin/referrals': typeof AdminReferralsRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/social-proof': typeof AdminSocialProofRoute
+  '/admin/telegram': typeof AdminTelegramRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/admin/videos': typeof AdminVideosRoute
+  '/bundle/$slug': typeof BundleSlugRoute
+  '/category/$slug': typeof CategorySlugRoute
+  '/product/$slug': typeof ProductSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/alerts': typeof AlertsRoute
+  '/auth': typeof AuthRoute
+  '/deals': typeof DealsRoute
+  '/favorites': typeof FavoritesRoute
+  '/feed': typeof FeedRoute
+  '/products': typeof ProductsRoute
+  '/profile': typeof ProfileRoute
+  '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/search': typeof SearchRoute
+  '/trending': typeof TrendingRoute
+  '/videos': typeof VideosRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/automations': typeof AdminAutomationsRoute
+  '/admin/bundles': typeof AdminBundlesRoute
+  '/admin/campaigns': typeof AdminCampaignsRoute
+  '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/integrations': typeof AdminIntegrationsRoute
+  '/admin/marketplaces': typeof AdminMarketplacesRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
+  '/admin/offers': typeof AdminOffersRoute
+  '/admin/products': typeof AdminProductsRoute
+  '/admin/recommendations': typeof AdminRecommendationsRoute
+  '/admin/referrals': typeof AdminReferralsRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/social-proof': typeof AdminSocialProofRoute
+  '/admin/telegram': typeof AdminTelegramRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/admin/videos': typeof AdminVideosRoute
+  '/bundle/$slug': typeof BundleSlugRoute
+  '/category/$slug': typeof CategorySlugRoute
+  '/product/$slug': typeof ProductSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/alerts'
+    | '/auth'
+    | '/deals'
+    | '/favorites'
+    | '/feed'
+    | '/products'
+    | '/profile'
+    | '/register'
+    | '/reset-password'
+    | '/search'
+    | '/trending'
+    | '/videos'
+    | '/admin/analytics'
+    | '/admin/automations'
+    | '/admin/bundles'
+    | '/admin/campaigns'
+    | '/admin/categories'
+    | '/admin/dashboard'
+    | '/admin/integrations'
+    | '/admin/marketplaces'
+    | '/admin/notifications'
+    | '/admin/offers'
+    | '/admin/products'
+    | '/admin/recommendations'
+    | '/admin/referrals'
+    | '/admin/settings'
+    | '/admin/social-proof'
+    | '/admin/telegram'
+    | '/admin/users'
+    | '/admin/videos'
+    | '/bundle/$slug'
+    | '/category/$slug'
+    | '/product/$slug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/admin'
+    | '/alerts'
+    | '/auth'
+    | '/deals'
+    | '/favorites'
+    | '/feed'
+    | '/products'
+    | '/profile'
+    | '/register'
+    | '/reset-password'
+    | '/search'
+    | '/trending'
+    | '/videos'
+    | '/admin/analytics'
+    | '/admin/automations'
+    | '/admin/bundles'
+    | '/admin/campaigns'
+    | '/admin/categories'
+    | '/admin/dashboard'
+    | '/admin/integrations'
+    | '/admin/marketplaces'
+    | '/admin/notifications'
+    | '/admin/offers'
+    | '/admin/products'
+    | '/admin/recommendations'
+    | '/admin/referrals'
+    | '/admin/settings'
+    | '/admin/social-proof'
+    | '/admin/telegram'
+    | '/admin/users'
+    | '/admin/videos'
+    | '/bundle/$slug'
+    | '/category/$slug'
+    | '/product/$slug'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/alerts'
+    | '/auth'
+    | '/deals'
+    | '/favorites'
+    | '/feed'
+    | '/products'
+    | '/profile'
+    | '/register'
+    | '/reset-password'
+    | '/search'
+    | '/trending'
+    | '/videos'
+    | '/admin/analytics'
+    | '/admin/automations'
+    | '/admin/bundles'
+    | '/admin/campaigns'
+    | '/admin/categories'
+    | '/admin/dashboard'
+    | '/admin/integrations'
+    | '/admin/marketplaces'
+    | '/admin/notifications'
+    | '/admin/offers'
+    | '/admin/products'
+    | '/admin/recommendations'
+    | '/admin/referrals'
+    | '/admin/settings'
+    | '/admin/social-proof'
+    | '/admin/telegram'
+    | '/admin/users'
+    | '/admin/videos'
+    | '/bundle/$slug'
+    | '/category/$slug'
+    | '/product/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
+  AlertsRoute: typeof AlertsRoute
+  AuthRoute: typeof AuthRoute
+  DealsRoute: typeof DealsRoute
+  FavoritesRoute: typeof FavoritesRoute
+  FeedRoute: typeof FeedRoute
+  ProductsRoute: typeof ProductsRoute
+  ProfileRoute: typeof ProfileRoute
+  RegisterRoute: typeof RegisterRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
+  SearchRoute: typeof SearchRoute
+  TrendingRoute: typeof TrendingRoute
+  VideosRoute: typeof VideosRoute
+  BundleSlugRoute: typeof BundleSlugRoute
+  CategorySlugRoute: typeof CategorySlugRoute
+  ProductSlugRoute: typeof ProductSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +476,309 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/alerts': {
+      id: '/alerts'
+      path: '/alerts'
+      fullPath: '/alerts'
+      preLoaderRoute: typeof AlertsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/deals': {
+      id: '/deals'
+      path: '/deals'
+      fullPath: '/deals'
+      preLoaderRoute: typeof DealsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/favorites': {
+      id: '/favorites'
+      path: '/favorites'
+      fullPath: '/favorites'
+      preLoaderRoute: typeof FavoritesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/feed': {
+      id: '/feed'
+      path: '/feed'
+      fullPath: '/feed'
+      preLoaderRoute: typeof FeedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/products': {
+      id: '/products'
+      path: '/products'
+      fullPath: '/products'
+      preLoaderRoute: typeof ProductsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trending': {
+      id: '/trending'
+      path: '/trending'
+      fullPath: '/trending'
+      preLoaderRoute: typeof TrendingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/videos': {
+      id: '/videos'
+      path: '/videos'
+      fullPath: '/videos'
+      preLoaderRoute: typeof VideosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/analytics': {
+      id: '/admin/analytics'
+      path: '/analytics'
+      fullPath: '/admin/analytics'
+      preLoaderRoute: typeof AdminAnalyticsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/automations': {
+      id: '/admin/automations'
+      path: '/automations'
+      fullPath: '/admin/automations'
+      preLoaderRoute: typeof AdminAutomationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/bundles': {
+      id: '/admin/bundles'
+      path: '/bundles'
+      fullPath: '/admin/bundles'
+      preLoaderRoute: typeof AdminBundlesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/campaigns': {
+      id: '/admin/campaigns'
+      path: '/campaigns'
+      fullPath: '/admin/campaigns'
+      preLoaderRoute: typeof AdminCampaignsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/categories': {
+      id: '/admin/categories'
+      path: '/categories'
+      fullPath: '/admin/categories'
+      preLoaderRoute: typeof AdminCategoriesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/dashboard': {
+      id: '/admin/dashboard'
+      path: '/dashboard'
+      fullPath: '/admin/dashboard'
+      preLoaderRoute: typeof AdminDashboardRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/integrations': {
+      id: '/admin/integrations'
+      path: '/integrations'
+      fullPath: '/admin/integrations'
+      preLoaderRoute: typeof AdminIntegrationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/marketplaces': {
+      id: '/admin/marketplaces'
+      path: '/marketplaces'
+      fullPath: '/admin/marketplaces'
+      preLoaderRoute: typeof AdminMarketplacesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/notifications': {
+      id: '/admin/notifications'
+      path: '/notifications'
+      fullPath: '/admin/notifications'
+      preLoaderRoute: typeof AdminNotificationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/offers': {
+      id: '/admin/offers'
+      path: '/offers'
+      fullPath: '/admin/offers'
+      preLoaderRoute: typeof AdminOffersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/products': {
+      id: '/admin/products'
+      path: '/products'
+      fullPath: '/admin/products'
+      preLoaderRoute: typeof AdminProductsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/recommendations': {
+      id: '/admin/recommendations'
+      path: '/recommendations'
+      fullPath: '/admin/recommendations'
+      preLoaderRoute: typeof AdminRecommendationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/referrals': {
+      id: '/admin/referrals'
+      path: '/referrals'
+      fullPath: '/admin/referrals'
+      preLoaderRoute: typeof AdminReferralsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings': {
+      id: '/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/social-proof': {
+      id: '/admin/social-proof'
+      path: '/social-proof'
+      fullPath: '/admin/social-proof'
+      preLoaderRoute: typeof AdminSocialProofRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/telegram': {
+      id: '/admin/telegram'
+      path: '/telegram'
+      fullPath: '/admin/telegram'
+      preLoaderRoute: typeof AdminTelegramRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/videos': {
+      id: '/admin/videos'
+      path: '/videos'
+      fullPath: '/admin/videos'
+      preLoaderRoute: typeof AdminVideosRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/bundle/$slug': {
+      id: '/bundle/$slug'
+      path: '/bundle/$slug'
+      fullPath: '/bundle/$slug'
+      preLoaderRoute: typeof BundleSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/category/$slug': {
+      id: '/category/$slug'
+      path: '/category/$slug'
+      fullPath: '/category/$slug'
+      preLoaderRoute: typeof CategorySlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product/$slug': {
+      id: '/product/$slug'
+      path: '/product/$slug'
+      fullPath: '/product/$slug'
+      preLoaderRoute: typeof ProductSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface AdminRouteChildren {
+  AdminAnalyticsRoute: typeof AdminAnalyticsRoute
+  AdminAutomationsRoute: typeof AdminAutomationsRoute
+  AdminBundlesRoute: typeof AdminBundlesRoute
+  AdminCampaignsRoute: typeof AdminCampaignsRoute
+  AdminCategoriesRoute: typeof AdminCategoriesRoute
+  AdminDashboardRoute: typeof AdminDashboardRoute
+  AdminIntegrationsRoute: typeof AdminIntegrationsRoute
+  AdminMarketplacesRoute: typeof AdminMarketplacesRoute
+  AdminNotificationsRoute: typeof AdminNotificationsRoute
+  AdminOffersRoute: typeof AdminOffersRoute
+  AdminProductsRoute: typeof AdminProductsRoute
+  AdminRecommendationsRoute: typeof AdminRecommendationsRoute
+  AdminReferralsRoute: typeof AdminReferralsRoute
+  AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminSocialProofRoute: typeof AdminSocialProofRoute
+  AdminTelegramRoute: typeof AdminTelegramRoute
+  AdminUsersRoute: typeof AdminUsersRoute
+  AdminVideosRoute: typeof AdminVideosRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminAnalyticsRoute: AdminAnalyticsRoute,
+  AdminAutomationsRoute: AdminAutomationsRoute,
+  AdminBundlesRoute: AdminBundlesRoute,
+  AdminCampaignsRoute: AdminCampaignsRoute,
+  AdminCategoriesRoute: AdminCategoriesRoute,
+  AdminDashboardRoute: AdminDashboardRoute,
+  AdminIntegrationsRoute: AdminIntegrationsRoute,
+  AdminMarketplacesRoute: AdminMarketplacesRoute,
+  AdminNotificationsRoute: AdminNotificationsRoute,
+  AdminOffersRoute: AdminOffersRoute,
+  AdminProductsRoute: AdminProductsRoute,
+  AdminRecommendationsRoute: AdminRecommendationsRoute,
+  AdminReferralsRoute: AdminReferralsRoute,
+  AdminSettingsRoute: AdminSettingsRoute,
+  AdminSocialProofRoute: AdminSocialProofRoute,
+  AdminTelegramRoute: AdminTelegramRoute,
+  AdminUsersRoute: AdminUsersRoute,
+  AdminVideosRoute: AdminVideosRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
+  AlertsRoute: AlertsRoute,
+  AuthRoute: AuthRoute,
+  DealsRoute: DealsRoute,
+  FavoritesRoute: FavoritesRoute,
+  FeedRoute: FeedRoute,
+  ProductsRoute: ProductsRoute,
+  ProfileRoute: ProfileRoute,
+  RegisterRoute: RegisterRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
+  SearchRoute: SearchRoute,
+  TrendingRoute: TrendingRoute,
+  VideosRoute: VideosRoute,
+  BundleSlugRoute: BundleSlugRoute,
+  CategorySlugRoute: CategorySlugRoute,
+  ProductSlugRoute: ProductSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,0 +1,19 @@
+import { createFileRoute } from '@tanstack/react-router'
+import { PremiumError } from '@/components/error/PremiumError'
+
+export const Route = createFileRoute('/__root')({
+  errorComponent: (props) => (
+    <PremiumError 
+      title="System Recovery" 
+      message="We've encountered a minor recalibration error. Our discovery engine is recovering."
+      {...props} 
+    />
+  ),
+  notFoundComponent: () => (
+    <PremiumError 
+      title="Coordinates Lost" 
+      message="The requested data point does not exist in our current index."
+      statusCode={404}
+    />
+  )
+})

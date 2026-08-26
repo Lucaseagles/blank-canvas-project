@@ -1,0 +1,12 @@
+GRANT SELECT ON public.profiles TO authenticated;
+GRANT SELECT ON public.profiles TO anon;
+GRANT SELECT ON public.products TO authenticated;
+GRANT SELECT ON public.products TO anon;
+GRANT SELECT ON public.categories TO authenticated;
+GRANT SELECT ON public.categories TO anon;
+GRANT INSERT ON public.analytics_events TO authenticated;
+GRANT INSERT ON public.analytics_events TO anon;
+GRANT INSERT ON public.user_interests TO authenticated;
+GRANT INSERT ON public.user_interests TO anon;
+GRANT INSERT ON public.favorites TO authenticated;
+GRANT INSERT ON public.favorites TO anon;

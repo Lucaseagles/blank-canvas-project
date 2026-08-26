@@ -1,0 +1,1 @@
+ALTER TABLE public.marketplaces ADD COLUMN IF NOT EXISTS api_config jsonb; COMMENT ON COLUMN public.marketplaces.api_config IS 'Sensitive API configuration stored as JSONB. Only accessible via server-side code or admin.'; GRANT SELECT, UPDATE ON public.marketplaces TO service_role;

@@ -1,12 +1,14 @@
-# Blank Canvas Project
+# Heartfelt Notes
 
-faça um projeto em branco
+.
 
 This project was built with [Lovable](https://lovable.dev).
 
+**Live app**: https://heartful-helper-box.lovable.app
+
 ## Build with Lovable
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/c101faf6-679e-453a-aeb3-9d9debb37095).
+Continue developing this project in the [Lovable editor](https://lovable.dev/projects/203209a8-c385-4ec5-b2f0-67a6c5972f26).
 
 - **Ship faster**: describe what you want to build and Lovable handles the code.
 - **Stay in sync**: every change made in Lovable is committed straight to this repository.
