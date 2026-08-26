@@ -1175,7 +1175,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      _try: { Args: { q: string }; Returns: string }
       cleanup_recently_shown: { Args: never; Returns: undefined }
       get_personalized_recommendations: {
         Args: { p_limit?: number; p_offset?: number; p_user_id: string }
