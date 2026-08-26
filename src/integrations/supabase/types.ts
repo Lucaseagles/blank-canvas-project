@@ -187,6 +187,30 @@ export type Database = {
           },
         ]
       }
+      feed_mix_config: {
+        Row: {
+          discovery_pct: number
+          id: string
+          related_pct: number
+          relevant_pct: number
+          updated_at: string | null
+        }
+        Insert: {
+          discovery_pct?: number
+          id?: string
+          related_pct?: number
+          relevant_pct?: number
+          updated_at?: string | null
+        }
+        Update: {
+          discovery_pct?: number
+          id?: string
+          related_pct?: number
+          relevant_pct?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       marketplaces: {
         Row: {
           api_config: Json | null
@@ -336,6 +360,44 @@ export type Database = {
         }
         Relationships: []
       }
+      price_alerts: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          product_id: string
+          target_price: number
+          triggered_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          product_id: string
+          target_price: number
+          triggered_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          product_id?: string
+          target_price?: number
+          triggered_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_alerts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       price_history: {
         Row: {
           id: string
@@ -484,6 +546,35 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      recently_shown: {
+        Row: {
+          id: string
+          product_id: string
+          shown_at: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          product_id: string
+          shown_at?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          product_id?: string
+          shown_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recently_shown_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_badges: {
         Row: {
@@ -656,35 +747,93 @@ export type Database = {
         }
         Relationships: []
       }
+      video_products: {
+        Row: {
+          created_at: string | null
+          id: string
+          position: number | null
+          product_id: string
+          video_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          position?: number | null
+          product_id: string
+          video_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          position?: number | null
+          product_id?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_products_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       videos: {
         Row: {
+          category_id: string | null
           created_at: string
+          duration_seconds: number | null
+          external_url: string | null
           id: string
           product_id: string | null
           status: string
+          storage_path: string | null
           thumbnail_url: string | null
           title: string
           video_url: string
         }
         Insert: {
+          category_id?: string | null
           created_at?: string
+          duration_seconds?: number | null
+          external_url?: string | null
           id?: string
           product_id?: string | null
           status?: string
+          storage_path?: string | null
           thumbnail_url?: string | null
           title: string
           video_url: string
         }
         Update: {
+          category_id?: string | null
           created_at?: string
+          duration_seconds?: number | null
+          external_url?: string | null
           id?: string
           product_id?: string | null
           status?: string
+          storage_path?: string | null
           thumbnail_url?: string | null
           title?: string
           video_url?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "videos_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "videos_product_id_fkey"
             columns: ["product_id"]
@@ -700,6 +849,7 @@ export type Database = {
     }
     Functions: {
       _try: { Args: { q: string }; Returns: string }
+      cleanup_recently_shown: { Args: never; Returns: undefined }
       get_personalized_recommendations: {
         Args: { p_limit?: number; p_offset?: number; p_user_id: string }
         Returns: {
@@ -729,6 +879,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "owner" | "admin" | "user"
