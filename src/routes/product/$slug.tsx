@@ -131,7 +131,7 @@ function ProductDetailPage() {
       };
       checkFavorite();
       
-      setTargetPrice((product.current_price * 0.9).toFixed(2));
+      setTargetPrice(((product.current_price ?? 0) * 0.9).toFixed(2));
     }
   }, [product, setIsFavorited]);
 
@@ -350,7 +350,7 @@ function ProductDetailPage() {
             <div className="flex flex-col gap-2">
               <div className="flex items-baseline gap-4">
                 <span className="text-6xl font-black tracking-[-0.05em] leading-none text-primary">
-                  R$ {product.current_price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  R$ {(product.current_price ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </span>
                 {product.previous_price && (
                   <span className="text-2xl text-muted-foreground/40 line-through decoration-primary/40 font-black italic tracking-tighter">
@@ -358,9 +358,9 @@ function ProductDetailPage() {
                   </span>
                 )}
               </div>
-              {product.current_price > 100 && (
+              {(product.current_price ?? 0) > 100 && (
                 <p className="text-lg font-bold text-muted-foreground uppercase tracking-tighter">
-                  ou 10x de R$ {(product.current_price / 10).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} sem juros
+                  ou 10x de R$ {((product.current_price ?? 0) / 10).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} sem juros
                 </p>
               )}
             </div>

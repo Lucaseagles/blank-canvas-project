@@ -160,7 +160,7 @@ function AdminProductsPage() {
                     {(product.marketplaces as any)?.name || 'External'}
                   </TableCell>
                   <TableCell className="font-bold tabular-nums">
-                    R$ {product.current_price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    R$ {(product.current_price ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </TableCell>
                   <TableCell className="text-center">
                     <div className="flex flex-col items-center gap-1">
@@ -266,7 +266,7 @@ function AdminProductsPage() {
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-1">
-                  <span className="font-bold text-xs">R$ {product.current_price.toLocaleString('pt-BR')}</span>
+                  <span className="font-bold text-xs">R$ {(product.current_price ?? 0).toLocaleString('pt-BR')}</span>
                   <Badge variant="outline" className="text-[8px] px-1 py-0 border-glass-border opacity-50 uppercase tracking-tighter">
                     Score: {(product as any).offer_score?.toFixed(1) || '0.0'}
                   </Badge>
