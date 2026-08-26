@@ -35,7 +35,7 @@ function AdminIntegrationsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("marketplaces")
-        .select("*")
+        .select("id, name, slug, status, api_status, created_at")
         .order("name");
       if (error) throw error;
       return data;
