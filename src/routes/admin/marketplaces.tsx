@@ -27,7 +27,7 @@ function AdminMarketplacesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("marketplaces")
-        .select("*")
+        .select("id, name, slug, status, api_status, created_at")
         .order("name", { ascending: true });
       
       if (error) throw error;
