@@ -117,7 +117,7 @@ function CategoryPage() {
               id={product.id}
               slug={product.slug}
               title={product.title}
-              price={product.price}
+              price={product.price ?? 0}
               previousPrice={product.previousPrice}
               discount={product.discount}
               image={product.image}

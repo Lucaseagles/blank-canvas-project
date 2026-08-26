@@ -22,10 +22,10 @@ export function FlashDeals() {
       
       return data.map(p => ({
         id: p.id,
-        slug: p.slug,
+        slug: p.slug ?? p.id,
         categoryId: p.category_id,
         title: p.title,
-        price: p.current_price,
+        price: p.current_price ?? 0,
         previousPrice: p.previous_price,
         discount: p.discount,
         image: p.images?.[0] || "",

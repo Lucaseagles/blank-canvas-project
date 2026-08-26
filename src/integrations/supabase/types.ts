@@ -500,6 +500,36 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          created_at: string
+          frequency_cap_days: number
+          id: string
+          push_enabled: boolean
+          retention_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          frequency_cap_days?: number
+          id?: string
+          push_enabled?: boolean
+          retention_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          frequency_cap_days?: number
+          id?: string
+          push_enabled?: boolean
+          retention_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           body: string
@@ -815,6 +845,36 @@ export type Database = {
         }
         Relationships: []
       }
+      push_subscriptions: {
+        Row: {
+          auth: string | null
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auth?: string | null
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auth?: string | null
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       recently_shown: {
         Row: {
           id: string
@@ -844,6 +904,44 @@ export type Database = {
           },
         ]
       }
+      referral_events: {
+        Row: {
+          campaign_id: string | null
+          created_at: string
+          id: string
+          invited_user_id: string | null
+          referral_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string
+          id?: string
+          invited_user_id?: string | null
+          referral_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string
+          id?: string
+          invited_user_id?: string | null
+          referral_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_events_referral_id_fkey"
+            columns: ["referral_id"]
+            isOneToOne: false
+            referencedRelation: "referrals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       referral_milestones: {
         Row: {
           created_at: string | null
@@ -868,6 +966,69 @@ export type Database = {
           name?: string
           reward_type?: string
           target_activations?: number
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          created_at: string
+          id: string
+          referral_code: string
+          referrer_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          referral_code: string
+          referrer_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          referral_code?: string
+          referrer_user_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      social_proof_config: {
+        Row: {
+          counter_window_hours: number
+          created_at: string
+          hybrid_simulation_enabled: boolean
+          id: string
+          is_enabled: boolean
+          min_events_for_counter: number
+          show_aggregated_counters: boolean
+          show_location: boolean
+          simulated_volume_boost: number
+          updated_at: string
+        }
+        Insert: {
+          counter_window_hours?: number
+          created_at?: string
+          hybrid_simulation_enabled?: boolean
+          id?: string
+          is_enabled?: boolean
+          min_events_for_counter?: number
+          show_aggregated_counters?: boolean
+          show_location?: boolean
+          simulated_volume_boost?: number
+          updated_at?: string
+        }
+        Update: {
+          counter_window_hours?: number
+          created_at?: string
+          hybrid_simulation_enabled?: boolean
+          id?: string
+          is_enabled?: boolean
+          min_events_for_counter?: number
+          show_aggregated_counters?: boolean
+          show_location?: boolean
+          simulated_volume_boost?: number
+          updated_at?: string
         }
         Relationships: []
       }

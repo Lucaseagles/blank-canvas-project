@@ -122,7 +122,7 @@ function AdminIntegrationsPage() {
                 <CardTitle className="text-lg font-black uppercase tracking-tighter italic">{m.name}</CardTitle>
                 <CardDescription className="text-[10px] font-mono uppercase tracking-tighter opacity-50">{m.slug}</CardDescription>
               </div>
-              {getStatusIcon(m.status)}
+              {getStatusIcon(m.status ?? '')}
             </CardHeader>
             <CardContent className="space-y-6 pt-4">
               <div className="flex flex-col gap-2">

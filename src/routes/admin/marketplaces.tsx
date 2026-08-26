@@ -151,8 +151,8 @@ function AdminMarketplacesPage() {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    {getStatusIcon(m.status)}
-                    {getStatusBadge(m.status)}
+                    {getStatusIcon(m.status ?? '')}
+                    {getStatusBadge(m.status ?? '')}
                   </div>
                 </TableCell>
                 <TableCell className="font-medium text-xs">
