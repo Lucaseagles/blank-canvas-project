@@ -65,6 +65,83 @@ export type Database = {
         }
         Relationships: []
       }
+      automation_logs: {
+        Row: {
+          context: Json | null
+          id: string
+          result: string | null
+          rule_id: string
+          status: string | null
+          triggered_at: string | null
+        }
+        Insert: {
+          context?: Json | null
+          id?: string
+          result?: string | null
+          rule_id: string
+          status?: string | null
+          triggered_at?: string | null
+        }
+        Update: {
+          context?: Json | null
+          id?: string
+          result?: string | null
+          rule_id?: string
+          status?: string | null
+          triggered_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_logs_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "automation_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      automation_rules: {
+        Row: {
+          action_params: Json | null
+          action_type: Database["public"]["Enums"]["automation_action_type"]
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_fully_automated: boolean | null
+          name: string
+          trigger_condition: Json | null
+          trigger_type: Database["public"]["Enums"]["automation_trigger_type"]
+          updated_at: string | null
+        }
+        Insert: {
+          action_params?: Json | null
+          action_type: Database["public"]["Enums"]["automation_action_type"]
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_fully_automated?: boolean | null
+          name: string
+          trigger_condition?: Json | null
+          trigger_type: Database["public"]["Enums"]["automation_trigger_type"]
+          updated_at?: string | null
+        }
+        Update: {
+          action_params?: Json | null
+          action_type?: Database["public"]["Enums"]["automation_action_type"]
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_fully_automated?: boolean | null
+          name?: string
+          trigger_condition?: Json | null
+          trigger_type?: Database["public"]["Enums"]["automation_trigger_type"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       badges: {
         Row: {
           created_at: string | null
@@ -226,6 +303,89 @@ export type Database = {
           slug?: string
         }
         Relationships: []
+      }
+      compliance_audit_log: {
+        Row: {
+          detected_at: string | null
+          id: string
+          marketplace_id: string | null
+          product_id: string | null
+          rule_key: string
+          violation_detail: string | null
+        }
+        Insert: {
+          detected_at?: string | null
+          id?: string
+          marketplace_id?: string | null
+          product_id?: string | null
+          rule_key: string
+          violation_detail?: string | null
+        }
+        Update: {
+          detected_at?: string | null
+          id?: string
+          marketplace_id?: string | null
+          product_id?: string | null
+          rule_key?: string
+          violation_detail?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_audit_log_marketplace_id_fkey"
+            columns: ["marketplace_id"]
+            isOneToOne: false
+            referencedRelation: "marketplaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_audit_log_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compliance_rules: {
+        Row: {
+          id: string
+          is_enforced: boolean
+          marketplace_id: string
+          notes: string | null
+          reviewed_at: string | null
+          rule_key: string
+          rule_value: Json
+          source_url: string | null
+        }
+        Insert: {
+          id?: string
+          is_enforced?: boolean
+          marketplace_id: string
+          notes?: string | null
+          reviewed_at?: string | null
+          rule_key: string
+          rule_value?: Json
+          source_url?: string | null
+        }
+        Update: {
+          id?: string
+          is_enforced?: boolean
+          marketplace_id?: string
+          notes?: string | null
+          reviewed_at?: string | null
+          rule_key?: string
+          rule_value?: Json
+          source_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_rules_marketplace_id_fkey"
+            columns: ["marketplace_id"]
+            isOneToOne: false
+            referencedRelation: "marketplaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       favorites: {
         Row: {
@@ -684,6 +844,33 @@ export type Database = {
           },
         ]
       }
+      referral_milestones: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          reward_type: string
+          target_activations: number
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          reward_type: string
+          target_activations: number
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          reward_type?: string
+          target_activations?: number
+        }
+        Relationships: []
+      }
       user_badges: {
         Row: {
           badge_id: string
@@ -837,6 +1024,38 @@ export type Database = {
         }
         Relationships: []
       }
+      user_rewards: {
+        Row: {
+          granted_at: string | null
+          id: string
+          milestone_id: string | null
+          reward_code: string | null
+          user_id: string
+        }
+        Insert: {
+          granted_at?: string | null
+          id?: string
+          milestone_id?: string | null
+          reward_code?: string | null
+          user_id: string
+        }
+        Update: {
+          granted_at?: string | null
+          id?: string
+          milestone_id?: string | null
+          reward_code?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_rewards_milestone_id_fkey"
+            columns: ["milestone_id"]
+            isOneToOne: false
+            referencedRelation: "referral_milestones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -988,6 +1207,16 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      log_automation_activity: {
+        Args: {
+          _context: Json
+          _result: string
+          _rule_id: string
+          _status: string
+        }
+        Returns: undefined
+      }
+      update_user_streak: { Args: { _user_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "owner" | "admin" | "user"
