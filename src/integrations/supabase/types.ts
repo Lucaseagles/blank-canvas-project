@@ -128,6 +128,75 @@ export type Database = {
         }
         Relationships: []
       }
+      bundle_products: {
+        Row: {
+          bundle_id: string
+          created_at: string | null
+          id: string
+          position: number | null
+          product_id: string
+        }
+        Insert: {
+          bundle_id: string
+          created_at?: string | null
+          id?: string
+          position?: number | null
+          product_id: string
+        }
+        Update: {
+          bundle_id?: string
+          created_at?: string | null
+          id?: string
+          position?: number | null
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bundle_products_bundle_id_fkey"
+            columns: ["bundle_id"]
+            isOneToOne: false
+            referencedRelation: "bundles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bundle_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bundles: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          slug: string
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          slug: string
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          slug?: string
+          title?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string | null
@@ -421,6 +490,45 @@ export type Database = {
           {
             foreignKeyName: "price_history_product_id_fkey"
             columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_relationships: {
+        Row: {
+          created_at: string | null
+          id: string
+          product_id: string
+          related_product_id: string
+          type: Database["public"]["Enums"]["relationship_type"]
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          product_id: string
+          related_product_id: string
+          type: Database["public"]["Enums"]["relationship_type"]
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          product_id?: string
+          related_product_id?: string
+          type?: Database["public"]["Enums"]["relationship_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_relationships_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_relationships_related_product_id_fkey"
+            columns: ["related_product_id"]
             isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id"]
