@@ -50,10 +50,10 @@ export async function trackEvent(
 
     const anonymousId = options.anonymousId || stableId(ANON_KEY);
     const currentSessionId = options.sessionId || sessionId();
-    const productId = options.productId || metadata.product_id || undefined;
-    const categoryId = options.categoryId || metadata.category_id || undefined;
-    const campaignId = options.campaignId || metadata.campaign_id || undefined;
-    const source = options.source || metadata.source || metadata.utm_source || undefined;
+    const productId = options.productId || metadata['product_id'] || undefined;
+    const categoryId = options.categoryId || metadata['category_id'] || undefined;
+    const campaignId = options.campaignId || metadata['campaign_id'] || undefined;
+    const source = options.source || metadata['source'] || metadata['utm_source'] || undefined;
 
     const { error } = await supabase.from("analytics_events").insert({
       user_id: user?.id ?? null,
@@ -67,8 +67,8 @@ export async function trackEvent(
       source: source || null,
       metadata: {
         ...metadata,
-        campaign_id: campaignId || metadata.campaign_id || null,
-        source: source || metadata.source || null,
+        campaign_id: campaignId || metadata['campaign_id'] || null,
+        source: source || metadata['source'] || null,
         session_id: currentSessionId || null,
       },
     });
