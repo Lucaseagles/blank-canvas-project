@@ -16,24 +16,45 @@ export type Database = {
     Tables: {
       analytics_events: {
         Row: {
+          anonymous_id: string | null
+          campaign_id: string | null
+          category_id: string | null
           created_at: string
+          event_name: string | null
           event_type: string
           id: string
           metadata: Json | null
+          product_id: string | null
+          session_id: string | null
+          source: string | null
           user_id: string | null
         }
         Insert: {
+          anonymous_id?: string | null
+          campaign_id?: string | null
+          category_id?: string | null
           created_at?: string
+          event_name?: string | null
           event_type: string
           id?: string
           metadata?: Json | null
+          product_id?: string | null
+          session_id?: string | null
+          source?: string | null
           user_id?: string | null
         }
         Update: {
+          anonymous_id?: string | null
+          campaign_id?: string | null
+          category_id?: string | null
           created_at?: string
+          event_name?: string | null
           event_type?: string
           id?: string
           metadata?: Json | null
+          product_id?: string | null
+          session_id?: string | null
+          source?: string | null
           user_id?: string | null
         }
         Relationships: []
@@ -1376,6 +1397,23 @@ export type Database = {
         }
         Returns: undefined
       }
+      run_retention_engine: {
+        Args: { _inactive_days?: number }
+        Returns: number
+      }
+      track_event: {
+        Args: {
+          p_anonymous_id?: string
+          p_campaign_id?: string
+          p_category_id?: string
+          p_event_name: string
+          p_metadata?: Json
+          p_product_id?: string
+          p_session_id?: string
+          p_source?: string
+        }
+        Returns: string
+      }
       update_user_streak: { Args: { _user_id: string }; Returns: undefined }
     }
     Enums: {
@@ -1394,6 +1432,7 @@ export type Database = {
         | "USER_INTEREST_THRESHOLD"
         | "SCHEDULED"
         | "EVENT_TRACKED"
+        | "USER_INACTIVE"
       campaign_channel_type:
         | "email"
         | "push"
@@ -1565,6 +1604,7 @@ export const Constants = {
         "USER_INTEREST_THRESHOLD",
         "SCHEDULED",
         "EVENT_TRACKED",
+        "USER_INACTIVE",
       ],
       campaign_channel_type: [
         "email",
