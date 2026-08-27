@@ -325,6 +325,57 @@ export type Database = {
         }
         Relationships: []
       }
+      category_highlights: {
+        Row: {
+          calculated_at: string
+          category_id: string
+          created_at: string
+          id: string
+          is_manual_override: boolean
+          offer_score: number
+          product_id: string
+          rank: number
+          updated_at: string
+        }
+        Insert: {
+          calculated_at?: string
+          category_id: string
+          created_at?: string
+          id?: string
+          is_manual_override?: boolean
+          offer_score?: number
+          product_id: string
+          rank: number
+          updated_at?: string
+        }
+        Update: {
+          calculated_at?: string
+          category_id?: string
+          created_at?: string
+          id?: string
+          is_manual_override?: boolean
+          offer_score?: number
+          product_id?: string
+          rank?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "category_highlights_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "category_highlights_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       compliance_audit_log: {
         Row: {
           detected_at: string | null
@@ -1426,6 +1477,7 @@ export type Database = {
         | "RECALCULATE_TRENDING"
         | "ADJUST_FEED_WEIGHT"
         | "QUEUE_FOR_REVIEW"
+        | "RECALCULATE_CATEGORY_HIGHLIGHTS"
       automation_trigger_type:
         | "PRICE_CHANGED"
         | "NEW_OFFER_IN_GROUP"
@@ -1597,6 +1649,7 @@ export const Constants = {
         "RECALCULATE_TRENDING",
         "ADJUST_FEED_WEIGHT",
         "QUEUE_FOR_REVIEW",
+        "RECALCULATE_CATEGORY_HIGHLIGHTS",
       ],
       automation_trigger_type: [
         "PRICE_CHANGED",
