@@ -10,10 +10,72 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.17"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
+      ab_assignments: {
+        Row: {
+          assigned_at: string
+          experiment_id: string
+          id: string
+          user_id: string
+          variant: string
+        }
+        Insert: {
+          assigned_at?: string
+          experiment_id: string
+          id?: string
+          user_id: string
+          variant: string
+        }
+        Update: {
+          assigned_at?: string
+          experiment_id?: string
+          id?: string
+          user_id?: string
+          variant?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ab_assignments_experiment_id_fkey"
+            columns: ["experiment_id"]
+            isOneToOne: false
+            referencedRelation: "ab_experiments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ab_experiments: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          target: Json
+          variant_a: Json
+          variant_b: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          target?: Json
+          variant_a?: Json
+          variant_b?: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          target?: Json
+          variant_a?: Json
+          variant_b?: Json
+        }
+        Relationships: []
+      }
       analytics_events: {
         Row: {
           anonymous_id: string | null
@@ -192,6 +254,8 @@ export type Database = {
       }
       banners: {
         Row: {
+          audience_segment: string | null
+          campaign_id: string | null
           created_at: string | null
           ends_at: string | null
           id: string
@@ -200,9 +264,14 @@ export type Database = {
           link_url: string | null
           position: number | null
           starts_at: string | null
+          target_category_id: string | null
+          target_device: string | null
+          target_product_id: string | null
           title: string
         }
         Insert: {
+          audience_segment?: string | null
+          campaign_id?: string | null
           created_at?: string | null
           ends_at?: string | null
           id?: string
@@ -211,9 +280,14 @@ export type Database = {
           link_url?: string | null
           position?: number | null
           starts_at?: string | null
+          target_category_id?: string | null
+          target_device?: string | null
+          target_product_id?: string | null
           title: string
         }
         Update: {
+          audience_segment?: string | null
+          campaign_id?: string | null
           created_at?: string | null
           ends_at?: string | null
           id?: string
@@ -222,6 +296,9 @@ export type Database = {
           link_url?: string | null
           position?: number | null
           starts_at?: string | null
+          target_category_id?: string | null
+          target_device?: string | null
+          target_product_id?: string | null
           title?: string
         }
         Relationships: []
@@ -292,6 +369,112 @@ export type Database = {
           is_active?: boolean | null
           slug?: string
           title?: string
+        }
+        Relationships: []
+      }
+      campaign_channels: {
+        Row: {
+          campaign_id: string
+          channel: string
+          config: Json
+          id: string
+          is_enabled: boolean
+        }
+        Insert: {
+          campaign_id: string
+          channel: string
+          config?: Json
+          id?: string
+          is_enabled?: boolean
+        }
+        Update: {
+          campaign_id?: string
+          channel?: string
+          config?: Json
+          id?: string
+          is_enabled?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_channels_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_products: {
+        Row: {
+          campaign_id: string
+          id: string
+          product_id: string
+        }
+        Insert: {
+          campaign_id: string
+          id?: string
+          product_id: string
+        }
+        Update: {
+          campaign_id?: string
+          id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_products_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns: {
+        Row: {
+          audience_segment: string | null
+          conditions: Json
+          created_at: string
+          description: string | null
+          ends_at: string
+          frequency_cap_per_day: number
+          id: string
+          min_interest_score: number | null
+          name: string
+          priority: number
+          starts_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          audience_segment?: string | null
+          conditions?: Json
+          created_at?: string
+          description?: string | null
+          ends_at: string
+          frequency_cap_per_day?: number
+          id?: string
+          min_interest_score?: number | null
+          name: string
+          priority?: number
+          starts_at: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          audience_segment?: string | null
+          conditions?: Json
+          created_at?: string
+          description?: string | null
+          ends_at?: string
+          frequency_cap_per_day?: number
+          id?: string
+          min_interest_score?: number | null
+          name?: string
+          priority?: number
+          starts_at?: string
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -487,6 +670,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      feature_flags: {
+        Row: {
+          id: string
+          is_enabled: boolean
+          key: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          is_enabled?: boolean
+          key: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          is_enabled?: boolean
+          key?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       feed_mix_config: {
         Row: {
@@ -691,6 +895,92 @@ export type Database = {
         }
         Relationships: []
       }
+      popup_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          popup_rule_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          popup_rule_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          popup_rule_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "popup_events_popup_rule_id_fkey"
+            columns: ["popup_rule_id"]
+            isOneToOne: false
+            referencedRelation: "popup_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      popup_rules: {
+        Row: {
+          audience_segment: string | null
+          conditions: Json
+          content: Json
+          cooldown_minutes: number
+          created_at: string
+          cta_label: string | null
+          cta_target: string | null
+          ends_at: string | null
+          frequency_cap_per_day: number
+          id: string
+          is_active: boolean
+          name: string
+          priority: number
+          starts_at: string | null
+          trigger_type: string
+        }
+        Insert: {
+          audience_segment?: string | null
+          conditions?: Json
+          content?: Json
+          cooldown_minutes?: number
+          created_at?: string
+          cta_label?: string | null
+          cta_target?: string | null
+          ends_at?: string | null
+          frequency_cap_per_day?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          priority?: number
+          starts_at?: string | null
+          trigger_type: string
+        }
+        Update: {
+          audience_segment?: string | null
+          conditions?: Json
+          content?: Json
+          cooldown_minutes?: number
+          created_at?: string
+          cta_label?: string | null
+          cta_target?: string | null
+          ends_at?: string | null
+          frequency_cap_per_day?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          priority?: number
+          starts_at?: string | null
+          trigger_type?: string
+        }
+        Relationships: []
+      }
       price_alerts: {
         Row: {
           created_at: string
@@ -803,6 +1093,7 @@ export type Database = {
           category_id: string | null
           created_at: string | null
           current_price: number | null
+          demand_score: number
           description: string | null
           discount: number | null
           external_product_id: string | null
@@ -819,6 +1110,7 @@ export type Database = {
           slug: string | null
           status: string | null
           title: string
+          trend_velocity: number
           updated_at: string | null
         }
         Insert: {
@@ -826,6 +1118,7 @@ export type Database = {
           category_id?: string | null
           created_at?: string | null
           current_price?: number | null
+          demand_score?: number
           description?: string | null
           discount?: number | null
           external_product_id?: string | null
@@ -842,6 +1135,7 @@ export type Database = {
           slug?: string | null
           status?: string | null
           title: string
+          trend_velocity?: number
           updated_at?: string | null
         }
         Update: {
@@ -849,6 +1143,7 @@ export type Database = {
           category_id?: string | null
           created_at?: string | null
           current_price?: number | null
+          demand_score?: number
           description?: string | null
           discount?: number | null
           external_product_id?: string | null
@@ -865,6 +1160,7 @@ export type Database = {
           slug?: string | null
           status?: string | null
           title?: string
+          trend_velocity?: number
           updated_at?: string | null
         }
         Relationships: [
@@ -1307,6 +1603,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_segments: {
+        Row: {
+          calculated_at: string
+          id: string
+          segment: string
+          user_id: string
+        }
+        Insert: {
+          calculated_at?: string
+          id?: string
+          segment: string
+          user_id: string
+        }
+        Update: {
+          calculated_at?: string
+          id?: string
+          segment?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       video_products: {
         Row: {
           created_at: string | null
@@ -1408,25 +1725,62 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_product_demand: {
+        Args: { p_product_id: string }
+        Returns: number
+      }
+      calculate_product_trend_velocity: {
+        Args: { p_product_id: string }
+        Returns: number
+      }
+      classify_user_segment: { Args: { p_user_id: string }; Returns: string }
       cleanup_recently_shown: { Args: never; Returns: undefined }
-      get_personalized_recommendations: {
-        Args: { p_limit?: number; p_offset?: number; p_user_id: string }
+      get_eligible_popup: {
+        Args: { p_user_id: string }
         Returns: {
-          category_id: string
-          current_price: number
-          description: string
-          discount: number
-          id: string
-          images: string[]
-          marketplace_id: string
-          previous_price: number
-          rating: number
-          recommendation_score: number
-          review_count: number
-          slug: string
-          title: string
+          content: Json
+          cta_label: string
+          cta_target: string
+          name: string
+          priority: number
+          rule_id: string
         }[]
       }
+      get_personalized_recommendations:
+        | {
+            Args: { p_limit?: number; p_user_id: string }
+            Returns: {
+              category_id: string
+              current_price: number
+              demand_score: number
+              offer_score: number
+              product_id: string
+              recommendation_component: string
+              recommendation_reason: string
+              recommendation_score: number
+              slug: string
+              title: string
+              trend_velocity: number
+            }[]
+          }
+        | {
+            Args: { p_limit?: number; p_offset?: number; p_user_id: string }
+            Returns: {
+              category_id: string
+              current_price: number
+              description: string
+              discount: number
+              id: string
+              images: string[]
+              marketplace_id: string
+              previous_price: number
+              rating: number
+              recommendation_score: number
+              review_count: number
+              slug: string
+              title: string
+            }[]
+          }
       grant_points: {
         Args: { _action_key: string; _ref_id?: string; _user_id: string }
         Returns: undefined
@@ -1448,6 +1802,13 @@ export type Database = {
         }
         Returns: undefined
       }
+      record_popup_event: {
+        Args: { p_event_type: string; p_rule_id: string; p_user_id: string }
+        Returns: string
+      }
+      refresh_demand_and_trend_scores: { Args: never; Returns: undefined }
+      refresh_user_interest_decay: { Args: never; Returns: undefined }
+      refresh_user_segments: { Args: never; Returns: undefined }
       run_retention_engine: {
         Args: { _inactive_days?: number }
         Returns: number
