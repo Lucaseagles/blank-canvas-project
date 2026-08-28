@@ -88,7 +88,7 @@ export function SocialProofPopup() {
       const selected = chooseEvent(candidates);
       if (!selected || cancelled) return;
 
-      const { data: p } = await supabase.from('products').select('id,title,images').eq('id', selected.productId).maybeSingle();
+      const { data: p } = await supabase.from('products').select('id,title,images').eq('id', selected.productId ?? '').maybeSingle();
       if (cancelled || !p) return;
       setProduct(p);
       setEvent(selected);
