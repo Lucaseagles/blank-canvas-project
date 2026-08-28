@@ -73,6 +73,7 @@ export function SocialProofPopup() {
     const pool = fresh.length ? fresh : list;
     if (!pool.length) return null;
     const selected = pool[Math.floor(Math.random() * pool.length)];
+    if (!selected) return null;
     shownIds.current.add(selected.id);
     if (shownIds.current.size > 100) shownIds.current.clear();
     return selected;
