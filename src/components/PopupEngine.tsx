@@ -1,57 +1,107 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { X, ArrowRight, Sparkles } from "lucide-react";
+import { X, ArrowRight, Clock3, Sparkles } from "lucide-react";
+
+type PopupContent = {
+  title?: string;
+  description?: string;
+  image_url?: string;
+  image_alt?: string;
+  secondary_label?: string;
+  secondary_target?: string;
+  snooze_minutes?: number;
+};
+
+type EligiblePopup = {
+  rule_id: string;
+  name?: string;
+  content?: PopupContent;
+  cta_label?: string;
+  cta_target?: string;
+  cooldown_minutes?: number;
+};
+
+const snoozeKey = (ruleId: string) => `popup-engine:snooze:${ruleId}`;
 
 export function PopupEngine() {
-  const [popup, setPopup] = useState<any>(null);
+  const [popup, setPopup] = useState<EligiblePopup | null>(null);
   const shown = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      const { data, error } = await (supabase as any).rpc("get_eligible_popup", { p_user_id: user?.id ?? null });
-      if (!cancelled && !error && data?.[0] && !shown.current) {
-        shown.current = true;
-        setPopup(data[0]);
-        await (supabase as any).rpc("record_popup_event", {
-          p_rule_id: data[0].rule_id,
-          p_user_id: user?.id ?? null,
-          p_event_type: "view",
-        });
-      }
+      const { data, error } = await (supabase as any).rpc("get_eligible_popup", {
+        p_user_id: user?.id ?? null,
+      });
+      const candidate = data?.[0] as EligiblePopup | undefined;
+      if (cancelled || error || !candidate || shown.current) return;
+
+      const snoozedUntil = Number(localStorage.getItem(snoozeKey(candidate.rule_id)) ?? 0);
+      if (snoozedUntil > Date.now()) return;
+      if (snoozedUntil) localStorage.removeItem(snoozeKey(candidate.rule_id));
+
+      shown.current = true;
+      setPopup(candidate);
+      await (supabase as any).rpc("record_popup_event", {
+        p_rule_id: candidate.rule_id,
+        p_user_id: user?.id ?? null,
+        p_event_type: "view",
+      });
     };
-    load();
+    void load();
     return () => { cancelled = true; };
   }, []);
 
+  const content = useMemo<PopupContent>(() => popup?.content ?? {}, [popup]);
   if (!popup) return null;
-  const content = popup.content ?? {};
 
-  const record = async (eventType: "click" | "dismiss") => {
+  const record = async (eventType: "click" | "dismiss", target?: string) => {
     const { data: { user } } = await supabase.auth.getUser();
     await (supabase as any).rpc("record_popup_event", {
       p_rule_id: popup.rule_id,
       p_user_id: user?.id ?? null,
       p_event_type: eventType,
     });
-    if (eventType === "click" && popup.cta_target) window.location.href = popup.cta_target;
-    else setPopup(null);
+    setPopup(null);
+    if (target) window.location.assign(target);
+  };
+
+  const snoozeMinutes = Math.max(1, Number(content.snooze_minutes ?? popup.cooldown_minutes ?? 1440));
+  const snooze = async () => {
+    localStorage.setItem(snoozeKey(popup.rule_id), String(Date.now() + snoozeMinutes * 60_000));
+    // Preserve the existing DB event vocabulary (view/click/dismiss) while using
+    // a local timestamp as the client-side snooze eligibility gate.
+    await record("dismiss");
   };
 
   return (
-    <div className="fixed inset-x-4 bottom-[88px] z-[80] mx-auto max-w-md md:inset-x-auto md:right-6 md:bottom-6" role="dialog" aria-live="polite">
-      <div className="rounded-3xl border border-primary/20 bg-background/95 p-5 shadow-2xl backdrop-blur-xl">
-        <button aria-label="Fechar" onClick={() => record("dismiss")} className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-full hover:bg-muted" type="button">
+    <div className="fixed inset-x-4 bottom-[88px] z-[80] mx-auto max-w-md md:inset-x-auto md:right-6 md:bottom-6" role="dialog" aria-live="polite" aria-label="Recomendação personalizada">
+      <div className="relative overflow-hidden rounded-3xl border border-primary/20 bg-background/95 p-5 shadow-2xl backdrop-blur-xl">
+        <button aria-label="Fechar" onClick={() => void record("dismiss")} className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-full hover:bg-muted" type="button">
           <X className="h-4 w-4" />
         </button>
+
+        {content.image_url && (
+          <img src={content.image_url} alt={content.image_alt ?? content.title ?? "Produto recomendado"} className="mb-4 h-36 w-full rounded-2xl object-cover" loading="lazy" />
+        )}
+
         <div className="pr-8">
           <div className="mb-3 flex items-center gap-2 text-primary"><Sparkles className="h-4 w-4" /><span className="text-[10px] font-black uppercase tracking-widest">Descoberto para você</span></div>
           <h3 className="text-xl font-black uppercase italic">{content.title ?? popup.name}</h3>
           {content.description && <p className="mt-2 text-sm text-muted-foreground">{content.description}</p>}
         </div>
-        {popup.cta_label && <Button onClick={() => record("click")} className="mt-4 h-11 w-full rounded-xl font-black uppercase italic" type="button">{popup.cta_label}<ArrowRight className="ml-2 h-4 w-4" /></Button>}
+
+        <div className="mt-4 flex gap-2">
+          {popup.cta_label && <Button onClick={() => void record("click", popup.cta_target)} className="h-11 flex-1 rounded-xl font-black uppercase italic" type="button">{popup.cta_label}<ArrowRight className="ml-2 h-4 w-4" /></Button>}
+          {content.secondary_label && <Button variant="outline" onClick={() => void record("click", content.secondary_target)} className="h-11 rounded-xl px-4 font-bold" type="button">{content.secondary_label}</Button>}
+        </div>
+
+        <button type="button" onClick={() => void snooze()} className="mt-3 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl text-xs font-bold text-muted-foreground transition hover:bg-muted hover:text-foreground">
+          <Clock3 className="h-3.5 w-3.5" />
+          Lembrar em {snoozeMinutes >= 1440 ? `${Math.round(snoozeMinutes / 1440)} dia${snoozeMinutes >= 2880 ? "s" : ""}` : `${Math.round(snoozeMinutes / 60)}h`}
+        </button>
       </div>
     </div>
   );
