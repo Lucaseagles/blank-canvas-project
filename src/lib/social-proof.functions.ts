@@ -1,8 +1,170 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-const DEFAULT_EVENT_TYPES=["SESSION_START","PRODUCT_VIEW","OUTBOUND_CLICK","ADD_FAVORITE","PRICE_ALERT_CONVERSION","video_complete"];
-export const getSocialProofEvents=createServerFn({method:"GET"}).handler(async()=>{try{const{supabaseAdmin}=await import('@/integrations/supabase/client.server');const{data:config,error:ce}=await supabaseAdmin.from('social_proof_config' as any).select('*').eq('is_enabled',true).single();if(ce||!config)return[];const minutes=(config as any).recency_window_minutes||120;const start=new Date(Date.now()-minutes*60000).toISOString();const types=Array.isArray((config as any).allowed_event_types)&&(config as any).allowed_event_types.length?(config as any).allowed_event_types:DEFAULT_EVENT_TYPES;const{data,error}=await supabaseAdmin.from('analytics_events').select('id,event_type,created_at,metadata,user_id').in('event_type',types).gte('created_at',start).order('created_at',{ascending:false}).limit(50);if(error)throw error;return(data||[]).map((e:any)=>{const m=e.metadata&&typeof e.metadata==='object'?e.metadata:{};return{id:e.id,type:e.event_type,userName:'Um cliente',productId:e.product_id||m.product_id||m.productId||undefined,timestamp:e.created_at}}).filter((e:any)=>e.type==='SESSION_START'||e.productId);}catch{return[]}});
-export const getSocialProofConfig=createServerFn({method:"GET"}).handler(async()=>{try{const{supabaseAdmin}=await import('@/integrations/supabase/client.server');const{data}=await supabaseAdmin.from('social_proof_config' as any).select('*').single();return data}catch{return null}});
-export const updateSocialProofConfig=createServerFn({method:"POST"}).validator((data:any)=>z.object({is_enabled:z.boolean(),allowed_event_types:z.array(z.string()),min_interval_seconds:z.number(),recency_window_minutes:z.number(),show_aggregated_counters:z.boolean(),min_events_for_counter:z.number(),counter_window_hours:z.number(),show_location:z.boolean().optional()}).parse(data)).handler(async({data})=>{const{supabaseAdmin}=await import('@/integrations/supabase/client.server');const config=await getSocialProofConfig();if(!config)return{success:false,error:'Config not found'};const{error}=await supabaseAdmin.from('social_proof_config' as any).update({...data,updated_at:new Date().toISOString()}).eq('id',(config as any).id);return{success:!error}});
-export const updateSocialProofOptOut=createServerFn({method:"POST"}).validator((data:any)=>z.object({userId:z.string(),enabled:z.boolean()}).parse(data)).handler(async({data:{userId,enabled}})=>{const{supabaseAdmin}=await import('@/integrations/supabase/client.server');const{error}=await supabaseAdmin.from('user_preferences').update({show_in_social_proof:enabled} as any).eq('user_id',userId);return{success:!error}});
-export const getAggregatedSocialProof=createServerFn({method:"GET"}).validator((data:any)=>z.object({productId:z.string()}).parse(data)).handler(async({data:{productId}})=>{try{const{supabaseAdmin}=await import('@/integrations/supabase/client.server');const config=await getSocialProofConfig();if(!config||(config as any).show_aggregated_counters!==true||!(config as any).is_enabled)return null;const hours=(config as any).counter_window_hours||24,start=new Date(Date.now()-hours*3600000).toISOString(),min=(config as any).min_events_for_counter||1;const{count:views}=await supabaseAdmin.from('analytics_events').select('*',{count:'exact',head:true}).eq('event_type','PRODUCT_VIEW').eq('product_id',productId).gte('created_at',start);const{count:favorites}=await supabaseAdmin.from('analytics_events').select('*',{count:'exact',head:true}).eq('event_type','ADD_FAVORITE').eq('product_id',productId).gte('created_at',start);return{views:(views||0)>=min?views||0:0,favorites:(favorites||0)>=min?favorites||0:0,windowHours:hours};}catch{return null}});
+
+const DEFAULT_EVENT_TYPES = [
+  "SESSION_START",
+  "PRODUCT_VIEW",
+  "OUTBOUND_CLICK",
+  "ADD_FAVORITE",
+  "PRICE_ALERT_CONVERSION",
+  "VIDEO_COMPLETE",
+  "video_complete",
+];
+
+const DEFAULT_FORMATS = [
+  "session",
+  "favorite",
+  "offer_click",
+  "price_alert_conversion",
+  "aggregate_count",
+  "video_complete",
+  "badge_unlock",
+  "referral_activated",
+];
+
+export const getSocialProofEvents = createServerFn({ method: "GET" }).handler(async () => {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: config, error: ce } = await supabaseAdmin
+      .from("social_proof_config" as any)
+      .select("*")
+      .eq("is_enabled", true)
+      .single();
+    if (ce || !config) return [];
+
+    const minutes = (config as any).recency_window_minutes || 120;
+    const start = new Date(Date.now() - minutes * 60000).toISOString();
+    const types = Array.isArray((config as any).allowed_event_types) && (config as any).allowed_event_types.length
+      ? (config as any).allowed_event_types
+      : DEFAULT_EVENT_TYPES;
+
+    const { data: events, error } = await supabaseAdmin
+      .from("analytics_events")
+      .select("id,event_type,created_at,metadata,user_id,product_id")
+      .in("event_type", types)
+      .gte("created_at", start)
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) throw error;
+
+    const analyticsEvents = (events || []).map((e: any) => {
+      const m = e.metadata && typeof e.metadata === "object" ? e.metadata : {};
+      return {
+        id: e.id,
+        type: e.event_type,
+        userName: "Um cliente",
+        productId: e.product_id || m.product_id || m.productId || undefined,
+        badgeName: m.badge_name || m.badgeName || undefined,
+        timestamp: e.created_at,
+      };
+    });
+
+    const badgeEvents = types.includes("BADGE_UNLOCKED")
+      ? await supabaseAdmin
+          .from("user_badges" as any)
+          .select("id,user_id,badge_id,earned_at,badges(name)")
+          .gte("earned_at", start)
+          .order("earned_at", { ascending: false })
+          .limit(25)
+      : { data: [], error: null };
+    if (badgeEvents.error) throw badgeEvents.error;
+
+    const badges = (badgeEvents.data || []).map((b: any) => ({
+      id: `badge-${b.id}`,
+      type: "BADGE_UNLOCKED",
+      userName: "Um cliente",
+      badgeName: b.badges?.name || "uma conquista",
+      timestamp: b.earned_at || new Date().toISOString(),
+    }));
+
+    const referralEvents = types.includes("REFERRAL_ACTIVATED")
+      ? await supabaseAdmin
+          .from("referral_events" as any)
+          .select("id,invited_user_id,status,created_at")
+          .eq("status", "activated")
+          .gte("created_at", start)
+          .order("created_at", { ascending: false })
+          .limit(25)
+      : { data: [], error: null };
+    if (referralEvents.error) throw referralEvents.error;
+
+    const referrals = (referralEvents.data || []).map((r: any) => ({
+      id: `referral-${r.id}`,
+      type: "REFERRAL_ACTIVATED",
+      userName: "Um cliente",
+      timestamp: r.created_at,
+    }));
+
+    return [...analyticsEvents, ...badges, ...referrals].filter((e: any) =>
+      e.type === "SESSION_START" ||
+      e.type === "BADGE_UNLOCKED" ||
+      e.type === "REFERRAL_ACTIVATED" ||
+      Boolean(e.productId)
+    );
+  } catch {
+    return [];
+  }
+});
+
+export const getSocialProofConfig = createServerFn({ method: "GET" }).handler(async () => {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin.from("social_proof_config" as any).select("*").single();
+    return data;
+  } catch {
+    return null;
+  }
+});
+
+export const updateSocialProofConfig = createServerFn({ method: "POST" })
+  .validator((data: any) => z.object({
+    is_enabled: z.boolean(),
+    allowed_event_types: z.array(z.string()),
+    min_interval_seconds: z.number(),
+    recency_window_minutes: z.number(),
+    show_aggregated_counters: z.boolean(),
+    min_events_for_counter: z.number(),
+    counter_window_hours: z.number(),
+    show_location: z.boolean().optional(),
+  }).parse(data))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const config = await getSocialProofConfig();
+    if (!config) return { success: false, error: "Config not found" };
+    const { error } = await supabaseAdmin
+      .from("social_proof_config" as any)
+      .update({ ...data, updated_at: new Date().toISOString() })
+      .eq("id", (config as any).id);
+    return { success: !error };
+  });
+
+export const updateSocialProofOptOut = createServerFn({ method: "POST" })
+  .validator((data: any) => z.object({ userId: z.string(), enabled: z.boolean() }).parse(data))
+  .handler(async ({ data: { userId, enabled } }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("user_preferences")
+      .update({ show_in_social_proof: enabled } as any)
+      .eq("user_id", userId);
+    return { success: !error };
+  });
+
+export const getAggregatedSocialProof = createServerFn({ method: "GET" })
+  .validator((data: any) => z.object({ productId: z.string() }).parse(data))
+  .handler(async ({ data: { productId } }) => {
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const config = await getSocialProofConfig();
+      if (!config || (config as any).show_aggregated_counters !== true || !(config as any).is_enabled) return null;
+      const hours = (config as any).counter_window_hours || 24;
+      const start = new Date(Date.now() - hours * 3600000).toISOString();
+      const min = (config as any).min_events_for_counter || 1;
+      const { count: views } = await supabaseAdmin.from("analytics_events").select("*", { count: "exact", head: true }).eq("event_type", "PRODUCT_VIEW").eq("product_id", productId).gte("created_at", start);
+      const { count: favorites } = await supabaseAdmin.from("analytics_events").select("*", { count: "exact", head: true }).eq("event_type", "ADD_FAVORITE").eq("product_id", productId).gte("created_at", start);
+      return { views: (views || 0) >= min ? views || 0 : 0, favorites: (favorites || 0) >= min ? favorites || 0 : 0, windowHours: hours };
+    } catch {
+      return null;
+    }
+  });
+
+export { DEFAULT_FORMATS };
