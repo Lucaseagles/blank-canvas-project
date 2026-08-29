@@ -75,7 +75,7 @@ function SocialProofPreview() {
   const x = useMotionValue(0);
   const opacity = useTransform(x, [-220, 0, 220], [0, 1, 0]);
 
-  const item = PREVIEW_ITEMS[index];
+  const item = PREVIEW_ITEMS[index]!;
   const meta = FORMAT_META[item.format];
   const Icon = meta.icon;
 
