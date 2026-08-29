@@ -847,6 +847,27 @@ export type Database = {
           },
         ]
       }
+      offer_groups: {
+        Row: {
+          canonical_title: string
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          canonical_title: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          canonical_title?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       personalization_weights: {
         Row: {
           id: string
@@ -1176,6 +1197,13 @@ export type Database = {
             columns: ["marketplace_id"]
             isOneToOne: false
             referencedRelation: "marketplaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_offer_group_id_fkey"
+            columns: ["offer_group_id"]
+            isOneToOne: false
+            referencedRelation: "offer_groups"
             referencedColumns: ["id"]
           },
         ]

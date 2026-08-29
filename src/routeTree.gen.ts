@@ -43,6 +43,7 @@ import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminVideosRouteImport } from './routes/admin/videos'
 import { Route as BundleSlugRouteImport } from './routes/bundle/$slug'
 import { Route as CategorySlugRouteImport } from './routes/category/$slug'
+import { Route as DevSocialProofPreviewRouteImport } from './routes/dev.social-proof-preview'
 import { Route as ProductSlugRouteImport } from './routes/product/$slug'
 
 const IndexRoute = IndexRouteImport.update({
@@ -215,6 +216,11 @@ const CategorySlugRoute = CategorySlugRouteImport.update({
   path: '/category/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DevSocialProofPreviewRoute = DevSocialProofPreviewRouteImport.update({
+  id: '/dev/social-proof-preview',
+  path: '/dev/social-proof-preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProductSlugRoute = ProductSlugRouteImport.update({
   id: '/product/$slug',
   path: '/product/$slug',
@@ -256,6 +262,7 @@ export interface FileRoutesByFullPath {
   '/admin/videos': typeof AdminVideosRoute
   '/bundle/$slug': typeof BundleSlugRoute
   '/category/$slug': typeof CategorySlugRoute
+  '/dev/social-proof-preview': typeof DevSocialProofPreviewRoute
   '/product/$slug': typeof ProductSlugRoute
 }
 export interface FileRoutesByTo {
@@ -293,6 +300,7 @@ export interface FileRoutesByTo {
   '/admin/videos': typeof AdminVideosRoute
   '/bundle/$slug': typeof BundleSlugRoute
   '/category/$slug': typeof CategorySlugRoute
+  '/dev/social-proof-preview': typeof DevSocialProofPreviewRoute
   '/product/$slug': typeof ProductSlugRoute
 }
 export interface FileRoutesById {
@@ -331,6 +339,7 @@ export interface FileRoutesById {
   '/admin/videos': typeof AdminVideosRoute
   '/bundle/$slug': typeof BundleSlugRoute
   '/category/$slug': typeof CategorySlugRoute
+  '/dev/social-proof-preview': typeof DevSocialProofPreviewRoute
   '/product/$slug': typeof ProductSlugRoute
 }
 export interface FileRouteTypes {
@@ -370,6 +379,7 @@ export interface FileRouteTypes {
     | '/admin/videos'
     | '/bundle/$slug'
     | '/category/$slug'
+    | '/dev/social-proof-preview'
     | '/product/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -407,6 +417,7 @@ export interface FileRouteTypes {
     | '/admin/videos'
     | '/bundle/$slug'
     | '/category/$slug'
+    | '/dev/social-proof-preview'
     | '/product/$slug'
   id:
     | '__root__'
@@ -444,6 +455,7 @@ export interface FileRouteTypes {
     | '/admin/videos'
     | '/bundle/$slug'
     | '/category/$slug'
+    | '/dev/social-proof-preview'
     | '/product/$slug'
   fileRoutesById: FileRoutesById
 }
@@ -464,6 +476,7 @@ export interface RootRouteChildren {
   VideosRoute: typeof VideosRoute
   BundleSlugRoute: typeof BundleSlugRoute
   CategorySlugRoute: typeof CategorySlugRoute
+  DevSocialProofPreviewRoute: typeof DevSocialProofPreviewRoute
   ProductSlugRoute: typeof ProductSlugRoute
 }
 
@@ -707,6 +720,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CategorySlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dev/social-proof-preview': {
+      id: '/dev/social-proof-preview'
+      path: '/dev/social-proof-preview'
+      fullPath: '/dev/social-proof-preview'
+      preLoaderRoute: typeof DevSocialProofPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/product/$slug': {
       id: '/product/$slug'
       path: '/product/$slug'
@@ -778,6 +798,7 @@ const rootRouteChildren: RootRouteChildren = {
   VideosRoute: VideosRoute,
   BundleSlugRoute: BundleSlugRoute,
   CategorySlugRoute: CategorySlugRoute,
+  DevSocialProofPreviewRoute: DevSocialProofPreviewRoute,
   ProductSlugRoute: ProductSlugRoute,
 }
 export const routeTree = rootRouteImport
