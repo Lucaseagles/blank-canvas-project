@@ -5,19 +5,21 @@ import { useEffect, useMemo, useState } from "react";
 
 const SWIPE_THRESHOLD = 90;
 
-// Lovable's editor Preview can run the Vite app in a production-like mode.
-// Keep this route inaccessible to normal/public production hosts while allowing
-// the editor preview and local development to render it.
+// Lovable can expose the editor Preview through different preview origins.
+// Allow only known Lovable/editor preview hosts and local development.
+// Published production URLs on *.lovable.app must remain blocked.
 function isAllowedPreviewHost() {
   if (typeof window === "undefined") return false;
+
   const host = window.location.hostname.toLowerCase();
-  return (
-    import.meta.env.DEV ||
-    host === "localhost" ||
-    host === "127.0.0.1" ||
-    host.endsWith(".lovable.dev") ||
-    host.endsWith(".lovableproject.com")
-  );
+  const isLocal = host === "localhost" || host === "127.0.0.1";
+  const isLovableEditorPreview = host.endsWith(".lovableproject.com");
+  const isLovableDevPreview = host.endsWith(".lovable.dev");
+  const isLovableAppPreview =
+    host.endsWith(".lovable.app") &&
+    (host.startsWith("id-preview--") || host.startsWith("preview--"));
+
+  return import.meta.env.DEV || isLocal || isLovableEditorPreview || isLovableDevPreview || isLovableAppPreview;
 }
 
 type PreviewFormat =
