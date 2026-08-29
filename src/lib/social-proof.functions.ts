@@ -5,19 +5,19 @@ export const getSocialProofEvents = createServerFn({ method: "GET" })
   .handler(async () => {
     try {
       const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
-      
+
       const { data: config, error: configError } = await supabaseAdmin
         .from("social_proof_config" as any)
         .select("*")
         .eq("is_enabled", true)
         .single();
-      
+
       if (configError || !config) return [];
 
       const recencyMinutes = (config as any).recency_window_minutes || 120;
       const windowStart = new Date(Date.now() - recencyMinutes * 60 * 1000).toISOString();
 
-      let { data: events, error: eventsError } = await supabaseAdmin
+      const { data: events, error: eventsError } = await supabaseAdmin
         .from("analytics_events")
         .select(`
           id,
@@ -39,37 +39,7 @@ export const getSocialProofEvents = createServerFn({ method: "GET" })
         .order("created_at", { ascending: false })
         .limit(20);
 
-      // Hybrid Simulation: If low traffic, get historical high-quality events
-      if ((!events || events.length < 5) && (config as any).hybrid_simulation_enabled) {
-        const historicalStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-        const { data: historicalEvents } = await supabaseAdmin
-          .from("analytics_events")
-          .select(`
-            id,
-            event_type,
-            created_at,
-            metadata,
-            user_id,
-            user_preferences:user_id (
-              show_in_social_proof
-            ),
-            profiles:user_id (
-              display_name,
-              location_city,
-              location_state
-            )
-          `)
-          .in("event_type", ["ADD_FAVORITE", "OUTBOUND_CLICK"])
-          .gte("created_at", historicalStart)
-          .order("created_at", { ascending: false })
-          .limit(10);
-        
-        if (historicalEvents) {
-          events = [...(events || []), ...historicalEvents];
-        }
-      }
-
-      if (eventsError && !events) throw eventsError;
+      if (eventsError) throw eventsError;
 
       return (events || [])
         .filter((e: any) => {
@@ -80,7 +50,7 @@ export const getSocialProofEvents = createServerFn({ method: "GET" })
           const profile = Array.isArray(e.profiles) ? e.profiles[0] : e.profiles;
           let displayName = "Um cliente";
           let location = "";
-          
+
           if (profile?.display_name) {
             const parts = (profile.display_name as string).trim().split(/\s+/);
             const firstName = parts[0];
@@ -96,12 +66,12 @@ export const getSocialProofEvents = createServerFn({ method: "GET" })
             id: e.id,
             type: e.event_type,
             userName: displayName,
-            location: location,
+            location,
             productId: (e.metadata as any)?.product_id,
-            timestamp: e.created_at
+            timestamp: e.created_at,
           };
         })
-        .filter(e => e.productId && e.userName);
+        .filter((e) => e.productId && e.userName);
     } catch (error) {
       console.error("Error fetching social proof events:", error);
       return [];
@@ -122,6 +92,10 @@ export const getSocialProofConfig = createServerFn({ method: "GET" })
     }
   });
 
+/**
+ * Production configuration intentionally contains no simulation/volume-boost controls.
+ * All social-proof content remains derived from real persisted events.
+ */
 export const updateSocialProofConfig = createServerFn({ method: "POST" })
   .validator((data: any) => z.object({
     is_enabled: z.boolean(),
@@ -131,20 +105,18 @@ export const updateSocialProofConfig = createServerFn({ method: "POST" })
     show_aggregated_counters: z.boolean(),
     min_events_for_counter: z.number(),
     counter_window_hours: z.number(),
-    hybrid_simulation_enabled: z.boolean().optional(),
     show_location: z.boolean().optional(),
-    simulated_volume_boost: z.number().optional()
   }).parse(data))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
     const config = await getSocialProofConfig();
     if (!config) return { success: false, error: "Config not found" };
-    
+
     const { error } = await supabaseAdmin
       .from("social_proof_config" as any)
       .update({ ...data, updated_at: new Date().toISOString() })
       .eq("id", (config as any).id);
-    
+
     return { success: !error };
   });
 
@@ -159,7 +131,7 @@ export const updateSocialProofOptOut = createServerFn({ method: "POST" })
       .from("user_preferences")
       .update({ show_in_social_proof: enabled } as any)
       .eq("user_id", userId);
-    
+
     return { success: !error };
   });
 
@@ -170,7 +142,7 @@ export const getAggregatedSocialProof = createServerFn({ method: "GET" })
   .handler(async ({ data: { productId } }) => {
     try {
       const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
-      
+
       const config = await getSocialProofConfig();
       if (!config || !(config as any).show_aggregated_counters || !(config as any).is_enabled) {
         return null;
@@ -179,7 +151,6 @@ export const getAggregatedSocialProof = createServerFn({ method: "GET" })
       const windowHours = (config as any).counter_window_hours || 24;
       const windowStart = new Date(Date.now() - windowHours * 60 * 60 * 1000).toISOString();
 
-      // Count PRODUCT_VIEW events
       const { count: views, error: viewsError } = await supabaseAdmin
         .from("analytics_events")
         .select("*", { count: 'exact', head: true })
@@ -187,7 +158,6 @@ export const getAggregatedSocialProof = createServerFn({ method: "GET" })
         .eq("metadata->>product_id", productId)
         .gte("created_at", windowStart);
 
-      // Count ADD_FAVORITE events
       const { count: favorites, error: favError } = await supabaseAdmin
         .from("analytics_events")
         .select("*", { count: 'exact', head: true })
@@ -195,7 +165,6 @@ export const getAggregatedSocialProof = createServerFn({ method: "GET" })
         .eq("metadata->>product_id", productId)
         .gte("created_at", windowStart);
 
-      // Count VIDEO_COMPLETE events
       const { count: videoCompletions } = await supabaseAdmin
         .from("analytics_events")
         .select("*", { count: 'exact', head: true })
@@ -206,12 +175,11 @@ export const getAggregatedSocialProof = createServerFn({ method: "GET" })
       if (viewsError || favError) throw viewsError || favError;
 
       const minEvents = (config as any).min_events_for_counter || 5;
-      const boost = 1 + ((config as any).simulated_volume_boost || 0) / 100;
-      
+
       return {
-        views: (views || 0) * boost >= minEvents ? Math.round((views || 0) * boost) : 0,
-        favorites: (favorites || 0) * boost >= minEvents ? Math.round((favorites || 0) * boost) : 0,
-        videoCompletions: (videoCompletions || 0) * boost >= minEvents ? Math.round((videoCompletions || 0) * boost) : 0,
+        views: (views || 0) >= minEvents ? views : 0,
+        favorites: (favorites || 0) >= minEvents ? favorites : 0,
+        videoCompletions: (videoCompletions || 0) >= minEvents ? videoCompletions : 0,
         windowHours
       };
     } catch (error) {
