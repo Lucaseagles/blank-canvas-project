@@ -1391,8 +1391,10 @@ export type Database = {
       }
       social_proof_config: {
         Row: {
+          allowed_event_types: string[] | null
           counter_window_hours: number
           created_at: string
+          enabled_formats: string[] | null
           hybrid_simulation_enabled: boolean
           id: string
           is_enabled: boolean
@@ -1403,8 +1405,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          allowed_event_types?: string[] | null
           counter_window_hours?: number
           created_at?: string
+          enabled_formats?: string[] | null
           hybrid_simulation_enabled?: boolean
           id?: string
           is_enabled?: boolean
@@ -1415,8 +1419,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          allowed_event_types?: string[] | null
           counter_window_hours?: number
           created_at?: string
+          enabled_formats?: string[] | null
           hybrid_simulation_enabled?: boolean
           id?: string
           is_enabled?: boolean
@@ -1841,19 +1847,33 @@ export type Database = {
         Args: { _inactive_days?: number }
         Returns: number
       }
-      track_event: {
-        Args: {
-          p_anonymous_id?: string
-          p_campaign_id?: string
-          p_category_id?: string
-          p_event_name: string
-          p_metadata?: Json
-          p_product_id?: string
-          p_session_id?: string
-          p_source?: string
-        }
-        Returns: string
-      }
+      track_event:
+        | {
+            Args: {
+              p_anonymous_id?: string
+              p_campaign_id?: string
+              p_category_id?: string
+              p_event_name: string
+              p_metadata?: Json
+              p_product_id?: string
+              p_session_id?: string
+              p_source?: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_anonymous_id?: string
+              p_campaign_id?: string
+              p_category_id?: string
+              p_event_type: string
+              p_metadata?: Json
+              p_product_id?: string
+              p_session_id?: string
+              p_source?: string
+            }
+            Returns: string
+          }
       update_user_streak: { Args: { _user_id: string }; Returns: undefined }
     }
     Enums: {
