@@ -73,9 +73,6 @@ export const getPersonalizedFeed = createServerFn({ method: "GET" })
       await collect(relatedProducts, relatedCount, active(supabaseAdmin.from("products").select(select).order("offer_score", { ascending: false, nullsFirst: false }).limit(relatedCount + used.size)));
       await collect(discoveryProducts, discoveryCount, active(supabaseAdmin.from("products").select(select).order("rating", { ascending: false, nullsFirst: false }).limit(discoveryCount + used.size)));
 
-      // Anti-repetition must never turn the feed into an empty page. If the catalog is
-      // smaller than the recent-history window, allow controlled recycling after the
-      // first pass while still preserving category/context ordering.
       const missing = limit - (relevantProducts.length + relatedProducts.length + discoveryProducts.length);
       if (missing > 0) {
         const fallbackUsed = new Set<string>([...relevantProducts, ...relatedProducts, ...discoveryProducts].map(p => p.id));
@@ -102,14 +99,35 @@ export const getPersonalizedFeed = createServerFn({ method: "GET" })
 
       const finalProducts = [...relevantProducts, ...relatedProducts, ...discoveryProducts].slice(0, limit);
       if (userId && finalProducts.length) await supabaseAdmin.from("recently_shown").insert(finalProducts.map(p => ({ user_id: userId, product_id: p.id, shown_at: new Date().toISOString() })));
-      return finalProducts.map(p => ({
-        id: p.id, title: p.title, price: p.current_price, previousPrice: p.previous_price, discount: p.discount,
-        image: Array.isArray(p.images) ? p.images[0] : (typeof p.images === 'string' ? (() => { try { return JSON.parse(p.images)[0]; } catch { return null; } })() : null),
-        rating: p.rating, reviewCount: p.review_count, affiliateUrl: p.affiliate_url, slug: p.slug, categoryId: p.category_id,
-        marketplace: (p.marketplaces as any)?.name || 'Marketplace',
-        feedContext: relevantProducts.some(rp => rp.id === p.id) ? "Baseado nos seus interesses" : relatedProducts.some(rp => rp.id === p.id) ? "Relacionado ao que você busca" : "Descoberto para você",
-        hasVideo: Array.isArray(p.video_products) && p.video_products.length > 0, isBestOffer: p.is_best_offer, offerScore: p.offer_score
-      }));
+
+      // Affinity is already calculated by the content-affinity pipeline. Read the
+      // latest stored score in one batched query; never calculate it in the client.
+      const affinityByProduct = new Map<string, number>();
+      let affinityThreshold = 70;
+      if (userId && finalProducts.length) {
+        const productIds = finalProducts.map(p => p.id);
+        const [{ data: affinityRows }, { data: proofConfig }] = await Promise.all([
+          supabaseAdmin.from("content_affinity_log").select("content_id, affinity_score, created_at").eq("user_id", userId).in("content_id", productIds).order("created_at", { ascending: false }),
+          supabaseAdmin.from("social_proof_config").select("content_affinity_threshold").limit(1).maybeSingle(),
+        ]);
+        affinityThreshold = Number((proofConfig as any)?.content_affinity_threshold ?? 70);
+        for (const row of affinityRows || []) {
+          if (!affinityByProduct.has(row.content_id)) affinityByProduct.set(row.content_id, Number(row.affinity_score));
+        }
+      }
+
+      return finalProducts.map(p => {
+        const score = affinityByProduct.get(p.id);
+        return {
+          id: p.id, title: p.title, price: p.current_price, previousPrice: p.previous_price, discount: p.discount,
+          image: Array.isArray(p.images) ? p.images[0] : (typeof p.images === 'string' ? (() => { try { return JSON.parse(p.images)[0]; } catch { return null; } })() : null),
+          rating: p.rating, reviewCount: p.review_count, affiliateUrl: p.affiliate_url, slug: p.slug, categoryId: p.category_id,
+          marketplace: (p.marketplaces as any)?.name || 'Marketplace',
+          feedContext: relevantProducts.some(rp => rp.id === p.id) ? "Baseado nos seus interesses" : relatedProducts.some(rp => rp.id === p.id) ? "Relacionado ao que você busca" : "Descoberto para você",
+          hasVideo: Array.isArray(p.video_products) && p.video_products.length > 0, isBestOffer: p.is_best_offer, offerScore: p.offer_score,
+          affinityScore: score !== undefined && score >= affinityThreshold ? Math.max(0, Math.min(100, score)) : null,
+        };
+      });
     } catch (error) {
       console.error("Catastrophic error in getPersonalizedFeed:", error);
       return [];
