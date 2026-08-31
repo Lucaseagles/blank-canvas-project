@@ -73,28 +73,33 @@ function AdminLayout() {
   }
 
   return (
-    <div className="flex bg-background min-h-screen">
-      <AdminSidebar />
+    <div className="flex min-h-screen bg-background">
+      <AdminSidebar authorized={true} />
 
-      <div className="lg:hidden fixed top-[max(1rem,env(safe-area-inset-top))] left-4 z-40">
-        <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
-          <SheetTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Abrir menu administrativo"
-              className="bg-glass-fallback border border-glass-border min-h-touch min-w-touch"
+      <div className="lg:hidden fixed inset-x-0 top-0 z-[60] pointer-events-none">
+        <div className="relative h-16">
+          <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
+            <SheetTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                aria-label="Abrir menu administrativo"
+                aria-expanded={isMobileOpen}
+                className="pointer-events-auto absolute left-4 top-[max(0.75rem,env(safe-area-inset-top))] z-[61] flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border-2 border-primary/50 bg-background/95 text-foreground shadow-xl backdrop-blur-xl hover:bg-primary/10 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <Menu className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
+                <span className="sr-only">Abrir menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent
+              side="left"
+              className="z-[70] h-dvh w-[min(20rem,88vw)] p-0 border-r border-glass-border bg-glass-fallback backdrop-blur-3xl"
             >
-              <Menu className="w-5 h-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent
-            side="left"
-            className="p-0 border-r border-glass-border bg-glass-fallback backdrop-blur-3xl w-[min(18rem,85vw)]"
-          >
-            <AdminSidebar mobile onNavigate={() => setIsMobileOpen(false)} />
-          </SheetContent>
-        </Sheet>
+              <AdminSidebar mobile authorized={true} onNavigate={() => setIsMobileOpen(false)} />
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
 
       <main className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto pt-16 lg:pt-0 pb-safe">
