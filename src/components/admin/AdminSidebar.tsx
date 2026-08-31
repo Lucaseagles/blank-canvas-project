@@ -31,11 +31,21 @@ const ADMIN_ROUTES = [
   { name: "Social Proof", path: "/admin/social-proof", icon: MessageSquare },
 ];
 
-export function AdminSidebar({ mobile = false, onNavigate }: { mobile?: boolean; onNavigate?: () => void }) {
-  const [authorized, setAuthorized] = useState(false);
+type AdminSidebarProps = {
+  mobile?: boolean;
+  onNavigate?: () => void;
+  authorized?: boolean;
+};
+
+export function AdminSidebar({ mobile = false, onNavigate, authorized: authorizedProp }: AdminSidebarProps) {
+  const [localAuthorized, setLocalAuthorized] = useState(false);
   const navigate = useNavigate();
+  const controlledAuthorization = authorizedProp !== undefined;
+  const authorized = controlledAuthorization ? authorizedProp : localAuthorized;
 
   useEffect(() => {
+    if (controlledAuthorization) return;
+
     let active = true;
     const verify = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -47,12 +57,12 @@ export function AdminSidebar({ mobile = false, onNavigate }: { mobile?: boolean;
         _user_id: session.user.id,
         _role: "owner",
       });
-      if (active && !error && data === true) setAuthorized(true);
+      if (active && !error && data === true) setLocalAuthorized(true);
       else if (active) navigate({ to: "/", replace: true });
     };
     verify();
     return () => { active = false; };
-  }, [navigate]);
+  }, [controlledAuthorization, navigate]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -69,7 +79,7 @@ export function AdminSidebar({ mobile = false, onNavigate }: { mobile?: boolean;
           : "flex min-h-screen flex-col gap-8 p-6 w-64 bg-glass-fallback border-r border-glass-border"
       }
     >
-      <div className="flex shrink-0 items-center gap-3 pr-8">
+      <div className="flex shrink-0 items-center gap-3 pr-10">
         <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-black italic">A</div>
         <span className="font-black tracking-tighter uppercase italic">Admin Panel</span>
       </div>
@@ -77,7 +87,7 @@ export function AdminSidebar({ mobile = false, onNavigate }: { mobile?: boolean;
       <nav
         className={
           mobile
-            ? "flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain pr-2 pb-2 [scrollbar-width:thin]"
+            ? "flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain pr-1 pb-4 [scrollbar-width:thin]"
             : "flex flex-col gap-1"
         }
         aria-label="Navegação administrativa"
@@ -89,8 +99,8 @@ export function AdminSidebar({ mobile = false, onNavigate }: { mobile?: boolean;
             onClick={onNavigate}
             className="flex shrink-0 items-center gap-3 px-4 py-3 rounded-xl min-h-[44px] text-xs font-bold uppercase tracking-widest text-muted-foreground hover:bg-primary/10 hover:text-primary transition-all [&.active]:bg-primary [&.active]:text-primary-foreground"
           >
-            <route.icon size={16} />
-            {route.name}
+            <route.icon size={16} aria-hidden="true" />
+            <span>{route.name}</span>
           </Link>
         ))}
       </nav>
@@ -100,7 +110,7 @@ export function AdminSidebar({ mobile = false, onNavigate }: { mobile?: boolean;
         onClick={signOut}
         className="shrink-0 min-h-[44px] justify-start gap-3 rounded-xl text-xs font-bold uppercase tracking-widest text-muted-foreground"
       >
-        <LogOut size={16} />
+        <LogOut size={16} aria-hidden="true" />
         Sair
       </Button>
     </div>
