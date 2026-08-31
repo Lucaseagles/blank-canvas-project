@@ -13,7 +13,7 @@ export const getBundleDetails = createServerFn({ method: "GET" })
 export const listBundles = createServerFn({ method: "GET" }).handler(async () => getBundles());
 
 export const getStrategicPopup = createServerFn({ method: "GET" }).handler(async () => {
-  const { supabaseAdmin } = await import('./client.server');
+  const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
   const { data: { user } } = await (await import('@/integrations/supabase/client')).supabase.auth.getUser();
   if (!user) return null;
   const { data, error } = await supabaseAdmin.rpc('get_eligible_strategic_popup', { p_user_id: user.id });
