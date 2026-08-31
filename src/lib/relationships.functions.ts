@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getProductRelationships, getBundleBySlug, getBundles, createBundle, updateBundle, deleteBundle, createProductRelationship, deleteProductRelationship } from "./relationships.server";
 
 export const getRelatedProducts = createServerFn({ method: "GET" })
@@ -13,14 +12,14 @@ export const getBundleDetails = createServerFn({ method: "GET" })
 
 export const listBundles = createServerFn({ method: "GET" }).handler(async () => getBundles());
 
-export const getStrategicPopup = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { supabaseAdmin } = await import('./client.server');
-    const { data, error } = await supabaseAdmin.rpc('get_eligible_strategic_popup', { p_user_id: context.userId });
-    if (error) throw error;
-    return data?.[0] ?? null;
-  });
+export const getStrategicPopup = createServerFn({ method: "GET" }).handler(async () => {
+  const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+  const { data: { user } } = await (await import('@/integrations/supabase/client')).supabase.auth.getUser();
+  if (!user) return null;
+  const { data, error } = await supabaseAdmin.rpc('get_eligible_strategic_popup', { p_user_id: user.id });
+  if (error) throw error;
+  return data?.[0] ?? null;
+});
 
 export const saveBundle = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({

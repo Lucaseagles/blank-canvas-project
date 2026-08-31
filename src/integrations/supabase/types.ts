@@ -344,6 +344,7 @@ export type Database = {
       }
       bundles: {
         Row: {
+          bundle_discount_price: number | null
           created_at: string | null
           description: string | null
           id: string
@@ -353,6 +354,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          bundle_discount_price?: number | null
           created_at?: string | null
           description?: string | null
           id?: string
@@ -362,6 +364,7 @@ export type Database = {
           title: string
         }
         Update: {
+          bundle_discount_price?: number | null
           created_at?: string | null
           description?: string | null
           id?: string
@@ -641,6 +644,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      content_affinity_log: {
+        Row: {
+          affinity_score: number
+          content_id: string
+          created_at: string
+          id: string
+          notified: boolean
+          user_id: string
+        }
+        Insert: {
+          affinity_score: number
+          content_id: string
+          created_at?: string
+          id?: string
+          notified?: boolean
+          user_id: string
+        }
+        Update: {
+          affinity_score?: number
+          content_id?: string
+          created_at?: string
+          id?: string
+          notified?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      content_notification_queue: {
+        Row: {
+          content_id: string
+          content_type: string
+          created_at: string
+          error_message: string | null
+          id: string
+          processed_at: string | null
+          status: string
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          processed_at?: string | null
+          status?: string
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          processed_at?: string | null
+          status?: string
+        }
+        Relationships: []
       }
       favorites: {
         Row: {
@@ -1218,6 +1278,9 @@ export type Database = {
           role: string | null
           updated_at: string | null
           user_id: string | null
+          whatsapp_opt_in: boolean
+          whatsapp_opt_in_at: string | null
+          whatsapp_opt_in_source: string | null
         }
         Insert: {
           created_at?: string | null
@@ -1228,6 +1291,9 @@ export type Database = {
           role?: string | null
           updated_at?: string | null
           user_id?: string | null
+          whatsapp_opt_in?: boolean
+          whatsapp_opt_in_at?: string | null
+          whatsapp_opt_in_source?: string | null
         }
         Update: {
           created_at?: string | null
@@ -1238,6 +1304,9 @@ export type Database = {
           role?: string | null
           updated_at?: string | null
           user_id?: string | null
+          whatsapp_opt_in?: boolean
+          whatsapp_opt_in_at?: string | null
+          whatsapp_opt_in_source?: string | null
         }
         Relationships: []
       }
@@ -1392,6 +1461,7 @@ export type Database = {
       social_proof_config: {
         Row: {
           allowed_event_types: string[] | null
+          content_affinity_threshold: number
           counter_window_hours: number
           created_at: string
           enabled_formats: string[] | null
@@ -1406,6 +1476,7 @@ export type Database = {
         }
         Insert: {
           allowed_event_types?: string[] | null
+          content_affinity_threshold?: number
           counter_window_hours?: number
           created_at?: string
           enabled_formats?: string[] | null
@@ -1420,6 +1491,7 @@ export type Database = {
         }
         Update: {
           allowed_event_types?: string[] | null
+          content_affinity_threshold?: number
           counter_window_hours?: number
           created_at?: string
           enabled_formats?: string[] | null
@@ -1819,11 +1891,83 @@ export type Database = {
           },
         ]
       }
+      whatsapp_config: {
+        Row: {
+          access_token_secret_ref: string | null
+          business_account_id: string | null
+          id: string
+          is_active: boolean
+          phone_number_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token_secret_ref?: string | null
+          business_account_id?: string | null
+          id?: string
+          is_active?: boolean
+          phone_number_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token_secret_ref?: string | null
+          business_account_id?: string | null
+          id?: string
+          is_active?: boolean
+          phone_number_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      whatsapp_messages: {
+        Row: {
+          created_at: string
+          id: string
+          message_text: string
+          product_id: string | null
+          sent_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_text: string
+          product_id?: string | null
+          sent_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_text?: string
+          product_id?: string | null
+          sent_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      calculate_content_affinity: {
+        Args: { p_content_id: string; p_content_type?: string }
+        Returns: {
+          affinity_score: number
+          user_id: string
+        }[]
+      }
       calculate_product_demand: {
         Args: { p_product_id: string }
         Returns: number
@@ -1834,10 +1978,26 @@ export type Database = {
       }
       classify_user_segment: { Args: { p_user_id: string }; Returns: string }
       cleanup_recently_shown: { Args: never; Returns: undefined }
+      get_content_affinity_summary: {
+        Args: { p_content_id: string }
+        Returns: Json
+      }
       get_eligible_popup: {
         Args: { p_user_id: string }
         Returns: {
           content: Json
+          cta_label: string
+          cta_target: string
+          name: string
+          priority: number
+          rule_id: string
+        }[]
+      }
+      get_eligible_strategic_popup: {
+        Args: { p_user_id: string }
+        Returns: {
+          content: Json
+          cooldown_minutes: number
           cta_label: string
           cta_target: string
           name: string
@@ -1901,6 +2061,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      process_content_notification_queue: {
+        Args: { p_batch_size?: number }
+        Returns: Json
+      }
       record_popup_event: {
         Args: { p_event_type: string; p_rule_id: string; p_user_id: string }
         Returns: string
@@ -1911,6 +2075,28 @@ export type Database = {
       run_retention_engine: {
         Args: { _inactive_days?: number }
         Returns: number
+      }
+      set_whatsapp_opt_in: {
+        Args: { p_enabled: boolean; p_source?: string }
+        Returns: {
+          created_at: string | null
+          display_name: string | null
+          id: string
+          location_city: string | null
+          location_state: string | null
+          role: string | null
+          updated_at: string | null
+          user_id: string | null
+          whatsapp_opt_in: boolean
+          whatsapp_opt_in_at: string | null
+          whatsapp_opt_in_source: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       track_event:
         | {
