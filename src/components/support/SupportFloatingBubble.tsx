@@ -125,8 +125,8 @@ export function SupportFloatingBubble() {
       if (Array.isArray(faqData) && faqData.length > 0) setFaqs(faqData as FAQ[]);
       if (configData?.public_phone_number) {
         setWhatsappNumber(String(configData.public_phone_number).replace(/\D/g, ""));
-      } else if (import.meta.env.VITE_SUPPORT_WHATSAPP_NUMBER) {
-        setWhatsappNumber(String(import.meta.env.VITE_SUPPORT_WHATSAPP_NUMBER).replace(/\D/g, ""));
+      } else if (import.meta.env['VITE_SUPPORT_WHATSAPP_NUMBER']) {
+        setWhatsappNumber(String(import.meta.env['VITE_SUPPORT_WHATSAPP_NUMBER']).replace(/\D/g, ""));
       }
     };
     void loadSupportConfig();

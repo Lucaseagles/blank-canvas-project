@@ -151,7 +151,7 @@ function AdminProductsPage() {
                   <TableCell className="font-bold py-6 pl-8">
                     <div className="flex items-center gap-4">
                       {product.images?.[0] && (
-                        <img src={product.images[0]} alt="" className="w-12 h-12 rounded-xl object-cover bg-muted border border-glass-border group-hover:scale-110 transition-transform duration-500" />
+                        <img src={product.images[0]} alt="" loading="lazy" decoding="async" className="w-12 h-12 rounded-xl object-cover bg-muted border border-glass-border group-hover:scale-110 transition-transform duration-500" />
                       )}
                       <span className="line-clamp-1 max-w-xs">{product.title}</span>
                     </div>
@@ -249,7 +249,7 @@ function AdminProductsPage() {
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-4">
                   {product.images?.[0] && (
-                    <img src={product.images[0]} alt="" className="w-12 h-12 rounded-xl object-cover bg-muted border border-glass-border" />
+                    <img src={product.images[0]} alt="" loading="lazy" decoding="async" className="w-12 h-12 rounded-xl object-cover bg-muted border border-glass-border" />
                   )}
                   <div className="space-y-1">
                     <h3 className="font-bold text-sm line-clamp-2">{product.title}</h3>

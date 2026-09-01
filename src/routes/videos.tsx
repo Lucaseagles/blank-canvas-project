@@ -170,7 +170,7 @@ function VideoFeedPage() {
                   <div className="p-4 rounded-2xl bg-white/5 backdrop-blur-2xl border border-white/10 flex items-center justify-between group cursor-pointer hover:bg-white/10 transition-all">
                     <div className="flex items-center gap-4 min-w-0">
                       <div className="w-12 h-12 rounded-xl bg-muted overflow-hidden shrink-0">
-                        <img src={video.video_products[0].products.images?.[0]} alt="" className="w-full h-full object-cover" />
+                        <img src={video.video_products[0].products.images?.[0]} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                       </div>
                       <div className="min-w-0">
                         <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest">Produto em Destaque</p>

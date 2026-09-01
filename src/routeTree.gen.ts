@@ -42,6 +42,7 @@ import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as AdminSocialProofRouteImport } from './routes/admin/social-proof'
 import { Route as AdminTelegramRouteImport } from './routes/admin/telegram'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
+import { Route as AdminV1AuditRouteImport } from './routes/admin/v1-audit'
 import { Route as AdminVideosRouteImport } from './routes/admin/videos'
 import { Route as BundleSlugRouteImport } from './routes/bundle/$slug'
 import { Route as CategorySlugRouteImport } from './routes/category/$slug'
@@ -213,6 +214,11 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminV1AuditRoute = AdminV1AuditRouteImport.update({
+  id: '/v1-audit',
+  path: '/v1-audit',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminVideosRoute = AdminVideosRouteImport.update({
   id: '/videos',
   path: '/videos',
@@ -273,6 +279,7 @@ export interface FileRoutesByFullPath {
   '/admin/social-proof': typeof AdminSocialProofRoute
   '/admin/telegram': typeof AdminTelegramRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/v1-audit': typeof AdminV1AuditRoute
   '/admin/videos': typeof AdminVideosRoute
   '/bundle/$slug': typeof BundleSlugRoute
   '/category/$slug': typeof CategorySlugRoute
@@ -313,6 +320,7 @@ export interface FileRoutesByTo {
   '/admin/social-proof': typeof AdminSocialProofRoute
   '/admin/telegram': typeof AdminTelegramRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/v1-audit': typeof AdminV1AuditRoute
   '/admin/videos': typeof AdminVideosRoute
   '/bundle/$slug': typeof BundleSlugRoute
   '/category/$slug': typeof CategorySlugRoute
@@ -354,6 +362,7 @@ export interface FileRoutesById {
   '/admin/social-proof': typeof AdminSocialProofRoute
   '/admin/telegram': typeof AdminTelegramRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/v1-audit': typeof AdminV1AuditRoute
   '/admin/videos': typeof AdminVideosRoute
   '/bundle/$slug': typeof BundleSlugRoute
   '/category/$slug': typeof CategorySlugRoute
@@ -396,6 +405,7 @@ export interface FileRouteTypes {
     | '/admin/social-proof'
     | '/admin/telegram'
     | '/admin/users'
+    | '/admin/v1-audit'
     | '/admin/videos'
     | '/bundle/$slug'
     | '/category/$slug'
@@ -436,6 +446,7 @@ export interface FileRouteTypes {
     | '/admin/social-proof'
     | '/admin/telegram'
     | '/admin/users'
+    | '/admin/v1-audit'
     | '/admin/videos'
     | '/bundle/$slug'
     | '/category/$slug'
@@ -476,6 +487,7 @@ export interface FileRouteTypes {
     | '/admin/social-proof'
     | '/admin/telegram'
     | '/admin/users'
+    | '/admin/v1-audit'
     | '/admin/videos'
     | '/bundle/$slug'
     | '/category/$slug'
@@ -738,6 +750,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/v1-audit': {
+      id: '/admin/v1-audit'
+      path: '/v1-audit'
+      fullPath: '/admin/v1-audit'
+      preLoaderRoute: typeof AdminV1AuditRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/videos': {
       id: '/admin/videos'
       path: '/videos'
@@ -795,6 +814,7 @@ interface AdminRouteChildren {
   AdminSocialProofRoute: typeof AdminSocialProofRoute
   AdminTelegramRoute: typeof AdminTelegramRoute
   AdminUsersRoute: typeof AdminUsersRoute
+  AdminV1AuditRoute: typeof AdminV1AuditRoute
   AdminVideosRoute: typeof AdminVideosRoute
 }
 
@@ -817,6 +837,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminSocialProofRoute: AdminSocialProofRoute,
   AdminTelegramRoute: AdminTelegramRoute,
   AdminUsersRoute: AdminUsersRoute,
+  AdminV1AuditRoute: AdminV1AuditRoute,
   AdminVideosRoute: AdminVideosRoute,
 }
 
