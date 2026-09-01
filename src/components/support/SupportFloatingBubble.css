@@ -1,0 +1,6 @@
+.support-bubble { position: fixed; right: 1rem; bottom: 5.25rem; z-index: 110; display:flex; align-items:center; justify-content:center; width:3.5rem; height:3.5rem; border:1px solid hsl(var(--primary) / .25); border-radius:9999px; background:hsl(var(--primary)); color:hsl(var(--primary-foreground)); box-shadow:0 12px 40px hsl(var(--primary) / .25); transition:transform .2s ease, box-shadow .2s ease; }
+.support-bubble:hover { transform:scale(1.05); box-shadow:0 16px 48px hsl(var(--primary) / .32); }
+.support-chat { position:fixed; right:.75rem; bottom:9.25rem; z-index:109; width:min(390px,calc(100vw - 24px)); height:min(620px,72vh); display:flex; flex-direction:column; overflow:hidden; border:1px solid hsl(var(--border) / .7); border-radius:28px; background:hsl(var(--background) / .96); box-shadow:0 24px 80px rgba(0,0,0,.3); backdrop-filter:blur(24px); animation:support-slide-up .25s ease-out; }
+@keyframes support-slide-up { from { opacity:0; transform:translateY(16px) scale(.98); } to { opacity:1; transform:none; } }
+@media (min-width:768px) { .support-bubble { right:1.5rem; bottom:1.5rem; } .support-chat { right:1.5rem; bottom:5.5rem; } }
+@media (prefers-reduced-motion:reduce) { .support-bubble,.support-chat { animation:none; transition:none; } }
