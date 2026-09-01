@@ -12,7 +12,7 @@ export const Route = createFileRoute('/history')({
 });
 
 type Item = { key: string; product?: any; video?: any; viewedAt: string; videoId?: string };
-function videoIdFromMetadata(metadata: unknown) { if (!metadata || Array.isArray(metadata) || typeof metadata !== 'object') return undefined; const value = (metadata as Record<string, unknown>).video_id; return typeof value === 'string' ? value : undefined; }
+function videoIdFromMetadata(metadata: unknown) { if (!metadata || Array.isArray(metadata) || typeof metadata !== 'object') return undefined; const value = (metadata as Record<string, unknown>)['video_id']; return typeof value === 'string' ? value : undefined; }
 
 async function getHistory(): Promise<Item[]> {
   const { data: auth } = await supabase.auth.getUser(); if (!auth.user) return [];
