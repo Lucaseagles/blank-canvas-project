@@ -15,12 +15,16 @@ export function PopupTimingController() {
       if (Date.now() - last < COOLDOWN_MS) return;
       fired.current = true;
       localStorage.setItem(KEY, String(Date.now()));
-      await (supabase as any).rpc("track_event", {
-        p_event_type: "POPUP_TIMING_TRIGGER",
-        p_metadata: { timing_trigger, path: window.location.pathname, device: window.innerWidth < 768 ? "mobile" : "desktop" },
-        p_session_id: sessionId,
-        p_anonymous_id: localStorage.getItem("analytics_anonymous_id") ?? undefined,
-      }).catch(() => undefined);
+      try {
+        await (supabase as any).rpc("track_event", {
+          p_event_type: "POPUP_TIMING_TRIGGER",
+          p_metadata: { timing_trigger, path: window.location.pathname, device: window.innerWidth < 768 ? "mobile" : "desktop" },
+          p_session_id: sessionId,
+          p_anonymous_id: localStorage.getItem("analytics_anonymous_id") ?? undefined,
+        });
+      } catch {
+        /* telemetria não deve quebrar a UI */
+      }
     };
     void fire("store_entry");
     const onProductView = () => void fire("product_view");
