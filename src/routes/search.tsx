@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { CustomBreadcrumbs } from '@/components/layout/Breadcrumbs';
 import { trackEvent } from '@/lib/analytics';
 
-export const Route = createFileRoute('/search')({ head: () => ({ meta: [{ title: 'Busca de Produtos e Ofertas' }, { name: 'description', content: 'Encontre produtos por nome, categoria ou marketplace com busca inteligente.' }] }), validateSearch: (search: Record<string, unknown>) => ({ q: typeof search.q === 'string' ? search.q : '' }), component: SearchPage });
+export const Route = createFileRoute('/search')({ head: () => ({ meta: [{ title: 'Busca de Produtos e Ofertas' }, { name: 'description', content: 'Encontre produtos por nome, categoria ou marketplace com busca inteligente.' }] }), validateSearch: (search: Record<string, unknown>) => ({ q: typeof search['q'] === 'string' ? search['q'] : '' }), component: SearchPage });
 type Product = any;
 const normalize = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 
