@@ -823,6 +823,38 @@ export type Database = {
         }
         Relationships: []
       }
+      hidden_from_recently_viewed: {
+        Row: {
+          hidden_at: string
+          id: string
+          product_id: string | null
+          user_id: string
+          video_id: string | null
+        }
+        Insert: {
+          hidden_at?: string
+          id?: string
+          product_id?: string | null
+          user_id: string
+          video_id?: string | null
+        }
+        Update: {
+          hidden_at?: string
+          id?: string
+          product_id?: string | null
+          user_id?: string
+          video_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hidden_from_recently_viewed_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketplaces: {
         Row: {
           api_config: Json | null
@@ -1235,6 +1267,7 @@ export type Database = {
           previous_price: number | null
           rating: number | null
           review_count: number | null
+          search_vector: unknown
           slug: string | null
           status: string | null
           title: string
@@ -1260,6 +1293,7 @@ export type Database = {
           previous_price?: number | null
           rating?: number | null
           review_count?: number | null
+          search_vector?: unknown
           slug?: string | null
           status?: string | null
           title: string
@@ -1285,6 +1319,7 @@ export type Database = {
           previous_price?: number | null
           rating?: number | null
           review_count?: number | null
+          search_vector?: unknown
           slug?: string | null
           status?: string | null
           title?: string
@@ -1502,6 +1537,30 @@ export type Database = {
           referral_code?: string
           referrer_user_id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      search_history: {
+        Row: {
+          created_at: string
+          id: string
+          query: string
+          result_count: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          query: string
+          result_count?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          query?: string
+          result_count?: number
+          user_id?: string
         }
         Relationships: []
       }
@@ -1947,6 +2006,30 @@ export type Database = {
           },
         ]
       }
+      video_watch_progress: {
+        Row: {
+          id: string
+          last_watched_seconds: number
+          updated_at: string
+          user_id: string
+          video_id: string
+        }
+        Insert: {
+          id?: string
+          last_watched_seconds?: number
+          updated_at?: string
+          user_id: string
+          video_id: string
+        }
+        Update: {
+          id?: string
+          last_watched_seconds?: number
+          updated_at?: string
+          user_id?: string
+          video_id?: string
+        }
+        Relationships: []
+      }
       videos: {
         Row: {
           category_id: string | null
@@ -2192,6 +2275,28 @@ export type Database = {
         Args: { _inactive_days?: number }
         Returns: number
       }
+      search_products_fuzzy: {
+        Args: { search_query: string }
+        Returns: {
+          affiliate_url: string
+          category_id: string
+          current_price: number
+          demand_score: number
+          description: string
+          discount: number
+          final_score: number
+          id: string
+          images: string[]
+          marketplace: string
+          offer_score: number
+          previous_price: number
+          rating: number
+          relevance_score: number
+          review_count: number
+          slug: string
+          title: string
+        }[]
+      }
       set_whatsapp_opt_in: {
         Args: { p_enabled: boolean; p_source?: string }
         Returns: {
@@ -2213,6 +2318,12 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
+      touch_video_watch_progress: {
+        Args: { p_seconds: number; p_video_id: string }
+        Returns: undefined
       }
       track_event:
         | {
