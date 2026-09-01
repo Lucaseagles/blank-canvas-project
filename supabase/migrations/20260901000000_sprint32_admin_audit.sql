@@ -11,53 +11,34 @@ create table if not exists public.admin_audit_log (
   created_at timestamptz not null default timezone('utc'::text, now())
 );
 
-create index if not exists admin_audit_log_entity_created_idx
-  on public.admin_audit_log (entity_type, created_at desc);
-create index if not exists admin_audit_log_created_idx
-  on public.admin_audit_log (created_at desc);
-create index if not exists admin_audit_log_action_idx
-  on public.admin_audit_log (action_type, created_at desc);
+create index if not exists admin_audit_log_entity_created_idx on public.admin_audit_log (entity_type, created_at desc);
+create index if not exists admin_audit_log_created_idx on public.admin_audit_log (created_at desc);
+create index if not exists admin_audit_log_action_idx on public.admin_audit_log (action_type, created_at desc);
 
 alter table public.admin_audit_log enable row level security;
 
--- Owner-only policy. Existing role table is intentionally used as the authorization source;
--- the audit table itself never becomes an authorization source.
 drop policy if exists "Owner can read admin audit log" on public.admin_audit_log;
-create policy "Owner can read admin audit log"
-  on public.admin_audit_log for select to authenticated
-  using (
-    exists (
-      select 1
-      from public.user_roles ur
-      where ur.user_id = auth.uid()
-        and ur.role = 'owner'
-    )
-  );
+create policy "Owner can read admin audit log" on public.admin_audit_log for select to authenticated
+using (exists (select 1 from public.user_roles ur where ur.user_id = auth.uid() and ur.role = 'owner'));
 
--- Writes are performed by trusted server-side mutations. Clients cannot insert/update/delete audit rows.
 revoke insert, update, delete on public.admin_audit_log from anon, authenticated;
 grant select on public.admin_audit_log to authenticated;
 grant all on public.admin_audit_log to service_role;
 
--- Centralized sanitizer: secrets are represented only by the fact that a credential changed.
 create or replace function public.sanitize_admin_audit_value(input jsonb)
-returns jsonb
-language plpgsql
-immutable
-as $$
-declare
-  result jsonb := coalesce(input, '{}'::jsonb);
-  key text;
+returns jsonb language plpgsql immutable as $$
+declare result jsonb := input; key text;
 begin
   if input is null then return null; end if;
-  foreach key in array array['token','access_token','refresh_token','api_key','apikey','secret','password','client_secret','authorization','bot_token'] loop
+  foreach key in array array['token','access_token','refresh_token','api_key','apikey','secret','password','client_secret','authorization','bot_token','service_role_key'] loop
     result := result - key;
   end loop;
   return result;
 end;
 $$;
 
--- Server-side append function. It derives actor from auth.uid() and strips known secrets.
+-- SECURITY DEFINER is required because authenticated clients are intentionally denied direct INSERT.
+-- The actor is still taken from auth.uid(), never from client input.
 create or replace function public.append_admin_audit(
   p_action_type text,
   p_entity_type text,
@@ -67,30 +48,19 @@ create or replace function public.append_admin_audit(
 )
 returns uuid
 language plpgsql
-security invoker
+security definer
+set search_path = public
 as $$
-declare
-  audit_id uuid;
+declare audit_id uuid;
 begin
-  if auth.uid() is null then
-    raise exception 'Authentication required';
-  end if;
-
-  if not exists (
-    select 1 from public.user_roles ur
-    where ur.user_id = auth.uid() and ur.role = 'owner'
-  ) then
+  if auth.uid() is null then raise exception 'Authentication required'; end if;
+  if not exists (select 1 from public.user_roles ur where ur.user_id = auth.uid() and ur.role = 'owner') then
     raise exception 'Owner access required';
   end if;
-
-  insert into public.admin_audit_log
-    (actor_user_id, action_type, entity_type, entity_id, previous_value, new_value)
-  values
-    (auth.uid(), p_action_type, p_entity_type, p_entity_id,
-     public.sanitize_admin_audit_value(p_previous_value),
-     public.sanitize_admin_audit_value(p_new_value))
+  insert into public.admin_audit_log (actor_user_id, action_type, entity_type, entity_id, previous_value, new_value)
+  values (auth.uid(), p_action_type, p_entity_type, p_entity_id,
+          public.sanitize_admin_audit_value(p_previous_value), public.sanitize_admin_audit_value(p_new_value))
   returning id into audit_id;
-
   return audit_id;
 end;
 $$;
