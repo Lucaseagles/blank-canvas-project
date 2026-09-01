@@ -34,7 +34,7 @@ function RootComponent() {
     const sessionKey = `session_started:${sessionId}`;
     if (!sessionStorage.getItem(sessionKey)) {
       sessionStorage.setItem(sessionKey, "1");
-      void (supabase as any).rpc("track_event", { p_event_type: "SESSION_START", p_metadata: { source: "app_shell" }, p_anonymous_id: anonymousId, p_session_id: sessionId }).catch(() => undefined);
+      void Promise.resolve((supabase as any).rpc("track_event", { p_event_type: "SESSION_START", p_metadata: { source: "app_shell" }, p_anonymous_id: anonymousId, p_session_id: sessionId })).catch(() => undefined);
     }
     return () => observer.disconnect();
   }, []);
