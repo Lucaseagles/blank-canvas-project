@@ -1559,6 +1559,66 @@ export type Database = {
         }
         Relationships: []
       }
+      support_conversations: {
+        Row: {
+          created_at: string
+          id: string
+          messages: Json
+          resolved: boolean
+          updated_at: string
+          user_id: string
+          whatsapp_handoff: boolean
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          messages?: Json
+          resolved?: boolean
+          updated_at?: string
+          user_id: string
+          whatsapp_handoff?: boolean
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          messages?: Json
+          resolved?: boolean
+          updated_at?: string
+          user_id?: string
+          whatsapp_handoff?: boolean
+        }
+        Relationships: []
+      }
+      support_faq: {
+        Row: {
+          answer: string
+          created_at: string
+          id: string
+          is_active: boolean
+          keywords: string[] | null
+          priority: number
+          question: string
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          keywords?: string[] | null
+          priority?: number
+          question: string
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          keywords?: string[] | null
+          priority?: number
+          question?: string
+        }
+        Relationships: []
+      }
       telegram_config: {
         Row: {
           bot_token_secret_ref: string | null
@@ -1951,6 +2011,7 @@ export type Database = {
           id: string
           is_active: boolean
           phone_number_id: string | null
+          public_phone_number: string | null
           updated_at: string
         }
         Insert: {
@@ -1959,6 +2020,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           phone_number_id?: string | null
+          public_phone_number?: string | null
           updated_at?: string
         }
         Update: {
@@ -1967,6 +2029,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           phone_number_id?: string | null
+          public_phone_number?: string | null
           updated_at?: string
         }
         Relationships: []
