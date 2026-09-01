@@ -1,22 +1,14 @@
 # Heartfelt Notes
 
-.
+V1 maintained directly in GitHub.
 
-This project was built with [Lovable](https://lovable.dev).
+## Repository workflow
 
-**Live app**: https://heartful-helper-box.lovable.app
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/203209a8-c385-4ec5-b2f0-67a6c5972f26).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+This repository is the source of truth for the project. Development, review and delivery are performed directly against GitHub and the `main` branch. Lovable is not required for the development workflow.
 
 ## Development
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+Prefer working locally? You need Node.js and npm.
 
 ```sh
 git clone <this-repository-url>
@@ -24,3 +16,14 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+
+## Production build
+
+```sh
+npm run build
+npm run preview
+```
+
+## V1 audit
+
+The final Sprint 27 audit criteria are documented in `docs/sprint-27-v1-final-audit.md`. Runtime checks such as Lighthouse and real mobile interaction must be executed in a browser before claiming production-grade performance metrics.
