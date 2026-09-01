@@ -2,11 +2,18 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Clock3, Trash2, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database, Json } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/product/ProductCard";
 import { useEffect, useState } from "react";
 
 type RecentItem = { key: string; product?: any; video?: any; viewedAt: string; videoId?: string };
+
+function metadataVideoId(metadata: Json | null): string | undefined {
+  if (!metadata || Array.isArray(metadata) || typeof metadata !== "object") return undefined;
+  const value = metadata["video_id"];
+  return typeof value === "string" ? value : undefined;
+}
 
 async function getRecent(limit = 8): Promise<RecentItem[]> {
   const { data: auth } = await supabase.auth.getUser();
@@ -23,10 +30,11 @@ async function getRecent(limit = 8): Promise<RecentItem[]> {
   const seen = new Set<string>();
   const result: RecentItem[] = [];
   for (const event of events || []) {
-    const videoId = event.metadata?.video_id as string | undefined;
+    const videoId = metadataVideoId(event.metadata);
     const key = videoId ? `video:${videoId}` : event.product_id ? `product:${event.product_id}` : "";
     if (!key || seen.has(key) || (videoId ? hiddenVideos.has(videoId) : hiddenProducts.has(event.product_id))) continue;
-    seen.add(key); result.push({ key, viewedAt: event.created_at, product: undefined, videoId });
+    seen.add(key);
+    result.push({ key, viewedAt: event.created_at, ...(videoId ? { videoId } : {}) });
     if (result.length >= limit) break;
   }
   const productIds = result.filter(x => x.key.startsWith("product:")).map(x => x.key.slice(8));
@@ -35,7 +43,7 @@ async function getRecent(limit = 8): Promise<RecentItem[]> {
     const byId = new Map((data || []).map((p: any) => [p.id, p]));
     for (const item of result) if (item.key.startsWith("product:")) item.product = byId.get(item.key.slice(8));
   }
-  const videoIds = result.filter(x => x.videoId).map(x => x.videoId!);
+  const videoIds = result.flatMap((item) => item.videoId ? [item.videoId] : []);
   if (videoIds.length) {
     const { data } = await supabase.from("videos").select("id,title,video_url,storage_path,external_url,thumbnail_url,duration").in("id", videoIds);
     const byId = new Map((data || []).map((v: any) => [v.id, v]));
@@ -52,6 +60,6 @@ export function ContinueBrowsing({ limit = 8, compact = false }: { limit?: numbe
   useEffect(() => { let active = true; void supabase.auth.getUser().then(({ data }) => { if (active) setVisible(Boolean(data.user)); }); return () => { active = false; }; }, []);
   const items = recent.data || [];
   if (!visible || recent.isLoading || !items.length) return null;
-  const hide = async (item: RecentItem) => { const { data: auth } = await supabase.auth.getUser(); if (!auth.user) return; const payload = item.videoId ? { user_id: auth.user.id, video_id: item.videoId } : { user_id: auth.user.id, product_id: item.product.id }; const { error } = await supabase.from("hidden_from_recently_viewed").upsert(payload, { onConflict: item.videoId ? "user_id,video_id" : "user_id,product_id" }); if (!error) await queryClient.invalidateQueries({ queryKey: ["recently-viewed"] }); };
+  const hide = async (item: RecentItem) => { const { data: auth } = await supabase.auth.getUser(); if (!auth.user) return; const payload: Database["public"]["Tables"]["hidden_from_recently_viewed"]["Insert"] = { user_id: auth.user.id, product_id: item.videoId ? null : item.product?.id ?? null, video_id: item.videoId ?? null }; const { error } = await supabase.from("hidden_from_recently_viewed").upsert(payload, { onConflict: item.videoId ? "user_id,video_id" : "user_id,product_id" }); if (!error) await queryClient.invalidateQueries({ queryKey: ["recently-viewed"] }); };
   return <section className={compact ? "py-8" : "py-16"} aria-labelledby="continue-browsing-title"><div className="mx-auto w-full max-w-7xl px-4"><div className="mb-8 flex flex-wrap items-end justify-between gap-4"><div><div className="mb-2 flex items-center gap-2 text-primary"><Clock3 className="h-4 w-4" /><span className="text-[10px] font-black uppercase tracking-[0.2em]">Seu histórico real</span></div><h2 id="continue-browsing-title" className="text-3xl font-black uppercase italic tracking-tight md:text-5xl">Continue de onde parou</h2></div><Button variant="ghost" size="sm" asChild className="font-black uppercase tracking-widest text-[10px]"><Link to="/history">Ver histórico <ArrowRight className="ml-2 h-4 w-4" /></Link></Button></div><div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-5">{items.map(item => item.product ? <div key={item.key} className="relative min-w-0"><ProductCard {...toCardProduct(item.product)} /><Button variant="secondary" size="icon" onClick={() => void hide(item)} className="absolute right-2 top-2 z-20 h-8 w-8 rounded-full bg-background/80 shadow-lg backdrop-blur" aria-label={`Remover ${item.product.title} do histórico`}><Trash2 className="h-3.5 w-3.5" /></Button></div> : <div key={item.key} className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4"><div className="aspect-video overflow-hidden rounded-xl bg-black"><img src={item.video.thumbnail_url || ""} alt={item.video.title || "Vídeo"} className="h-full w-full object-cover" loading="lazy" /></div><p className="mt-3 line-clamp-2 text-sm font-bold">{item.video.title || "Vídeo assistido"}</p><Button variant="secondary" size="sm" onClick={() => void hide(item)} className="mt-3 w-full">Remover</Button></div>)}</div></div></section>;
 }

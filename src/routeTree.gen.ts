@@ -17,6 +17,7 @@ import { Route as BridgeVideosRouteImport } from './routes/bridge-videos'
 import { Route as DealsRouteImport } from './routes/deals'
 import { Route as FavoritesRouteImport } from './routes/favorites'
 import { Route as FeedRouteImport } from './routes/feed'
+import { Route as HistoryRouteImport } from './routes/history'
 import { Route as ProductsRouteImport } from './routes/products'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as RegisterRouteImport } from './routes/register'
@@ -87,6 +88,11 @@ const FavoritesRoute = FavoritesRouteImport.update({
 const FeedRoute = FeedRouteImport.update({
   id: '/feed',
   path: '/feed',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HistoryRoute = HistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProductsRoute = ProductsRouteImport.update({
@@ -254,6 +260,7 @@ export interface FileRoutesByFullPath {
   '/deals': typeof DealsRoute
   '/favorites': typeof FavoritesRoute
   '/feed': typeof FeedRoute
+  '/history': typeof HistoryRoute
   '/products': typeof ProductsRoute
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
@@ -295,6 +302,7 @@ export interface FileRoutesByTo {
   '/deals': typeof DealsRoute
   '/favorites': typeof FavoritesRoute
   '/feed': typeof FeedRoute
+  '/history': typeof HistoryRoute
   '/products': typeof ProductsRoute
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
@@ -337,6 +345,7 @@ export interface FileRoutesById {
   '/deals': typeof DealsRoute
   '/favorites': typeof FavoritesRoute
   '/feed': typeof FeedRoute
+  '/history': typeof HistoryRoute
   '/products': typeof ProductsRoute
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
@@ -380,6 +389,7 @@ export interface FileRouteTypes {
     | '/deals'
     | '/favorites'
     | '/feed'
+    | '/history'
     | '/products'
     | '/profile'
     | '/register'
@@ -421,6 +431,7 @@ export interface FileRouteTypes {
     | '/deals'
     | '/favorites'
     | '/feed'
+    | '/history'
     | '/products'
     | '/profile'
     | '/register'
@@ -462,6 +473,7 @@ export interface FileRouteTypes {
     | '/deals'
     | '/favorites'
     | '/feed'
+    | '/history'
     | '/products'
     | '/profile'
     | '/register'
@@ -504,6 +516,7 @@ export interface RootRouteChildren {
   DealsRoute: typeof DealsRoute
   FavoritesRoute: typeof FavoritesRoute
   FeedRoute: typeof FeedRoute
+  HistoryRoute: typeof HistoryRoute
   ProductsRoute: typeof ProductsRoute
   ProfileRoute: typeof ProfileRoute
   RegisterRoute: typeof RegisterRoute
@@ -573,6 +586,13 @@ declare module '@tanstack/react-router' {
       path: '/feed'
       fullPath: '/feed'
       preLoaderRoute: typeof FeedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/history': {
+      id: '/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof HistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/products': {
@@ -852,6 +872,7 @@ const rootRouteChildren: RootRouteChildren = {
   DealsRoute: DealsRoute,
   FavoritesRoute: FavoritesRoute,
   FeedRoute: FeedRoute,
+  HistoryRoute: HistoryRoute,
   ProductsRoute: ProductsRoute,
   ProfileRoute: ProfileRoute,
   RegisterRoute: RegisterRoute,

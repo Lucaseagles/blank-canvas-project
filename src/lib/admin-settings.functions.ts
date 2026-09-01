@@ -20,9 +20,13 @@ const SETTINGS_REGISTRY = [
 const SECRET_KEYS = new Set(["token", "access_token", "refresh_token", "api_key", "apikey", "secret", "password", "client_secret", "authorization", "bot_token", "service_role_key"]);
 const HAS_UPDATED_AT = new Set(["personalization_weights", "feed_mix_config", "social_proof_config", "popup_rules", "automation_rules", "app_points_config", "compliance_rules", "feature_flags", "coupon_capability", "whatsapp_config", "telegram_config"]);
 
-function sanitize(value: unknown): unknown {
+type SerializableValue = string | number | boolean | null | SerializableValue[] | { [key: string]: SerializableValue };
+
+function sanitize(value: unknown): SerializableValue {
+  if (value === undefined) return null;
   if (Array.isArray(value)) return value.map(sanitize);
-  if (!value || typeof value !== "object") return value;
+  if (value === null || typeof value === "string" || typeof value === "number" || typeof value === "boolean") return value;
+  if (typeof value !== "object") return String(value);
   return Object.fromEntries(Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, SECRET_KEYS.has(k.toLowerCase()) ? "[REDACTED]" : sanitize(v)]));
 }
 
@@ -32,7 +36,7 @@ export const getAdminSettings = createServerFn({ method: "GET" }).middleware([re
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server"); const db = supabaseAdmin as any;
   return Promise.all(SETTINGS_REGISTRY.map(async (entry) => {
     const { data, error } = await db.from(entry.table).select("*").limit(100);
-    if (error) return { ...entry, rows: [], available: false, error: error.message };
+    if (error) return { ...entry, rows: [] as SerializableValue[], available: false, error: String(error.message) };
     const rows = [...(data ?? [])].sort((a: any, b: any) => String(b.updated_at ?? b.created_at ?? "").localeCompare(String(a.updated_at ?? a.created_at ?? ""))).map(sanitize);
     return { ...entry, rows, available: true, error: null };
   }));
@@ -42,7 +46,7 @@ export const updateAdminSetting = createServerFn({ method: "POST" }).middleware(
   const entry = registryEntry(data.source); const patch: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(data.patch)) { if (!entry.editable.includes(key as never)) continue; if (SECRET_KEYS.has(key.toLowerCase())) throw new Error("Secrets cannot be edited through the generic settings editor"); patch[key] = value; }
   if (Object.keys(patch).length === 0) throw new Error("No editable fields supplied");
-  if (HAS_UPDATED_AT.has(entry.key)) patch.updated_at = new Date().toISOString();
+  if (HAS_UPDATED_AT.has(entry.key)) patch["updated_at"] = new Date().toISOString();
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server"); const db = supabaseAdmin as any;
   const { data: before, error: readError } = await db.from(entry.table).select("*").eq("id", data.id).single(); if (readError) throw readError;
   const { data: after, error } = await db.from(entry.table).update(patch).eq("id", data.id).select("*").single(); if (error) throw error;
