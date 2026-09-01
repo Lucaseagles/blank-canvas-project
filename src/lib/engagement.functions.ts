@@ -77,7 +77,7 @@ export const getPriceAlerts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    const { data, error } = await supabase.from("price_alerts").select("*, products(*, marketplaces(name))").eq("user_id", userId).order("created_at", { ascending: false });
+    const { data, error } = await supabase.from("price_alerts").select("id,user_id,product_id,target_price,is_active,triggered_at,created_at,products(id,slug,title,current_price,previous_price,discount,images,rating,review_count,affiliate_url,marketplaces(name))").eq("user_id", userId).order("created_at", { ascending: false });
     if (error) throw error;
     return data || [];
   });
