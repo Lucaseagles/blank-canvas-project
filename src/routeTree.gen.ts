@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AlertsRouteImport } from './routes/alerts'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BridgeVideosRouteImport } from './routes/bridge-videos'
 import { Route as DealsRouteImport } from './routes/deals'
 import { Route as FavoritesRouteImport } from './routes/favorites'
 import { Route as FeedRouteImport } from './routes/feed'
@@ -25,6 +26,7 @@ import { Route as TrendingRouteImport } from './routes/trending'
 import { Route as VideosRouteImport } from './routes/videos'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin/analytics'
 import { Route as AdminAutomationsRouteImport } from './routes/admin/automations'
+import { Route as AdminBridgeVideosRouteImport } from './routes/admin/bridge-videos'
 import { Route as AdminBundlesRouteImport } from './routes/admin/bundles'
 import { Route as AdminCampaignsRouteImport } from './routes/admin/campaigns'
 import { Route as AdminCategoriesRouteImport } from './routes/admin/categories'
@@ -64,6 +66,11 @@ const AlertsRoute = AlertsRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BridgeVideosRoute = BridgeVideosRouteImport.update({
+  id: '/bridge-videos',
+  path: '/bridge-videos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DealsRoute = DealsRouteImport.update({
@@ -124,6 +131,11 @@ const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
 const AdminAutomationsRoute = AdminAutomationsRouteImport.update({
   id: '/automations',
   path: '/automations',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBridgeVideosRoute = AdminBridgeVideosRouteImport.update({
+  id: '/bridge-videos',
+  path: '/bridge-videos',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminBundlesRoute = AdminBundlesRouteImport.update({
@@ -232,6 +244,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/alerts': typeof AlertsRoute
   '/auth': typeof AuthRoute
+  '/bridge-videos': typeof BridgeVideosRoute
   '/deals': typeof DealsRoute
   '/favorites': typeof FavoritesRoute
   '/feed': typeof FeedRoute
@@ -244,6 +257,7 @@ export interface FileRoutesByFullPath {
   '/videos': typeof VideosRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/automations': typeof AdminAutomationsRoute
+  '/admin/bridge-videos': typeof AdminBridgeVideosRoute
   '/admin/bundles': typeof AdminBundlesRoute
   '/admin/campaigns': typeof AdminCampaignsRoute
   '/admin/categories': typeof AdminCategoriesRoute
@@ -270,6 +284,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRouteWithChildren
   '/alerts': typeof AlertsRoute
   '/auth': typeof AuthRoute
+  '/bridge-videos': typeof BridgeVideosRoute
   '/deals': typeof DealsRoute
   '/favorites': typeof FavoritesRoute
   '/feed': typeof FeedRoute
@@ -282,6 +297,7 @@ export interface FileRoutesByTo {
   '/videos': typeof VideosRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/automations': typeof AdminAutomationsRoute
+  '/admin/bridge-videos': typeof AdminBridgeVideosRoute
   '/admin/bundles': typeof AdminBundlesRoute
   '/admin/campaigns': typeof AdminCampaignsRoute
   '/admin/categories': typeof AdminCategoriesRoute
@@ -309,6 +325,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/alerts': typeof AlertsRoute
   '/auth': typeof AuthRoute
+  '/bridge-videos': typeof BridgeVideosRoute
   '/deals': typeof DealsRoute
   '/favorites': typeof FavoritesRoute
   '/feed': typeof FeedRoute
@@ -321,6 +338,7 @@ export interface FileRoutesById {
   '/videos': typeof VideosRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/automations': typeof AdminAutomationsRoute
+  '/admin/bridge-videos': typeof AdminBridgeVideosRoute
   '/admin/bundles': typeof AdminBundlesRoute
   '/admin/campaigns': typeof AdminCampaignsRoute
   '/admin/categories': typeof AdminCategoriesRoute
@@ -349,6 +367,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/alerts'
     | '/auth'
+    | '/bridge-videos'
     | '/deals'
     | '/favorites'
     | '/feed'
@@ -361,6 +380,7 @@ export interface FileRouteTypes {
     | '/videos'
     | '/admin/analytics'
     | '/admin/automations'
+    | '/admin/bridge-videos'
     | '/admin/bundles'
     | '/admin/campaigns'
     | '/admin/categories'
@@ -387,6 +407,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/alerts'
     | '/auth'
+    | '/bridge-videos'
     | '/deals'
     | '/favorites'
     | '/feed'
@@ -399,6 +420,7 @@ export interface FileRouteTypes {
     | '/videos'
     | '/admin/analytics'
     | '/admin/automations'
+    | '/admin/bridge-videos'
     | '/admin/bundles'
     | '/admin/campaigns'
     | '/admin/categories'
@@ -425,6 +447,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/alerts'
     | '/auth'
+    | '/bridge-videos'
     | '/deals'
     | '/favorites'
     | '/feed'
@@ -437,6 +460,7 @@ export interface FileRouteTypes {
     | '/videos'
     | '/admin/analytics'
     | '/admin/automations'
+    | '/admin/bridge-videos'
     | '/admin/bundles'
     | '/admin/campaigns'
     | '/admin/categories'
@@ -464,6 +488,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   AlertsRoute: typeof AlertsRoute
   AuthRoute: typeof AuthRoute
+  BridgeVideosRoute: typeof BridgeVideosRoute
   DealsRoute: typeof DealsRoute
   FavoritesRoute: typeof FavoritesRoute
   FeedRoute: typeof FeedRoute
@@ -508,6 +533,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bridge-videos': {
+      id: '/bridge-videos'
+      path: '/bridge-videos'
+      fullPath: '/bridge-videos'
+      preLoaderRoute: typeof BridgeVideosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/deals': {
@@ -592,6 +624,13 @@ declare module '@tanstack/react-router' {
       path: '/automations'
       fullPath: '/admin/automations'
       preLoaderRoute: typeof AdminAutomationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/bridge-videos': {
+      id: '/admin/bridge-videos'
+      path: '/bridge-videos'
+      fullPath: '/admin/bridge-videos'
+      preLoaderRoute: typeof AdminBridgeVideosRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/bundles': {
@@ -740,6 +779,7 @@ declare module '@tanstack/react-router' {
 interface AdminRouteChildren {
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminAutomationsRoute: typeof AdminAutomationsRoute
+  AdminBridgeVideosRoute: typeof AdminBridgeVideosRoute
   AdminBundlesRoute: typeof AdminBundlesRoute
   AdminCampaignsRoute: typeof AdminCampaignsRoute
   AdminCategoriesRoute: typeof AdminCategoriesRoute
@@ -761,6 +801,7 @@ interface AdminRouteChildren {
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminAutomationsRoute: AdminAutomationsRoute,
+  AdminBridgeVideosRoute: AdminBridgeVideosRoute,
   AdminBundlesRoute: AdminBundlesRoute,
   AdminCampaignsRoute: AdminCampaignsRoute,
   AdminCategoriesRoute: AdminCategoriesRoute,
@@ -786,6 +827,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   AlertsRoute: AlertsRoute,
   AuthRoute: AuthRoute,
+  BridgeVideosRoute: BridgeVideosRoute,
   DealsRoute: DealsRoute,
   FavoritesRoute: FavoritesRoute,
   FeedRoute: FeedRoute,
