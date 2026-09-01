@@ -50,7 +50,7 @@ function AdminAnalyticsPage() {
         return {strategy,views:v,clicks:c,ctr:v?c/v*100:0};
       });
       const hour = Array.from({length:24},(_,h)=>({hour:h,views:0,clicks:0}));
-      popupEvents.forEach(e=>{const h=new Date(e.created_at).getHours(); if(e.event_type==='view')hour[h].views++; if(e.event_type==='click')hour[h].clicks++;});
+      popupEvents.forEach(e=>{const h=new Date(e.created_at).getHours(); if(e.event_type==='view')hour[h]!.views++; if(e.event_type==='click')hour[h]!.clicks++;});
       const device = new Map<string,{views:number;clicks:number}>();
       events.forEach(e=>{const d=String((e.metadata as any)?.device ?? (e.metadata as any)?.device_type ?? 'unknown').toLowerCase(); if(!device.has(d))device.set(d,{views:0,clicks:0});});
       return {events,popupEvents,rules,experiments:experimentsRes.data??[],assignments:assignmentsRes.data??[],views,clicks,byStrategy,timing:Array.from(timing,([trigger,stats])=>({trigger,...stats,ctr:stats.views?stats.clicks/stats.views*100:0})),hour,device};

@@ -34,7 +34,7 @@ function BridgeVideosPage() {
       {isLoading ? (
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">{[1, 2, 3].map((item) => <Skeleton key={item} className="aspect-[4/5] rounded-[1.75rem]" />)}</div>
       ) : videos.length > 0 ? (
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">{videos.map((video) => <VideoBridge key={video.id} video={video} />)}</div>
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">{videos.map((video: BridgeVideo) => <VideoBridge key={video.id} video={video} />)}</div>
       ) : (
         <section className="rounded-[1.75rem] border border-glass-border bg-white/[0.03] p-8 text-center"><p className="text-sm font-bold text-muted-foreground">Nenhum vídeo ponte ativo foi cadastrado.</p></section>
       )}
