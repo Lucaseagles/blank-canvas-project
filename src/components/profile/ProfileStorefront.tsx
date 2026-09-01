@@ -30,7 +30,7 @@ function realReviews(value: unknown) {
   return value.filter((item) => {
     if (!item || typeof item !== "object") return false;
     const review = item as Record<string, unknown>;
-    return typeof review.comment === "string" && review.comment.trim().length > 0;
+    return typeof review['comment'] === "string" && (review['comment'] as string).trim().length > 0;
   }) as Array<{ author?: string; rating?: number; comment?: string; date?: string }>;
 }
 
