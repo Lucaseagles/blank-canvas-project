@@ -246,7 +246,7 @@ function AdminRecommendationsPage() {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-white/5 overflow-hidden">
-                          {h.products?.images?.[0] && <img src={h.products.images[0]} className="w-full h-full object-cover" />}
+                          {h.products?.images?.[0] && <img src={h.products.images[0]} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />}
                         </div>
                         <span className="text-[10px] font-bold uppercase tracking-tight line-clamp-1 max-w-[150px]">
                           {h.products?.title}

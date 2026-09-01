@@ -333,7 +333,7 @@ function V1AuditPage() {
     } catch (err) {
       secChecks.push({ id: "sec:owner", label: "Autorização owner-only", status: "FAIL", evidence: String(err) });
     }
-    secChecks.push({ id: "sec:xss", label: "XSS / sanitização de entrada", status: "PASS", evidence: "Nenhum uso de dangerouslySetInnerHTML em código de aplicação; React escapa a saída por padrão." });
+    secChecks.push({ id: "sec:xss", label: "XSS / sanitização de entrada", status: "PASS", evidence: "Nenhum uso de dangerouslySetInnerHTML em código de aplicação (apenas no componente shadcn chart, com CSS gerado internamente); React escapa a saída por padrão." });
     secChecks.push({ id: "sec:csrf", label: "CSRF", status: "PASS", evidence: "Arquitetura sem cookies de sessão: token bearer em header por server-function middleware — requests cross-site não carregam credenciais." });
     secChecks.push({ id: "sec:rls", label: "RLS / policies", status: "NOT MEASURED", evidence: "Cobertura completa de policies exige varredura server-side; use o scanner de segurança do projeto." });
     secChecks.push({ id: "sec:rate", label: "Rate limiting", status: "NOT MEASURED", evidence: "Não há limitador aplicativo; limites do gateway Supabase não são observáveis daqui." });
