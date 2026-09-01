@@ -25,7 +25,7 @@ export function ProductMediaShowcase({ title, images, discount, video, onVideoSt
       </TabsContent>
       {hasVideo && (
         <TabsContent value="video" className="mt-0 focus-visible:outline-none">
-          <ProductVideo videoUrl={video!.url!} title={video?.title ?? null} subtitle={video?.subtitle ?? null} thumbnail={video?.thumbnail ?? null} onStart={onVideoStart} onComplete={onVideoComplete} />
+          <ProductVideo videoUrl={video!.url!} title={video?.title ?? null} subtitle={video?.subtitle ?? null} thumbnail={video?.thumbnail ?? null} onStart={onVideoStart ?? (() => {})} onComplete={onVideoComplete ?? (() => {})} />
         </TabsContent>
       )}
       <TabsList className="mt-3 h-auto w-full justify-start gap-2 overflow-x-auto bg-transparent p-1 scrollbar-hide">
