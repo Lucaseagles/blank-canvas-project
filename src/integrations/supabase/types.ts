@@ -350,6 +350,41 @@ export type Database = {
           },
         ]
       }
+      browsing_history: {
+        Row: {
+          device_type: string | null
+          duration_seconds: number
+          id: string
+          product_id: string
+          user_id: string
+          viewed_at: string
+        }
+        Insert: {
+          device_type?: string | null
+          duration_seconds?: number
+          id?: string
+          product_id: string
+          user_id: string
+          viewed_at?: string
+        }
+        Update: {
+          device_type?: string | null
+          duration_seconds?: number
+          id?: string
+          product_id?: string
+          user_id?: string
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "browsing_history_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bundle_products: {
         Row: {
           bundle_id: string
