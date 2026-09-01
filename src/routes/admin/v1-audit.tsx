@@ -8,6 +8,16 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/admin/v1-audit")({
   ssr: false,
+  head: () => ({
+    meta: [
+      { title: "Auditoria V1 — Administração" },
+      { name: "description", content: "Matriz técnica da auditoria funcional, de performance e segurança da V1." },
+      { property: "og:title", content: "Auditoria V1 — Administração" },
+      { property: "og:description", content: "Matriz técnica da auditoria funcional, de performance e segurança da V1." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: V1AuditPage,
 });
 
@@ -22,7 +32,7 @@ type Check = {
 
 const KNOWN_ROUTES = [
   "/", "/feed", "/deals", "/products", "/trending", "/videos", "/search",
-  "/favorites", "/alerts", "/profile", "/auth", "/register", "/reset-password",
+  "/favorites", "/alerts", "/history", "/profile", "/auth", "/register", "/reset-password",
   "/bridge-videos", "/product/$slug", "/category/$slug", "/bundle/$slug",
   "/admin/dashboard", "/admin/products", "/admin/videos", "/admin/bridge-videos",
   "/admin/marketplaces", "/admin/categories", "/admin/integrations", "/admin/users",
@@ -196,8 +206,8 @@ function V1AuditPage() {
       scenarioChecks.push({
         id: "scn:purchase",
         label: "Jornada de compra (feed → produto → redirect)",
-        status: p && p.length > 0 ? "PASS" : "NOT MEASURED",
-        evidence: p && p.length > 0 ? `Produto navegável disponível: /product/${(p[0] as any).slug}` : "Sem produtos no banco para percorrer a jornada",
+        status: "NOT MEASURED",
+        evidence: p && p.length > 0 ? `Pré-condição confirmada: produto navegável em /product/${(p[0] as any).slug}. A jornada completa e o destino externo não foram automatizados.` : "Sem produtos no banco para percorrer a jornada",
       });
       const { data: v } = await supabase.from("video_products" as never).select("video_id").limit(1);
       scenarioChecks.push({
@@ -229,8 +239,8 @@ function V1AuditPage() {
     scenarioChecks.push({
       id: "scn:admin-mobile",
       label: "Admin mobile (hamburger + menu completo)",
-      status: typeof window !== "undefined" ? "PASS" : "NOT MEASURED",
-      evidence: `Sidebar declara ${KNOWN_ROUTES.filter((r) => r.startsWith("/admin/")).length} destinos administrativos; gatilho hamburger renderizado abaixo de lg. Viewport atual: ${typeof window !== "undefined" ? window.innerWidth : "?"}px`,
+      status: "NOT MEASURED",
+      evidence: `Pré-condição de código: sidebar declara ${KNOWN_ROUTES.filter((r) => r.startsWith("/admin/")).length} destinos e gatilho abaixo de lg. Interação owner autenticada não foi medida. Viewport atual: ${typeof window !== "undefined" ? window.innerWidth : "?"}px`,
     });
 
     // ---- Performance (medida via Performance API quando disponível) ----
