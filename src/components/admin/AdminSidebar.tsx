@@ -3,7 +3,7 @@ import {
   LayoutDashboard, ShoppingBag, Play, Store, Folders,
   Settings, Users, Target, BarChart3, Megaphone,
   Send, Bell, Gift, GitBranch, ShieldCheck, Mail, MessageSquare,
-  LogOut, Video
+  LogOut, Video, Package, ClipboardCheck
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,6 +30,8 @@ const ADMIN_ROUTES = [
   { name: "Settings", path: "/admin/settings", icon: Settings },
   { name: "Offers", path: "/admin/offers", icon: Mail },
   { name: "Social Proof", path: "/admin/social-proof", icon: MessageSquare },
+  { name: "Bundles", path: "/admin/bundles", icon: Package },
+  { name: "Auditoria V1", path: "/admin/v1-audit", icon: ClipboardCheck },
 ];
 
 type AdminSidebarProps = {
