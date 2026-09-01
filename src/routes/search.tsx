@@ -1,143 +1,118 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductCard } from "@/components/product/ProductCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search as SearchIcon, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { Search as SearchIcon, Sparkles, SlidersHorizontal, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { CustomBreadcrumbs } from "@/components/layout/Breadcrumbs";
 
 export const Route = createFileRoute("/search")({
-  head: () => ({
-    meta: [
-      { title: "Busca de Produtos e Ofertas" },
-      { name: "description", content: "Encontre produtos por nome, categoria ou marketplace com resultados em tempo real." },
-      { property: "og:title", content: "Busca de Produtos e Ofertas" },
-      { property: "og:description", content: "Encontre produtos por nome, categoria ou marketplace com resultados em tempo real." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
-  validateSearch: (search: Record<string, unknown>) => {
-    return {
-      q: (search['q'] as string) || "",
-    };
-  },
+  head: () => ({ meta: [
+    { title: "Busca de Produtos e Ofertas" },
+    { name: "description", content: "Encontre produtos por nome, categoria ou marketplace com busca inteligente." },
+  ] }),
+  validateSearch: (search: Record<string, unknown>) => ({ q: (search.q as string) || "" }),
   component: SearchPage,
 });
 
+type Product = any;
+
+const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+const synonyms: Record<string, string[]> = {
+  celular: ["smartphone", "telefone", "mobile"], notebook: ["laptop", "computador", "pc"],
+  tenis: ["tênis", "sneaker", "sapato esportivo"], fone: ["headphone", "earphone", "bluetooth"],
+  carregador: ["charger", "adaptador", "fonte"], teclado: ["keyboard"], mouse: ["mice"],
+};
+
 function SearchPage() {
   const search = Route.useSearch();
-  const [query, setQuery] = useState(search['q'] || "");
-  const [activeQuery, setActiveQuery] = useState(search['q'] || "");
+  const [query, setQuery] = useState(search.q);
+  const [activeQuery, setActiveQuery] = useState(search.q);
+  const [category, setCategory] = useState("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [sort, setSort] = useState<"relevance" | "price_asc" | "price_desc" | "popular">("relevance");
 
-  const { data: products, isLoading } = useQuery<any[]>({
-    queryKey: ["search", activeQuery],
+  useEffect(() => { setQuery(search.q); setActiveQuery(search.q); }, [search.q]);
+
+  const { data: suggestions = [] } = useQuery<string[]>({
+    queryKey: ["search-suggestions", query],
     queryFn: async () => {
-      if (!activeQuery) return [];
-      const { data, error } = await supabase
-        .from("products")
-        .select("*, marketplaces(name), video_products(id)")
-        .ilike("title", `%${activeQuery}%`)
-        .limit(20);
-      
-      if (error) throw error;
-      
-      return data.map(p => ({
-        id: p.id,
-        slug: (p as any).slug || "",
-        title: p.title,
-        price: p.current_price,
-        previousPrice: p.previous_price,
-        discount: p.discount,
-        image: p.images?.[0] || "",
-        marketplace: (p.marketplaces as any)?.name || "External",
-        rating: p.rating,
-        reviewCount: p.review_count,
-        affiliateUrl: p.affiliate_url || null,
-        hasVideo: p.video_products && p.video_products.length > 0
-      }));
+      const q = normalize(query);
+      if (q.length < 2) return [];
+      const terms = [q, ...(synonyms[q] || [])];
+      const { data } = await supabase.from("products").select("title").eq("is_active", true).ilike("title", `%${q}%`).limit(8);
+      const titles = (data || []).map((p: any) => p.title).filter(Boolean);
+      return Array.from(new Set([...terms, ...titles])).slice(0, 8);
     },
-    enabled: activeQuery.length > 0,
+    enabled: query.trim().length >= 2,
+    staleTime: 30_000,
   });
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setActiveQuery(query);
-  };
+  const { data: products = [], isLoading } = useQuery<Product[]>({
+    queryKey: ["search", activeQuery, category, minPrice, maxPrice, sort],
+    queryFn: async () => {
+      const q = normalize(activeQuery);
+      let result: any[] | null = null;
+      if (q) {
+        const rpc = await supabase.rpc("search_products_fuzzy", { search_query: q });
+        if (!rpc.error && rpc.data) result = rpc.data as any[];
+      }
+      if (!result) {
+        let request = supabase.from("products").select("*, marketplaces(name), video_products(id)").eq("is_active", true);
+        if (q) {
+          const terms = [q, ...(synonyms[q] || [])];
+          request = request.or(terms.map((term) => `title.ilike.%${term}%`).join(","));
+        }
+        const fallback = await request.limit(50);
+        if (fallback.error) throw fallback.error;
+        result = fallback.data || [];
+      }
+      let mapped = result.map((p: any) => ({ ...p, price: p.current_price ?? p.price, image: p.images?.[0] || p.image || "", marketplace: p.marketplaces?.name || "External", affiliateUrl: p.affiliate_url || null, hasVideo: Boolean(p.video_products?.length) }));
+      if (category) mapped = mapped.filter((p) => p.category_id === category);
+      if (minPrice) mapped = mapped.filter((p) => Number(p.price) >= Number(minPrice));
+      if (maxPrice) mapped = mapped.filter((p) => Number(p.price) <= Number(maxPrice));
+      if (sort === "price_asc") mapped.sort((a, b) => Number(a.price) - Number(b.price));
+      if (sort === "price_desc") mapped.sort((a, b) => Number(b.price) - Number(a.price));
+      if (sort === "popular") mapped.sort((a, b) => Number(b.review_count || 0) - Number(a.review_count || 0));
+      return mapped;
+    },
+    enabled: activeQuery.trim().length > 0,
+  });
+
+  const activeSuggestionSet = useMemo(() => new Set(suggestions.map(normalize)), [suggestions]);
+  const handleSearch = (e: React.FormEvent) => { e.preventDefault(); setActiveQuery(query.trim()); };
+  const clearFilters = () => { setCategory(""); setMinPrice(""); setMaxPrice(""); setSort("relevance"); };
 
   return (
-    <div className="container mx-auto py-20 px-4 max-w-7xl reveal-on-scroll">
-      <CustomBreadcrumbs items={[{ label: 'Search', to: '/search' }]} />
-      <div className="max-w-3xl mx-auto mb-16 text-center space-y-8">
-        <Badge variant="outline" className="px-5 py-2 rounded-full border-primary/30 bg-primary/5 text-primary glass-surface">
-          <Sparkles className="w-3.5 h-3.5 mr-2" />
-          Neural Discovery Engine
-        </Badge>
-        <h1 className="text-6xl md:text-8xl font-black tracking-tighter uppercase italic leading-none">Busca Global</h1>
+    <div className="container mx-auto max-w-7xl px-4 py-16 reveal-on-scroll">
+      <CustomBreadcrumbs items={[{ label: "Busca", to: "/search" }]} />
+      <div className="mx-auto mb-12 max-w-4xl space-y-6 text-center">
+        <Badge variant="outline" className="rounded-full border-primary/30 bg-primary/5 px-5 py-2 text-primary glass-surface"><Sparkles className="mr-2 h-3.5 w-3.5" />Busca Inteligente</Badge>
+        <h1 className="text-5xl font-black uppercase italic tracking-tighter md:text-7xl">Busca Global</h1>
         <form onSubmit={handleSearch} className="relative flex gap-2">
-          <div className="relative flex-1">
-            <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
-            <Input 
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar por produtos, marcas ou categorias..." 
-              className="h-16 pl-14 pr-6 rounded-2xl bg-white/5 border-glass-border focus:border-primary/50 focus:ring-primary/20 text-xl font-medium shadow-2xl transition-all"
-            />
+          <div className="relative flex-1"><SearchIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" /><Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar produtos, marcas ou categorias..." className="h-16 rounded-2xl bg-white/5 pl-14 pr-6 text-lg" />
+            {query.length >= 2 && suggestions.length > 0 && !activeSuggestionSet.has(normalize(query)) && <div className="absolute left-0 right-0 top-[4.5rem] z-50 overflow-hidden rounded-2xl border bg-background/95 p-2 text-left shadow-2xl backdrop-blur-xl">{suggestions.map((suggestion) => <button key={suggestion} type="button" onClick={() => { setQuery(suggestion); setActiveQuery(suggestion); }} className="block w-full rounded-xl px-4 py-3 text-left text-sm font-medium hover:bg-primary/10">{suggestion}</button>)}</div>}
           </div>
-          <Button type="submit" size="lg" className="h-16 px-10 rounded-2xl font-black italic uppercase tracking-tight shadow-2xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
-            Buscar
-          </Button>
+          <Button type="submit" size="lg" className="h-16 rounded-2xl px-8 font-black uppercase">Buscar</Button>
         </form>
       </div>
 
-      {isLoading ? (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="space-y-4">
-              <Skeleton className="aspect-square w-full rounded-2xl" />
-              <Skeleton className="h-6 w-3/4" />
-              <Skeleton className="h-4 w-1/2" />
-            </div>
-          ))}
+      <div className="mb-10 rounded-3xl border border-white/10 bg-white/5 p-4">
+        <div className="mb-4 flex items-center justify-between"><div className="flex items-center gap-2 font-black uppercase"><SlidersHorizontal className="h-4 w-4 text-primary" />Filtros</div><Button variant="ghost" size="sm" onClick={clearFilters}>Limpar <X className="ml-1 h-4 w-4" /></Button></div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="ID da categoria" />
+          <Input type="number" min="0" value={minPrice} onChange={(e) => setMinPrice(e.target.value)} placeholder="Preço mínimo" />
+          <Input type="number" min="0" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} placeholder="Preço máximo" />
+          <select value={sort} onChange={(e) => setSort(e.target.value as typeof sort)} className="h-10 rounded-md border border-input bg-background px-3 text-sm"><option value="relevance">Relevância</option><option value="popular">Popularidade</option><option value="price_asc">Menor preço</option><option value="price_desc">Maior preço</option></select>
         </div>
-      ) : products?.length ? (
-        <div className="space-y-8">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <span className="font-bold text-foreground">{products?.length || 0}</span> resultados encontrados para "{activeQuery}"
-          </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-            {products.map((product) => (
-              <ProductCard 
-                key={product.id} 
-                id={product.id}
-                slug={product.slug}
-                title={product.title}
-                price={product.price}
-                previousPrice={product.previousPrice}
-                discount={product.discount}
-                image={product.image}
-                marketplace={product.marketplace}
-                rating={product.rating}
-                reviewCount={product.reviewCount}
-                affiliateUrl={product.affiliateUrl ?? null}
-              />
-            ))}
-          </div>
-        </div>
-      ) : activeQuery ? (
-        <div className="text-center py-24 bg-muted/20 rounded-3xl border border-dashed border-muted-foreground/20">
-          <p className="text-muted-foreground">Nenhum resultado encontrado para "{activeQuery}". Tente palavras-chave diferentes.</p>
-        </div>
-      ) : (
-        <div className="text-center py-24 opacity-40">
-          <SearchIcon className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-          <p className="text-xl font-medium">Insira um termo de busca para descobrir ofertas.</p>
-        </div>
-      )}
+      </div>
+
+      {isLoading ? <div className="grid grid-cols-2 gap-6 lg:grid-cols-4">{[...Array(8)].map((_, i) => <div key={i} className="space-y-4"><Skeleton className="aspect-square w-full rounded-2xl" /><Skeleton className="h-6 w-3/4" /><Skeleton className="h-4 w-1/2" /></div>)}</div> : products.length ? <div className="space-y-8"><div className="text-muted-foreground"><strong className="text-foreground">{products.length}</strong> resultado(s) para “{activeQuery}”</div><div className="grid grid-cols-2 gap-6 lg:grid-cols-4">{products.map((product) => <ProductCard key={product.id} id={product.id} slug={product.slug || ""} categoryId={product.category_id} title={product.title} price={product.price} previousPrice={product.previous_price} discount={product.discount} image={product.image} marketplace={product.marketplace} rating={product.rating} reviewCount={product.review_count} affiliateUrl={product.affiliateUrl} hasVideo={product.hasVideo} />)}</div></div> : activeQuery ? <div className="rounded-3xl border border-dashed p-16 text-center text-muted-foreground">Nenhum resultado encontrado. Tente outro termo ou uma variação da busca.</div> : <div className="py-20 text-center text-muted-foreground"><SearchIcon className="mx-auto mb-4 h-14 w-14 opacity-40" /><p>Digite algo para começar sua descoberta.</p></div>}
     </div>
   );
 }
