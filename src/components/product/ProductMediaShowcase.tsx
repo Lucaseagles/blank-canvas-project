@@ -21,11 +21,11 @@ export function ProductMediaShowcase({ title, images, discount, video, onVideoSt
   return (
     <Tabs value={tab} onValueChange={(value) => setTab(value as 'image' | 'video')} className="w-full">
       <TabsContent value="image" className="mt-0 focus-visible:outline-none">
-        <ProductGallery images={imageList} productName={title} discount={discount} />
+        <ProductGallery images={imageList} productName={title} discount={discount ?? null} />
       </TabsContent>
       {hasVideo && (
         <TabsContent value="video" className="mt-0 focus-visible:outline-none">
-          <ProductVideo videoUrl={video!.url!} title={video?.title} subtitle={video?.subtitle} thumbnail={video?.thumbnail} onStart={onVideoStart} onComplete={onVideoComplete} />
+          <ProductVideo videoUrl={video!.url!} title={video?.title ?? null} subtitle={video?.subtitle ?? null} thumbnail={video?.thumbnail ?? null} onStart={onVideoStart ?? (() => {})} onComplete={onVideoComplete ?? (() => {})} />
         </TabsContent>
       )}
       <TabsList className="mt-3 h-auto w-full justify-start gap-2 overflow-x-auto bg-transparent p-1 scrollbar-hide">

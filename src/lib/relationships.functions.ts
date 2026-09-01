@@ -28,7 +28,7 @@ export const getStrategicPopup = createServerFn({ method: "GET" }).handler(async
   if (strategicError) throw strategicError;
   if (strategic?.[0]) return strategic[0];
 
-  const { data: benefit, error: benefitError } = await supabaseAdmin.rpc('get_eligible_benefit_popup', { p_user_id: user.id });
+  const { data: benefit, error: benefitError } = await (supabaseAdmin as any).rpc('get_eligible_benefit_popup', { p_user_id: user.id });
   if (benefitError) throw benefitError;
   return benefit?.[0] ?? null;
 });

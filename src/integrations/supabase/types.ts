@@ -303,6 +303,53 @@ export type Database = {
         }
         Relationships: []
       }
+      bridge_videos: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          link: string
+          platform: string
+          product_id: string
+          subtitle: string | null
+          thumbnail: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          link: string
+          platform: string
+          product_id: string
+          subtitle?: string | null
+          thumbnail?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          link?: string
+          platform?: string
+          product_id?: string
+          subtitle?: string | null
+          thumbnail?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bridge_videos_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bundle_products: {
         Row: {
           bundle_id: string
@@ -1460,6 +1507,7 @@ export type Database = {
       }
       social_proof_config: {
         Row: {
+          adaptive_priority_enabled: boolean
           allowed_event_types: string[] | null
           content_affinity_threshold: number
           counter_window_hours: number
@@ -1468,6 +1516,7 @@ export type Database = {
           hybrid_simulation_enabled: boolean
           id: string
           is_enabled: boolean
+          low_volume_threshold: number
           min_events_for_counter: number
           show_aggregated_counters: boolean
           show_location: boolean
@@ -1475,6 +1524,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          adaptive_priority_enabled?: boolean
           allowed_event_types?: string[] | null
           content_affinity_threshold?: number
           counter_window_hours?: number
@@ -1483,6 +1533,7 @@ export type Database = {
           hybrid_simulation_enabled?: boolean
           id?: string
           is_enabled?: boolean
+          low_volume_threshold?: number
           min_events_for_counter?: number
           show_aggregated_counters?: boolean
           show_location?: boolean
@@ -1490,6 +1541,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          adaptive_priority_enabled?: boolean
           allowed_event_types?: string[] | null
           content_affinity_threshold?: number
           counter_window_hours?: number
@@ -1498,6 +1550,7 @@ export type Database = {
           hybrid_simulation_enabled?: boolean
           id?: string
           is_enabled?: boolean
+          low_volume_threshold?: number
           min_events_for_counter?: number
           show_aggregated_counters?: boolean
           show_location?: boolean
