@@ -19,6 +19,5 @@ export const useActivityTracker = () => {
     };
 
     track();
-  }, []);
+  }, [recordActivity]);
 };
-
