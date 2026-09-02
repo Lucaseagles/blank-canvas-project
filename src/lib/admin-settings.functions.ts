@@ -45,7 +45,7 @@ export const getAdminSettings = createServerFn({ method: "GET" }).middleware([re
   return Promise.all(SETTINGS_REGISTRY.map(async (entry) => {
     const { data, error } = await db.from(entry.table).select("*").limit(100);
     if (error) return { ...entry, rows: [] as SerializableValue[], available: false, error: String(error.message) };
-    const rows = [...(data ?? [])].sort((a: any, b: any) => String(b.updated_at ?? b.created_at ?? "").localeCompare(String(a.updated_at ?? a.created_at ?? ""))).map(sanitize);
+    const rows = [...(data ?? [])].sort((a: any, b: any) => String(b["updated_at"] ?? b["created_at"] ?? "").localeCompare(String(a["updated_at"] ?? a["created_at"] ?? ""))).map(sanitize);
     return { ...entry, rows, available: true, error: null };
   }));
 });
@@ -59,7 +59,7 @@ export const updateAdminSetting = createServerFn({ method: "POST" }).middleware(
     patch[key] = value;
   }
   if (Object.keys(patch).length === 0) throw new Error("No editable fields supplied");
-  if (HAS_UPDATED_AT.has(entry.key)) patch.updated_at = new Date().toISOString();
+  if (HAS_UPDATED_AT.has(entry.key)) patch["updated_at"] = new Date().toISOString();
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const db = supabaseAdmin as any;
