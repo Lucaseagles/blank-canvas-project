@@ -3,7 +3,6 @@ import { z } from "zod";
 import { requireOwnerRole } from "./auth-guards.server";
 
 const credentialInput = z.object({ platformId: z.string().min(1), fieldKey: z.string().min(1), value: z.string().min(1) });
-const secretLookup = z.object({ platformId: z.string().min(1), fieldKey: z.string().min(1) });
 
 export const saveIntegrationSecret = createServerFn({ method: "POST" })
   .middleware([requireOwnerRole])
@@ -17,19 +16,6 @@ export const saveIntegrationSecret = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(`Não foi possível salvar a credencial: ${error.message}`);
     return { success: true, secretId: secretId as string };
-  });
-
-export const getIntegrationSecret = createServerFn({ method: "POST" })
-  .middleware([requireOwnerRole])
-  .validator((data) => secretLookup.parse(data))
-  .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: value, error } = await supabaseAdmin.rpc("get_integration_secret", {
-      p_platform_id: data.platformId,
-      p_field_key: data.fieldKey,
-    });
-    if (error) throw new Error(`Não foi possível carregar a credencial: ${error.message}`);
-    return (value as string | null) ?? null;
   });
 
 export const getIntegrationStatuses = createServerFn({ method: "GET" })
@@ -53,10 +39,11 @@ export const testIntegration = createServerFn({ method: "POST" })
     if (!connector) throw new Error(`Connector não implementado: ${data.platformId}`);
     const result = await connector.testConnection();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.rpc("mark_integration_check", {
+    const { error } = await supabaseAdmin.rpc("mark_integration_check", {
       p_platform_id: data.platformId,
       p_status: result.success ? "active" : "error",
       p_error: result.success ? null : (result.message ?? result.error ?? "Falha na conexão"),
     });
+    if (error) console.error("Failed to persist integration test status", error);
     return result;
   });
