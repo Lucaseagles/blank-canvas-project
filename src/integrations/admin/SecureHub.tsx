@@ -1,0 +1,32 @@
+import { useMemo, useState } from "react";
+import { Activity, CheckCircle2, Filter, Loader2, PlugZap, RefreshCw, Sparkles } from "lucide-react";
+import { toast } from "sonner";
+import { PLATFORM_LIST } from "../config/platforms";
+import type { PlatformConfig } from "../core/types";
+import { useIntegrations } from "../hooks/useIntegrations";
+import { IntegrationCard } from "../components/IntegrationCard";
+import { CredentialForm } from "../components/CredentialForm";
+import { EcosystemStatus } from "../components/EcosystemStatus";
+import { PremiumBackground } from "../components/PremiumBackground";
+import { StatusBadge } from "../components/StatusBadge";
+
+type Category = "all" | PlatformConfig["category"];
+const categories: { id: Category; label: string }[] = [{ id: "all", label: "Todas" }, { id: "marketplace", label: "Marketplaces" }, { id: "video", label: "Vídeo" }, { id: "affiliate", label: "Afiliados" }, { id: "communication", label: "Comunicação" }, { id: "compliance", label: "Compliance" }];
+export function SecureHub() {
+  const { rows, state, activePlatforms, loading, refreshing, error, load, testConnection } = useIntegrations();
+  const [category, setCategory] = useState<Category>("all"); const [selected, setSelected] = useState<string | null>(null); const [availableOnly, setAvailableOnly] = useState(false); const [ecosystem, setEcosystem] = useState(true);
+  const platforms = useMemo(() => PLATFORM_LIST.filter((p) => (category === "all" || p.category === category) && (!availableOnly || p.status === "available" || p.status === "external_traffic")), [category, availableOnly]);
+  const active = rows.filter((r) => r.status === "active").length; const errors = rows.filter((r) => r.status === "error").length;
+  const runTest = async (id: string) => { try { const result = await testConnection(id); toast[result.success ? "success" : "error"](result.message ?? result.error ?? "Teste concluído"); } catch (e) { toast.error(e instanceof Error ? e.message : "Falha no teste."); } };
+  if (selected) return <div className="secure-hub-shell container mx-auto max-w-3xl px-4 py-8 lg:px-8"><PremiumBackground /><button className="mb-5 text-sm text-muted-foreground hover:text-foreground" onClick={() => { setSelected(null); void load(); }}>← Voltar para o Secure Hub</button><CredentialForm platformId={selected} onSuccess={() => { setSelected(null); void load(); }} onCancel={() => setSelected(null)} /></div>;
+  return <div className="secure-hub-shell container mx-auto max-w-7xl space-y-7 px-4 py-8 lg:px-8 lg:py-10"><PremiumBackground />
+    <header className="secure-glass rounded-[2rem] border border-glass-border p-6 md:p-8"><div className="flex flex-wrap items-start justify-between gap-5"><div className="flex gap-4"><div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary"><PlugZap /></div><div><p className="text-[10px] font-black uppercase tracking-[.25em] text-primary">Owner / Secure Hub</p><h1 className="text-3xl font-black tracking-tight md:text-4xl">Centro de comando</h1><p className="mt-2 max-w-2xl text-sm text-muted-foreground">Conexões seguras, status confirmado e ativação dinâmica dos setores do ecossistema.</p></div></div><button type="button" onClick={() => void load(true)} disabled={refreshing} className="inline-flex items-center gap-2 rounded-xl border border-glass-border px-4 py-2 text-xs font-bold hover:bg-muted/50">{refreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}Atualizar</button></div>
+      <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4"><Stat label="Plataformas" value={PLATFORM_LIST.length} /><Stat label="Ativas" value={active} /><Stat label="Setores ativos" value={Object.values(state.sectors).filter(Boolean).length} /><Stat label="Erros" value={errors} /></div></header>
+    {error && <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive">{error}</div>}
+    {ecosystem && <EcosystemStatus state={state} status={rows} />}
+    <div className="flex flex-wrap items-center gap-2"><div className="flex items-center gap-2 text-sm font-black"><Activity className="h-4 w-4 text-primary" /> Integrações</div>{categories.map((c) => <button key={c.id} type="button" onClick={() => setCategory(c.id)} className={`rounded-xl border px-3 py-2 text-xs font-bold ${category === c.id ? "border-primary bg-primary/10 text-primary" : "border-glass-border text-muted-foreground hover:text-foreground"}`}>{c.label}</button>)}<button type="button" onClick={() => setAvailableOnly((v) => !v)} className={`ml-auto inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-bold ${availableOnly ? "border-primary bg-primary/10 text-primary" : "border-glass-border text-muted-foreground"}`}><Filter className="h-3.5 w-3.5" />Disponíveis</button><button type="button" onClick={() => setEcosystem((v) => !v)} className="rounded-xl border border-glass-border px-3 py-2 text-xs font-bold">{ecosystem ? "Ocultar status" : "Mostrar status"}</button></div>
+    {loading ? <div className="flex min-h-72 items-center justify-center"><Loader2 className="h-7 w-7 animate-spin text-primary" /></div> : <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">{platforms.map((platform) => { const status = rows.find((r) => r.platform_id === platform.id); const badge = status?.status === "active" ? "active" : status?.status === "error" ? "error" : platform.status === "pending" ? "pending" : "available"; return <div key={platform.id} className="secure-hub-card relative"><div className="absolute right-4 top-4 z-10"><StatusBadge status={badge} /></div><IntegrationCard platform={platform} status={status} onConfigure={() => setSelected(platform.id)} onTest={platform.connectorId ? () => runTest(platform.id) : undefined} /></div>; })}</div>}
+    <footer className="flex items-center justify-center gap-2 py-3 text-[11px] text-muted-foreground"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />Credenciais protegidas no Vault · nenhum segredo é exposto ao cliente.</footer>
+  </div>;
+}
+function Stat({ label, value }: { label: string; value: number }) { return <div className="rounded-2xl border border-glass-border bg-background/20 p-4"><div className="text-2xl font-black">{value}</div><div className="text-[9px] font-black uppercase tracking-wider text-muted-foreground">{label}</div></div>; }
