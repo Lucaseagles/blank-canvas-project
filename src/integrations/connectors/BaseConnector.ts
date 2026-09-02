@@ -1,4 +1,5 @@
 import { PlatformConfig, PLATFORMS } from "../config/platforms";
+import { getIntegrationSecretServer } from "../secrets.server";
 
 export interface ConnectorStatus {
   isActive: boolean;
@@ -27,10 +28,9 @@ export abstract class BaseConnector {
   }
 
   protected async loadSecrets(): Promise<boolean> {
-    const { getIntegrationSecret } = await import("@/lib/integrations.functions");
     this.secrets = {};
     for (const field of this.config.credentialFields) {
-      const value = await getIntegrationSecret({ data: { platformId: this.platformId, fieldKey: field.key } });
+      const value = await getIntegrationSecretServer(this.platformId, field.key);
       if (value) this.secrets[field.key] = value;
     }
     return true;
