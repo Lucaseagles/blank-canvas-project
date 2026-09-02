@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
-import { Search, ShieldCheck, Save, History, ChevronDown, ChevronRight } from "lucide-react";
+import { Search, ShieldCheck, Save, History, ChevronDown, ChevronRight, Filter } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,25 +14,139 @@ import { getAdminSettings, getAdminAuditLog, updateAdminSetting, SETTINGS_REGIST
 
 export const Route = createFileRoute("/admin/settings")({ component: AdminSettingsPage });
 
-function pretty(value: unknown) { if (typeof value === "boolean") return value ? "Ativo" : "Inativo"; if (value === null || value === undefined) return "—"; if (typeof value === "object") return JSON.stringify(value, null, 2); return String(value); }
+function pretty(value: unknown) {
+  if (typeof value === "boolean") return value ? "Ativo" : "Inativo";
+  if (value === null || value === undefined) return "—";
+  if (typeof value === "object") return JSON.stringify(value, null, 2);
+  return String(value);
+}
 
 function AdminSettingsPage() {
   const queryClient = useQueryClient();
-  const getSettings = useServerFn(getAdminSettings); const update = useServerFn(updateAdminSetting); const getAudit = useServerFn(getAdminAuditLog);
-  const [search, setSearch] = useState(""); const [open, setOpen] = useState<string | null>(null); const [page, setPage] = useState(0);
+  const getSettings = useServerFn(getAdminSettings);
+  const update = useServerFn(updateAdminSetting);
+  const getAudit = useServerFn(getAdminAuditLog);
+  const [search, setSearch] = useState("");
+  const [open, setOpen] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const [actionType, setActionType] = useState("");
+  const [entityType, setEntityType] = useState("");
+
   const settingsQuery = useQuery({ queryKey: ["admin-settings"], queryFn: () => getSettings({ data: undefined }) });
-  const auditQuery = useQuery({ queryKey: ["admin-audit", page], queryFn: () => getAudit({ data: { page, pageSize: 25 } }) });
-  const mutation = useMutation({ mutationFn: (input: { source: string; id: string; patch: Record<string, unknown> }) => update({ data: input }), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["admin-settings"] }); queryClient.invalidateQueries({ queryKey: ["admin-audit"] }); toast.success("Configuração atualizada e auditada"); }, onError: (error) => toast.error(error.message) });
-  const groups = useMemo(() => { const term = search.trim().toLowerCase(); return SETTINGS_REGISTRY.map((entry) => ({ entry, result: settingsQuery.data?.find((x) => x.key === entry.key) })).filter(({ entry, result }) => !term || `${entry.label} ${entry.category} ${entry.table}`.toLowerCase().includes(term) || result?.rows.some((row: any) => JSON.stringify(row).toLowerCase().includes(term))).reduce<Record<string, any[]>>((acc, item) => { (acc[item.entry.category] ??= []).push(item); return acc; }, {}); }, [search, settingsQuery.data]);
-  return <div className="container mx-auto px-4 py-8 lg:px-8 lg:py-12 space-y-8">
-    <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-6"><div><Badge className="mb-3 gap-2"><ShieldCheck className="h-3 w-3" /> Owner Only</Badge><h1 className="text-4xl lg:text-6xl font-black tracking-tighter uppercase italic">Configuração <span className="text-primary">Avançada</span></h1><p className="mt-3 text-sm text-muted-foreground max-w-2xl">Hub central das configurações reais do sistema. Nenhuma fonte de configuração é duplicada.</p></div><div className="relative w-full lg:w-96"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar configuração..." className="pl-10 h-12 rounded-2xl" /></div></header>
-    <Tabs defaultValue="settings"><TabsList className="rounded-2xl"><TabsTrigger value="settings">Configurações</TabsTrigger><TabsTrigger value="audit" className="gap-2"><History className="h-4 w-4" /> Auditoria</TabsTrigger></TabsList>
-      <TabsContent value="settings" className="mt-6 space-y-6">{Object.entries(groups).map(([category, items]) => <Card key={category} className="rounded-3xl border-glass-border bg-glass-fallback backdrop-blur-xl"><CardHeader><CardTitle className="uppercase tracking-widest text-sm">{category}</CardTitle></CardHeader><CardContent className="space-y-3">{items.map(({ entry, result }) => <div key={entry.key} className="rounded-2xl border border-glass-border overflow-hidden"><button className="w-full flex items-center justify-between p-4 text-left hover:bg-muted/30" onClick={() => setOpen(open === entry.key ? null : entry.key)}><span><b className="text-sm">{entry.label}</b><span className="block text-[10px] text-muted-foreground font-mono mt-1">{entry.table}</span></span>{open === entry.key ? <ChevronDown /> : <ChevronRight />}</button>{open === entry.key && <div className="border-t border-glass-border p-4 space-y-3">{!result?.available ? <p className="text-sm text-muted-foreground">Fonte indisponível: {result?.error ?? "não encontrada"}</p> : result.rows.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum registro real encontrado.</p> : result.rows.map((row: any) => <SettingRow key={String(row.id)} row={row} editable={entry.editable as readonly string[]} pending={mutation.isPending} onSave={(patch) => mutation.mutate({ source: entry.key, id: String(row.id), patch })} />)}</div>}</div>)}</CardContent></Card>)}{Object.keys(groups).length === 0 && <Card className="rounded-3xl"><CardContent className="py-16 text-center text-muted-foreground">Nenhuma configuração encontrada.</CardContent></Card>}</TabsContent>
-      <TabsContent value="audit" className="mt-6"><AuditTable data={auditQuery.data} loading={auditQuery.isLoading} page={page} setPage={setPage} /></TabsContent>
-    </Tabs>
-  </div>;
+  const auditQuery = useQuery({
+    queryKey: ["admin-audit", page, actionType, entityType],
+    queryFn: () => getAudit({ data: { page, pageSize: 25, actionType: actionType || undefined, entityType: entityType || undefined } }),
+  });
+
+  const mutation = useMutation({
+    mutationFn: (input: { source: string; id: string; patch: Record<string, unknown> }) => update({ data: input }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-settings"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-audit"] });
+      toast.success("Configuração atualizada e auditada");
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
+  const groups = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return SETTINGS_REGISTRY
+      .map((entry) => ({ entry, result: settingsQuery.data?.find((x) => x.key === entry.key) }))
+      .filter(({ entry, result }) => !term || `${entry.label} ${entry.category} ${entry.table}`.toLowerCase().includes(term) || result?.rows.some((row: any) => JSON.stringify(row).toLowerCase().includes(term)))
+      .reduce<Record<string, any[]>>((acc, item) => {
+        (acc[item.entry.category] ??= []).push(item);
+        return acc;
+      }, {});
+  }, [search, settingsQuery.data]);
+
+  return (
+    <div className="container mx-auto space-y-8 px-4 py-8 lg:px-8 lg:py-12">
+      <header className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
+        <div>
+          <Badge className="mb-3 gap-2"><ShieldCheck className="h-3 w-3" /> Owner Only</Badge>
+          <h1 className="text-4xl font-black uppercase italic tracking-tighter lg:text-6xl">Configuração <span className="text-primary">Avançada</span></h1>
+          <p className="mt-3 max-w-2xl text-sm text-muted-foreground">Hub central das configurações reais do sistema. As telas existentes continuam sendo consumidoras das mesmas fontes de verdade.</p>
+        </div>
+        <div className="relative w-full lg:w-96">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} placeholder="Buscar configuração..." className="h-12 rounded-2xl pl-10" />
+        </div>
+      </header>
+
+      <Tabs defaultValue="settings">
+        <TabsList className="rounded-2xl">
+          <TabsTrigger value="settings">Configurações</TabsTrigger>
+          <TabsTrigger value="audit" className="gap-2"><History className="h-4 w-4" /> Auditoria</TabsTrigger>
+        </TabsList>
+        <TabsContent value="settings" className="mt-6 space-y-6">
+          {Object.entries(groups).map(([category, items]) => (
+            <Card key={category} className="rounded-3xl border-glass-border bg-glass-fallback backdrop-blur-xl">
+              <CardHeader><CardTitle className="text-sm uppercase tracking-widest">{category}</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                {items.map(({ entry, result }) => (
+                  <div key={entry.key} className="overflow-hidden rounded-2xl border border-glass-border">
+                    <button type="button" className="flex w-full items-center justify-between p-4 text-left hover:bg-muted/30" onClick={() => setOpen(open === entry.key ? null : entry.key)}>
+                      <span><b className="text-sm">{entry.label}</b><span className="mt-1 block font-mono text-[10px] text-muted-foreground">{entry.table}</span></span>
+                      {open === entry.key ? <ChevronDown /> : <ChevronRight />}
+                    </button>
+                    {open === entry.key && (
+                      <div className="space-y-3 border-t border-glass-border p-4">
+                        {!result?.available ? <p className="text-sm text-muted-foreground">Fonte indisponível: {result?.error ?? "não encontrada"}</p> : result.rows.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum registro real encontrado.</p> : result.rows.map((row: any) => <SettingRow key={String(row.id)} row={row} editable={entry.editable as readonly string[]} pending={mutation.isPending} onSave={(patch) => mutation.mutate({ source: entry.key, id: String(row.id), patch })} />)}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          ))}
+          {settingsQuery.isError && <Card className="rounded-3xl"><CardContent className="py-10 text-center text-sm text-destructive">Falha ao carregar configurações: {settingsQuery.error.message}</CardContent></Card>}
+        </TabsContent>
+        <TabsContent value="audit" className="mt-6">
+          <AuditTable data={auditQuery.data} loading={auditQuery.isLoading} page={page} setPage={(next) => setPage(Math.max(0, next))} actionType={actionType} entityType={entityType} setActionType={(value) => { setActionType(value); setPage(0); }} setEntityType={(value) => { setEntityType(value); setPage(0); }} />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
 }
 
-function SettingRow({ row, editable, pending, onSave }: { row: Record<string, any>; editable: readonly string[]; pending: boolean; onSave: (patch: Record<string, unknown>) => void }) { const [draft, setDraft] = useState<Record<string, unknown>>({}); const changed = Object.keys(draft).length > 0; return <div className="rounded-2xl bg-background/50 p-4 space-y-4"><div className="flex items-center justify-between gap-4"><div><p className="font-bold text-sm">{row["name"] ?? row["signal_key"] ?? row["action_key"] ?? row["key"] ?? row["id"]}</p><p className="text-[10px] text-muted-foreground">Atualizado: {row["updated_at"] ? new Date(row["updated_at"]).toLocaleString() : "não informado"}</p></div><Badge variant="outline">ID {String(row["id"]).slice(0, 8)}</Badge></div><div className="grid grid-cols-1 md:grid-cols-2 gap-3">{editable.map((key) => { const value = draft[key] ?? row[key]; if (typeof value === "boolean") return <label key={key} className="flex items-center justify-between rounded-xl border p-3"><span className="text-xs font-bold">{key}</span><Switch checked={Boolean(value)} onCheckedChange={(v) => setDraft((d) => ({ ...d, [key]: v }))} /></label>; return <label key={key} className="space-y-1"><span className="text-[10px] uppercase font-bold text-muted-foreground">{key}</span><Input value={typeof value === "object" ? JSON.stringify(value) : String(value ?? "")} onChange={(e) => { const raw = e.target.value; let parsed: unknown = raw; try { parsed = JSON.parse(raw); } catch {} setDraft((d) => ({ ...d, [key]: parsed })); }} /></label>; })}</div><div className="flex justify-end"><Button disabled={!changed || pending} onClick={() => onSave(draft)} className="gap-2 rounded-xl"><Save className="h-4 w-4" /> Salvar e auditar</Button></div></div>; }
+function SettingRow({ row, editable, pending, onSave }: { row: Record<string, any>; editable: readonly string[]; pending: boolean; onSave: (patch: Record<string, unknown>) => void }) {
+  const [draft, setDraft] = useState<Record<string, unknown>>({});
+  const changed = Object.keys(draft).length > 0;
+  return (
+    <div className="space-y-4 rounded-2xl bg-background/50 p-4">
+      <div className="flex items-center justify-between gap-4">
+        <div><p className="text-sm font-bold">{row.name ?? row.signal_key ?? row.action_key ?? row.rule_key ?? row.key ?? row.id}</p><p className="text-[10px] text-muted-foreground">Atualizado: {row.updated_at ? new Date(row.updated_at).toLocaleString() : "não informado"}</p></div>
+        <Badge variant="outline">ID {String(row.id).slice(0, 8)}</Badge>
+      </div>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        {editable.map((key) => {
+          const value = draft[key] ?? row[key];
+          if (typeof value === "boolean") return <label key={key} className="flex items-center justify-between rounded-xl border p-3"><span className="text-xs font-bold">{key}</span><Switch checked={Boolean(value)} onCheckedChange={(v) => setDraft((d) => ({ ...d, [key]: v }))} /></label>;
+          return <label key={key} className="space-y-1"><span className="text-[10px] font-bold uppercase text-muted-foreground">{key}</span><Input value={typeof value === "object" ? JSON.stringify(value) : String(value ?? "")} onChange={(e) => { const raw = e.target.value; let parsed: unknown = raw; try { parsed = JSON.parse(raw); } catch {} setDraft((d) => ({ ...d, [key]: parsed })); }} /></label>;
+        })}
+      </div>
+      <div className="flex justify-end"><Button disabled={!changed || pending} onClick={() => onSave(draft)} className="gap-2 rounded-xl"><Save className="h-4 w-4" /> Salvar e auditar</Button></div>
+    </div>
+  );
+}
 
-function AuditTable({ data, loading, page, setPage }: { data: any; loading: boolean; page: number; setPage: (p: number) => void }) { if (loading) return <Card className="rounded-3xl"><CardContent className="py-16 text-center">Carregando auditoria…</CardContent></Card>; const totalPages = Math.max(1, Math.ceil((data?.count ?? 0) / 25)); return <Card className="rounded-3xl border-glass-border bg-glass-fallback overflow-hidden"><CardHeader><CardTitle className="uppercase tracking-widest text-sm">Log de Auditoria Administrativo</CardTitle></CardHeader><CardContent className="p-0"><div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="p-4">Data</th><th className="p-4">Ação</th><th className="p-4">Entidade</th><th className="p-4">Anterior</th><th className="p-4">Novo</th></tr></thead><tbody>{(data?.rows ?? []).map((r: any) => <tr key={r.id} className="border-b last:border-0"><td className="p-4 whitespace-nowrap">{new Date(r.created_at).toLocaleString()}</td><td className="p-4 font-bold">{r.action_type}</td><td className="p-4 font-mono text-xs">{r.entity_type}</td><td className="p-4 max-w-xs truncate font-mono text-xs">{pretty(r.previous_value)}</td><td className="p-4 max-w-xs truncate font-mono text-xs">{pretty(r.new_value)}</td></tr>)}</tbody></table></div><div className="flex items-center justify-between p-4 border-t"><span className="text-xs text-muted-foreground">Página {page + 1} de {totalPages} · {data?.count ?? 0} registros</span><div className="flex gap-2"><Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}>Anterior</Button><Button variant="outline" size="sm" disabled={page + 1 >= totalPages} onClick={() => setPage(page + 1)}>Próxima</Button></div></div></CardContent></Card>; }
+function AuditTable({ data, loading, page, setPage, actionType, entityType, setActionType, setEntityType }: { data: any; loading: boolean; page: number; setPage: (p: number) => void; actionType: string; entityType: string; setActionType: (v: string) => void; setEntityType: (v: string) => void }) {
+  if (loading) return <Card className="rounded-3xl"><CardContent className="py-16 text-center">Carregando auditoria…</CardContent></Card>;
+  const totalPages = Math.max(1, Math.ceil((data?.count ?? 0) / 25));
+  return (
+    <Card className="overflow-hidden rounded-3xl border-glass-border bg-glass-fallback">
+      <CardHeader className="space-y-4">
+        <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-widest"><History className="h-4 w-4" /> Log de Auditoria Administrativo</CardTitle>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+          <div className="relative"><Filter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={actionType} onChange={(e) => setActionType(e.target.value)} placeholder="Filtrar ação" className="pl-10" /></div>
+          <Input value={entityType} onChange={(e) => setEntityType(e.target.value)} placeholder="Filtrar entidade" />
+          <div className="flex items-center text-xs text-muted-foreground">{data?.count ?? 0} registros encontrados · 25 por página</div>
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="p-4">Data</th><th className="p-4">Ator</th><th className="p-4">Ação</th><th className="p-4">Entidade</th><th className="p-4">Anterior</th><th className="p-4">Novo</th></tr></thead><tbody>{(data?.rows ?? []).map((r: any) => <tr key={r.id} className="border-b last:border-0"><td className="whitespace-nowrap p-4">{new Date(r.created_at).toLocaleString()}</td><td className="p-4 text-xs">{r.actor_email ?? String(r.actor_user_id ?? "—")}</td><td className="p-4 font-bold">{r.action_type}</td><td className="p-4 font-mono text-xs">{r.entity_type}</td><td className="max-w-xs truncate p-4 font-mono text-xs">{pretty(r.previous_value)}</td><td className="max-w-xs truncate p-4 font-mono text-xs">{pretty(r.new_value)}</td></tr>)}</tbody></table></div>
+        <div className="flex items-center justify-between border-t p-4"><span className="text-xs text-muted-foreground">Página {page + 1} de {totalPages}</span><div className="flex gap-2"><Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}>Anterior</Button><Button variant="outline" size="sm" disabled={page + 1 >= totalPages} onClick={() => setPage(page + 1)}>Próxima</Button></div></div>
+      </CardContent>
+    </Card>
+  );
+}
