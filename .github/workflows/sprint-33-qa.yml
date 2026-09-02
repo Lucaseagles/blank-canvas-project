@@ -33,3 +33,5 @@ jobs:
 
       - name: Production build
         run: npm run build
+
+      # Sprint 33 final gate: TypeScript + lint + production build must pass.
