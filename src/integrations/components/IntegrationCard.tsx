@@ -6,9 +6,9 @@ import type { PlatformConfig } from "../core/types";
 
 interface IntegrationCardProps {
   platform: PlatformConfig;
-  status?: { status?: string; last_checked_at?: string | null; last_error?: string | null };
+  status?: { status?: string; last_checked_at?: string | null; last_error?: string | null } | undefined;
   onConfigure: () => void;
-  onTest?: () => Promise<void>;
+  onTest?: (() => Promise<void>) | undefined;
 }
 
 const categoryLabel: Record<PlatformConfig["category"], string> = {
