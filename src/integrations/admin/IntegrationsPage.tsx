@@ -10,6 +10,7 @@ import { AFFILIATE_STRATEGIES } from "../strategies/affiliate-strategies";
 
 type Status = { platform_id: string; status: string; last_checked_at: string | null; last_error: string | null };
 type CategoryFilter = "all" | PlatformConfig["category"];
+type TestResult = { success: boolean; message?: string; error?: string };
 
 const categories: { id: CategoryFilter; label: string }[] = [
   { id: "all", label: "Todas" },
@@ -37,8 +38,11 @@ export function IntegrationsPage() {
 
   const test = async (platformId: string) => {
     setTesting(platformId);
-    try { const result = await testIntegration({ data: { platformId } }); toast[result.success ? "success" : "error"](result.message ?? result.error ?? "Teste concluído"); await load(); }
-    catch (error) { toast.error(error instanceof Error ? error.message : "Falha no teste."); }
+    try {
+      const result = await testIntegration({ data: { platformId } }) as TestResult;
+      toast[result.success ? "success" : "error"](result.message ?? result.error ?? "Teste concluído");
+      await load();
+    } catch (error) { toast.error(error instanceof Error ? error.message : "Falha no teste."); }
     finally { setTesting(null); }
   };
 
