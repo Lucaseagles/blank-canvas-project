@@ -6,7 +6,7 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: ["dist", ".output", ".vinxi", "node_modules"],
+    ignores: ["dist", ".output", ".vinxi", "node_modules", "public/sw.js"],
   },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
@@ -39,6 +39,10 @@ export default tseslint.config(
       ],
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-unused-expressions": "warn",
+      "no-empty": "warn",
+      "prefer-const": "warn",
     },
   },
 );
