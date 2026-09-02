@@ -1,0 +1,99 @@
+export type IntegrationCategory =
+  | "marketplace"
+  | "affiliate"
+  | "video"
+  | "communication"
+  | "compliance";
+
+export type IntegrationLifecycleStatus =
+  | "available"
+  | "pending"
+  | "inactive"
+  | "blocked"
+  | "external_traffic";
+
+export type IntegrationConnectionStatus = "pending" | "active" | "error";
+
+export type CredentialFieldType = "text" | "password" | "select" | "textarea";
+
+export type ConnectorId =
+  | "telegram"
+  | "whatsapp"
+  | "shopee"
+  | "mercadolivre"
+  | "aliexpress";
+
+export interface CredentialField {
+  key: string;
+  label: string;
+  type: CredentialFieldType;
+  placeholder?: string;
+  required: boolean;
+  options?: { label: string; value: string }[];
+  helpText?: string;
+}
+
+export interface PlatformCapabilities {
+  hasProductCatalog: boolean;
+  hasProductAPI: boolean;
+  hasProductSearch: boolean;
+  hasAffiliateProgram: boolean;
+  hasAffiliateAPI: boolean;
+  hasAffiliateLinks: boolean;
+  hasCommissionTracking: boolean;
+  hasVideoContent: boolean;
+  hasVideoAPI: boolean;
+  canEmbedVideo: boolean;
+  canLinkVideoToProduct: boolean;
+  requiresContentAuthorization: boolean;
+  allowsExternalLinks: boolean;
+  allowsExternalTraffic: boolean;
+  requiresOptIn: boolean;
+  requiresTemplateApproval: boolean;
+  hasContentRestrictions: boolean;
+}
+
+export interface PlatformRules {
+  allowedActions: string[];
+  restrictedActions: string[];
+  requiresReview: string[];
+  blockedActions: string[];
+  ruleComments: Record<string, string>;
+}
+
+export interface AffiliateRules {
+  canShareLinks: boolean;
+  canTrackConversions: boolean;
+  requiresApproval: boolean;
+  commissionStructure: "fixed" | "percentage" | "dynamic";
+  payoutPeriod: string;
+  restrictions: string[];
+}
+
+export interface ContentRules {
+  canEmbed: boolean;
+  canDownload: boolean;
+  canEdit: boolean;
+  canRemoveWatermark: boolean;
+  canHost: boolean;
+  requiresAttribution: boolean;
+  attributionText?: string;
+}
+
+export interface PlatformConfig {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  description: string;
+  category: IntegrationCategory;
+  capabilities: PlatformCapabilities;
+  status: IntegrationLifecycleStatus;
+  credentialFields: CredentialField[];
+  docsUrl: string;
+  setupGuide: string;
+  rules: PlatformRules;
+  affiliateRules?: AffiliateRules;
+  contentRules?: ContentRules;
+  connectorId?: ConnectorId;
+}
