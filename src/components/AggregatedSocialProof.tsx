@@ -19,7 +19,7 @@ export function AggregatedSocialProof({
   const { data: stats, isLoading } = useQuery({
     queryKey: ["aggregatedSocialProof", productId],
     queryFn: () => fetchAggregated({ data: { productId } }),
-    staleTime: 1000 * 60 * 5, // 5 minutes cache
+    staleTime: 1000 * 60 * 5,
   });
 
   const views = stats?.views || 0;
@@ -56,7 +56,9 @@ export function AggregatedSocialProof({
         <div className="flex items-center gap-3 p-3 rounded-2xl bg-primary/5 border border-primary/10 group hover:bg-primary/10 transition-all">
           <TrendingUp className="w-4 h-4 text-primary animate-pulse" />
           <p className="text-xs font-bold text-foreground/90 uppercase tracking-tight">
-            🔥 <span className="text-primary font-black">{views} pessoas</span> viram esta oferta {timeLabel}
+            🔥{" "}
+            <span className="text-primary font-black">{views} pessoas</span>{" "}
+            viram esta oferta {timeLabel}
           </p>
         </div>
       )}
@@ -64,7 +66,9 @@ export function AggregatedSocialProof({
         <div className="flex items-center gap-3 p-3 rounded-2xl bg-red-500/5 border border-red-500/10 group hover:bg-red-500/10 transition-all">
           <Heart className="w-4 h-4 text-red-500 fill-red-500/20" />
           <p className="text-xs font-bold text-foreground/90 uppercase tracking-tight">
-            ❤️ <span className="text-red-500 font-black">{favorites} pessoas</span> favoritaram este item
+            ❤️{" "}
+            <span className="text-red-500 font-black">{favorites} pessoas</span>{" "}
+            favoritaram este item
           </p>
         </div>
       )}
