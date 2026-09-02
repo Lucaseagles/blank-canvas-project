@@ -5,7 +5,7 @@ CREATE EXTENSION IF NOT EXISTS supabase_vault WITH SCHEMA vault;
 
 CREATE TABLE IF NOT EXISTS public.integration_credentials (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  platform_id TEXT NOT NULL UNIQUE,
+  platform_id TEXT NOT NULL UNIQUE CHECK (platform_id IN ('telegram', 'whatsapp', 'shopee', 'mercadolivre', 'aliexpress')),
   secret_refs JSONB NOT NULL DEFAULT '{}'::jsonb,
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'active', 'error')),
   last_checked_at TIMESTAMPTZ,
@@ -20,6 +20,10 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.integration_credentials TO 
 
 CREATE INDEX IF NOT EXISTS idx_integration_credentials_platform ON public.integration_credentials(platform_id);
 
+INSERT INTO public.integration_credentials (platform_id)
+VALUES ('telegram'), ('whatsapp'), ('shopee'), ('mercadolivre'), ('aliexpress')
+ON CONFLICT (platform_id) DO NOTHING;
+
 CREATE OR REPLACE FUNCTION public.set_integration_secret(p_platform_id TEXT, p_field_key TEXT, p_value TEXT)
 RETURNS UUID
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, vault
@@ -31,12 +35,30 @@ DECLARE
   secret_name TEXT := 'integration:' || p_platform_id || ':' || p_field_key;
   description TEXT := 'Sprint 34 integration secret for ' || p_platform_id || '.' || p_field_key;
 BEGIN
-  IF p_platform_id IS NULL OR p_field_key IS NULL OR p_value IS NULL OR length(trim(p_value)) = 0 THEN
+  IF p_platform_id NOT IN ('telegram', 'whatsapp', 'shopee', 'mercadolivre', 'aliexpress') THEN
+    RAISE EXCEPTION 'Invalid integration platform';
+  END IF;
+
+  IF p_field_key IS NULL OR p_value IS NULL OR length(trim(p_value)) = 0 THEN
     RAISE EXCEPTION 'Invalid integration secret payload';
   END IF;
 
-  SELECT secret_refs INTO refs FROM public.integration_credentials WHERE platform_id = p_platform_id FOR UPDATE;
-  existing_ref := refs ->> p_field_key;
+  IF NOT (
+    (p_platform_id = 'telegram' AND p_field_key IN ('bot_token', 'channel_id')) OR
+    (p_platform_id = 'whatsapp' AND p_field_key IN ('business_account_id', 'phone_number_id', 'access_token')) OR
+    (p_platform_id = 'shopee' AND p_field_key IN ('partner_id', 'partner_key', 'affiliate_id')) OR
+    (p_platform_id = 'mercadolivre' AND p_field_key IN ('client_id', 'client_secret', 'affiliate_id')) OR
+    (p_platform_id = 'aliexpress' AND p_field_key IN ('app_key', 'app_secret', 'tracking_id'))
+  ) THEN
+    RAISE EXCEPTION 'Invalid credential field for integration platform';
+  END IF;
+
+  SELECT secret_refs INTO refs
+  FROM public.integration_credentials
+  WHERE platform_id = p_platform_id
+  FOR UPDATE;
+
+  existing_ref := COALESCE(refs, '{}'::jsonb) ->> p_field_key;
 
   IF existing_ref IS NOT NULL AND existing_ref <> '' THEN
     secret_id := existing_ref::UUID;
@@ -49,7 +71,9 @@ BEGIN
   VALUES (p_platform_id, jsonb_build_object(p_field_key, secret_id::TEXT), 'pending', NOW())
   ON CONFLICT (platform_id) DO UPDATE SET
     secret_refs = public.integration_credentials.secret_refs || jsonb_build_object(p_field_key, secret_id::TEXT),
-    status = 'pending', last_error = NULL, updated_at = NOW();
+    status = 'pending',
+    last_error = NULL,
+    updated_at = NOW();
 
   RETURN secret_id;
 END;
@@ -62,10 +86,24 @@ AS $$
 DECLARE
   secret_ref TEXT;
 BEGIN
-  SELECT secret_refs ->> p_field_key INTO secret_ref
-  FROM public.integration_credentials WHERE platform_id = p_platform_id;
-  IF secret_ref IS NULL OR secret_ref = '' THEN RETURN NULL; END IF;
-  RETURN (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE id = secret_ref::UUID);
+  IF p_platform_id NOT IN ('telegram', 'whatsapp', 'shopee', 'mercadolivre', 'aliexpress') THEN
+    RAISE EXCEPTION 'Invalid integration platform';
+  END IF;
+
+  SELECT secret_refs ->> p_field_key
+  INTO secret_ref
+  FROM public.integration_credentials
+  WHERE platform_id = p_platform_id;
+
+  IF secret_ref IS NULL OR secret_ref = '' THEN
+    RETURN NULL;
+  END IF;
+
+  RETURN (
+    SELECT decrypted_secret
+    FROM vault.decrypted_secrets
+    WHERE id = secret_ref::UUID
+  );
 END;
 $$;
 
@@ -74,11 +112,20 @@ RETURNS VOID
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
 AS $$
 BEGIN
-  IF p_status NOT IN ('pending', 'active', 'error') THEN RAISE EXCEPTION 'Invalid integration status'; END IF;
+  IF p_platform_id NOT IN ('telegram', 'whatsapp', 'shopee', 'mercadolivre', 'aliexpress') THEN
+    RAISE EXCEPTION 'Invalid integration platform';
+  END IF;
+  IF p_status NOT IN ('pending', 'active', 'error') THEN
+    RAISE EXCEPTION 'Invalid integration status';
+  END IF;
+
   INSERT INTO public.integration_credentials (platform_id, status, last_checked_at, last_error, updated_at)
   VALUES (p_platform_id, p_status, NOW(), p_error, NOW())
   ON CONFLICT (platform_id) DO UPDATE SET
-    status = EXCLUDED.status, last_checked_at = EXCLUDED.last_checked_at, last_error = EXCLUDED.last_error, updated_at = NOW();
+    status = EXCLUDED.status,
+    last_checked_at = EXCLUDED.last_checked_at,
+    last_error = EXCLUDED.last_error,
+    updated_at = NOW();
 END;
 $$;
 
