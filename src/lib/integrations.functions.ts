@@ -60,5 +60,9 @@ export const testIntegration = createServerFn({ method: "POST" })
       p_error: result.success ? null : (result.message ?? result.error ?? "Falha na conexão"),
     });
     if (error) console.error("Failed to persist integration test status", error);
-    return result;
+    return {
+      success: result.success,
+      ...(result.message ? { message: result.message } : {}),
+      ...(result.error ? { error: result.error } : {}),
+    };
   });
