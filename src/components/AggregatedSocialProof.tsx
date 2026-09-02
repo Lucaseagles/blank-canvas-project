@@ -5,15 +5,19 @@ import { useServerFn } from "@tanstack/react-start";
 
 interface AggregatedSocialProofProps {
   productId: string;
-  variant?: 'compact' | 'full';
+  variant?: "compact" | "full";
   className?: string;
 }
 
-export function AggregatedSocialProof({ productId, variant = 'compact', className = "" }: AggregatedSocialProofProps) {
+export function AggregatedSocialProof({
+  productId,
+  variant = "compact",
+  className = "",
+}: AggregatedSocialProofProps) {
   const fetchAggregated = useServerFn(getAggregatedSocialProof);
-  
+
   const { data: stats, isLoading } = useQuery({
-    queryKey: ['aggregatedSocialProof', productId],
+    queryKey: ["aggregatedSocialProof", productId],
     queryFn: () => fetchAggregated({ data: { productId } }),
     staleTime: 1000 * 60 * 5, // 5 minutes cache
   });
@@ -25,13 +29,15 @@ export function AggregatedSocialProof({ productId, variant = 'compact', classNam
 
   const timeLabel = (stats.windowHours || 24) <= 24 ? "hoje" : "esta semana";
 
-  if (variant === 'compact') {
+  if (variant === "compact") {
     return (
       <div className={`flex items-center gap-2 ${className}`}>
         {views > 0 && (
           <div className="flex items-center gap-1 text-[9px] font-black uppercase tracking-tighter text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full border border-primary/10">
             <Eye className="w-3 h-3" />
-            <span>{views} viram {timeLabel}</span>
+            <span>
+              {views} viram {timeLabel}
+            </span>
           </div>
         )}
         {favorites > 0 && (
