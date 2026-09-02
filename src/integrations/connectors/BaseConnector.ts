@@ -8,10 +8,9 @@ export interface ConnectorStatus {
   error: string | null;
 }
 
-export interface ConnectorResult<T = unknown> {
+export interface ConnectorResult {
   success: boolean;
   message?: string;
-  data?: T;
   error?: string;
 }
 
