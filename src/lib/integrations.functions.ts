@@ -9,7 +9,8 @@ export const saveIntegrationSecret = createServerFn({ method: "POST" })
   .validator((data) => credentialInput.parse(data))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: secretId, error } = await supabaseAdmin.rpc("set_integration_secret", {
+    const db = supabaseAdmin as any;
+    const { data: secretId, error } = await db.rpc("set_integration_secret", {
       p_platform_id: data.platformId,
       p_field_key: data.fieldKey,
       p_value: data.value,
@@ -22,7 +23,8 @@ export const getIntegrationStatuses = createServerFn({ method: "GET" })
   .middleware([requireOwnerRole])
   .handler(async () => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
+    const db = supabaseAdmin as any;
+    const { data, error } = await db
       .from("integration_credentials")
       .select("platform_id, status, last_checked_at, last_error, created_at, updated_at")
       .order("platform_id");
@@ -39,7 +41,8 @@ export const testIntegration = createServerFn({ method: "POST" })
     if (!connector) throw new Error(`Connector não implementado: ${data.platformId}`);
     const result = await connector.testConnection();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.rpc("mark_integration_check", {
+    const db = supabaseAdmin as any;
+    const { error } = await db.rpc("mark_integration_check", {
       p_platform_id: data.platformId,
       p_status: result.success ? "active" : "error",
       p_error: result.success ? null : (result.message ?? result.error ?? "Falha na conexão"),
