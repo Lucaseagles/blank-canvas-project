@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Activity, CheckCircle2, Clock3, Download, RefreshCw } from "lucide-react";
@@ -29,16 +29,24 @@ export function ExternalMetrics() {
     [metrics],
   );
   const latestTelegram = telegramMetrics.at(-1)?.value ?? null;
-  const chartData = telegramMetrics.map((metric) => ({ date: new Date(metric.collected_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }), members: metric.value }));
+  const chartData = telegramMetrics.map((metric) => ({
+    date: new Date(metric.collected_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
+    members: metric.value,
+  }));
 
   const reload = async () => {
+    setErrorMessage(null);
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["admin-external-metrics"] }),
       queryClient.invalidateQueries({ queryKey: ["admin-external-channels"] }),
     ]);
   };
 
-  if (metricsQuery.isLoading || channelsQuery.isLoading) return <div className="flex min-h-64 items-center justify-center text-muted-foreground">Carregando métricas externas…</div>;
+  const queryError = metricsQuery.error || channelsQuery.error;
+
+  if (metricsQuery.isLoading || channelsQuery.isLoading) {
+    return <div className="flex min-h-64 items-center justify-center text-muted-foreground">Carregando métricas externas…</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -48,7 +56,9 @@ export function ExternalMetrics() {
           <p className="mt-1 text-sm text-muted-foreground">Dados coletados de canais externos, sem métricas inventadas.</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={reload}><RefreshCw className="mr-2 h-4 w-4" />Atualizar</Button>
+          <Button variant="outline" onClick={reload} disabled={metricsQuery.isFetching || channelsQuery.isFetching}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${metricsQuery.isFetching || channelsQuery.isFetching ? "animate-spin" : ""}`} />Atualizar
+          </Button>
           <Button onClick={() => collectMutation.mutate()} disabled={collectMutation.isPending}>
             <Download className="mr-2 h-4 w-4" />{collectMutation.isPending ? "Coletando…" : "Coletar Telegram"}
           </Button>
@@ -56,7 +66,7 @@ export function ExternalMetrics() {
       </div>
 
       {errorMessage && <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">{errorMessage}</div>}
-      {(metricsQuery.error || channelsQuery.error) && <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">Não foi possível carregar todos os dados. Tente atualizar.</div>}
+      {queryError && <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">Não foi possível carregar todos os dados. Tente atualizar.</div>}
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card><CardContent className="pt-6"><div className="flex items-center justify-between"><span className="text-sm text-muted-foreground">Telegram · membros</span><CheckCircle2 className="h-4 w-4" /></div><div className="mt-2 text-3xl font-bold">{latestTelegram === null ? "—" : latestTelegram.toLocaleString("pt-BR")}</div><p className="mt-1 text-xs text-muted-foreground">Última coleta registrada</p></CardContent></Card>
