@@ -2,8 +2,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireOwnerRole } from "./auth-guards.server";
 
-export type HomeModule = { id: string; module_key: string; module_name: string; is_enabled: boolean; display_order: number; config: Record<string, unknown>; updated_at: string };
-export type BadgeConfig = { id: string; badge_key: string; badge_name: string; badge_text: string; icon: string | null; color: string | null; threshold: Record<string, unknown> | null; is_enabled: boolean; updated_at: string };
+export type HomeModule = { id: string; module_key: string; module_name: string; is_enabled: boolean; display_order: number; config: Record<string, JsonValue>; updated_at: string };
+export type BadgeConfig = { id: string; badge_key: string; badge_name: string; badge_text: string; icon: string | null; color: string | null; threshold: Record<string, JsonValue> | null; is_enabled: boolean; updated_at: string };
+type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 const idSchema = z.string().uuid();
 const db = async () => (await import("@/integrations/supabase/client.server")).supabaseAdmin as any;
 
