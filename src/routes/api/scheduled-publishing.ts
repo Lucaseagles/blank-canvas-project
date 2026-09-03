@@ -18,9 +18,7 @@ function isAuthorized(request: Request): boolean {
   return providedSecret.length > 0 && providedSecret === expectedSecret;
 }
 
-// The generated TanStack route tree may lag behind when this file is type-checked
-// directly with `tsc <file>`. The production build regenerates the route tree.
-export const Route = createFileRoute("/api/scheduled-publishing" as any)({
+export const Route = createFileRoute("/api/scheduled-publishing")({
   server: {
     handlers: {
       GET: async () => {
