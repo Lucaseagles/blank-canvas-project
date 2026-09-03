@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button";
 
 const icons = { tiktok: Video, instagram: Instagram, kwai: PlayCircle, telegram: Send, youtube: PlayCircle } as const;
 
+type SocialChannel = { id: string; platform: keyof typeof icons; channel_name: string; channel_url: string; icon: string | null; is_active: boolean; created_at: string | null };
+
 export function VideoSocialMilestone() {
-  const { data: channels = [] } = useQuery({ queryKey: ["active-social-channels"], queryFn: getActiveSocialChannels });
-  const channel = channels.find((item: any) => item.platform === "tiktok") ?? channels[0];
+  const { data: channels = [] } = useQuery<SocialChannel[]>({ queryKey: ["active-social-channels"], queryFn: getActiveSocialChannels as () => Promise<SocialChannel[]> });
+  const channel = channels.find((item) => item.platform === "tiktok") ?? channels[0];
   if (!channel) return null;
-  const Icon = icons[channel.platform as keyof typeof icons] ?? ExternalLink;
+  const Icon = icons[channel.platform] ?? ExternalLink;
 
   return (
     <aside className="mx-auto w-[min(92vw,34rem)] rounded-2xl border border-white/10 bg-black/45 p-3 backdrop-blur-xl shadow-2xl">
