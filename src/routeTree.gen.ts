@@ -40,6 +40,7 @@ import { Route as AdminModulesRouteImport } from './routes/admin/modules'
 import { Route as AdminNotificationsRouteImport } from './routes/admin/notifications'
 import { Route as AdminOffersRouteImport } from './routes/admin/offers'
 import { Route as AdminProductsRouteImport } from './routes/admin/products'
+import { Route as AdminPublishingRouteImport } from './routes/admin/publishing'
 import { Route as AdminRecommendationsRouteImport } from './routes/admin/recommendations'
 import { Route as AdminReferralsRouteImport } from './routes/admin/referrals'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
@@ -209,6 +210,11 @@ const AdminProductsRoute = AdminProductsRouteImport.update({
   path: '/products',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminPublishingRoute = AdminPublishingRouteImport.update({
+  id: '/publishing',
+  path: '/publishing',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminRecommendationsRoute = AdminRecommendationsRouteImport.update({
   id: '/recommendations',
   path: '/recommendations',
@@ -307,6 +313,7 @@ export interface FileRoutesByFullPath {
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/offers': typeof AdminOffersRoute
   '/admin/products': typeof AdminProductsRoute
+  '/admin/publishing': typeof AdminPublishingRoute
   '/admin/recommendations': typeof AdminRecommendationsRoute
   '/admin/referrals': typeof AdminReferralsRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -353,6 +360,7 @@ export interface FileRoutesByTo {
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/offers': typeof AdminOffersRoute
   '/admin/products': typeof AdminProductsRoute
+  '/admin/publishing': typeof AdminPublishingRoute
   '/admin/recommendations': typeof AdminRecommendationsRoute
   '/admin/referrals': typeof AdminReferralsRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -400,6 +408,7 @@ export interface FileRoutesById {
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/offers': typeof AdminOffersRoute
   '/admin/products': typeof AdminProductsRoute
+  '/admin/publishing': typeof AdminPublishingRoute
   '/admin/recommendations': typeof AdminRecommendationsRoute
   '/admin/referrals': typeof AdminReferralsRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -448,6 +457,7 @@ export interface FileRouteTypes {
     | '/admin/notifications'
     | '/admin/offers'
     | '/admin/products'
+    | '/admin/publishing'
     | '/admin/recommendations'
     | '/admin/referrals'
     | '/admin/settings'
@@ -494,6 +504,7 @@ export interface FileRouteTypes {
     | '/admin/notifications'
     | '/admin/offers'
     | '/admin/products'
+    | '/admin/publishing'
     | '/admin/recommendations'
     | '/admin/referrals'
     | '/admin/settings'
@@ -540,6 +551,7 @@ export interface FileRouteTypes {
     | '/admin/notifications'
     | '/admin/offers'
     | '/admin/products'
+    | '/admin/publishing'
     | '/admin/recommendations'
     | '/admin/referrals'
     | '/admin/settings'
@@ -797,6 +809,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminProductsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/publishing': {
+      id: '/admin/publishing'
+      path: '/publishing'
+      fullPath: '/admin/publishing'
+      preLoaderRoute: typeof AdminPublishingRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/recommendations': {
       id: '/admin/recommendations'
       path: '/recommendations'
@@ -907,6 +926,7 @@ interface AdminRouteChildren {
   AdminNotificationsRoute: typeof AdminNotificationsRoute
   AdminOffersRoute: typeof AdminOffersRoute
   AdminProductsRoute: typeof AdminProductsRoute
+  AdminPublishingRoute: typeof AdminPublishingRoute
   AdminRecommendationsRoute: typeof AdminRecommendationsRoute
   AdminReferralsRoute: typeof AdminReferralsRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
@@ -934,6 +954,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminNotificationsRoute: AdminNotificationsRoute,
   AdminOffersRoute: AdminOffersRoute,
   AdminProductsRoute: AdminProductsRoute,
+  AdminPublishingRoute: AdminPublishingRoute,
   AdminRecommendationsRoute: AdminRecommendationsRoute,
   AdminReferralsRoute: AdminReferralsRoute,
   AdminSettingsRoute: AdminSettingsRoute,
