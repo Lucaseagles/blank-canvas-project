@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
 import { requireOwnerRole } from "./auth-guards.server";
 import { getIntegrationSecretServer } from "@/integrations/secrets.server";
 
@@ -41,8 +40,8 @@ export const getExternalMetrics = createServerFn({ method: "GET" })
       metric_type: row.metric_type,
       value: Number(row.value),
       collected_at: row.collected_at,
-      channel_name: row.social_channels?.channel_name ?? "Canal",
-      platform: row.social_channels?.platform ?? "unknown",
+      channel_name: Array.isArray(row.social_channels) ? row.social_channels[0]?.channel_name ?? "Canal" : row.social_channels?.channel_name ?? "Canal",
+      platform: Array.isArray(row.social_channels) ? row.social_channels[0]?.platform ?? "unknown" : row.social_channels?.platform ?? "unknown",
     })) as ExternalMetric[];
   });
 
@@ -61,26 +60,7 @@ export const getExternalChannels = createServerFn({ method: "GET" })
 
 export const collectTelegramMetric = createServerFn({ method: "POST" })
   .middleware([requireOwnerRole])
-  .validator((value: unknown) => z.object({ channelId: z.string().uuid().optional() }).parse(value ?? {}))
-  .handler(async ({ data }) => {
-    const token = await getIntegrationSecretServer("telegram", "bot_token");
-    const configuredChannelId = await getIntegrationSecretServer("telegram", "channel_id");
-    if (!token) throw new Error("Bot Token do Telegram não está configurado no Secure Hub.");
-
-    const channelId = data.channelId?.trim() || configuredChannelId?.trim();
-    if (!channelId) throw new Error("Channel ID do Telegram não está configurado no Secure Hub.");
-
-    const telegramResponse = await fetch(
-      `https://api.telegram.org/bot${encodeURIComponent(token)}/getChatMemberCount?chat_id=${encodeURIComponent(channelId)}`,
-      { method: "GET", headers: { accept: "application/json" }, signal: AbortSignal.timeout(10000) },
-    );
-    if (!telegramResponse.ok) throw new Error(`Telegram respondeu HTTP ${telegramResponse.status}.`);
-
-    const result = (await telegramResponse.json()) as { ok?: boolean; result?: number; description?: string };
-    if (!result.ok || typeof result.result !== "number" || !Number.isInteger(result.result) || result.result < 0) {
-      throw new Error(result.description ?? "O Telegram não retornou uma quantidade de membros válida.");
-    }
-
+  .handler(async () => {
     const db = await getDb();
     const { data: channels, error: channelError } = await db
       .from("social_channels")
@@ -90,12 +70,24 @@ export const collectTelegramMetric = createServerFn({ method: "POST" })
       .order("created_at", { ascending: true })
       .limit(20);
     if (channelError) throw new Error(`Não foi possível localizar o canal Telegram: ${channelError.message}`);
-
-    const channel = (channels ?? []).find((item: any) => {
-      const url = String(item.channel_url ?? "").trim();
-      return url === channelId || url.endsWith(`/${channelId.replace(/^@/, "")}`) || url.includes(channelId.replace(/^@/, ""));
-    }) ?? (channels ?? [])[0];
+    const channel = (channels ?? [])[0];
     if (!channel) throw new Error("Nenhum canal Telegram ativo está cadastrado em social_channels.");
+
+    const token = await getIntegrationSecretServer("telegram", "bot_token");
+    const configuredChannelId = await getIntegrationSecretServer("telegram", "channel_id");
+    if (!token) throw new Error("Bot Token do Telegram não está configurado no Secure Hub.");
+    if (!configuredChannelId?.trim()) throw new Error("Channel ID do Telegram não está configurado no Secure Hub.");
+
+    const telegramResponse = await fetch(
+      `https://api.telegram.org/bot${encodeURIComponent(token)}/getChatMemberCount?chat_id=${encodeURIComponent(configuredChannelId.trim())}`,
+      { method: "GET", headers: { accept: "application/json" }, signal: AbortSignal.timeout(10000) },
+    );
+    if (!telegramResponse.ok) throw new Error(`Telegram respondeu HTTP ${telegramResponse.status}.`);
+
+    const result = (await telegramResponse.json()) as { ok?: boolean; result?: number; description?: string };
+    if (!result.ok || typeof result.result !== "number" || !Number.isInteger(result.result) || result.result < 0) {
+      throw new Error(result.description ?? "O Telegram não retornou uma quantidade de membros válida.");
+    }
 
     const { data: metric, error: metricError } = await db
       .from("external_channel_metrics")
