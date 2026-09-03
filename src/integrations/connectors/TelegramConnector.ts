@@ -43,7 +43,7 @@ export class TelegramConnector extends BaseConnector {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ chat_id: chatId, text: payload.message, parse_mode: "HTML" }),
       });
-      return result.ok ? { success: true, data: result.result } : { success: false, error: result.description ?? "Erro ao enviar" };
+      return result.ok ? { success: true } : { success: false, error: result.description ?? "Erro ao enviar" };
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : "Erro de conexão" };
     }
