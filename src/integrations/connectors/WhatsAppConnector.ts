@@ -51,7 +51,7 @@ export class WhatsAppConnector extends BaseConnector {
       const result = await this.request(`${phoneNumberId}/messages`, {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
       });
-      return result.error ? { success: false, error: result.error.message ?? "Erro ao enviar" } : { success: true, data: result };
+      return result.error ? { success: false, error: result.error.message ?? "Erro ao enviar" } : { success: true };
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : "Erro de conexão" };
     }
