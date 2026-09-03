@@ -14,7 +14,7 @@ export function ExternalMetrics() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const collectMutation = useMutation({
-    mutationFn: () => collectTelegramMetric({ data: {} }),
+    mutationFn: () => collectTelegramMetric(),
     onSuccess: async () => {
       setErrorMessage(null);
       await queryClient.invalidateQueries({ queryKey: ["admin-external-metrics"] });
