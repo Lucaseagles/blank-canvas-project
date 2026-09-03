@@ -60,7 +60,7 @@ export const getExternalChannels = createServerFn({ method: "GET" })
 
 export const collectTelegramMetric = createServerFn({ method: "POST" })
   .middleware([requireOwnerRole])
-  .handler(async () => {
+  .handler(async ({ context }) => {
     const db = await getDb();
     const { data: channels, error: channelError } = await db
       .from("social_channels")
@@ -97,8 +97,8 @@ export const collectTelegramMetric = createServerFn({ method: "POST" })
     if (metricError) throw new Error(`Não foi possível armazenar a métrica: ${metricError.message}`);
 
     const { error: auditError } = await db.from("admin_audit_log").insert({
-      actor_user_id: null,
-      actor_email: "eaglesfr49@gmail.com",
+      actor_user_id: context.userId ?? null,
+      actor_email: context.userEmail ?? null,
       action_type: "TELEGRAM_METRIC_COLLECTED",
       entity_type: "external_channel_metric",
       entity_id: metric.id,
