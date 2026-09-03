@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 
-export const Route = createFileRoute("/admin/social-channels" as any)({ component: AdminSocialChannelsPage });
+export const Route = createFileRoute("/admin/social-channels")({ component: AdminSocialChannelsPage });
 const platforms = ["tiktok", "instagram", "kwai", "telegram", "youtube"] as const;
 type Channel = { id: string; platform: string; channel_name: string; channel_url: string; is_active: boolean; };
 type AnalyticsRow = { platform: string; exposure_point: string; intent_clicks: number; };

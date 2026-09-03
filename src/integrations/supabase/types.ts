@@ -76,6 +76,42 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_audit_log: {
+        Row: {
+          action_type: string
+          actor_email: string | null
+          actor_user_id: string | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          new_value: Json
+          previous_value: Json
+        }
+        Insert: {
+          action_type: string
+          actor_email?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          new_value?: Json
+          previous_value?: Json
+        }
+        Update: {
+          action_type?: string
+          actor_email?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          new_value?: Json
+          previous_value?: Json
+        }
+        Relationships: []
+      }
       analytics_events: {
         Row: {
           anonymous_id: string | null
@@ -84,6 +120,7 @@ export type Database = {
           created_at: string
           event_name: string | null
           event_type: string
+          follow_intent_platform: string | null
           id: string
           metadata: Json | null
           product_id: string | null
@@ -98,6 +135,7 @@ export type Database = {
           created_at?: string
           event_name?: string | null
           event_type: string
+          follow_intent_platform?: string | null
           id?: string
           metadata?: Json | null
           product_id?: string | null
@@ -112,6 +150,7 @@ export type Database = {
           created_at?: string
           event_name?: string | null
           event_type?: string
+          follow_intent_platform?: string | null
           id?: string
           metadata?: Json | null
           product_id?: string | null
@@ -249,6 +288,42 @@ export type Database = {
           icon?: string | null
           id?: string
           name?: string
+        }
+        Relationships: []
+      }
+      badges_config: {
+        Row: {
+          badge_key: string
+          badge_name: string
+          badge_text: string
+          color: string | null
+          icon: string | null
+          id: string
+          is_enabled: boolean
+          threshold: Json | null
+          updated_at: string
+        }
+        Insert: {
+          badge_key: string
+          badge_name: string
+          badge_text: string
+          color?: string | null
+          icon?: string | null
+          id?: string
+          is_enabled?: boolean
+          threshold?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          badge_key?: string
+          badge_name?: string
+          badge_text?: string
+          color?: string | null
+          icon?: string | null
+          id?: string
+          is_enabled?: boolean
+          threshold?: Json | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -784,6 +859,38 @@ export type Database = {
         }
         Relationships: []
       }
+      external_channel_metrics: {
+        Row: {
+          channel_id: string | null
+          collected_at: string
+          id: string
+          metric_type: string
+          value: number
+        }
+        Insert: {
+          channel_id?: string | null
+          collected_at?: string
+          id?: string
+          metric_type: string
+          value: number
+        }
+        Update: {
+          channel_id?: string | null
+          collected_at?: string
+          id?: string
+          metric_type?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "external_channel_metrics_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "social_channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       favorites: {
         Row: {
           created_at: string | null
@@ -889,6 +996,145 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      home_modules_config: {
+        Row: {
+          config: Json
+          display_order: number
+          id: string
+          is_enabled: boolean
+          module_key: string
+          module_name: string
+          updated_at: string
+        }
+        Insert: {
+          config?: Json
+          display_order?: number
+          id?: string
+          is_enabled?: boolean
+          module_key: string
+          module_name: string
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          display_order?: number
+          id?: string
+          is_enabled?: boolean
+          module_key?: string
+          module_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      integration_credential_fields: {
+        Row: {
+          field_key: string
+          field_type: string
+          label: string
+          platform_id: string
+          required: boolean
+        }
+        Insert: {
+          field_key: string
+          field_type: string
+          label: string
+          platform_id: string
+          required?: boolean
+        }
+        Update: {
+          field_key?: string
+          field_type?: string
+          label?: string
+          platform_id?: string
+          required?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_credential_fields_platform_id_fkey"
+            columns: ["platform_id"]
+            isOneToOne: false
+            referencedRelation: "integration_platforms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integration_credentials: {
+        Row: {
+          created_at: string
+          id: string
+          last_checked_at: string | null
+          last_error: string | null
+          platform_id: string
+          secret_refs: Json
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_checked_at?: string | null
+          last_error?: string | null
+          platform_id: string
+          secret_refs?: Json
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_checked_at?: string | null
+          last_error?: string | null
+          platform_id?: string
+          secret_refs?: Json
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_credentials_platform_id_fkey"
+            columns: ["platform_id"]
+            isOneToOne: true
+            referencedRelation: "integration_platforms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integration_platforms: {
+        Row: {
+          active: boolean
+          capabilities: Json
+          category: string
+          created_at: string
+          id: string
+          lifecycle_status: string
+          name: string
+          rules: Json
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          capabilities?: Json
+          category: string
+          created_at?: string
+          id: string
+          lifecycle_status: string
+          name: string
+          rules?: Json
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          capabilities?: Json
+          category?: string
+          created_at?: string
+          id?: string
+          lifecycle_status?: string
+          name?: string
+          rules?: Json
+          updated_at?: string
+        }
+        Relationships: []
       }
       marketplaces: {
         Row: {
@@ -1575,6 +1821,48 @@ export type Database = {
         }
         Relationships: []
       }
+      scheduled_posts: {
+        Row: {
+          channels: string[]
+          content_id: string
+          content_type: string
+          created_at: string
+          created_by: string | null
+          error_message: string | null
+          id: string
+          message_template: string | null
+          published_at: string | null
+          scheduled_for: string
+          status: string
+        }
+        Insert: {
+          channels?: string[]
+          content_id: string
+          content_type: string
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          id?: string
+          message_template?: string | null
+          published_at?: string | null
+          scheduled_for: string
+          status?: string
+        }
+        Update: {
+          channels?: string[]
+          content_id?: string
+          content_type?: string
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          id?: string
+          message_template?: string | null
+          published_at?: string | null
+          scheduled_for?: string
+          status?: string
+        }
+        Relationships: []
+      }
       search_history: {
         Row: {
           created_at: string
@@ -1596,6 +1884,39 @@ export type Database = {
           query?: string
           result_count?: number
           user_id?: string
+        }
+        Relationships: []
+      }
+      social_channels: {
+        Row: {
+          channel_name: string
+          channel_url: string
+          created_at: string
+          icon: string | null
+          id: string
+          is_active: boolean
+          platform: string
+          updated_at: string
+        }
+        Insert: {
+          channel_name: string
+          channel_url: string
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          platform: string
+          updated_at?: string
+        }
+        Update: {
+          channel_name?: string
+          channel_url?: string
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          platform?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -2195,6 +2516,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      append_admin_audit: {
+        Args: {
+          p_action_type: string
+          p_entity_id: string
+          p_entity_type: string
+          p_new_value: Json
+          p_previous_value: Json
+        }
+        Returns: string
+      }
       calculate_content_affinity: {
         Args: { p_content_id: string; p_content_type?: string }
         Returns: {
@@ -2212,6 +2543,25 @@ export type Database = {
       }
       classify_user_segment: { Args: { p_user_id: string }; Returns: string }
       cleanup_recently_shown: { Args: never; Returns: undefined }
+      get_active_social_channels: {
+        Args: never
+        Returns: {
+          channel_name: string
+          channel_url: string
+          created_at: string
+          icon: string | null
+          id: string
+          is_active: boolean
+          platform: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "social_channels"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_content_affinity_summary: {
         Args: { p_content_id: string }
         Returns: Json
@@ -2238,6 +2588,10 @@ export type Database = {
           priority: number
           rule_id: string
         }[]
+      }
+      get_integration_secret: {
+        Args: { p_field_key: string; p_platform_id: string }
+        Returns: string
       }
       get_personalized_recommendations:
         | {
@@ -2274,6 +2628,14 @@ export type Database = {
               title: string
             }[]
           }
+      get_social_cross_promo_summary: {
+        Args: never
+        Returns: {
+          exposure_point: string
+          intent_clicks: number
+          platform: string
+        }[]
+      }
       grant_points: {
         Args: { _action_key: string; _ref_id?: string; _user_id: string }
         Returns: undefined
@@ -2286,6 +2648,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_owner: { Args: never; Returns: boolean }
       log_automation_activity: {
         Args: {
           _context: Json
@@ -2293,6 +2656,10 @@ export type Database = {
           _rule_id: string
           _status: string
         }
+        Returns: undefined
+      }
+      mark_integration_check: {
+        Args: { p_error?: string; p_platform_id: string; p_status: string }
         Returns: undefined
       }
       process_content_notification_queue: {
@@ -2310,6 +2677,7 @@ export type Database = {
         Args: { _inactive_days?: number }
         Returns: number
       }
+      sanitize_admin_audit_json: { Args: { value: Json }; Returns: Json }
       search_products_fuzzy: {
         Args: { search_query: string }
         Returns: {
@@ -2331,6 +2699,10 @@ export type Database = {
           slug: string
           title: string
         }[]
+      }
+      set_integration_secret: {
+        Args: { p_field_key: string; p_platform_id: string; p_value: string }
+        Returns: string
       }
       set_whatsapp_opt_in: {
         Args: { p_enabled: boolean; p_source?: string }
@@ -2450,12 +2822,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2479,11 +2851,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2504,11 +2876,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2529,11 +2901,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2546,11 +2918,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
