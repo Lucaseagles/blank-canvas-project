@@ -1,0 +1,32 @@
+name: Scheduled Publishing Worker
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: scheduled-publishing-worker
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger publishing worker
+        env:
+          WORKER_URL: ${{ secrets.SCHEDULED_PUBLISHING_WORKER_URL }}
+          WORKER_SECRET: ${{ secrets.SCHEDULED_PUBLISHING_WORKER_SECRET }}
+        run: |
+          set -euo pipefail
+          test -n "$WORKER_URL" || { echo 'Missing SCHEDULED_PUBLISHING_WORKER_URL'; exit 1; }
+          test -n "$WORKER_SECRET" || { echo 'Missing SCHEDULED_PUBLISHING_WORKER_SECRET'; exit 1; }
+          curl --fail-with-body --silent --show-error \
+            --max-time 30 \
+            -X POST "$WORKER_URL" \
+            -H 'Content-Type: application/json' \
+            -H "Authorization: Bearer $WORKER_SECRET" \
+            -d '{"limit":10}'
