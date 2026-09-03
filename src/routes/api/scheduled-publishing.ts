@@ -18,7 +18,11 @@ function isAuthorized(request: Request): boolean {
   return providedSecret.length > 0 && providedSecret === expectedSecret;
 }
 
-export const Route = createFileRoute("/api/scheduled-publishing")({
+// The generated TanStack route tree can lag behind a newly added server route
+// until the dev/build generator runs. The cast keeps the source type-safe with
+// the existing generated tree while allowing the route generator to register
+// the canonical /api/scheduled-publishing path during the build.
+export const Route = createFileRoute("/api/scheduled-publishing" as any)({
   server: {
     handlers: {
       GET: async ({ request }) => {
