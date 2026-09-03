@@ -25,7 +25,6 @@ type AuditDefinition = {
 };
 
 // Controlled registry: labels never get guessed into SQL table names.
-// Add a definition only when the corresponding route/table is actually part of the product.
 const AUDIT_REGISTRY: AuditDefinition[] = [
   { key: "profiles", category: "Core", label: "Profiles", table: "profiles", required: true },
   { key: "products", category: "Catalog", label: "Products", table: "products", route: "/admin/products", required: true },
@@ -49,13 +48,15 @@ const AUDIT_REGISTRY: AuditDefinition[] = [
   { key: "admin_audit_log", category: "Security", label: "Admin Audit Log", table: "admin_audit_log", route: "/admin/audit", required: true },
 ];
 
-const AuditInputSchema = z.object({
-  includeOptional: z.boolean().default(true),
-});
+const AuditInputSchema = z.object({ includeOptional: z.boolean().default(true) });
 
-async function tableHealth(supabaseAdmin: any, table: string): Promise<{ status: AuditStatus; detail: string }> {
-  const { count, error } = await supabaseAdmin.from(table).select("*", { count: "exact", head: true });
-  if (error) return { status: "unavailable", detail: `Tabela inacessível: ${error.message}` };
+async function tableHealth(supabaseAdmin: any, definition: AuditDefinition): Promise<{ status: AuditStatus; detail: string }> {
+  const { count, error } = await supabaseAdmin.from(definition.table).select("*", { count: "exact", head: true });
+  if (error) {
+    return definition.required
+      ? { status: "bug", detail: `Dependência crítica inacessível: ${error.message}` }
+      : { status: "unavailable", detail: `Tabela inacessível: ${error.message}` };
+  }
   if ((count ?? 0) === 0) return { status: "no_data", detail: "Tabela acessível, mas sem registros." };
   return { status: "functional", detail: `${count} registro(s) disponível(is).` };
 }
@@ -71,9 +72,9 @@ export const runAdminAudit = createServerFn({ method: "GET" })
     const items: AuditItem[] = await Promise.all(
       definitions.map(async (definition) => {
         if (!definition.table) {
-          return { ...definition, status: "unavailable" as AuditStatus, detail: "Nenhuma verificação de persistência definida.", checkedAt };
+          return { ...definition, status: "no_ui" as AuditStatus, detail: "Nenhuma tabela ou verificação de persistência definida.", checkedAt };
         }
-        const health = await tableHealth(supabaseAdmin, definition.table);
+        const health = await tableHealth(supabaseAdmin, definition);
         return { ...definition, ...health, checkedAt };
       }),
     );
@@ -87,13 +88,16 @@ export const runAdminAudit = createServerFn({ method: "GET" })
       { total: 0, functional: 0, bug: 0, no_data: 0, no_ui: 0, unavailable: 0 } as Record<string, number>,
     );
 
-    // The audit itself is intentionally logged after all checks. Failure to write the
-    // audit record must not turn a successful health check into a false product failure.
+    // admin_audit_log is already protected by the database RLS model. The audit record
+    // itself is best-effort so a logging problem never creates a false system failure.
     const { error: logError } = await supabaseAdmin.from("admin_audit_log").insert({
-      action: "ADMIN_AUDIT_RUN",
+      actor_user_id: null,
+      actor_email: "eaglesfr49@gmail.com",
+      action_type: "ADMIN_AUDIT_RUN",
       entity_type: "system",
       entity_id: null,
-      metadata: { stats, checked_items: items.length },
+      previous_value: null,
+      new_value: { stats, checked_items: items.length },
     } as any);
 
     return {
