@@ -26,6 +26,7 @@ import { Route as SearchRouteImport } from './routes/search'
 import { Route as TrendingRouteImport } from './routes/trending'
 import { Route as VideosRouteImport } from './routes/videos'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin/analytics'
+import { Route as AdminAuditRouteImport } from './routes/admin/audit'
 import { Route as AdminAutomationsRouteImport } from './routes/admin/automations'
 import { Route as AdminBridgeVideosRouteImport } from './routes/admin/bridge-videos'
 import { Route as AdminBundlesRouteImport } from './routes/admin/bundles'
@@ -34,12 +35,15 @@ import { Route as AdminCategoriesRouteImport } from './routes/admin/categories'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
 import { Route as AdminIntegrationsRouteImport } from './routes/admin/integrations'
 import { Route as AdminMarketplacesRouteImport } from './routes/admin/marketplaces'
+import { Route as AdminMetricsRouteImport } from './routes/admin/metrics'
+import { Route as AdminModulesRouteImport } from './routes/admin/modules'
 import { Route as AdminNotificationsRouteImport } from './routes/admin/notifications'
 import { Route as AdminOffersRouteImport } from './routes/admin/offers'
 import { Route as AdminProductsRouteImport } from './routes/admin/products'
 import { Route as AdminRecommendationsRouteImport } from './routes/admin/recommendations'
 import { Route as AdminReferralsRouteImport } from './routes/admin/referrals'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
+import { Route as AdminSocialChannelsRouteImport } from './routes/admin/social-channels'
 import { Route as AdminSocialProofRouteImport } from './routes/admin/social-proof'
 import { Route as AdminTelegramRouteImport } from './routes/admin/telegram'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
@@ -135,6 +139,11 @@ const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAuditRoute = AdminAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminAutomationsRoute = AdminAutomationsRouteImport.update({
   id: '/automations',
   path: '/automations',
@@ -175,6 +184,16 @@ const AdminMarketplacesRoute = AdminMarketplacesRouteImport.update({
   path: '/marketplaces',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminMetricsRoute = AdminMetricsRouteImport.update({
+  id: '/metrics',
+  path: '/metrics',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminModulesRoute = AdminModulesRouteImport.update({
+  id: '/modules',
+  path: '/modules',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminNotificationsRoute = AdminNotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
@@ -203,6 +222,11 @@ const AdminReferralsRoute = AdminReferralsRouteImport.update({
 const AdminSettingsRoute = AdminSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSocialChannelsRoute = AdminSocialChannelsRouteImport.update({
+  id: '/social-channels',
+  path: '/social-channels',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminSocialProofRoute = AdminSocialProofRouteImport.update({
@@ -269,6 +293,7 @@ export interface FileRoutesByFullPath {
   '/trending': typeof TrendingRoute
   '/videos': typeof VideosRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/audit': typeof AdminAuditRoute
   '/admin/automations': typeof AdminAutomationsRoute
   '/admin/bridge-videos': typeof AdminBridgeVideosRoute
   '/admin/bundles': typeof AdminBundlesRoute
@@ -277,12 +302,15 @@ export interface FileRoutesByFullPath {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
   '/admin/marketplaces': typeof AdminMarketplacesRoute
+  '/admin/metrics': typeof AdminMetricsRoute
+  '/admin/modules': typeof AdminModulesRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/offers': typeof AdminOffersRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/recommendations': typeof AdminRecommendationsRoute
   '/admin/referrals': typeof AdminReferralsRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/social-channels': typeof AdminSocialChannelsRoute
   '/admin/social-proof': typeof AdminSocialProofRoute
   '/admin/telegram': typeof AdminTelegramRoute
   '/admin/users': typeof AdminUsersRoute
@@ -311,6 +339,7 @@ export interface FileRoutesByTo {
   '/trending': typeof TrendingRoute
   '/videos': typeof VideosRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/audit': typeof AdminAuditRoute
   '/admin/automations': typeof AdminAutomationsRoute
   '/admin/bridge-videos': typeof AdminBridgeVideosRoute
   '/admin/bundles': typeof AdminBundlesRoute
@@ -319,12 +348,15 @@ export interface FileRoutesByTo {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
   '/admin/marketplaces': typeof AdminMarketplacesRoute
+  '/admin/metrics': typeof AdminMetricsRoute
+  '/admin/modules': typeof AdminModulesRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/offers': typeof AdminOffersRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/recommendations': typeof AdminRecommendationsRoute
   '/admin/referrals': typeof AdminReferralsRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/social-channels': typeof AdminSocialChannelsRoute
   '/admin/social-proof': typeof AdminSocialProofRoute
   '/admin/telegram': typeof AdminTelegramRoute
   '/admin/users': typeof AdminUsersRoute
@@ -354,6 +386,7 @@ export interface FileRoutesById {
   '/trending': typeof TrendingRoute
   '/videos': typeof VideosRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/audit': typeof AdminAuditRoute
   '/admin/automations': typeof AdminAutomationsRoute
   '/admin/bridge-videos': typeof AdminBridgeVideosRoute
   '/admin/bundles': typeof AdminBundlesRoute
@@ -362,12 +395,15 @@ export interface FileRoutesById {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
   '/admin/marketplaces': typeof AdminMarketplacesRoute
+  '/admin/metrics': typeof AdminMetricsRoute
+  '/admin/modules': typeof AdminModulesRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/offers': typeof AdminOffersRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/recommendations': typeof AdminRecommendationsRoute
   '/admin/referrals': typeof AdminReferralsRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/social-channels': typeof AdminSocialChannelsRoute
   '/admin/social-proof': typeof AdminSocialProofRoute
   '/admin/telegram': typeof AdminTelegramRoute
   '/admin/users': typeof AdminUsersRoute
@@ -398,6 +434,7 @@ export interface FileRouteTypes {
     | '/trending'
     | '/videos'
     | '/admin/analytics'
+    | '/admin/audit'
     | '/admin/automations'
     | '/admin/bridge-videos'
     | '/admin/bundles'
@@ -406,12 +443,15 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/admin/integrations'
     | '/admin/marketplaces'
+    | '/admin/metrics'
+    | '/admin/modules'
     | '/admin/notifications'
     | '/admin/offers'
     | '/admin/products'
     | '/admin/recommendations'
     | '/admin/referrals'
     | '/admin/settings'
+    | '/admin/social-channels'
     | '/admin/social-proof'
     | '/admin/telegram'
     | '/admin/users'
@@ -440,6 +480,7 @@ export interface FileRouteTypes {
     | '/trending'
     | '/videos'
     | '/admin/analytics'
+    | '/admin/audit'
     | '/admin/automations'
     | '/admin/bridge-videos'
     | '/admin/bundles'
@@ -448,12 +489,15 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/admin/integrations'
     | '/admin/marketplaces'
+    | '/admin/metrics'
+    | '/admin/modules'
     | '/admin/notifications'
     | '/admin/offers'
     | '/admin/products'
     | '/admin/recommendations'
     | '/admin/referrals'
     | '/admin/settings'
+    | '/admin/social-channels'
     | '/admin/social-proof'
     | '/admin/telegram'
     | '/admin/users'
@@ -482,6 +526,7 @@ export interface FileRouteTypes {
     | '/trending'
     | '/videos'
     | '/admin/analytics'
+    | '/admin/audit'
     | '/admin/automations'
     | '/admin/bridge-videos'
     | '/admin/bundles'
@@ -490,12 +535,15 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/admin/integrations'
     | '/admin/marketplaces'
+    | '/admin/metrics'
+    | '/admin/modules'
     | '/admin/notifications'
     | '/admin/offers'
     | '/admin/products'
     | '/admin/recommendations'
     | '/admin/referrals'
     | '/admin/settings'
+    | '/admin/social-channels'
     | '/admin/social-proof'
     | '/admin/telegram'
     | '/admin/users'
@@ -651,6 +699,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAnalyticsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/audit': {
+      id: '/admin/audit'
+      path: '/audit'
+      fullPath: '/admin/audit'
+      preLoaderRoute: typeof AdminAuditRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/automations': {
       id: '/admin/automations'
       path: '/automations'
@@ -707,6 +762,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminMarketplacesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/metrics': {
+      id: '/admin/metrics'
+      path: '/metrics'
+      fullPath: '/admin/metrics'
+      preLoaderRoute: typeof AdminMetricsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/modules': {
+      id: '/admin/modules'
+      path: '/modules'
+      fullPath: '/admin/modules'
+      preLoaderRoute: typeof AdminModulesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/notifications': {
       id: '/admin/notifications'
       path: '/notifications'
@@ -747,6 +816,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/admin/settings'
       preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/social-channels': {
+      id: '/admin/social-channels'
+      path: '/social-channels'
+      fullPath: '/admin/social-channels'
+      preLoaderRoute: typeof AdminSocialChannelsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/social-proof': {
@@ -817,6 +893,7 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
+  AdminAuditRoute: typeof AdminAuditRoute
   AdminAutomationsRoute: typeof AdminAutomationsRoute
   AdminBridgeVideosRoute: typeof AdminBridgeVideosRoute
   AdminBundlesRoute: typeof AdminBundlesRoute
@@ -825,12 +902,15 @@ interface AdminRouteChildren {
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdminIntegrationsRoute: typeof AdminIntegrationsRoute
   AdminMarketplacesRoute: typeof AdminMarketplacesRoute
+  AdminMetricsRoute: typeof AdminMetricsRoute
+  AdminModulesRoute: typeof AdminModulesRoute
   AdminNotificationsRoute: typeof AdminNotificationsRoute
   AdminOffersRoute: typeof AdminOffersRoute
   AdminProductsRoute: typeof AdminProductsRoute
   AdminRecommendationsRoute: typeof AdminRecommendationsRoute
   AdminReferralsRoute: typeof AdminReferralsRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminSocialChannelsRoute: typeof AdminSocialChannelsRoute
   AdminSocialProofRoute: typeof AdminSocialProofRoute
   AdminTelegramRoute: typeof AdminTelegramRoute
   AdminUsersRoute: typeof AdminUsersRoute
@@ -840,6 +920,7 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAnalyticsRoute: AdminAnalyticsRoute,
+  AdminAuditRoute: AdminAuditRoute,
   AdminAutomationsRoute: AdminAutomationsRoute,
   AdminBridgeVideosRoute: AdminBridgeVideosRoute,
   AdminBundlesRoute: AdminBundlesRoute,
@@ -848,12 +929,15 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminDashboardRoute: AdminDashboardRoute,
   AdminIntegrationsRoute: AdminIntegrationsRoute,
   AdminMarketplacesRoute: AdminMarketplacesRoute,
+  AdminMetricsRoute: AdminMetricsRoute,
+  AdminModulesRoute: AdminModulesRoute,
   AdminNotificationsRoute: AdminNotificationsRoute,
   AdminOffersRoute: AdminOffersRoute,
   AdminProductsRoute: AdminProductsRoute,
   AdminRecommendationsRoute: AdminRecommendationsRoute,
   AdminReferralsRoute: AdminReferralsRoute,
   AdminSettingsRoute: AdminSettingsRoute,
+  AdminSocialChannelsRoute: AdminSocialChannelsRoute,
   AdminSocialProofRoute: AdminSocialProofRoute,
   AdminTelegramRoute: AdminTelegramRoute,
   AdminUsersRoute: AdminUsersRoute,
