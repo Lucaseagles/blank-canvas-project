@@ -5,7 +5,6 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const Platform = z.enum(["tiktok", "instagram", "kwai", "telegram", "youtube"]);
 const ExposurePoint = z.enum(["profile", "video_feed", "post_affiliate", "campaign", "gamification"]);
-
 type SocialChannel = { id: string; platform: z.infer<typeof Platform>; channel_name: string; channel_url: string; icon: string | null; is_active: boolean; created_at: string | null };
 
 export const getActiveSocialChannels = createServerFn({ method: "GET" }).handler(async (): Promise<SocialChannel[]> => {
@@ -47,7 +46,7 @@ export const getCrossPromoAnalytics = createServerFn({ method: "GET" }).middlewa
 
 export const trackFollowIntent = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).validator((data: unknown) => z.object({ platform: Platform, exposurePoint: ExposurePoint, channelId: z.string().uuid().optional() }).parse(data)).handler(async ({ data, context }) => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { error } = await (supabaseAdmin as any).from("analytics_events").insert({ user_id: context.userId, event_type: "FOLLOW_CLICK", event_name: "FOLLOW_CLICK", metadata: { exposure_point: data.exposurePoint, channel_id: data.channelId ?? null } });
+  const { error } = await (supabaseAdmin as any).from("analytics_events").insert({ user_id: context.userId, event_type: "FOLLOW_CLICK", event_name: "FOLLOW_CLICK", follow_intent_platform: data.platform, metadata: { exposure_point: data.exposurePoint, channel_id: data.channelId ?? null } });
   if (error) throw error;
   return { success: true, metric: "intent_click" as const };
 });
