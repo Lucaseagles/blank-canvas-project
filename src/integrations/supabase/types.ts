@@ -2772,6 +2772,7 @@ export type Database = {
         | "ADJUST_FEED_WEIGHT"
         | "QUEUE_FOR_REVIEW"
         | "RECALCULATE_CATEGORY_HIGHLIGHTS"
+        | "PUBLISH_SCHEDULED_POSTS"
       automation_trigger_type:
         | "PRICE_CHANGED"
         | "NEW_OFFER_IN_GROUP"
@@ -2944,6 +2945,7 @@ export const Constants = {
         "ADJUST_FEED_WEIGHT",
         "QUEUE_FOR_REVIEW",
         "RECALCULATE_CATEGORY_HIGHLIGHTS",
+        "PUBLISH_SCHEDULED_POSTS",
       ],
       automation_trigger_type: [
         "PRICE_CHANGED",
