@@ -1,0 +1,59 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+
+export interface FilterState { categories: string[]; minPrice: number; maxPrice: number; minDiscount: number; minRating: number; marketplaces: string[]; freeShipping: boolean; bestOffer: boolean; }
+export interface FilterOption { id: string; name: string; count: number; checked: boolean; }
+
+const defaults: FilterState = { categories: [], minPrice: 0, maxPrice: 10000, minDiscount: 0, minRating: 0, marketplaces: [], freeShipping: false, bestOffer: false };
+function readUrl(): FilterState {
+  const p = new URLSearchParams(window.location.search);
+  const num = (key: string, fallback: number) => { const n = Number(p.get(key)); return Number.isFinite(n) ? n : fallback; };
+  return { categories: p.get("categories")?.split(",").filter(Boolean) ?? [], minPrice: num("min_price", 0), maxPrice: num("max_price", 10000), minDiscount: num("min_discount", 0), minRating: num("min_rating", 0), marketplaces: p.get("marketplaces")?.split(",").filter(Boolean) ?? [], freeShipping: p.get("free_shipping") === "true", bestOffer: p.get("best_offer") === "true" };
+}
+export function useFilters(pageType: "search" | "products" | "category" | "deals", categoryId?: string) {
+  const [filters, setFilters] = useState<FilterState>(() => typeof window === "undefined" ? defaults : readUrl());
+  const [availableFilters, setAvailableFilters] = useState({ categories: [] as FilterOption[], marketplaces: [] as FilterOption[], minPrice: 0, maxPrice: 10000 });
+  const [results, setResults] = useState<any[]>([]);
+  const [totalResults, setTotalResults] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  const updateURL = useCallback((next: FilterState) => {
+    const p = new URLSearchParams(window.location.search);
+    const set = (key: string, value: string | null) => value ? p.set(key, value) : p.delete(key);
+    set("categories", next.categories.length ? next.categories.join(",") : null); set("min_price", next.minPrice > 0 ? String(next.minPrice) : null); set("max_price", next.maxPrice < 10000 ? String(next.maxPrice) : null); set("min_discount", next.minDiscount > 0 ? String(next.minDiscount) : null); set("min_rating", next.minRating > 0 ? String(next.minRating) : null); set("marketplaces", next.marketplaces.length ? next.marketplaces.join(",") : null); set("free_shipping", next.freeShipping ? "true" : null); set("best_offer", next.bestOffer ? "true" : null);
+    window.history.replaceState({}, "", `${window.location.pathname}${p.toString() ? `?${p}` : ""}`); window.dispatchEvent(new PopStateEvent("popstate"));
+  }, []);
+
+  const loadOptions = useCallback(async () => {
+    const [cats, mps, prices] = await Promise.all([
+      supabase.from("categories").select("id,name,products:products!category_id(count)").eq("is_active", true).order("name"),
+      supabase.from("marketplaces").select("id,name,products:products!marketplace_id(count)").order("name"),
+      supabase.from("products").select("current_price").eq("status", "active").limit(1000),
+    ]);
+    if (cats.error) throw cats.error; if (mps.error) throw mps.error; if (prices.error) throw prices.error;
+    const values = (prices.data ?? []).map((p) => Number(p.current_price)).filter(Number.isFinite);
+    setAvailableFilters({ categories: (cats.data ?? []).map((c: any) => ({ id: c.id, name: c.name, count: c.products?.[0]?.count ?? 0, checked: filters.categories.includes(c.id) })), marketplaces: (mps.data ?? []).map((m: any) => ({ id: m.id, name: m.name, count: m.products?.[0]?.count ?? 0, checked: filters.marketplaces.includes(m.id) })), minPrice: values.length ? Math.floor(Math.min(...values)) : 0, maxPrice: values.length ? Math.ceil(Math.max(...values)) : 10000 });
+  }, [filters.categories, filters.marketplaces]);
+
+  const applyFilters = useCallback(async () => {
+    setLoading(true);
+    try {
+      let q = supabase.from("products").select("*, marketplaces(name)", { count: "exact" }).eq("status", "active");
+      if (categoryId) q = q.eq("category_id", categoryId);
+      if (filters.categories.length) q = q.in("category_id", filters.categories);
+      if (filters.marketplaces.length) q = q.in("marketplace_id", filters.marketplaces);
+      if (filters.minPrice > 0) q = q.gte("current_price", filters.minPrice);
+      if (filters.maxPrice < 10000) q = q.lte("current_price", filters.maxPrice);
+      if (filters.minDiscount > 0) q = q.gte("discount", filters.minDiscount);
+      if (filters.minRating > 0) q = q.gte("rating", filters.minRating);
+      if (filters.freeShipping) q = q.eq("free_shipping", true);
+      if (filters.bestOffer) q = q.eq("is_best_offer", true);
+      const { data, error, count } = await q.order("created_at", { ascending: false }).range(0, 49);
+      if (error) throw error; setResults((data ?? []) as any[]); setTotalResults(count ?? 0);
+    } finally { setLoading(false); }
+  }, [categoryId, filters]);
+  useEffect(() => { loadOptions().catch(console.error); }, [loadOptions]);
+  useEffect(() => { applyFilters().catch(console.error); }, [applyFilters]);
+  useEffect(() => { const onPop = () => setFilters(readUrl()); window.addEventListener("popstate", onPop); return () => window.removeEventListener("popstate", onPop); }, []);
+  return useMemo(() => ({ pageType, filters, setFilters, updateURL, availableFilters, results, totalResults, loading, applyFilters }), [pageType, filters, updateURL, availableFilters, results, totalResults, loading, applyFilters]);
+}
