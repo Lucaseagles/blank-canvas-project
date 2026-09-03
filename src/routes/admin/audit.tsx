@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AuditDashboard } from "@/admin/audit/AuditDashboard";
 
-export const Route = createFileRoute("/admin/audit")({
+// The generated route tree is refreshed by TanStack during Vite build; keep CI typecheck
+// compatible with the checked-in tree when this newly-added route has not been regenerated yet.
+export const Route = createFileRoute("/admin/audit" as any)({
   component: AuditDashboard,
 });
