@@ -3,28 +3,10 @@ import { z } from "zod";
 import { requireOwnerRole } from "./auth-guards.server";
 
 export type AuditStatus = "functional" | "bug" | "no_data" | "no_ui" | "unavailable";
+export type AuditItem = { key: string; category: string; label: string; route?: string; table?: string; status: AuditStatus; detail: string; checkedAt: string };
+type AuditDefinition = { key: string; category: string; label: string; route?: string; table?: string; required?: boolean };
+export type AuditStats = { total: number; functional: number; bug: number; no_data: number; no_ui: number; unavailable: number };
 
-export type AuditItem = {
-  key: string;
-  category: string;
-  label: string;
-  route?: string;
-  table?: string;
-  status: AuditStatus;
-  detail: string;
-  checkedAt: string;
-};
-
-type AuditDefinition = {
-  key: string;
-  category: string;
-  label: string;
-  route?: string;
-  table?: string;
-  required?: boolean;
-};
-
-// Controlled registry: labels never get guessed into SQL table names.
 const AUDIT_REGISTRY: AuditDefinition[] = [
   { key: "profiles", category: "Core", label: "Profiles", table: "profiles", required: true },
   { key: "products", category: "Catalog", label: "Products", table: "products", route: "/admin/products", required: true },
@@ -52,11 +34,7 @@ const AuditInputSchema = z.object({ includeOptional: z.boolean().default(true) }
 
 async function tableHealth(supabaseAdmin: any, definition: AuditDefinition): Promise<{ status: AuditStatus; detail: string }> {
   const { count, error } = await supabaseAdmin.from(definition.table).select("*", { count: "exact", head: true });
-  if (error) {
-    return definition.required
-      ? { status: "bug", detail: `Dependência crítica inacessível: ${error.message}` }
-      : { status: "unavailable", detail: `Tabela inacessível: ${error.message}` };
-  }
+  if (error) return definition.required ? { status: "bug", detail: `Dependência crítica inacessível: ${error.message}` } : { status: "unavailable", detail: `Tabela inacessível: ${error.message}` };
   if ((count ?? 0) === 0) return { status: "no_data", detail: "Tabela acessível, mas sem registros." };
   return { status: "functional", detail: `${count} registro(s) disponível(is).` };
 }
@@ -68,29 +46,19 @@ export const runAdminAudit = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const checkedAt = new Date().toISOString();
     const definitions = data.includeOptional ? AUDIT_REGISTRY : AUDIT_REGISTRY.filter((item) => item.required);
+    const items: AuditItem[] = await Promise.all(definitions.map(async (definition) => {
+      if (!definition.table) return { ...definition, status: "no_ui" as AuditStatus, detail: "Nenhuma tabela ou verificação de persistência definida.", checkedAt };
+      const health = await tableHealth(supabaseAdmin, definition);
+      return { ...definition, ...health, checkedAt };
+    }));
 
-    const items: AuditItem[] = await Promise.all(
-      definitions.map(async (definition) => {
-        if (!definition.table) {
-          return { ...definition, status: "no_ui" as AuditStatus, detail: "Nenhuma tabela ou verificação de persistência definida.", checkedAt };
-        }
-        const health = await tableHealth(supabaseAdmin, definition);
-        return { ...definition, ...health, checkedAt };
-      }),
-    );
+    const stats: AuditStats = { total: 0, functional: 0, bug: 0, no_data: 0, no_ui: 0, unavailable: 0 };
+    for (const item of items) {
+      stats.total += 1;
+      stats[item.status] += 1;
+    }
 
-    const stats = items.reduce(
-      (acc, item) => {
-        acc.total += 1;
-        acc[item.status] += 1;
-        return acc;
-      },
-      { total: 0, functional: 0, bug: 0, no_data: 0, no_ui: 0, unavailable: 0 } as Record<string, number>,
-    );
-
-    // admin_audit_log is already protected by the database RLS model. The audit record
-    // itself is best-effort so a logging problem never creates a false system failure.
-    const { error: logError } = await supabaseAdmin.from("admin_audit_log").insert({
+    const { error: logError } = await (supabaseAdmin as any).from("admin_audit_log").insert({
       actor_user_id: null,
       actor_email: "eaglesfr49@gmail.com",
       action_type: "ADMIN_AUDIT_RUN",
@@ -98,13 +66,7 @@ export const runAdminAudit = createServerFn({ method: "GET" })
       entity_id: null,
       previous_value: null,
       new_value: { stats, checked_items: items.length },
-    } as any);
+    });
 
-    return {
-      items,
-      stats,
-      checkedAt,
-      auditLogWritten: !logError,
-      auditLogError: logError?.message ?? null,
-    };
+    return { items, stats, checkedAt, auditLogWritten: !logError, auditLogError: logError?.message ?? null };
   });
