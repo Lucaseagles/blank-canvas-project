@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 concurrency:
   group: scheduled-publishing-worker
@@ -16,17 +17,32 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger publishing worker
+      - name: Request GitHub OIDC token
+        id: oidc
         env:
-          WORKER_URL: ${{ secrets.SCHEDULED_PUBLISHING_WORKER_URL }}
-          WORKER_SECRET: ${{ secrets.SCHEDULED_PUBLISHING_WORKER_SECRET }}
+          ACTIONS_ID_TOKEN_REQUEST_URL: ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}
+          ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}
         run: |
           set -euo pipefail
-          test -n "$WORKER_URL" || { echo 'Missing SCHEDULED_PUBLISHING_WORKER_URL'; exit 1; }
-          test -n "$WORKER_SECRET" || { echo 'Missing SCHEDULED_PUBLISHING_WORKER_SECRET'; exit 1; }
+          test -n "$ACTIONS_ID_TOKEN_REQUEST_URL" || { echo 'GitHub OIDC is unavailable'; exit 1; }
+          test -n "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" || { echo 'GitHub OIDC request token is unavailable'; exit 1; }
+          TOKEN_URL="${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=scheduled-publishing"
+          RESPONSE=$(curl --fail-with-body --silent --show-error --max-time 15 \
+            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$TOKEN_URL")
+          TOKEN=$(printf '%s' "$RESPONSE" | python -c 'import json,sys; print(json.load(sys.stdin)["value"])')
+          test -n "$TOKEN" || { echo 'Empty OIDC token'; exit 1; }
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
+      - name: Trigger scheduled publishing
+        env:
+          WORKER_URL: https://akfvkjarpgocdsieuvvq.supabase.co/functions/v1/scheduled-publishing
+          OIDC_TOKEN: ${{ steps.oidc.outputs.token }}
+        run: |
+          set -euo pipefail
           curl --fail-with-body --silent --show-error \
             --max-time 30 \
             -X POST "$WORKER_URL" \
             -H 'Content-Type: application/json' \
-            -H "Authorization: Bearer $WORKER_SECRET" \
+            -H "Authorization: Bearer $OIDC_TOKEN" \
             -d '{"limit":10}'
