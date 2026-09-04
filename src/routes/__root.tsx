@@ -13,6 +13,7 @@ import { PremiumError } from "@/components/ui/PremiumError";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import "@/styles.css";
+import "@/category-filter-premium.css";
 import "@/components/support/SupportFloatingBubble.css";
 const rootQueryClient = new QueryClient();
 export const Route = createRootRoute({
@@ -39,7 +40,7 @@ function RootComponent() {
     return () => observer.disconnect();
   }, []);
   return <QueryClientProvider client={rootQueryClient}>
-    <html lang="pt-BR" className="dark"><head><HeadContent /><link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" /><link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32;1,14..32&display=swap" rel="stylesheet" /></head>
+    <html lang="pt-BR" className="dark"><head><HeadContent /><link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" /><link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet" /></head>
     <body className="antialiased selection:bg-primary selection:text-primary-foreground bg-background"><Navbar /><main className="min-h-[calc(100vh-200px)] pb-[72px] md:pb-0"><Outlet /></main><Footer /><BottomNav /><PopupTimingController /><SocialProofPopup /><PopupEngine /><SupportFloatingBubble /><Toaster /><Scripts /></body></html>
   </QueryClientProvider>;
 }
