@@ -19,14 +19,14 @@ type ReferralEvent = {
 export const getReferralInfo = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const userId = context.userId;
-  let { data: referral, error } = await supabaseAdmin.from("referrals" as never).select("*").eq("referrer_user_id", userId).maybeSingle();
+  let { data: referral, error } = await supabaseAdmin.from("referrals" as never).select("*").eq("referrer_user_id", userId).maybeSingle() as { data: ReferralRow | null; error: Error | null };
   if (error) throw error;
   if (!referral) {
     const { data: created, error: createError } = await (supabaseAdmin.from("referrals" as never) as unknown as { insert: (values: { referrer_user_id: string; referral_code: string }) => { select: () => { single: () => Promise<{ data: ReferralRow | null; error: Error | null }> } } }).insert({ referrer_user_id: userId, referral_code: generateReferralCode() }).select().single();
     if (createError) throw createError;
     referral = created;
   }
-  const r = referral as unknown as ReferralRow;
+  const r = referral as ReferralRow;
   const [invited, registered, activated] = await Promise.all([
     supabaseAdmin.from("referral_events" as never).select("id", { count: "exact", head: true }).eq("referral_id", r.id),
     supabaseAdmin.from("referral_events" as never).select("id", { count: "exact", head: true }).eq("referral_id", r.id).eq("status", "registered"),
