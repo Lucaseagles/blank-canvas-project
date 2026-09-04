@@ -1,0 +1,4 @@
+.rating-stars { display: inline-flex; align-items: center; gap: .5rem; }
+.rating-stars__icons { display: inline-flex; gap: .15rem; }
+.rating-stars__value { font-weight: 900; font-variant-numeric: tabular-nums; }
+.rating-stars__count { color: hsl(var(--muted-foreground)); font-size: .75rem; }
