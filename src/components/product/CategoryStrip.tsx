@@ -1,57 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Link } from "@tanstack/react-router";
 import * as Icons from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export function CategoryStrip() {
   const { data: categories } = useQuery({
-    queryKey: ["categories"],
+    queryKey: ["categories", "root", "active"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("categories")
-        .select("*")
-        .eq("is_active", true)
-        .order("name");
+      const { data, error } = await supabase.from("categories").select("*").eq("is_active", true).is("parent_id", null).order("display_order", { ascending: true }).order("name");
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
   });
-
-  if (!categories || categories.length === 0) return null;
-
-  return (
-    <div className="w-full bg-background/50 backdrop-blur-md border-b border-glass-border py-6 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 overflow-x-auto scrollbar-hide flex gap-8 items-center justify-between min-w-max md:min-w-0">
-        {categories.map((cat, idx) => {
-          const Icon = (Icons as any)[cat.icon || "Package"] || Icons.Package;
-          const bgColors = [
-            'bg-blue-500/10 text-blue-500',
-            'bg-purple-500/10 text-purple-500',
-            'bg-emerald-500/10 text-emerald-500',
-            'bg-amber-500/10 text-amber-500',
-            'bg-rose-500/10 text-rose-500',
-            'bg-indigo-500/10 text-indigo-500'
-          ];
-          const colorClass = bgColors[idx % bgColors.length] || bgColors[0];
-          const [bgPart, textPart] = colorClass!.split(' ');
-          
-          return (
-            <Link
-              key={cat.id}
-              to="/category/$slug"
-              params={{ slug: cat.slug }}
-              className="flex flex-col items-center gap-3 group transition-all shrink-0"
-            >
-              <div className={`w-16 h-16 rounded-full ${bgPart} border border-white/5 flex items-center justify-center group-hover:scale-110 transition-all shadow-lg`}>
-                <Icon className={`w-7 h-7 ${textPart}`} />
-              </div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground group-hover:text-foreground transition-colors text-center w-20 line-clamp-1">
-                {cat.name}
-              </span>
-            </Link>
-          );
-        })}
-      </div>
-    </div>
-  );
+  if (!categories?.length) return null;
+  return <div className="w-full overflow-hidden border-b border-glass-border bg-background/50 py-6 backdrop-blur-md"><div className="mx-auto flex max-w-7xl items-center gap-5 overflow-x-auto px-4 scrollbar-hide"><div className="flex min-w-max items-center gap-5">{categories.map((cat) => { const Icon=(Icons as any)[cat.icon||"Package"]||Icons.Package; return <Link key={cat.id} to="/category/$slug" params={{slug:cat.slug}} className="group flex shrink-0 flex-col items-center gap-3"><div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-border/60 bg-muted/30 transition-all group-hover:scale-105 group-hover:border-primary/40">{cat.image_url?<img src={cat.image_url} alt="" className="h-full w-full object-cover"/>:<Icon className="h-7 w-7 text-primary"/>}</div><span className="w-24 text-center text-[10px] font-bold uppercase tracking-widest text-muted-foreground group-hover:text-foreground line-clamp-1">{cat.name}</span></Link>})}<Link to="/categories" className="group flex shrink-0 flex-col items-center gap-3"><div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-dashed border-primary/30 bg-primary/5 transition-all group-hover:scale-105"><ArrowRight className="h-6 w-6 text-primary"/></div><span className="w-24 text-center text-[10px] font-bold uppercase tracking-widest text-primary">Ver todas</span></Link></div></div></div>;
 }
