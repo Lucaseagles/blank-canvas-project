@@ -2,10 +2,16 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireOwnerRole } from "./auth-guards.server";
 
+const videoInput = z.object({
+  id: z.string().uuid().optional(), title: z.string().trim().min(1).max(200), storage_path: z.string().optional(), external_url: z.string().url().optional(),
+  duration_seconds: z.number().nonnegative().optional(), category_id: z.string().uuid().optional(), status: z.enum(['published', 'draft', 'archived']),
+  scheduled_for: z.string().datetime().optional().nullable(), campaign_id: z.string().uuid().optional().nullable(), productIds: z.array(z.string().uuid()).max(100).optional(),
+  caption: z.string().trim().max(500).optional().nullable(), subtitle_url: z.string().url().max(2000).optional().nullable(), subtitle_text: z.string().trim().max(10000).optional().nullable()
+});
+
 export const getVideos = createServerFn({ method: "GET" })
   .validator((data: { status?: 'published' | 'draft' | 'archived', categoryId?: string, campaignId?: string, limit?: number, includeScheduled?: boolean }) => z.object({
-    status: z.enum(['published', 'draft', 'archived']).optional(), categoryId: z.string().optional(), campaignId: z.string().optional(),
-    limit: z.number().int().min(1).max(100).optional().default(20), includeScheduled: z.boolean().optional().default(false)
+    status: z.enum(['published', 'draft', 'archived']).optional(), categoryId: z.string().optional(), campaignId: z.string().optional(), limit: z.number().int().min(1).max(100).optional().default(20), includeScheduled: z.boolean().optional().default(false)
   }).parse(data))
   .handler(async ({ data: { status, categoryId, campaignId, limit, includeScheduled } }) => {
     try {
@@ -26,11 +32,7 @@ export const getVideos = createServerFn({ method: "GET" })
 
 export const saveVideo = createServerFn({ method: "POST" })
   .middleware([requireOwnerRole])
-  .validator((data: unknown) => z.object({
-    id: z.string().uuid().optional(), title: z.string().trim().min(1).max(200), storage_path: z.string().optional(), external_url: z.string().url().optional(),
-    duration_seconds: z.number().nonnegative().optional(), category_id: z.string().uuid().optional(), status: z.enum(['published', 'draft', 'archived']),
-    scheduled_for: z.string().datetime().optional().nullable(), campaign_id: z.string().uuid().optional().nullable(), productIds: z.array(z.string().uuid()).max(100).optional()
-  }).parse(data))
+  .validator((data: unknown) => videoInput.parse(data))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
     const { productIds, ...videoData } = data;
@@ -38,7 +40,8 @@ export const saveVideo = createServerFn({ method: "POST" })
       title: videoData.title, status: videoData.status, storage_path: videoData.storage_path || null,
       external_url: videoData.external_url || null, duration_seconds: videoData.duration_seconds || null,
       category_id: videoData.category_id || null, scheduled_for: videoData.scheduled_for || null,
-      campaign_id: videoData.campaign_id || null, video_url: videoData.external_url || (videoData.storage_path ? `storage://${videoData.storage_path}` : '')
+      campaign_id: videoData.campaign_id || null, caption: videoData.caption || null, subtitle_url: videoData.subtitle_url || null,
+      subtitle_text: videoData.subtitle_text || null, video_url: videoData.external_url || (videoData.storage_path ? `storage://${videoData.storage_path}` : '')
     };
     let videoId = videoData.id;
     if (videoId) {
