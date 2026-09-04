@@ -1,0 +1,9 @@
+.product-video-premium { overflow: hidden; border: 1px solid hsl(var(--border) / .8); border-radius: 2rem; background: #050507; box-shadow: 0 24px 70px rgb(0 0 0 / .22); }
+.product-video-stage { position: relative; aspect-ratio: 16 / 9; overflow: hidden; }
+.product-video-element { width: 100%; height: 100%; object-fit: contain; background: #000; }
+.product-video-play { position: absolute; inset: 0; margin: auto; width: 4rem; height: 4rem; border: 1px solid rgb(255 255 255 / .15); border-radius: 999px; background: hsl(var(--primary) / .92); color: hsl(var(--primary-foreground)); box-shadow: 0 15px 45px rgb(0 0 0 / .35); transition: transform .2s ease; }
+.product-video-play:hover { transform: scale(1.06); }
+.product-video-controls { position: absolute; right: 0; bottom: 0; left: 0; padding: 2.5rem 1rem 1rem; background: linear-gradient(to top, rgb(0 0 0 / .86), transparent); }
+.product-video-caption { border-top: 1px solid rgb(255 255 255 / .08); padding: 1rem 1.1rem; background: hsl(var(--background) / .7); }
+@media (max-width: 640px) { .product-video-premium { border-radius: 1.5rem; } .product-video-controls { padding-inline: .75rem; } }
+@media (prefers-reduced-motion: reduce) { .product-video-play { transition: none; } }
