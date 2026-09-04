@@ -6,7 +6,15 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 const generateReferralCode = () => Math.random().toString(36).substring(2, 8).toUpperCase();
 
 type ReferralRow = { id: string; referral_code: string; referrer_user_id: string };
-type ReferralEventRow = { id: string; referral_id: string; invited_user_id: string; campaign_id: string | null; status: string; created_at: string };
+type ReferralEvent = {
+  id: string;
+  referral_id: string;
+  invited_user_id: string;
+  campaign_id: string | null;
+  status: string;
+  created_at: string;
+  referrals: { referral_code: string; referrer_user_id: string } | null;
+};
 
 export const getReferralInfo = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -38,7 +46,7 @@ export const processReferral = createServerFn({ method: "POST" }).validator((dat
 
 export const getAdminReferralStats = createServerFn({ method: "GET" }).middleware([requireOwnerRole]).handler(async () => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const result = await (supabaseAdmin.from("referral_events" as never) as unknown as { select: (columns: string) => { order: (column: string, options: { ascending: boolean }) => { limit: (count: number) => Promise<{ data: ReferralEventRow[] | null; error: Error | null }> } } }).select("*, referrals(referral_code,referrer_user_id)").order("created_at", { ascending: false }).limit(50);
+  const result = await (supabaseAdmin.from("referral_events" as never) as unknown as { select: (columns: string) => { order: (column: string, options: { ascending: boolean }) => { limit: (count: number) => Promise<{ data: ReferralEvent[] | null; error: Error | null }> } } }).select("id,referral_id,invited_user_id,campaign_id,status,created_at,referrals(referral_code,referrer_user_id)").order("created_at", { ascending: false }).limit(50);
   if (result.error) throw result.error;
   const [codes, totalEvents, activated, registered] = await Promise.all([
     supabaseAdmin.from("referrals" as never).select("id", { count: "exact", head: true }),
