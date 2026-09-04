@@ -5,17 +5,20 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const generateReferralCode = () => Math.random().toString(36).substring(2, 8).toUpperCase();
 
+type ReferralRow = { id: string; referral_code: string; referrer_user_id: string };
+type ReferralEventRow = { id: string; referral_id: string; invited_user_id: string; campaign_id: string | null; status: string; created_at: string };
+
 export const getReferralInfo = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const userId = context.userId;
   let { data: referral, error } = await supabaseAdmin.from("referrals" as never).select("*").eq("referrer_user_id", userId).maybeSingle();
   if (error) throw error;
   if (!referral) {
-    const { data: created, error: createError } = await supabaseAdmin.from("referrals" as never).insert({ referrer_user_id: userId, referral_code: generateReferralCode() }).select().single();
+    const { data: created, error: createError } = await (supabaseAdmin.from("referrals" as never) as unknown as { insert: (values: { referrer_user_id: string; referral_code: string }) => { select: () => { single: () => Promise<{ data: ReferralRow | null; error: Error | null }> } } }).insert({ referrer_user_id: userId, referral_code: generateReferralCode() }).select().single();
     if (createError) throw createError;
     referral = created;
   }
-  const r = referral as unknown as { id: string; referral_code: string };
+  const r = referral as unknown as ReferralRow;
   const [invited, registered, activated] = await Promise.all([
     supabaseAdmin.from("referral_events" as never).select("id", { count: "exact", head: true }).eq("referral_id", r.id),
     supabaseAdmin.from("referral_events" as never).select("id", { count: "exact", head: true }).eq("referral_id", r.id).eq("status", "registered"),
@@ -28,20 +31,28 @@ export const processReferral = createServerFn({ method: "POST" }).validator((dat
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: referral } = await supabaseAdmin.from("referrals" as never).select("id").eq("referral_code", data.code.toUpperCase()).maybeSingle();
   if (!referral) return { success: false, error: "Invalid code" };
-  const { error } = await supabaseAdmin.from("referral_events" as never).insert({ referral_id: (referral as { id: string }).id, invited_user_id: data.invitedUserId, status: "registered", campaign_id: data.campaignId ?? null });
-  if (error) throw error;
+  const result = await (supabaseAdmin.from("referral_events" as never) as unknown as { insert: (values: { referral_id: string; invited_user_id: string; status: string; campaign_id: string | null }) => Promise<{ error: Error | null }> }).insert({ referral_id: (referral as { id: string }).id, invited_user_id: data.invitedUserId, status: "registered", campaign_id: data.campaignId ?? null });
+  if (result.error) throw result.error;
   return { success: true };
 });
 
 export const getAdminReferralStats = createServerFn({ method: "GET" }).middleware([requireOwnerRole]).handler(async () => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data: events, error } = await supabaseAdmin.from("referral_events" as never).select("*, referrals(referral_code,referrer_user_id)").order("created_at", { ascending: false }).limit(50);
-  if (error) throw error;
+  const result = await (supabaseAdmin.from("referral_events" as never) as unknown as { select: (columns: string) => { order: (column: string, options: { ascending: boolean }) => { limit: (count: number) => Promise<{ data: ReferralEventRow[] | null; error: Error | null }> } } }).select("*, referrals(referral_code,referrer_user_id)").order("created_at", { ascending: false }).limit(50);
+  if (result.error) throw result.error;
   const [codes, totalEvents, activated, registered] = await Promise.all([
     supabaseAdmin.from("referrals" as never).select("id", { count: "exact", head: true }),
     supabaseAdmin.from("referral_events" as never).select("id", { count: "exact", head: true }),
     supabaseAdmin.from("referral_events" as never).select("id", { count: "exact", head: true }).eq("status", "activated"),
     supabaseAdmin.from("referral_events" as never).select("id", { count: "exact", head: true }).eq("status", "registered"),
   ]);
-  return { events: (events ?? []) as unknown[], summary: { totalCodes: codes.count ?? 0, totalEvents: totalEvents.count ?? 0, activated: activated.count ?? 0, registered: registered.count ?? 0 } };
+  return {
+    events: result.data ?? [],
+    summary: {
+      totalCodes: codes.count ?? 0,
+      totalEvents: totalEvents.count ?? 0,
+      activated: activated.count ?? 0,
+      registered: registered.count ?? 0,
+    },
+  };
 });
