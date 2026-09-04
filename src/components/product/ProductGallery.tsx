@@ -1,37 +1,56 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Images, ZoomIn, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import './ProductGallery.css';
 
 interface ProductGalleryProps {
   images?: string[] | null;
   productName: string;
   discount?: number | null;
+  autoPlay?: boolean;
 }
 
-export function ProductGallery({ images, productName, discount }: ProductGalleryProps) {
+export function ProductGallery({ images, productName, discount, autoPlay = false }: ProductGalleryProps) {
   const normalizedImages = useMemo(
-    () => (Array.isArray(images) ? images.filter((image): image is string => typeof image === 'string' && image.trim().length > 0) : []),
+    () => (Array.isArray(images) ? Array.from(new Set(images.filter((image): image is string => typeof image === 'string' && image.trim().length > 0))) : []),
     [images]
   );
   const [currentIndex, setCurrentIndex] = useState(0);
   const [zoomOpen, setZoomOpen] = useState(false);
   const touchStartX = useRef<number | null>(null);
 
-  const hasImages = normalizedImages.length > 0;
-  const safeIndex = hasImages ? Math.min(currentIndex, normalizedImages.length - 1) : 0;
+  const totalImages = normalizedImages.length;
+  const hasImages = totalImages > 0;
+  const safeIndex = hasImages ? Math.min(currentIndex, totalImages - 1) : 0;
   const currentImage = normalizedImages[safeIndex];
 
   const nextImage = () => {
-    if (normalizedImages.length < 2) return;
-    setCurrentIndex((index) => (index + 1) % normalizedImages.length);
+    if (totalImages < 2) return;
+    setCurrentIndex((index) => (index + 1) % totalImages);
   };
 
   const prevImage = () => {
-    if (normalizedImages.length < 2) return;
-    setCurrentIndex((index) => (index - 1 + normalizedImages.length) % normalizedImages.length);
+    if (totalImages < 2) return;
+    setCurrentIndex((index) => (index - 1 + totalImages) % totalImages);
   };
+
+  useEffect(() => {
+    if (!autoPlay || totalImages < 2 || zoomOpen) return;
+    const timer = window.setInterval(nextImage, 4000);
+    return () => window.clearInterval(timer);
+  }, [autoPlay, totalImages, zoomOpen]);
+
+  useEffect(() => {
+    if (!zoomOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowLeft') prevImage();
+      if (event.key === 'ArrowRight') nextImage();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [zoomOpen, totalImages]);
 
   const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
     touchStartX.current = event.touches[0]?.clientX ?? null;
@@ -40,96 +59,74 @@ export function ProductGallery({ images, productName, discount }: ProductGallery
   const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
     if (touchStartX.current === null) return;
     const endX = event.changedTouches[0]?.clientX;
-    if (endX === undefined) return;
-    const diff = touchStartX.current - endX;
+    const startX = touchStartX.current;
     touchStartX.current = null;
+    if (endX === undefined) return;
+    const diff = startX - endX;
     if (Math.abs(diff) >= 45) diff > 0 ? nextImage() : prevImage();
   };
 
+  if (!hasImages) {
+    return (
+      <div className="product-gallery-fallback" role="img" aria-label={`${productName}: imagem indisponível`}>
+        <Images className="h-10 w-10 opacity-40" />
+        <span>Imagem indisponível</span>
+      </div>
+    );
+  }
+
   return (
     <>
-      <div className="w-full max-w-2xl mx-auto space-y-3">
+      <div className="product-gallery-premium">
         <div
-          className="relative aspect-square overflow-hidden rounded-[2rem] bg-muted border border-glass-border shadow-2xl touch-pan-y"
+          className="gallery-main"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
+          aria-label={`Galeria de ${productName}`}
         >
-          {currentImage ? (
-            <button
-              type="button"
-              className="group block w-full h-full cursor-zoom-in"
-              onClick={() => setZoomOpen(true)}
-              aria-label={`Ampliar ${productName}`}
-            >
-              <img
-                src={currentImage}
-                alt={`${productName} — imagem ${safeIndex + 1} de ${normalizedImages.length}`}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                loading={safeIndex === 0 ? 'eager' : 'lazy'}
-                decoding="async"
-              />
-              <span className="absolute right-4 bottom-4 inline-flex items-center gap-2 rounded-full bg-black/55 px-3 py-2 text-xs font-bold text-white backdrop-blur-md opacity-0 transition-opacity group-hover:opacity-100">
-                <ZoomIn className="h-4 w-4" />
-                Ampliar
-              </span>
-            </button>
-          ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-muted-foreground">
-              <Images className="h-10 w-10 opacity-40" />
-              <span className="text-xs font-semibold uppercase tracking-wider">Imagem indisponível</span>
-            </div>
-          )}
+          <button type="button" className="gallery-image-button group" onClick={() => setZoomOpen(true)} aria-label={`Ampliar ${productName}`}>
+            <img
+              src={currentImage}
+              alt={`${productName} — imagem ${safeIndex + 1} de ${totalImages}`}
+              className="gallery-image"
+              loading={safeIndex === 0 ? 'eager' : 'lazy'}
+              decoding="async"
+              draggable={false}
+              onError={(event) => { event.currentTarget.style.visibility = 'hidden'; }}
+            />
+            <span className="gallery-zoom-hint"><ZoomIn className="h-4 w-4" />Ampliar</span>
+          </button>
 
           {discount !== null && discount !== undefined && discount > 0 && (
-            <div className="absolute top-5 left-5 z-20 rounded-2xl bg-primary px-4 py-2 text-lg font-black text-primary-foreground shadow-xl">
-              -{discount}%
-            </div>
+            <span className="gallery-discount">-{Math.round(discount)}%</span>
           )}
 
-          {normalizedImages.length > 1 && (
+          {totalImages > 1 && (
             <>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={(event) => { event.stopPropagation(); prevImage(); }}
-                aria-label="Imagem anterior"
-                className="absolute left-4 top-1/2 z-20 hidden -translate-y-1/2 rounded-full bg-black/45 text-white backdrop-blur-md hover:bg-black/65 md:flex"
-              >
+              <Button type="button" variant="ghost" size="icon" onClick={prevImage} aria-label="Imagem anterior" className="gallery-nav gallery-nav-prev">
                 <ChevronLeft className="h-5 w-5" />
               </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={(event) => { event.stopPropagation(); nextImage(); }}
-                aria-label="Próxima imagem"
-                className="absolute right-4 top-1/2 z-20 hidden -translate-y-1/2 rounded-full bg-black/45 text-white backdrop-blur-md hover:bg-black/65 md:flex"
-              >
+              <Button type="button" variant="ghost" size="icon" onClick={nextImage} aria-label="Próxima imagem" className="gallery-nav gallery-nav-next">
                 <ChevronRight className="h-5 w-5" />
               </Button>
-              <div className="absolute bottom-4 right-4 z-20 rounded-full bg-black/55 px-3 py-1.5 text-xs font-bold text-white backdrop-blur-md md:hidden">
-                {safeIndex + 1} / {normalizedImages.length}
-              </div>
+              <span className="gallery-counter" aria-live="polite">{safeIndex + 1} / {totalImages}</span>
             </>
           )}
         </div>
 
-        {normalizedImages.length > 1 && (
-          <div className="flex gap-2 overflow-x-auto px-1 py-1 scrollbar-hide snap-x snap-mandatory">
+        {totalImages > 1 && (
+          <div className="gallery-thumbnails" role="tablist" aria-label="Imagens do produto">
             {normalizedImages.map((image, index) => (
               <button
                 key={`${image}-${index}`}
                 type="button"
-                onClick={() => setCurrentIndex(index)}
+                role="tab"
+                aria-selected={index === safeIndex}
                 aria-label={`Ver imagem ${index + 1}`}
-                aria-current={index === safeIndex}
-                className={cn(
-                  'relative h-16 w-16 shrink-0 snap-start overflow-hidden rounded-xl border-2 transition-all sm:h-20 sm:w-20',
-                  index === safeIndex ? 'border-primary ring-2 ring-primary/20' : 'border-glass-border opacity-65 hover:opacity-100'
-                )}
+                onClick={() => setCurrentIndex(index)}
+                className={cn('gallery-thumbnail', index === safeIndex && 'is-active')}
               >
-                <img src={image} alt="" aria-hidden="true" className="h-full w-full object-cover" loading="lazy" decoding="async" />
+                <img src={image} alt="" aria-hidden="true" loading="lazy" decoding="async" />
               </button>
             ))}
           </div>
@@ -137,20 +134,22 @@ export function ProductGallery({ images, productName, discount }: ProductGallery
       </div>
 
       <Dialog open={zoomOpen} onOpenChange={setZoomOpen}>
-        <DialogContent className="w-[96vw] max-w-6xl border-glass-border bg-black/95 p-2 sm:p-4">
-          <div className="relative flex max-h-[90vh] items-center justify-center overflow-hidden rounded-2xl">
-            {currentImage && (
-              <img src={currentImage} alt={productName} className="max-h-[86vh] w-auto max-w-full object-contain" />
+        <DialogContent className="gallery-lightbox">
+          <div className="gallery-lightbox-stage">
+            <img src={currentImage} alt={`${productName} — imagem ${safeIndex + 1} de ${totalImages}`} className="gallery-lightbox-image" />
+            {totalImages > 1 && (
+              <>
+                <Button type="button" variant="ghost" size="icon" onClick={prevImage} aria-label="Imagem anterior" className="gallery-lightbox-nav left-3 sm:left-6">
+                  <ChevronLeft />
+                </Button>
+                <Button type="button" variant="ghost" size="icon" onClick={nextImage} aria-label="Próxima imagem" className="gallery-lightbox-nav right-3 sm:right-6">
+                  <ChevronRight />
+                </Button>
+                <div className="gallery-lightbox-counter">{safeIndex + 1} / {totalImages}</div>
+              </>
             )}
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => setZoomOpen(false)}
-              aria-label="Fechar zoom"
-              className="absolute right-2 top-2 rounded-full bg-black/55 text-white hover:bg-black/75"
-            >
-              <X className="h-5 w-5" />
+            <Button type="button" variant="ghost" size="icon" onClick={() => setZoomOpen(false)} aria-label="Fechar galeria" className="gallery-lightbox-close">
+              <X />
             </Button>
           </div>
         </DialogContent>
