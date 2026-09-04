@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Link } from "@tanstack/react-router";
-import { Search, ShoppingBag, Menu, User, Bell, Heart, Heart as FavoritesIcon, Play } from "lucide-react";
+import { Search, ShoppingBag, Menu, User, Bell, Heart, Heart as FavoritesIcon, Play, Grid3X3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -52,6 +52,7 @@ export function Navbar() {
   const navigation = [
     { to: "/feed", label: "Feed de Descoberta", icon: ShoppingBag },
     { to: "/products", label: "Produtos", icon: ShoppingBag },
+    { to: "/categories", label: "Categorias", icon: Grid3X3 },
     { to: "/deals", label: "Ofertas", icon: ShoppingBag },
     { to: "/trending", label: "Em Alta", icon: ShoppingBag },
     { to: "/videos", label: "Video Commerce", icon: Play },
@@ -96,6 +97,7 @@ export function Navbar() {
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <div className="hidden sm:flex items-center gap-1 pr-2 border-r border-glass-border">
             <Button asChild variant="ghost" size="icon" className="w-10 h-10 rounded-xl hover:bg-primary/10 hover:text-primary relative" aria-label="Feed de Descoberta"><Link to="/feed"><ShoppingBag size={20} /></Link></Button>
+            <Button asChild variant="ghost" size="icon" className="w-10 h-10 rounded-xl hover:bg-primary/10 hover:text-primary relative" aria-label="Categorias"><Link to="/categories"><Grid3X3 size={20} /></Link></Button>
             <Button asChild variant="ghost" size="icon" className="w-10 h-10 rounded-xl hover:bg-primary/10 hover:text-primary relative" aria-label="Video Commerce"><Link to="/videos"><Play size={20} /></Link></Button>
             <Button asChild variant="ghost" size="icon" className="w-10 h-10 rounded-xl hover:bg-primary/10 hover:text-primary relative" aria-label="Alertas"><Link to="/alerts"><Bell size={20} />{unreadCount > 0 && <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-black text-primary-foreground">{unreadCount}</span>}</Link></Button>
             <Button asChild variant="ghost" size="icon" className="w-10 h-10 rounded-xl hover:bg-primary/10 hover:text-primary relative" aria-label="Favoritos"><Link to="/favorites"><Heart size={20} />{favoritesCount > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />}</Link></Button>
