@@ -9,7 +9,7 @@ export function CategoryBreadcrumb({ items }: { items: Category[] }) {
         <Home className="h-4 w-4" /> Início
       </Link>
       <ChevronRight className="h-4 w-4 shrink-0 opacity-40" />
-      <Link to="/categories" className="shrink-0 rounded-lg px-2 py-1.5 hover:bg-muted/50 hover:text-foreground">Categorias</Link>
+      <a href="/categories" className="shrink-0 rounded-lg px-2 py-1.5 hover:bg-muted/50 hover:text-foreground">Categorias</a>
       {items.map((item, index) => (
         <span key={item.id} className="flex shrink-0 items-center gap-1.5">
           <ChevronRight className="h-4 w-4 opacity-40" />
