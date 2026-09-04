@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,8 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { useServerFn } from "@tanstack/react-start";
-import { User, Shield, Sparkles, LogOut, CheckCircle2, Bell, Zap, Share2, Copy, Users, Eye, Heart, ShoppingBag, Star, Package, Activity, ExternalLink, Settings2 } from "lucide-react";
+import { User, Shield, Sparkles, LogOut, CheckCircle2, Bell, Zap, Share2, Copy, Users, Eye, Heart, ShoppingBag, Activity, ExternalLink, Settings2, Trophy } from "lucide-react";
 import { useNotificationPreferences } from "@/hooks/useNotificationPreferences";
 import { getReferralInfo } from "@/lib/referral.functions";
 import { getUserGamificationStats } from "@/lib/gamification.functions";
@@ -21,246 +20,31 @@ import { useActivityTracker } from "@/hooks/useActivityTracker";
 import { trackEvent } from "@/lib/analytics";
 import { updateSocialProofOptOut } from "@/lib/social-proof.functions";
 import { ProfileStorefront } from "@/components/profile/ProfileStorefront";
+import { ReferralLeaderboard } from "@/referral/ReferralLeaderboard";
+import { ReferralTiers } from "@/referral/ReferralTiers";
 
-export const Route = createFileRoute("/profile")({
-  head: () => ({
-    meta: [
-      { title: "Perfil — Sua Conta" },
-      { name: "description", content: "Perfil, loja, favoritos, atividade, preferências e configurações." },
-    ],
-  }),
-  component: ProfilePage,
-});
+export const Route = createFileRoute("/profile")({ head: () => ({ meta: [{ title: "Perfil — Sua Conta" }, { name: "description", content: "Perfil, loja, favoritos, atividade, preferências e configurações." }] }), component: ProfilePage });
 
 function ProfilePage() {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const [userId, setUserId] = useState<string | null>(null);
-  const [displayName, setDisplayName] = useState("");
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedMarketplaces, setSelectedMarketplaces] = useState<string[]>([]);
-
+  const navigate = useNavigate(); const queryClient = useQueryClient(); const [userId, setUserId] = useState<string | null>(null); const [displayName, setDisplayName] = useState(""); const [selectedCategories, setSelectedCategories] = useState<string[]>([]); const [selectedMarketplaces, setSelectedMarketplaces] = useState<string[]>([]);
   useActivityTracker();
-
-  useEffect(() => {
-    let mounted = true;
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!mounted) return;
-      if (user) setUserId(user.id);
-      else navigate({ to: "/auth" });
-    });
-    return () => { mounted = false; };
-  }, [navigate]);
-
-  const { data: profile } = useQuery({
-    queryKey: ["profile", userId],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("*").eq("user_id", userId!).maybeSingle();
-      if (error) throw error;
-      if (data) setDisplayName(data.display_name || "");
-      return data;
-    },
-    enabled: !!userId,
-  });
-
-  const { data: preferences } = useQuery({
-    queryKey: ["user-preferences", userId],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("user_preferences").select("*").eq("user_id", userId!).maybeSingle();
-      if (error) throw error;
-      setSelectedCategories(data?.preferred_categories || []);
-      setSelectedMarketplaces(data?.preferred_marketplaces || []);
-      return data;
-    },
-    enabled: !!userId,
-  });
-
-  const { data: interests = [] } = useQuery({
-    queryKey: ["user-interests", userId],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("user_interests").select("score, categories(name)").eq("user_id", userId!).order("score", { ascending: false });
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!userId,
-  });
-
-  const { data: categories = [] } = useQuery({
-    queryKey: ["all-categories"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("categories").select("id,name").eq("is_active", true);
-      if (error) throw error;
-      return data || [];
-    },
-  });
-
-  const { data: marketplaces = [] } = useQuery({
-    queryKey: ["all-marketplaces"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("marketplaces").select("id,name").eq("status", "active");
-      if (error) throw error;
-      return data || [];
-    },
-  });
-
+  useEffect(() => { let mounted = true; supabase.auth.getUser().then(({ data: { user } }) => { if (!mounted) return; if (user) setUserId(user.id); else navigate({ to: "/auth" }); }); return () => { mounted = false; }; }, [navigate]);
+  const { data: profile } = useQuery({ queryKey: ["profile", userId], queryFn: async () => { const { data, error } = await supabase.from("profiles").select("*").eq("user_id", userId!).maybeSingle(); if (error) throw error; if (data) setDisplayName(data.display_name || ""); return data; }, enabled: !!userId });
+  const { data: preferences } = useQuery({ queryKey: ["user-preferences", userId], queryFn: async () => { const { data, error } = await supabase.from("user_preferences").select("*").eq("user_id", userId!).maybeSingle(); if (error) throw error; setSelectedCategories(data?.preferred_categories || []); setSelectedMarketplaces(data?.preferred_marketplaces || []); return data; }, enabled: !!userId });
+  const { data: interests = [] } = useQuery({ queryKey: ["user-interests", userId], queryFn: async () => { const { data, error } = await supabase.from("user_interests").select("score, categories(name)").eq("user_id", userId!).order("score", { ascending: false }); if (error) throw error; return data || []; }, enabled: !!userId });
+  const { data: categories = [] } = useQuery({ queryKey: ["all-categories"], queryFn: async () => { const { data, error } = await supabase.from("categories").select("id,name").eq("is_active", true); if (error) throw error; return data || []; } });
+  const { data: marketplaces = [] } = useQuery({ queryKey: ["all-marketplaces"], queryFn: async () => { const { data, error } = await supabase.from("marketplaces").select("id,name").eq("status", "active"); if (error) throw error; return data || []; } });
   const getGamificationFn = useServerFn(getUserGamificationStats);
-  const { data: gamification } = useQuery({
-    queryKey: ["gamification-stats", userId],
-    queryFn: () => getGamificationFn({ data: {} as any }),
-    enabled: !!userId,
-  });
-
-  const saveProfile = useMutation({
-    mutationFn: async () => {
-      if (!userId) throw new Error("Usuário não autenticado");
-      const { error: profileError } = await supabase.from("profiles").update({ display_name: displayName, updated_at: new Date().toISOString() }).eq("user_id", userId);
-      if (profileError) throw profileError;
-
-      const { data: existing } = await supabase.from("user_preferences").select("id").eq("user_id", userId).maybeSingle();
-      if (existing) {
-        const { error } = await supabase.from("user_preferences").update({ preferred_categories: selectedCategories, preferred_marketplaces: selectedMarketplaces }).eq("user_id", userId);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("user_preferences").insert({ user_id: userId, preferred_categories: selectedCategories, preferred_marketplaces: selectedMarketplaces });
-        if (error) throw error;
-      }
-      await trackEvent("PREFERENCE_UPDATED", { display_name: displayName, categories: selectedCategories, marketplaces: selectedMarketplaces });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["profile", userId] });
-      queryClient.invalidateQueries({ queryKey: ["user-preferences", userId] });
-      toast.success("Perfil atualizado com sucesso");
-    },
-    onError: (error) => toast.error(error.message),
-  });
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate({ to: "/auth" });
-  };
-
-  if (!userId) {
-    return <div className="min-h-[60vh] grid place-items-center text-sm font-bold text-muted-foreground">Carregando perfil...</div>;
-  }
-
-  const interestMax = Math.max(1, Number(interests[0]?.score || 1));
-  const firstName = displayName || "Operator";
-
-  return (
-    <main className="container mx-auto w-full max-w-6xl px-3 sm:px-5 lg:px-8 pt-20 sm:pt-24 pb-24">
-      <div className="grid gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
-        <aside className="space-y-5">
-          <Card className="rounded-[2rem] border-glass-border bg-glass backdrop-blur-xl overflow-hidden shadow-2xl">
-            <div className="h-24 bg-gradient-to-br from-primary/20 via-primary/5 to-transparent relative">
-              <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-20 h-20 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center border-4 border-background shadow-xl">
-                <User className="w-9 h-9" />
-              </div>
-            </div>
-            <CardContent className="pt-14 p-6 text-center">
-              <h1 className="text-2xl font-black italic uppercase tracking-tighter break-words">{firstName}</h1>
-              <p className="mt-1 text-[10px] font-black uppercase tracking-[.18em] text-muted-foreground/60 break-all">ID: {userId.slice(0, 12)}...</p>
-              <div className="grid grid-cols-3 gap-2 mt-6">
-                <MiniStat icon={Heart} label="Favoritos" value="" userId={userId} />
-                <MiniStat icon={Bell} label="Alertas" value="" userId={userId} />
-                <MiniStat icon={Activity} label="Atividade" value="" userId={userId} />
-              </div>
-              <Button onClick={handleLogout} variant="outline" className="w-full mt-6 rounded-xl border-destructive/20 text-destructive hover:bg-destructive/5 font-black uppercase text-[10px] tracking-widest">
-                <LogOut className="w-3.5 h-3.5 mr-2" /> Sair
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-[2rem] border-glass-border bg-glass backdrop-blur-xl shadow-xl">
-            <CardHeader className="pb-2"><CardTitle className="text-xs font-black uppercase tracking-[.2em] flex items-center gap-2 text-primary"><Shield className="w-4 h-4" /> QI de Descoberta</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              {interests.length ? interests.slice(0, 5).map((item: any, index: number) => (
-                <div key={index} className="space-y-1.5">
-                  <div className="flex justify-between text-[10px] font-bold uppercase"><span className="truncate mr-2">{item.categories?.name || "Categoria"}</span><span>{Number(item.score || 0).toFixed(0)}</span></div>
-                  <div className="h-1.5 rounded-full bg-white/5 overflow-hidden"><div className="h-full bg-primary rounded-full" style={{ width: `${Math.min(100, Number(item.score || 0) / interestMax * 100)}%` }} /></div>
-                </div>
-              )) : <div className="py-6 text-center opacity-40"><Sparkles className="w-7 h-7 mx-auto mb-2" /><p className="text-[10px] font-black uppercase tracking-widest">Aguardando sinais</p></div>}
-            </CardContent>
-          </Card>
-        </aside>
-
-        <section className="min-w-0">
-          <Tabs defaultValue="store" className="w-full">
-            <div className="overflow-x-auto pb-2 -mx-1 px-1 scrollbar-thin">
-              <TabsList className="inline-flex min-w-max h-12 rounded-2xl bg-glass border border-glass-border p-1">
-                <TabsTrigger value="store" className="rounded-xl px-4 text-xs font-black uppercase">Minha Loja</TabsTrigger>
-                <TabsTrigger value="overview" className="rounded-xl px-4 text-xs font-black uppercase">Visão Geral</TabsTrigger>
-                <TabsTrigger value="gamification" className="rounded-xl px-4 text-xs font-black uppercase">XP</TabsTrigger>
-                <TabsTrigger value="preferences" className="rounded-xl px-4 text-xs font-black uppercase">Preferências</TabsTrigger>
-                <TabsTrigger value="notifications" className="rounded-xl px-4 text-xs font-black uppercase">Sinais</TabsTrigger>
-                <TabsTrigger value="referral" className="rounded-xl px-4 text-xs font-black uppercase">Rede</TabsTrigger>
-              </TabsList>
-            </div>
-
-            <TabsContent value="store" className="mt-4"><ProfileStorefront userId={userId} /></TabsContent>
-
-            <TabsContent value="overview" className="mt-4 space-y-5">
-              <Card className="rounded-[2.5rem] border-glass-border bg-glass backdrop-blur-xl shadow-2xl">
-                <CardHeader className="p-6 sm:p-8"><CardTitle className="text-2xl sm:text-3xl font-black italic uppercase tracking-tighter">Seu perfil em uma visão</CardTitle><CardDescription>Dados reais do seu comportamento no sistema.</CardDescription></CardHeader>
-                <CardContent className="p-6 sm:p-8 pt-0 grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <ActivityMetric icon={Heart} label="Favoritos" table="favorites" userId={userId} />
-                  <ActivityMetric icon={Bell} label="Notificações" table="notifications" userId={userId} />
-                  <ActivityMetric icon={Eye} label="Eventos" table="analytics_events" userId={userId} />
-                  <ActivityMetric icon={ShoppingBag} label="Alertas de preço" table="price_alerts" userId={userId} />
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="gamification" className="mt-4"><GamificationDashboard points={gamification?.points || 0} streak={gamification?.streak || 0} badges={gamification?.badges || []} missions={gamification?.missions || []} /></TabsContent>
-
-            <TabsContent value="preferences" className="mt-4">
-              <Card className="rounded-[2.5rem] border-glass-border bg-glass backdrop-blur-xl shadow-2xl">
-                <CardHeader className="p-6 sm:p-8"><CardTitle className="text-2xl sm:text-3xl font-black italic uppercase tracking-tighter">Preferências de descoberta</CardTitle><CardDescription>Essas escolhas alimentam a personalização do feed.</CardDescription></CardHeader>
-                <CardContent className="p-6 sm:p-8 pt-0 space-y-8">
-                  <PreferenceGroup title="Categorias" items={categories} selected={selectedCategories} setSelected={setSelectedCategories} />
-                  <PreferenceGroup title="Marketplaces" items={marketplaces} selected={selectedMarketplaces} setSelected={setSelectedMarketplaces} />
-                  <Button onClick={() => saveProfile.mutate()} disabled={saveProfile.isPending} className="w-full h-14 rounded-2xl font-black uppercase tracking-widest">{saveProfile.isPending ? "Salvando..." : "Salvar preferências"}</Button>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="notifications" className="mt-4"><NotificationSettings userId={userId} /></TabsContent>
-            <TabsContent value="referral" className="mt-4"><ReferralPanel userId={userId} /></TabsContent>
-          </Tabs>
-        </section>
-      </div>
-    </main>
-  );
+  const { data: gamification } = useQuery({ queryKey: ["gamification-stats", userId], queryFn: () => getGamificationFn({ data: {} as never }), enabled: !!userId });
+  const saveProfile = useMutation({ mutationFn: async () => { if (!userId) throw new Error("Usuário não autenticado"); const { error: profileError } = await supabase.from("profiles").update({ display_name: displayName, updated_at: new Date().toISOString() }).eq("user_id", userId); if (profileError) throw profileError; const { data: existing } = await supabase.from("user_preferences").select("id").eq("user_id", userId).maybeSingle(); if (existing) { const { error } = await supabase.from("user_preferences").update({ preferred_categories: selectedCategories, preferred_marketplaces: selectedMarketplaces }).eq("user_id", userId); if (error) throw error; } else { const { error } = await supabase.from("user_preferences").insert({ user_id: userId, preferred_categories: selectedCategories, preferred_marketplaces: selectedMarketplaces }); if (error) throw error; } await trackEvent("PREFERENCE_UPDATED", { display_name: displayName, categories: selectedCategories, marketplaces: selectedMarketplaces }); }, onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["profile", userId] }); queryClient.invalidateQueries({ queryKey: ["user-preferences", userId] }); toast.success("Perfil atualizado com sucesso"); }, onError: (error) => toast.error(error.message) });
+  const handleLogout = async () => { await supabase.auth.signOut(); navigate({ to: "/auth" }); };
+  if (!userId) return <div className="min-h-[60vh] grid place-items-center text-sm font-bold text-muted-foreground">Carregando perfil...</div>;
+  const interestMax = Math.max(1, Number(interests[0]?.score || 1)); const firstName = displayName || "Operator";
+  return <main className="container mx-auto w-full max-w-6xl px-3 sm:px-5 lg:px-8 pt-20 sm:pt-24 pb-24"><div className="grid gap-5 lg:grid-cols-[300px_minmax(0,1fr)]"><aside className="space-y-5"><Card className="rounded-[2rem] border-glass-border bg-glass backdrop-blur-xl overflow-hidden shadow-2xl"><div className="h-24 bg-gradient-to-br from-primary/20 via-primary/5 to-transparent relative"><div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-20 h-20 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center border-4 border-background shadow-xl"><User className="w-9 h-9" /></div></div><CardContent className="pt-14 p-6 text-center"><h1 className="text-2xl font-black italic uppercase tracking-tighter break-words">{firstName}</h1><p className="mt-1 text-[10px] font-black uppercase tracking-[.18em] text-muted-foreground/60 break-all">ID: {userId.slice(0, 12)}...</p><div className="grid grid-cols-3 gap-2 mt-6"><MiniStat icon={Heart} label="Favoritos" value="" userId={userId} /><MiniStat icon={Bell} label="Alertas" value="" userId={userId} /><MiniStat icon={Activity} label="Atividade" value="" userId={userId} /></div><Button onClick={handleLogout} variant="outline" className="w-full mt-6 rounded-xl border-destructive/20 text-destructive hover:bg-destructive/5 font-black uppercase text-[10px] tracking-widest"><LogOut className="w-3.5 h-3.5 mr-2" /> Sair</Button></CardContent></Card><Card className="rounded-[2rem] border-glass-border bg-glass backdrop-blur-xl shadow-xl"><CardHeader className="pb-2"><CardTitle className="text-xs font-black uppercase tracking-[.2em] flex items-center gap-2 text-primary"><Shield className="w-4 h-4" /> QI de Descoberta</CardTitle></CardHeader><CardContent className="space-y-4">{interests.length ? interests.slice(0, 5).map((item: any, index: number) => <div key={index} className="space-y-1.5"><div className="flex justify-between text-[10px] font-bold uppercase"><span className="truncate mr-2">{item.categories?.name || "Categoria"}</span><span>{Number(item.score || 0).toFixed(0)}</span></div><div className="h-1.5 rounded-full bg-white/5 overflow-hidden"><div className="h-full bg-primary rounded-full" style={{ width: `${Math.min(100, Number(item.score || 0) / interestMax * 100)}%` }} /></div></div>) : <div className="py-6 text-center opacity-40"><Sparkles className="w-7 h-7 mx-auto mb-2" /><p className="text-[10px] font-black uppercase tracking-widest">Aguardando sinais</p></div>}</CardContent></Card></aside><section className="min-w-0"><Tabs defaultValue="store" className="w-full"><div className="overflow-x-auto pb-2 -mx-1 px-1 scrollbar-thin"><TabsList className="inline-flex min-w-max h-12 rounded-2xl bg-glass border border-glass-border p-1"><TabsTrigger value="store" className="rounded-xl px-4 text-xs font-black uppercase">Minha Loja</TabsTrigger><TabsTrigger value="overview" className="rounded-xl px-4 text-xs font-black uppercase">Visão Geral</TabsTrigger><TabsTrigger value="gamification" className="rounded-xl px-4 text-xs font-black uppercase">XP</TabsTrigger><TabsTrigger value="preferences" className="rounded-xl px-4 text-xs font-black uppercase">Preferências</TabsTrigger><TabsTrigger value="notifications" className="rounded-xl px-4 text-xs font-black uppercase">Sinais</TabsTrigger><TabsTrigger value="referral" className="rounded-xl px-4 text-xs font-black uppercase">Rede</TabsTrigger></TabsList></div><TabsContent value="store" className="mt-4"><ProfileStorefront userId={userId} /></TabsContent><TabsContent value="overview" className="mt-4 space-y-5"><Card className="rounded-[2.5rem] border-glass-border bg-glass backdrop-blur-xl shadow-2xl"><CardHeader className="p-6 sm:p-8"><CardTitle className="text-2xl sm:text-3xl font-black italic uppercase tracking-tighter">Seu perfil em uma visão</CardTitle><CardDescription>Dados reais do seu comportamento no sistema.</CardDescription></CardHeader><CardContent className="p-6 sm:p-8 pt-0 grid grid-cols-2 md:grid-cols-4 gap-3"><ActivityMetric icon={Heart} label="Favoritos" table="favorites" userId={userId} /><ActivityMetric icon={Bell} label="Notificações" table="notifications" userId={userId} /><ActivityMetric icon={Eye} label="Eventos" table="analytics_events" userId={userId} /><ActivityMetric icon={ShoppingBag} label="Alertas de preço" table="price_alerts" userId={userId} /></CardContent></Card></TabsContent><TabsContent value="gamification" className="mt-4"><GamificationDashboard points={gamification?.points || 0} streak={gamification?.streak || 0} badges={gamification?.badges || []} missions={gamification?.missions || []} /></TabsContent><TabsContent value="preferences" className="mt-4"><Card className="rounded-[2.5rem] border-glass-border bg-glass backdrop-blur-xl shadow-2xl"><CardHeader className="p-6 sm:p-8"><CardTitle className="text-2xl sm:text-3xl font-black italic uppercase tracking-tighter">Preferências de descoberta</CardTitle><CardDescription>Essas escolhas alimentam a personalização do feed.</CardDescription></CardHeader><CardContent className="p-6 sm:p-8 pt-0 space-y-8"><PreferenceGroup title="Categorias" items={categories} selected={selectedCategories} setSelected={setSelectedCategories} /><PreferenceGroup title="Marketplaces" items={marketplaces} selected={selectedMarketplaces} setSelected={setSelectedMarketplaces} /><Button onClick={() => saveProfile.mutate()} disabled={saveProfile.isPending} className="w-full h-14 rounded-2xl font-black uppercase tracking-widest">{saveProfile.isPending ? "Salvando..." : "Salvar preferências"}</Button></CardContent></Card></TabsContent><TabsContent value="notifications" className="mt-4"><NotificationSettings userId={userId} /></TabsContent><TabsContent value="referral" className="mt-4 space-y-5"><ReferralPanel userId={userId} /><ReferralTiers userId={userId} /><ReferralLeaderboard userId={userId} /></TabsContent></Tabs></section></div></main>;
 }
 
-function PreferenceGroup({ title, items, selected, setSelected }: { title: string; items: Array<{ id: string; name: string | null }>; selected: string[]; setSelected: (v: string[]) => void }) {
-  return <div className="space-y-3"><Label className="text-[10px] font-black uppercase tracking-[.2em] text-primary">{title}</Label><div className="grid grid-cols-2 sm:grid-cols-3 gap-2">{items.map((item) => { const active = selected.includes(item.id); return <button type="button" key={item.id} onClick={() => setSelected(active ? selected.filter((id) => id !== item.id) : [...selected, item.id])} className={`flex items-center gap-2 p-3 rounded-xl border text-left transition-all ${active ? "bg-primary/10 border-primary text-primary" : "bg-white/5 border-glass-border hover:bg-white/10"}`}><Checkbox checked={active} className="pointer-events-none" /><span className="text-[10px] font-black uppercase truncate">{item.name}</span></button>; })}</div></div>;
-}
-
-function ActivityMetric({ icon: Icon, label, table, userId }: { icon: any; label: string; table: string; userId: string }) {
-  const { data = 0 } = useQuery({ queryKey: ["profile-count", table, userId], queryFn: async () => { const { count, error } = await supabase.from(table as any).select("id", { count: "exact", head: true }).eq("user_id", userId); if (error) return 0; return count || 0; }, enabled: !!userId });
-  return <div className="rounded-2xl border border-glass-border bg-white/[.03] p-4"><Icon className="w-4 h-4 text-primary mb-3" /><div className="text-2xl font-black">{data}</div><div className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">{label}</div></div>;
-}
-
+function PreferenceGroup({ title, items, selected, setSelected }: { title: string; items: Array<{ id: string; name: string | null }>; selected: string[]; setSelected: (v: string[]) => void }) { return <div className="space-y-3"><Label className="text-[10px] font-black uppercase tracking-[.2em] text-primary">{title}</Label><div className="grid grid-cols-2 sm:grid-cols-3 gap-2">{items.map(item => { const active = selected.includes(item.id); return <button type="button" key={item.id} onClick={() => setSelected(active ? selected.filter(id => id !== item.id) : [...selected, item.id])} className={`flex items-center gap-2 p-3 rounded-xl border text-left transition-all ${active ? "bg-primary/10 border-primary text-primary" : "bg-white/5 border-glass-border hover:bg-white/10"}`}><Checkbox checked={active} className="pointer-events-none" /><span className="text-[10px] font-black uppercase truncate">{item.name}</span></button>; })}</div></div>; }
+function ActivityMetric({ icon: Icon, label, table, userId }: { icon: any; label: string; table: string; userId: string }) { const { data = 0 } = useQuery({ queryKey: ["profile-count", table, userId], queryFn: async () => { const { count, error } = await supabase.from(table as any).select("id", { count: "exact", head: true }).eq("user_id", userId); if (error) return 0; return count || 0; }, enabled: !!userId }); return <div className="rounded-2xl border border-glass-border bg-white/[.03] p-4"><Icon className="w-4 h-4 text-primary mb-3" /><div className="text-2xl font-black">{data}</div><div className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">{label}</div></div>; }
 function MiniStat({ icon: Icon, label, value }: { icon: any; label: string; value: string; userId: string }) { return <div className="rounded-xl bg-white/[.03] border border-white/5 p-2"><Icon className="w-3.5 h-3.5 mx-auto text-primary" /><div className="text-[9px] font-black uppercase tracking-wider text-muted-foreground mt-1">{label}</div>{value && <div className="text-xs font-black">{value}</div>}</div>; }
-
-function NotificationSettings({ userId }: { userId: string }) {
-  const queryClient = useQueryClient();
-  const { webPush, updatePreferences } = useNotificationPreferences(userId);
-  const { data: prefs } = useQuery({ queryKey: ["notification-preferences", userId], queryFn: async () => { const { data, error } = await supabase.from("notification_preferences").select("*").eq("user_id", userId).maybeSingle(); if (error) throw error; return data || { push_enabled: true, retention_enabled: true }; }, enabled: !!userId });
-  const { data: socialProof } = useQuery({ queryKey: ["social-proof-opt-in", userId], queryFn: async () => { const { data } = await supabase.from("user_preferences").select("show_in_social_proof").eq("user_id", userId).maybeSingle(); return (data as any)?.show_in_social_proof !== false; }, enabled: !!userId });
-  const privacy = useMutation({ mutationFn: (enabled: boolean) => updateSocialProofOptOut({ data: { userId, enabled } }), onSuccess: () => queryClient.invalidateQueries({ queryKey: ["social-proof-opt-in", userId] }) });
-  return <Card className="rounded-[2.5rem] border-glass-border bg-glass backdrop-blur-xl shadow-2xl"><CardHeader className="p-6 sm:p-8"><CardTitle className="text-2xl sm:text-3xl font-black italic uppercase">Configurações de sinais</CardTitle><CardDescription>Controle notificações e privacidade da prova social.</CardDescription></CardHeader><CardContent className="p-6 sm:p-8 pt-0 space-y-3">{[
-    { icon: Zap, title: "Web Push", description: "Receber alertas em tempo real", checked: !!(prefs?.push_enabled && webPush.isSubscribed), disabled: !webPush.isSupported || updatePreferences.isPending, change: (v: boolean) => updatePreferences.mutate({ push_enabled: v, togglePushSubscription: true }) },
-    { icon: Bell, title: "Retention Pulse", description: "Reengajamento inteligente", checked: !!prefs?.retention_enabled, disabled: updatePreferences.isPending, change: (v: boolean) => updatePreferences.mutate({ retention_enabled: v }) },
-    { icon: Eye, title: "Prova social", description: "Compartilhar atividade de forma anonimizada", checked: socialProof !== false, disabled: privacy.isPending, change: (v: boolean) => privacy.mutate(v) },
-  ].map((item) => <div key={item.title} className="flex items-center justify-between gap-4 rounded-2xl border border-glass-border bg-white/[.03] p-4 sm:p-5"><div className="flex items-center gap-3 min-w-0"><div className="w-9 h-9 rounded-xl bg-primary/10 text-primary grid place-items-center shrink-0"><item.icon className="w-4 h-4" /></div><div className="min-w-0"><p className="font-black uppercase text-xs truncate">{item.title}</p><p className="text-[10px] text-muted-foreground truncate">{item.description}</p></div></div><Switch checked={item.checked} disabled={item.disabled} onCheckedChange={item.change} /></div>)}{!webPush.isSupported && <p className="text-[10px] font-bold text-muted-foreground text-center pt-2">Web Push não é suportado neste navegador/dispositivo.</p>}</CardContent></Card>;
-}
-
-function ReferralPanel({ userId }: { userId: string }) {
-  const getReferralFn = useServerFn(getReferralInfo);
-  const { data: referral, isLoading } = useQuery({ queryKey: ["referral-info", userId], queryFn: () => getReferralFn({ data: {} as any }), enabled: !!userId });
-  const code = referral?.code || "...";
-  const link = typeof window !== "undefined" ? `${window.location.origin}/auth?ref=${code}` : "";
-  const share = async () => { try { if (navigator.share) await navigator.share({ title: "Convite", text: "Entre pelo meu convite.", url: link }); else await navigator.clipboard.writeText(link); toast.success("Link copiado"); } catch {} };
-  return <Card className="rounded-[2.5rem] border-glass-border bg-glass backdrop-blur-xl shadow-2xl"><CardHeader className="p-6 sm:p-8"><CardTitle className="text-2xl sm:text-3xl font-black italic uppercase flex items-center gap-2"><Users className="w-6 h-6 text-primary" /> Rede de indicação</CardTitle><CardDescription>Convide pessoas e acompanhe ativações reais.</CardDescription></CardHeader><CardContent className="p-6 sm:p-8 pt-0 space-y-6"><div className="rounded-2xl bg-primary/5 border border-primary/10 p-6 text-center"><p className="text-[10px] font-black uppercase tracking-[.25em] text-primary">Seu código</p><div className="text-3xl sm:text-4xl font-black tracking-widest mt-2">{isLoading ? "..." : code}</div><div className="flex gap-2 mt-5"><Button className="flex-1 rounded-xl font-black uppercase" onClick={share}><Share2 className="w-4 h-4 mr-2" /> Compartilhar</Button><Button variant="outline" className="w-12 rounded-xl" onClick={async () => { await navigator.clipboard.writeText(link); toast.success("Link copiado"); }}><Copy className="w-4 h-4" /></Button></div></div><div className="grid grid-cols-3 gap-2">{[["Convidados", referral?.stats?.invited], ["Registrados", referral?.stats?.registered], ["Ativados", referral?.stats?.activated]].map(([label, value]) => <div key={String(label)} className="rounded-2xl bg-white/[.03] border border-white/5 p-4 text-center"><div className="text-xl font-black">{Number(value || 0)}</div><div className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">{label}</div></div>)}</div></CardContent></Card>;
-}
+function NotificationSettings({ userId }: { userId: string }) { const queryClient = useQueryClient(); const { webPush, updatePreferences } = useNotificationPreferences(userId); const { data: prefs } = useQuery({ queryKey: ["notification-preferences", userId], queryFn: async () => { const { data, error } = await supabase.from("notification_preferences").select("*").eq("user_id", userId).maybeSingle(); if (error) throw error; return data || { push_enabled: true, retention_enabled: true }; }, enabled: !!userId }); const { data: socialProof } = useQuery({ queryKey: ["social-proof-opt-in", userId], queryFn: async () => { const { data } = await supabase.from("user_preferences").select("show_in_social_proof").eq("user_id", userId).maybeSingle(); return (data as any)?.show_in_social_proof !== false; }, enabled: !!userId }); const privacy = useMutation({ mutationFn: (enabled: boolean) => updateSocialProofOptOut({ data: { userId, enabled } }), onSuccess: () => queryClient.invalidateQueries({ queryKey: ["social-proof-opt-in", userId] }) }); return <Card className="rounded-[2.5rem] border-glass-border bg-glass backdrop-blur-xl shadow-2xl"><CardHeader className="p-6 sm:p-8"><CardTitle className="text-2xl sm:text-3xl font-black italic uppercase">Configurações de sinais</CardTitle><CardDescription>Controle notificações e privacidade da prova social.</CardDescription></CardHeader><CardContent className="p-6 sm:p-8 pt-0 space-y-3">{[{ icon: Zap, title: "Web Push", description: "Receber alertas em tempo real", checked: !!(prefs?.push_enabled && webPush.isSubscribed), disabled: !webPush.isSupported || updatePreferences.isPending, change: (v: boolean) => updatePreferences.mutate({ push_enabled: v, togglePushSubscription: true }) }, { icon: Bell, title: "Retention Pulse", description: "Reengajamento inteligente", checked: !!prefs?.retention_enabled, disabled: updatePreferences.isPending, change: (v: boolean) => updatePreferences.mutate({ retention_enabled: v }) }, { icon: Eye, title: "Prova social", description: "Compartilhar atividade de forma anonimizada", checked: socialProof !== false, disabled: privacy.isPending, change: (v: boolean) => privacy.mutate(v) }].map(item => <div key={item.title} className="flex items-center justify-between gap-4 rounded-2xl border border-glass-border bg-white/[.03] p-4 sm:p-5"><div className="flex items-center gap-3 min-w-0"><div className="w-9 h-9 rounded-xl bg-primary/10 text-primary grid place-items-center shrink-0"><item.icon className="w-4 h-4" /></div><div className="min-w-0"><p className="font-black uppercase text-xs truncate">{item.title}</p><p className="text-[10px] text-muted-foreground truncate">{item.description}</p></div></div><Switch checked={item.checked} disabled={item.disabled} onCheckedChange={item.change} /></div>)}{!webPush.isSupported && <p className="text-[10px] font-bold text-muted-foreground text-center pt-2">Web Push não é suportado neste navegador/dispositivo.</p>}</CardContent></Card>; }
+function ReferralPanel({ userId }: { userId: string }) { const getReferralFn = useServerFn(getReferralInfo); const { data: referral, isLoading } = useQuery({ queryKey: ["referral-info", userId], queryFn: () => getReferralFn({ data: {} as never }), enabled: !!userId }); const code = referral?.code || "..."; const link = typeof window !== "undefined" ? `${window.location.origin}/auth?ref=${code}` : ""; const share = async () => { try { if (navigator.share) await navigator.share({ title: "Convite", text: "Entre pelo meu convite.", url: link }); else { await navigator.clipboard.writeText(link); toast.success("Link copiado"); } } catch {} }; return <Card className="rounded-[2.5rem] border-glass-border bg-glass backdrop-blur-xl shadow-2xl"><CardHeader className="p-6 sm:p-8"><CardTitle className="text-2xl sm:text-3xl font-black italic uppercase flex items-center gap-2"><Users className="w-6 h-6 text-primary" /> Rede de indicação</CardTitle><CardDescription>Convide pessoas e acompanhe ativações reais.</CardDescription></CardHeader><CardContent className="p-6 sm:p-8 pt-0 space-y-6"><div className="rounded-2xl bg-primary/5 border border-primary/10 p-6 text-center"><p className="text-[10px] font-black uppercase tracking-[.25em] text-primary">Seu código</p><div className="text-3xl sm:text-4xl font-black tracking-widest mt-2">{isLoading ? "..." : code}</div><div className="flex gap-2 mt-5"><Button className="flex-1 rounded-xl font-black uppercase" onClick={share}><Share2 className="w-4 h-4 mr-2" /> Compartilhar</Button><Button variant="outline" className="w-12 rounded-xl" onClick={async () => { await navigator.clipboard.writeText(link); toast.success("Link copiado"); }}><Copy className="w-4 h-4" /></Button></div></div><div className="grid grid-cols-3 gap-2">{[["Convidados", referral?.stats?.invited], ["Registrados", referral?.stats?.registered], ["Ativados", referral?.stats?.activated]].map(([label, value]) => <div key={String(label)} className="rounded-2xl bg-white/[.03] border border-white/5 p-4 text-center"><div className="text-xl font-black">{Number(value || 0)}</div><div className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">{label}</div></div>)}</div></CardContent></Card>; }
