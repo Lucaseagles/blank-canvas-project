@@ -10,17 +10,19 @@ function readUrl(): FilterState {
   if (typeof window === "undefined") return defaults;
   const p = new URLSearchParams(window.location.search);
   const num = (key: string, fallback: number) => { const n = Number(p.get(key)); return Number.isFinite(n) && n >= 0 ? n : fallback; };
-  return { categories: p.get("categories")?.split(",").filter(Boolean) ?? [], minPrice: num("min_price", 0), maxPrice: num("max_price", DEFAULT_MAX_PRICE), minDiscount: num("min_discount", 0), minRating: num("min_rating", 0), marketplaces: p.get("marketplaces")?.split(",").filter(Boolean) ?? [], freeShipping: p.get("free_shipping") === "true", bestOffer: p.get("best_offer") === "true" };
+  return { categories: p.get("categories")?.split(",").filter(Boolean) ?? [], minPrice: num("min_price", 0), maxPrice: num("max_price", DEFAULT_MAX_PRICE), minDiscount: Math.min(100, num("min_discount", 0)), minRating: Math.min(5, num("min_rating", 0)), marketplaces: p.get("marketplaces")?.split(",").filter(Boolean) ?? [], freeShipping: p.get("free_shipping") === "true", bestOffer: p.get("best_offer") === "true" };
 }
 
 export function useFilters(pageType: "search" | "products" | "category" | "deals", categoryId?: string) {
-  const [filters, setFilters] = useState<FilterState>(() => readUrl());
+  const [filters, setFiltersState] = useState<FilterState>(() => readUrl());
   const [availableFilters, setAvailableFilters] = useState({ categories: [] as FilterOption[], marketplaces: [] as FilterOption[], minPrice: 0, maxPrice: DEFAULT_MAX_PRICE });
   const [results, setResults] = useState<any[]>([]);
   const [totalResults, setTotalResults] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [optionsLoading, setOptionsLoading] = useState(true);
 
   const updateURL = useCallback((next: FilterState) => {
+    if (typeof window === "undefined") return;
     const p = new URLSearchParams(window.location.search);
     const set = (key: string, value: string | null) => value ? p.set(key, value) : p.delete(key);
     set("categories", pageType === "category" ? null : next.categories.length ? next.categories.join(",") : null);
@@ -32,22 +34,33 @@ export function useFilters(pageType: "search" | "products" | "category" | "deals
     set("free_shipping", next.freeShipping ? "true" : null);
     set("best_offer", next.bestOffer ? "true" : null);
     window.history.replaceState({}, "", `${window.location.pathname}${p.toString() ? `?${p}` : ""}`);
-    window.dispatchEvent(new PopStateEvent("popstate"));
   }, [pageType]);
 
   const loadOptions = useCallback(async () => {
-    const categoryQuery = supabase.from("categories").select("id,name").eq("is_active", true).order("name");
-    const marketplaceQuery = supabase.from("marketplaces").select("id,name").order("name");
-    const [cats, mps, minPriceQuery, maxPriceQuery] = await Promise.all([
-      categoryQuery, marketplaceQuery,
-      supabase.from("products").select("current_price").eq("status", "active").order("current_price", { ascending: true }).limit(1),
-      supabase.from("products").select("current_price").eq("status", "active").order("current_price", { ascending: false }).limit(1),
-    ]);
-    if (cats.error) throw cats.error; if (mps.error) throw mps.error; if (minPriceQuery.error) throw minPriceQuery.error; if (maxPriceQuery.error) throw maxPriceQuery.error;
-    const min = Number(minPriceQuery.data?.[0]?.current_price ?? 0); const max = Number(maxPriceQuery.data?.[0]?.current_price ?? DEFAULT_MAX_PRICE);
-    const scopedCategories = pageType === "category" ? [] : filters.categories;
-    setAvailableFilters({ categories: (cats.data ?? []).map((c) => ({ id: c.id, name: c.name, count: 0, checked: scopedCategories.includes(c.id) })), marketplaces: (mps.data ?? []).map((m) => ({ id: m.id, name: m.name, count: 0, checked: filters.marketplaces.includes(m.id) })), minPrice: Number.isFinite(min) ? Math.floor(min) : 0, maxPrice: Number.isFinite(max) ? Math.ceil(max) : DEFAULT_MAX_PRICE });
-  }, [filters.categories, filters.marketplaces, pageType]);
+    setOptionsLoading(true);
+    try {
+      const [cats, mps, minPriceQuery, maxPriceQuery] = await Promise.all([
+        supabase.from("categories").select("id,name").eq("is_active", true).order("name"),
+        supabase.from("marketplaces").select("id,name").order("name"),
+        supabase.from("products").select("current_price").eq("status", "active").order("current_price", { ascending: true }).limit(1),
+        supabase.from("products").select("current_price").eq("status", "active").order("current_price", { ascending: false }).limit(1),
+      ]);
+      if (cats.error) throw cats.error;
+      if (mps.error) throw mps.error;
+      if (minPriceQuery.error) throw minPriceQuery.error;
+      if (maxPriceQuery.error) throw maxPriceQuery.error;
+      const min = Number(minPriceQuery.data?.[0]?.current_price ?? 0);
+      const max = Number(maxPriceQuery.data?.[0]?.current_price ?? DEFAULT_MAX_PRICE);
+      setAvailableFilters({
+        categories: (cats.data ?? []).map((c) => ({ id: c.id, name: c.name, count: 0, checked: filters.categories.includes(c.id) })),
+        marketplaces: (mps.data ?? []).map((m) => ({ id: m.id, name: m.name, count: 0, checked: filters.marketplaces.includes(m.id) })),
+        minPrice: Number.isFinite(min) ? Math.floor(min) : 0,
+        maxPrice: Number.isFinite(max) && max >= min ? Math.ceil(max) : DEFAULT_MAX_PRICE,
+      });
+    } finally {
+      setOptionsLoading(false);
+    }
+  }, [filters.categories, filters.marketplaces]);
 
   const applyFilters = useCallback(async () => {
     setLoading(true);
@@ -64,16 +77,25 @@ export function useFilters(pageType: "search" | "products" | "category" | "deals
       if (filters.bestOffer) q = q.eq("is_best_offer", true);
       const { data, error, count } = await q.order("created_at", { ascending: false }).range(0, 49);
       if (error) throw error;
-      setResults((data ?? []) as any[]); setTotalResults(count ?? 0);
-    } finally { setLoading(false); }
+      setResults((data ?? []) as any[]);
+      setTotalResults(count ?? 0);
+    } finally {
+      setLoading(false);
+    }
   }, [categoryId, filters, pageType]);
 
   useEffect(() => { void loadOptions(); }, [loadOptions]);
   useEffect(() => { void applyFilters(); }, [applyFilters]);
-  useEffect(() => { const onPopState = () => setFilters(readUrl()); window.addEventListener("popstate", onPopState); return () => window.removeEventListener("popstate", onPopState); }, []);
+  useEffect(() => { const onPopState = () => setFiltersState(readUrl()); window.addEventListener("popstate", onPopState); return () => window.removeEventListener("popstate", onPopState); }, []);
 
-  const updateFilters = useCallback((patch: Partial<FilterState>) => { setFilters((current) => { const next = { ...current, ...patch }; updateURL(next); return next; }); }, [updateURL]);
-  const activeFilterCount = useMemo(() => filters.categories.length + filters.marketplaces.length + (filters.minPrice > 0 ? 1 : 0) + (filters.maxPrice < DEFAULT_MAX_PRICE ? 1 : 0) + (filters.minDiscount > 0 ? 1 : 0) + (filters.minRating > 0 ? 1 : 0) + (filters.freeShipping ? 1 : 0) + (filters.bestOffer ? 1 : 0), [filters]);
-  const clearFilters = useCallback(() => { setFilters(defaults); updateURL(defaults); }, [updateURL]);
-  return { filters, setFilters: updateFilters, availableFilters, results, totalResults, loading, activeFilterCount, clearFilters };
+  const setFilters = useCallback((patch: Partial<FilterState> | FilterState) => {
+    setFiltersState((current) => {
+      const next = { ...current, ...patch };
+      updateURL(next);
+      return next;
+    });
+  }, [updateURL]);
+  const activeFilterCount = useMemo(() => filters.categories.length + filters.marketplaces.length + (filters.minPrice > availableFilters.minPrice ? 1 : 0) + (filters.maxPrice < availableFilters.maxPrice ? 1 : 0) + (filters.minDiscount > 0 ? 1 : 0) + (filters.minRating > 0 ? 1 : 0) + (filters.freeShipping ? 1 : 0) + (filters.bestOffer ? 1 : 0), [availableFilters, filters]);
+  const clearFilters = useCallback(() => { const next = { ...defaults, minPrice: availableFilters.minPrice, maxPrice: availableFilters.maxPrice }; setFiltersState(next); updateURL(next); }, [availableFilters.maxPrice, availableFilters.minPrice, updateURL]);
+  return { filters, setFilters, availableFilters, results, totalResults, loading, optionsLoading, activeFilterCount, clearFilters };
 }
