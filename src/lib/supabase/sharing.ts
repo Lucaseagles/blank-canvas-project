@@ -24,42 +24,65 @@ export interface ShareCardConfig {
   reward_label: string;
 }
 
+type ShareHistoryInsert = {
+  user_id: string;
+  referral_code: string;
+  platform: SharePlatform;
+  format: ShareFormat;
+};
+
+type ShareTableClient = {
+  from(table: string): {
+    select(columns: string): {
+      eq(column: string, value: unknown): any;
+      in(column: string, values: unknown[]): any;
+      order(column: string): any;
+      maybeSingle(): Promise<{ data: unknown; error: Error | null }>;
+    };
+    insert(values: ShareHistoryInsert): Promise<{ error: Error | null }>;
+    update(values: Record<string, unknown>): {
+      eq(column: string, value: unknown): Promise<{ error: Error | null }>;
+    };
+  };
+};
+
+const shareDb = supabase as unknown as ShareTableClient;
 const asTemplates = (data: unknown): ShareTemplate[] => (data ?? []) as ShareTemplate[];
 
 export async function getShareTemplates(): Promise<ShareTemplate[]> {
-  const { data, error } = await supabase.from("share_templates" as never).select("*").eq("is_active", true).order("platform");
+  const { data, error } = await shareDb.from("share_templates").select("*").eq("is_active", true).order("platform");
   if (error) throw error;
   return asTemplates(data);
 }
 
 export async function getAllShareTemplates(): Promise<ShareTemplate[]> {
-  const { data, error } = await supabase.from("share_templates" as never).select("*").order("platform");
+  const { data, error } = await shareDb.from("share_templates").select("*").order("platform");
   if (error) throw error;
   return asTemplates(data);
 }
 
 export async function getShareTemplate(platform: string): Promise<ShareTemplate | null> {
-  const { data, error } = await supabase.from("share_templates" as never).select("*").eq("platform", platform).eq("is_active", true).maybeSingle();
+  const { data, error } = await shareDb.from("share_templates").select("*").eq("platform", platform).eq("is_active", true).maybeSingle();
   if (error) throw error;
   return (data ?? null) as ShareTemplate | null;
 }
 
 export async function getShareCardConfig(): Promise<ShareCardConfig | null> {
-  const { data, error } = await supabase.from("share_card_config" as never).select("config_key,config_value").in("config_key", ["card_style", "card_texts"]);
+  const { data, error } = await shareDb.from("share_card_config").select("config_key,config_value").in("config_key", ["card_style", "card_texts"]);
   if (error) throw error;
-  const rows = (data ?? []) as unknown as Array<{ config_key: string; config_value: unknown }>;
+  const rows = (data ?? []) as Array<{ config_key: string; config_value: unknown }>;
   const style = (rows.find((row) => row.config_key === "card_style")?.config_value ?? {}) as Partial<ShareCardConfig>;
   const texts = (rows.find((row) => row.config_key === "card_texts")?.config_value ?? {}) as Partial<ShareCardConfig>;
   return { ...style, ...texts } as ShareCardConfig;
 }
 
 export async function logShare(userId: string, referralCode: string, platform: SharePlatform, format: ShareFormat): Promise<void> {
-  const { error } = await supabase.from("share_history" as never).insert({ user_id: userId, referral_code: referralCode, platform, format });
+  const { error } = await shareDb.from("share_history").insert({ user_id: userId, referral_code: referralCode, platform, format });
   if (error) throw error;
 }
 
 export async function updateShareTemplate(id: string, values: Pick<ShareTemplate, "caption_template" | "max_length" | "hashtags" | "is_active">): Promise<void> {
-  const { error } = await supabase.from("share_templates" as never).update({ ...values, updated_at: new Date().toISOString() }).eq("id", id);
+  const { error } = await shareDb.from("share_templates").update({ ...values, updated_at: new Date().toISOString() }).eq("id", id);
   if (error) throw error;
 }
 
@@ -67,7 +90,7 @@ export async function updateShareCardConfig(config: ShareCardConfig): Promise<vo
   const style = { primary_color: config.primary_color, secondary_color: config.secondary_color, text_color: config.text_color, background: config.background, accent_color: config.accent_color };
   const texts = { title: config.title, subtitle: config.subtitle, cta: config.cta, reward_label: config.reward_label };
   for (const [configKey, configValue] of [["card_style", style], ["card_texts", texts]] as const) {
-    const { error } = await supabase.from("share_card_config" as never).update({ config_value: configValue, updated_at: new Date().toISOString() }).eq("config_key", configKey);
+    const { error } = await shareDb.from("share_card_config").update({ config_value: configValue, updated_at: new Date().toISOString() }).eq("config_key", configKey);
     if (error) throw error;
   }
 }
