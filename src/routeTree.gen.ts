@@ -14,6 +14,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AlertsRouteImport } from './routes/alerts'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BridgeVideosRouteImport } from './routes/bridge-videos'
+import { Route as CategoriesRouteImport } from './routes/categories'
 import { Route as DealsRouteImport } from './routes/deals'
 import { Route as FavoritesRouteImport } from './routes/favorites'
 import { Route as FeedRouteImport } from './routes/feed'
@@ -50,6 +51,7 @@ import { Route as AdminTelegramRouteImport } from './routes/admin/telegram'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminV1AuditRouteImport } from './routes/admin/v1-audit'
 import { Route as AdminVideosRouteImport } from './routes/admin/videos'
+import { Route as ApiScheduledPublishingRouteImport } from './routes/api/scheduled-publishing'
 import { Route as BundleSlugRouteImport } from './routes/bundle/$slug'
 import { Route as CategorySlugRouteImport } from './routes/category/$slug'
 import { Route as DevSocialProofPreviewRouteImport } from './routes/dev.social-proof-preview'
@@ -78,6 +80,11 @@ const AuthRoute = AuthRouteImport.update({
 const BridgeVideosRoute = BridgeVideosRouteImport.update({
   id: '/bridge-videos',
   path: '/bridge-videos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CategoriesRoute = CategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DealsRoute = DealsRouteImport.update({
@@ -260,6 +267,11 @@ const AdminVideosRoute = AdminVideosRouteImport.update({
   path: '/videos',
   getParentRoute: () => AdminRoute,
 } as any)
+const ApiScheduledPublishingRoute = ApiScheduledPublishingRouteImport.update({
+  id: '/api/scheduled-publishing',
+  path: '/api/scheduled-publishing',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BundleSlugRoute = BundleSlugRouteImport.update({
   id: '/bundle/$slug',
   path: '/bundle/$slug',
@@ -287,6 +299,7 @@ export interface FileRoutesByFullPath {
   '/alerts': typeof AlertsRoute
   '/auth': typeof AuthRoute
   '/bridge-videos': typeof BridgeVideosRoute
+  '/categories': typeof CategoriesRoute
   '/deals': typeof DealsRoute
   '/favorites': typeof FavoritesRoute
   '/feed': typeof FeedRoute
@@ -323,6 +336,7 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AdminUsersRoute
   '/admin/v1-audit': typeof AdminV1AuditRoute
   '/admin/videos': typeof AdminVideosRoute
+  '/api/scheduled-publishing': typeof ApiScheduledPublishingRoute
   '/bundle/$slug': typeof BundleSlugRoute
   '/category/$slug': typeof CategorySlugRoute
   '/dev/social-proof-preview': typeof DevSocialProofPreviewRoute
@@ -334,6 +348,7 @@ export interface FileRoutesByTo {
   '/alerts': typeof AlertsRoute
   '/auth': typeof AuthRoute
   '/bridge-videos': typeof BridgeVideosRoute
+  '/categories': typeof CategoriesRoute
   '/deals': typeof DealsRoute
   '/favorites': typeof FavoritesRoute
   '/feed': typeof FeedRoute
@@ -370,6 +385,7 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AdminUsersRoute
   '/admin/v1-audit': typeof AdminV1AuditRoute
   '/admin/videos': typeof AdminVideosRoute
+  '/api/scheduled-publishing': typeof ApiScheduledPublishingRoute
   '/bundle/$slug': typeof BundleSlugRoute
   '/category/$slug': typeof CategorySlugRoute
   '/dev/social-proof-preview': typeof DevSocialProofPreviewRoute
@@ -382,6 +398,7 @@ export interface FileRoutesById {
   '/alerts': typeof AlertsRoute
   '/auth': typeof AuthRoute
   '/bridge-videos': typeof BridgeVideosRoute
+  '/categories': typeof CategoriesRoute
   '/deals': typeof DealsRoute
   '/favorites': typeof FavoritesRoute
   '/feed': typeof FeedRoute
@@ -418,6 +435,7 @@ export interface FileRoutesById {
   '/admin/users': typeof AdminUsersRoute
   '/admin/v1-audit': typeof AdminV1AuditRoute
   '/admin/videos': typeof AdminVideosRoute
+  '/api/scheduled-publishing': typeof ApiScheduledPublishingRoute
   '/bundle/$slug': typeof BundleSlugRoute
   '/category/$slug': typeof CategorySlugRoute
   '/dev/social-proof-preview': typeof DevSocialProofPreviewRoute
@@ -431,6 +449,7 @@ export interface FileRouteTypes {
     | '/alerts'
     | '/auth'
     | '/bridge-videos'
+    | '/categories'
     | '/deals'
     | '/favorites'
     | '/feed'
@@ -467,6 +486,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/admin/v1-audit'
     | '/admin/videos'
+    | '/api/scheduled-publishing'
     | '/bundle/$slug'
     | '/category/$slug'
     | '/dev/social-proof-preview'
@@ -478,6 +498,7 @@ export interface FileRouteTypes {
     | '/alerts'
     | '/auth'
     | '/bridge-videos'
+    | '/categories'
     | '/deals'
     | '/favorites'
     | '/feed'
@@ -514,6 +535,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/admin/v1-audit'
     | '/admin/videos'
+    | '/api/scheduled-publishing'
     | '/bundle/$slug'
     | '/category/$slug'
     | '/dev/social-proof-preview'
@@ -525,6 +547,7 @@ export interface FileRouteTypes {
     | '/alerts'
     | '/auth'
     | '/bridge-videos'
+    | '/categories'
     | '/deals'
     | '/favorites'
     | '/feed'
@@ -561,6 +584,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/admin/v1-audit'
     | '/admin/videos'
+    | '/api/scheduled-publishing'
     | '/bundle/$slug'
     | '/category/$slug'
     | '/dev/social-proof-preview'
@@ -573,6 +597,7 @@ export interface RootRouteChildren {
   AlertsRoute: typeof AlertsRoute
   AuthRoute: typeof AuthRoute
   BridgeVideosRoute: typeof BridgeVideosRoute
+  CategoriesRoute: typeof CategoriesRoute
   DealsRoute: typeof DealsRoute
   FavoritesRoute: typeof FavoritesRoute
   FeedRoute: typeof FeedRoute
@@ -584,6 +609,7 @@ export interface RootRouteChildren {
   SearchRoute: typeof SearchRoute
   TrendingRoute: typeof TrendingRoute
   VideosRoute: typeof VideosRoute
+  ApiScheduledPublishingRoute: typeof ApiScheduledPublishingRoute
   BundleSlugRoute: typeof BundleSlugRoute
   CategorySlugRoute: typeof CategorySlugRoute
   DevSocialProofPreviewRoute: typeof DevSocialProofPreviewRoute
@@ -625,6 +651,13 @@ declare module '@tanstack/react-router' {
       path: '/bridge-videos'
       fullPath: '/bridge-videos'
       preLoaderRoute: typeof BridgeVideosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/categories': {
+      id: '/categories'
+      path: '/categories'
+      fullPath: '/categories'
+      preLoaderRoute: typeof CategoriesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/deals': {
@@ -879,6 +912,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminVideosRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/api/scheduled-publishing': {
+      id: '/api/scheduled-publishing'
+      path: '/api/scheduled-publishing'
+      fullPath: '/api/scheduled-publishing'
+      preLoaderRoute: typeof ApiScheduledPublishingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/bundle/$slug': {
       id: '/bundle/$slug'
       path: '/bundle/$slug'
@@ -974,6 +1014,7 @@ const rootRouteChildren: RootRouteChildren = {
   AlertsRoute: AlertsRoute,
   AuthRoute: AuthRoute,
   BridgeVideosRoute: BridgeVideosRoute,
+  CategoriesRoute: CategoriesRoute,
   DealsRoute: DealsRoute,
   FavoritesRoute: FavoritesRoute,
   FeedRoute: FeedRoute,
@@ -985,6 +1026,7 @@ const rootRouteChildren: RootRouteChildren = {
   SearchRoute: SearchRoute,
   TrendingRoute: TrendingRoute,
   VideosRoute: VideosRoute,
+  ApiScheduledPublishingRoute: ApiScheduledPublishingRoute,
   BundleSlugRoute: BundleSlugRoute,
   CategorySlugRoute: CategorySlugRoute,
   DevSocialProofPreviewRoute: DevSocialProofPreviewRoute,
