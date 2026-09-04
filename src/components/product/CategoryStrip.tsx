@@ -28,7 +28,7 @@ export function CategoryStrip() {
       <div className="mx-auto flex max-w-7xl items-center gap-5 overflow-x-auto px-4 scrollbar-hide">
         <div className="flex min-w-max items-center gap-5">
           {categories.map((cat) => {
-            const Icon = (Icons as Record<string, typeof Icons.Package>)[cat.icon || "Package"] || Icons.Package;
+            const Icon = (Icons as unknown as Record<string, typeof Icons.Package>)[cat.icon || "Package"] || Icons.Package;
             return (
               <Link key={cat.id} to="/category/$slug" params={{ slug: cat.slug }} className="group flex shrink-0 flex-col items-center gap-3">
                 <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-border/60 bg-muted/30 transition-all group-hover:scale-105 group-hover:border-primary/40">
