@@ -1,123 +1,33 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getCategoriesAdmin, saveCategory, deleteCategory } from "@/lib/admin_intel.functions";
+import { getCategoriesAdmin, saveCategory, deleteCategory, reorderCategories } from "@/lib/admin_intel.functions";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit2, Trash2, FolderIcon } from "lucide-react";
+import { Plus, Edit2, Trash2, FolderIcon, GripVertical, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/admin/categories")({
-  component: AdminCategoriesPage,
-});
+export const Route = createFileRoute("/admin/categories")({ component: AdminCategoriesPage });
 
-function AdminCategoriesPage() {
-  const getCats = useServerFn(getCategoriesAdmin);
-  const saveCat = useServerFn(saveCategory);
-  const deleteCat = useServerFn(deleteCategory);
-  const queryClient = useQueryClient();
+type Category = { id:string; name:string; slug:string; description?:string|null; icon?:string|null; image_url?:string|null; color?:string|null; parent_id?:string|null; display_order?:number; is_active?:boolean };
+type FormState = Omit<Category,"id"> & { id?:string };
+const emptyForm:FormState={name:"",slug:"",description:"",icon:"FolderOpen",image_url:"",color:"",parent_id:null,display_order:0,is_active:true};
 
-  const { data: categories } = useSuspenseQuery({
-    queryKey: ["admin-categories"],
-    queryFn: () => getCats({ data: undefined }),
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => deleteCat({ data: { id } }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
-      toast.success("Category deleted");
-    }
-  });
-
-  return (
-    <div className="container mx-auto py-8 lg:py-12 px-4 lg:px-8 space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
-        <div className="space-y-2">
-          <Badge className="bg-primary/10 text-primary border-primary/20 font-bold px-3">Structure</Badge>
-          <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase italic">Categories</h1>
-        </div>
-        <Button className="h-12 px-8 font-black uppercase tracking-tighter italic gap-2 rounded-2xl shadow-2xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
-          <Plus className="w-5 h-5" />
-          Add Category
-        </Button>
-      </div>
-
-      <div className="bg-glass-fallback border border-glass-border rounded-[2.5rem] backdrop-blur-xl overflow-hidden elevation-1 shadow-2xl reveal-on-scroll">
-        <div className="hidden lg:block">
-          <Table>
-            <TableHeader className="bg-muted/30">
-              <TableRow className="border-glass-border">
-                <TableHead className="font-black text-xs uppercase tracking-widest text-muted-foreground py-6 pl-8">Name</TableHead>
-                <TableHead className="font-black text-xs uppercase tracking-widest text-muted-foreground">Slug</TableHead>
-                <TableHead className="font-black text-xs uppercase tracking-widest text-muted-foreground">Parent</TableHead>
-                <TableHead className="font-black text-xs uppercase tracking-widest text-muted-foreground text-right pr-8">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {categories.map((cat) => (
-                <TableRow key={cat.id} className="hover:bg-white/5 border-glass-border transition-colors group">
-                  <TableCell className="font-bold py-6 pl-8">
-                    <div className="flex items-center gap-3">
-                      <FolderIcon className="w-4 h-4 text-primary" />
-                      {cat.name}
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-medium text-muted-foreground font-mono text-xs">{cat.slug}</TableCell>
-                  <TableCell className="text-muted-foreground text-xs uppercase font-black">
-                    {cat.parent_id ? categories.find(c => c.id === cat.parent_id)?.name : "Root"}
-                  </TableCell>
-                  <TableCell className="text-right pr-8">
-                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-muted-foreground hover:text-foreground bg-white/5 hover:bg-white/10 border border-white/5 transition-all">
-                        <Edit2 className="w-4 h-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-10 w-10 rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10 bg-white/5 border border-white/5 transition-all"
-                        onClick={() => {
-                          if (confirm("Delete this category?")) deleteMutation.mutate(cat.id);
-                        }}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-
-        <div className="lg:hidden divide-y divide-glass-border">
-          {categories.map((cat) => (
-            <div key={cat.id} className="p-6 space-y-4 hover:bg-white/5 transition-colors">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <FolderIcon className="w-4 h-4 text-primary" />
-                  <div>
-                    <h3 className="font-bold text-sm">{cat.name}</h3>
-                    <p className="text-[10px] text-muted-foreground font-mono">{cat.slug}</p>
-                  </div>
-                </div>
-                <Badge variant="outline" className="text-[8px] uppercase font-black opacity-50 border-glass-border">
-                  {cat.parent_id ? categories.find(c => c.id === cat.parent_id)?.name : "Root"}
-                </Badge>
-              </div>
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <Button size="icon" variant="ghost" className="h-9 w-9 bg-white/5 border border-white/5">
-                  <Edit2 className="w-4 h-4" />
-                </Button>
-                <Button size="icon" variant="ghost" className="h-9 w-9 bg-rose-500/10 text-rose-500 border border-rose-500/10" onClick={() => { if (confirm("Delete?")) deleteMutation.mutate(cat.id); }}>
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+function AdminCategoriesPage(){
+ const getCats=useServerFn(getCategoriesAdmin), saveCat=useServerFn(saveCategory), deleteCat=useServerFn(deleteCategory), reorderCat=useServerFn(reorderCategories); const qc=useQueryClient();
+ const {data}=useSuspenseQuery({queryKey:["admin-categories"],queryFn:()=>getCats({data:undefined})}); const categories=data as Category[];
+ const [editing,setEditing]=useState<FormState|null>(null); const [dragId,setDragId]=useState<string|null>(null);
+ const refresh=()=>qc.invalidateQueries({queryKey:["admin-categories"]});
+ const save=useMutation({mutationFn:(v:FormState)=>saveCat({data:v}),onSuccess:()=>{refresh();setEditing(null);toast.success("Categoria salva");},onError:(e)=>toast.error(e instanceof Error?e.message:"Não foi possível salvar")});
+ const remove=useMutation({mutationFn:(id:string)=>deleteCat({data:{id}}),onSuccess:()=>{refresh();toast.success("Categoria excluída")},onError:(e)=>toast.error(e instanceof Error?e.message:"Não foi possível excluir")});
+ const reorder=useMutation({mutationFn:(ids:string[])=>reorderCat({data:{ids}}),onSuccess:refresh,onError:(e)=>toast.error(e instanceof Error?e.message:"Não foi possível reordenar")});
+ const ordered=[...categories].sort((a,b)=>(a.display_order??0)-(b.display_order??0));
+ const move=(id:string,target:string)=>{const ids=ordered.map(c=>c.id);const from=ids.indexOf(id),to=ids.indexOf(target);if(from<0||to<0||from===to)return;ids.splice(from,1);ids.splice(to,0,id);reorder.mutate(ids)};
+ const toggle=(cat:Category)=>save.mutate({...cat,is_active:!(cat.is_active??true)});
+ return <div className="container mx-auto px-4 py-8 lg:px-8 lg:py-12 space-y-8">
+  <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between"><div className="space-y-2"><Badge className="bg-primary/10 text-primary border-primary/20 font-bold px-3">Structure</Badge><h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase italic">Categorias</h1><p className="text-sm text-muted-foreground">Controle visual, ordem, status e conteúdo das categorias públicas.</p></div><Button onClick={()=>setEditing({...emptyForm})} className="h-12 rounded-2xl px-7 font-black uppercase"><Plus className="mr-2 h-4 w-4"/>Adicionar</Button></div>
+  <div className="space-y-3">{ordered.map((cat,index)=><div key={cat.id} draggable onDragStart={()=>setDragId(cat.id)} onDragOver={e=>e.preventDefault()} onDrop={()=>{if(dragId){move(dragId,cat.id);setDragId(null)}}} className="rounded-3xl border border-border/60 bg-card/60 p-4 shadow-xl"><div className="flex flex-col gap-4 md:flex-row md:items-center"><GripVertical className="hidden h-5 w-5 shrink-0 text-muted-foreground md:block"/><div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border/60 bg-muted/40">{cat.image_url?<img src={cat.image_url} alt="" className="h-full w-full object-cover"/>:<FolderIcon className="h-6 w-6 text-primary"/>}</div><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h3 className="font-black">{cat.name}</h3><Badge variant="outline" className="text-[9px]">#{index+1}</Badge><Badge variant={cat.is_active===false?"secondary":"default"} className="text-[9px]">{cat.is_active===false?"INATIVA":"ATIVA"}</Badge></div><p className="text-xs text-muted-foreground font-mono">/{cat.slug} · {cat.parent_id?categories.find(x=>x.id===cat.parent_id)?.name??"Subcategoria":"Raiz"}</p></div><div className="flex flex-wrap gap-2"><Button variant="outline" size="sm" onClick={()=>toggle(cat)}>{cat.is_active===false?<Eye className="mr-1 h-4 w-4"/>:<EyeOff className="mr-1 h-4 w-4"/>}{cat.is_active===false?"Ativar":"Ocultar"}</Button><Button variant="outline" size="sm" onClick={()=>setEditing({...cat})}><Edit2 className="mr-1 h-4 w-4"/>Editar</Button><Button variant="ghost" size="icon" className="text-destructive" onClick={()=>{if(confirm("Excluir esta categoria? Produtos vinculados podem impedir a exclusão."))remove.mutate(cat.id)}}><Trash2 className="h-4 w-4"/></Button></div></div></div>)}</div>
+  {editing&&<div className="fixed inset-0 z-[120] bg-black/70 p-4 backdrop-blur-sm" onMouseDown={e=>{if(e.target===e.currentTarget)setEditing(null)}}><div className="mx-auto mt-8 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[2rem] border border-border bg-background p-6 shadow-2xl"><div className="mb-6 flex items-center justify-between"><div><h2 className="text-2xl font-black">{editing.id?"Editar categoria":"Nova categoria"}</h2><p className="text-sm text-muted-foreground">Todos os campos visuais são persistidos no banco.</p></div><Button variant="ghost" onClick={()=>setEditing(null)}>Fechar</Button></div><div className="grid gap-4 md:grid-cols-2">{([['name','Nome'],['slug','Slug'],['icon','Ícone Lucide'],['image_url','URL da imagem'],['color','Cor'],['display_order','Ordem']] as const).map(([key,label])=><label key={key} className="space-y-1 text-sm font-bold"><span>{label}</span><input type={key==='display_order'?'number':'text'} value={String(editing[key]??'')} onChange={e=>setEditing({...editing,[key]:key==='display_order'?Number(e.target.value):e.target.value})} className="h-11 w-full rounded-xl border border-border bg-card px-3 outline-none focus:ring-2 focus:ring-primary/30"/></label>)}<label className="space-y-1 text-sm font-bold md:col-span-2"><span>Descrição</span><textarea value={editing.description??''} onChange={e=>setEditing({...editing,description:e.target.value})} className="min-h-24 w-full rounded-xl border border-border bg-card p-3 outline-none focus:ring-2 focus:ring-primary/30"/></label><label className="space-y-1 text-sm font-bold"><span>Categoria pai</span><select value={editing.parent_id??''} onChange={e=>setEditing({...editing,parent_id:e.target.value||null})} className="h-11 w-full rounded-xl border border-border bg-card px-3"><option value="">Raiz</option>{categories.filter(c=>c.id!==editing.id).map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label><label className="flex items-center gap-3 self-end rounded-xl border border-border p-3 text-sm font-bold"><input type="checkbox" checked={editing.is_active??true} onChange={e=>setEditing({...editing,is_active:e.target.checked})}/>Categoria ativa</label></div><div className="mt-6 flex justify-end gap-3"><Button variant="outline" onClick={()=>setEditing(null)}>Cancelar</Button><Button disabled={save.isPending} onClick={()=>save.mutate(editing)}>{save.isPending?"Salvando…":"Salvar categoria"}</Button></div></div></div>}
+ </div>;
 }
