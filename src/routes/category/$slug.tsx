@@ -12,6 +12,7 @@ import { getSubcategories, getCategoryBreadcrumb } from "@/lib/supabase/categori
 import { SubcategoryGrid } from "@/categories/SubcategoryGrid";
 import { FilterDrawer } from "@/filters/FilterDrawer";
 import { useFilters } from "@/filters/useFilters";
+import type { Category } from "@/lib/supabase/categories";
 
 export const Route = createFileRoute("/category/$slug")({
   head: ({ params }) => ({
@@ -26,16 +27,16 @@ export const Route = createFileRoute("/category/$slug")({
 function CategoryPage() {
   const { slug } = Route.useParams();
   const [showFilters, setShowFilters] = useState(false);
-  const { data: category, isLoading: categoryLoading } = useQuery({
+  const { data: category, isLoading: categoryLoading } = useQuery<Category | null>({
     queryKey: ["category-info", slug],
-    queryFn: async () => {
+    queryFn: async (): Promise<Category | null> => {
       const { data, error } = await supabase
         .from("categories")
         .select("id,name,slug,icon,image_url,color,parent_id,display_order,is_active,created_at")
         .eq("slug", slug)
         .maybeSingle();
       if (error) throw error;
-      return data;
+      return (data ?? null) as unknown as Category | null;
     },
   });
   const { data: subcategories = [] } = useQuery({
