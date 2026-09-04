@@ -16,9 +16,9 @@ export interface Category {
 }
 
 export async function getMainCategories(): Promise<Category[]> {
-  const { data, error } = await supabase.rpc("get_categories_with_counts");
+  const { data, error } = await supabase.rpc("get_categories_with_counts" as never);
   if (error) throw error;
-  return (data ?? []) as Category[];
+  return (data ?? []) as unknown as Category[];
 }
 
 export async function getCategoryBySlug(slug: string): Promise<Category | null> {
@@ -30,7 +30,7 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
 export async function getSubcategories(parentId: string): Promise<Category[]> {
   const { data, error } = await supabase
     .from("categories")
-    .select("id,name,slug,description,icon,image_url,color,parent_id,display_order,created_at")
+    .select("id,name,slug,icon,parent_id,display_order,created_at")
     .eq("parent_id", parentId)
     .eq("is_active", true)
     .order("display_order", { ascending: true })
@@ -50,7 +50,7 @@ export async function getSubcategories(parentId: string): Promise<Category[]> {
 
   const counts = new Map<string, number>();
   for (const product of products ?? []) {
-    counts.set(product.category_id, (counts.get(product.category_id) ?? 0) + 1);
+    if (product.category_id) counts.set(product.category_id, (counts.get(product.category_id) ?? 0) + 1);
   }
   return rows.map((row) => ({ ...row, product_count: counts.get(row.id) ?? 0 }));
 }
@@ -64,8 +64,9 @@ export async function getCategoryBreadcrumb(categoryId: string): Promise<Categor
     visited.add(currentId);
     const { data, error } = await supabase.from("categories").select("*").eq("id", currentId).maybeSingle();
     if (error || !data) break;
-    breadcrumb.unshift(data as Category);
-    currentId = data.parent_id;
+    const row = data as Category;
+    breadcrumb.unshift(row);
+    currentId = row.parent_id ?? null;
   }
   return breadcrumb;
 }
