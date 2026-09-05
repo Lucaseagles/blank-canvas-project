@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useServerFn } from '@tanstack/react-start';
-import { GripVertical, ImagePlus, Play, Save, Trash2, Video, X } from 'lucide-react';
+import { GripVertical, ImagePlus, Play, Save, Trash2, Video } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { saveVideo } from '@/lib/video.functions';
