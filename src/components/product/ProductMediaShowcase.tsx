@@ -14,6 +14,7 @@ interface ProductMediaShowcaseProps {
     title?: string | null;
     caption?: string | null;
     subtitle?: string | null;
+    subtitleText?: string | null;
     subtitleUrl?: string | null;
     thumbnail?: string | null;
     resumeAt?: number;
@@ -40,6 +41,7 @@ export function ProductMediaShowcase({ title, images, discount, video, onVideoSt
             title={video.title ?? null}
             caption={video.caption ?? null}
             subtitle={video.subtitle ?? null}
+            subtitleText={video.subtitleText ?? null}
             subtitleUrl={video.subtitleUrl ?? null}
             thumbnail={video.thumbnail ?? null}
             initialTime={video.resumeAt ?? 0}
