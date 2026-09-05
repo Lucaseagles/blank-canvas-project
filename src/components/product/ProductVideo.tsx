@@ -9,6 +9,7 @@ interface ProductVideoProps {
   title?: string | null;
   caption?: string | null;
   subtitle?: string | null;
+  subtitleText?: string | null;
   subtitleUrl?: string | null;
   thumbnail?: string | null;
   autoPlay?: boolean;
@@ -23,6 +24,7 @@ export function ProductVideo({
   title,
   caption,
   subtitle,
+  subtitleText,
   subtitleUrl,
   thumbnail,
   autoPlay = false,
@@ -83,16 +85,13 @@ export function ProductVideo({
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !Number.isFinite(initialTime) || initialTime <= 0) return;
-
     const seek = () => {
       if (Number.isFinite(video.duration) && video.duration > 0) {
         video.currentTime = Math.min(initialTime, Math.max(0, video.duration - 0.5));
       }
     };
-
     if (video.readyState >= 1) seek();
     else video.addEventListener('loadedmetadata', seek, { once: true });
-
     return () => video.removeEventListener('loadedmetadata', seek);
   }, [initialTime, videoUrl]);
 
@@ -120,14 +119,9 @@ export function ProductVideo({
     const video = videoRef.current;
     if (!video) return;
     if (video.paused) {
-      try {
-        await video.play();
-      } catch {
-        setError('Não foi possível reproduzir o vídeo.');
-      }
-    } else {
-      video.pause();
-    }
+      try { await video.play(); }
+      catch { setError('Não foi possível reproduzir o vídeo.'); }
+    } else video.pause();
     revealControls();
   };
 
@@ -153,9 +147,7 @@ export function ProductVideo({
     try {
       if (document.fullscreenElement) await document.exitFullscreen();
       else await stage.requestFullscreen();
-    } catch {
-      setError('Não foi possível abrir a tela cheia.');
-    }
+    } catch { setError('Não foi possível abrir a tela cheia.'); }
     revealControls();
   };
 
@@ -163,30 +155,19 @@ export function ProductVideo({
     const nextVisible = !showCaption;
     setShowCaption(nextVisible);
     const video = videoRef.current;
-    if (video) {
-      Array.from(video.textTracks).forEach((track) => {
-        track.mode = nextVisible ? 'showing' : 'hidden';
-      });
-    }
+    if (video) Array.from(video.textTracks).forEach((track) => { track.mode = nextVisible ? 'showing' : 'hidden'; });
     revealControls();
   };
 
   const handleStageKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.target !== event.currentTarget) return;
-    if (event.key === ' ' || event.key === 'Enter') {
-      event.preventDefault();
-      void togglePlay();
-    } else if (event.key === 'm') {
-      event.preventDefault();
-      toggleMute();
-    } else if (event.key === 'f') {
-      event.preventDefault();
-      void toggleFullscreen();
-    } else if (event.key === 'c' && (caption || subtitleUrl)) {
-      event.preventDefault();
-      toggleCaptions();
-    }
+    if (event.key === ' ' || event.key === 'Enter') { event.preventDefault(); void togglePlay(); }
+    else if (event.key === 'm') { event.preventDefault(); toggleMute(); }
+    else if (event.key === 'f') { event.preventDefault(); void toggleFullscreen(); }
+    else if (event.key === 'c' && (caption || subtitleUrl || subtitleText)) { event.preventDefault(); toggleCaptions(); }
   };
+
+  const transcript = subtitleText?.trim() || subtitle?.trim() || '';
 
   return (
     <div className="product-video-premium">
@@ -220,16 +201,9 @@ export function ProductVideo({
             setPlaying(true);
             setError(null);
             revealControls();
-            if (!started) {
-              setStarted(true);
-              onStart?.();
-            }
+            if (!started) { setStarted(true); onStart?.(); }
           }}
-          onPause={() => {
-            setPlaying(false);
-            setShowControls(true);
-            clearControlsTimer();
-          }}
+          onPause={() => { setPlaying(false); setShowControls(true); clearControlsTimer(); }}
           onTimeUpdate={() => {
             const video = videoRef.current;
             if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return;
@@ -242,63 +216,36 @@ export function ProductVideo({
               lastProgressRef.current = nextTime;
               onProgress(nextTime, video.duration);
             }
-            if (!completed && ratio >= 0.9) {
-              setCompleted(true);
-              onComplete?.();
-            }
+            if (!completed && ratio >= 0.9) { setCompleted(true); onComplete?.(); }
           }}
           onEnded={() => {
             const video = videoRef.current;
             setPlaying(false);
             setProgress(100);
+            setCurrentTime(Number.isFinite(video?.duration) ? video!.duration : currentTime);
             setShowControls(true);
             clearControlsTimer();
             if (onProgress && video) onProgress(video.currentTime, video.duration);
           }}
-          onError={() => {
-            setLoading(false);
-            setError('Erro ao carregar vídeo.');
-          }}
+          onError={() => { setLoading(false); setError('Erro ao carregar vídeo.'); }}
           onClick={() => void togglePlay()}
         >
           {subtitleUrl && (
-            <track
-              kind="subtitles"
-              src={subtitleUrl}
-              srcLang="pt-BR"
-              label="Português"
-              default={showCaption}
-            />
+            <track kind="subtitles" src={subtitleUrl} srcLang="pt-BR" label="Português" default={showCaption} />
           )}
         </video>
 
         {loading && !error && (
-          <div className="product-video-status" role="status">
-            <span className="product-video-spinner" aria-hidden="true" />
-            <span>Carregando vídeo...</span>
-          </div>
+          <div className="product-video-status" role="status"><span className="product-video-spinner" aria-hidden="true" /><span>Carregando vídeo...</span></div>
         )}
-
         {error && (
-          <div className="product-video-status product-video-error" role="alert">
-            <span aria-hidden="true">⚠️</span>
-            <span>{error}</span>
-          </div>
+          <div className="product-video-status product-video-error" role="alert"><span aria-hidden="true">⚠️</span><span>{error}</span></div>
         )}
-
         {caption && showCaption && !loading && !error && (
-          <div className="product-video-caption-overlay" aria-hidden="true">
-            {caption}
-          </div>
+          <div className="product-video-caption-overlay" aria-hidden="true">{caption}</div>
         )}
-
         {!playing && !loading && !error && (
-          <button
-            type="button"
-            onClick={() => void togglePlay()}
-            aria-label="Reproduzir vídeo"
-            className="product-video-play"
-          >
+          <button type="button" onClick={() => void togglePlay()} aria-label="Reproduzir vídeo" className="product-video-play">
             <Play className="h-8 w-8 fill-current" />
           </button>
         )}
@@ -307,54 +254,31 @@ export function ProductVideo({
           <div className={`product-video-controls ${showControls ? 'is-visible' : 'is-hidden'}`}>
             <div className="product-video-controls-top">
               {title && <span className="product-video-title">{title}</span>}
-              {(caption || subtitleUrl) && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={toggleCaptions}
-                  aria-label={showCaption ? 'Ocultar legendas' : 'Mostrar legendas'}
-                  className={showCaption ? 'text-primary hover:bg-white/10' : 'text-white/70 hover:bg-white/10'}
-                >
+              {(caption || subtitleUrl || transcript) && (
+                <Button type="button" variant="ghost" size="icon" onClick={toggleCaptions} aria-label={showCaption ? 'Ocultar legendas' : 'Mostrar legendas'} className={showCaption ? 'text-primary hover:bg-white/10' : 'text-white/70 hover:bg-white/10'}>
                   <Captions />
                 </Button>
               )}
             </div>
-
-            <Slider
-              value={[progress]}
-              max={100}
-              step={0.1}
-              onValueChange={seek}
-              aria-label="Progresso do vídeo"
-              className="product-video-progress"
-            />
-
+            <Slider value={[progress]} max={100} step={0.1} onValueChange={seek} aria-label="Progresso do vídeo" className="product-video-progress" />
             <div className="product-video-actions">
               <div className="flex items-center gap-1">
-                <Button type="button" variant="ghost" size="icon" onClick={() => void togglePlay()} aria-label={playing ? 'Pausar vídeo' : 'Reproduzir vídeo'} className="text-white hover:bg-white/15">
-                  {playing ? <Pause /> : <Play />}
-                </Button>
-                <Button type="button" variant="ghost" size="icon" onClick={toggleMute} aria-label={muted ? 'Ativar som' : 'Silenciar vídeo'} className="text-white hover:bg-white/15">
-                  {muted ? <VolumeX /> : <Volume2 />}
-                </Button>
+                <Button type="button" variant="ghost" size="icon" onClick={() => void togglePlay()} aria-label={playing ? 'Pausar vídeo' : 'Reproduzir vídeo'} className="text-white hover:bg-white/15">{playing ? <Pause /> : <Play />}</Button>
+                <Button type="button" variant="ghost" size="icon" onClick={toggleMute} aria-label={muted ? 'Ativar som' : 'Silenciar vídeo'} className="text-white hover:bg-white/15">{muted ? <VolumeX /> : <Volume2 />}</Button>
                 <span className="product-video-time">{formatTime(currentTime)} / {formatTime(duration)}</span>
               </div>
-
-              <Button type="button" variant="ghost" size="icon" onClick={() => void toggleFullscreen()} aria-label={fullscreen ? 'Sair da tela cheia' : 'Tela cheia'} className="text-white hover:bg-white/15">
-                {fullscreen ? <Minimize /> : <Maximize />}
-              </Button>
+              <Button type="button" variant="ghost" size="icon" onClick={() => void toggleFullscreen()} aria-label={fullscreen ? 'Sair da tela cheia' : 'Tela cheia'} className="text-white hover:bg-white/15">{fullscreen ? <Minimize /> : <Maximize />}</Button>
             </div>
           </div>
         )}
       </div>
 
-      {(title || caption || subtitle) && (
+      {(title || caption || transcript) && (
         <div className="product-video-caption">
           <div>
             {title && <h3 className="text-sm font-black uppercase tracking-tight">{title}</h3>}
             {caption && <p className="mt-1 text-sm font-semibold leading-relaxed">{caption}</p>}
-            {subtitle && <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{subtitle}</p>}
+            {transcript && <p className="mt-1 text-xs leading-relaxed text-muted-foreground whitespace-pre-wrap">{transcript}</p>}
           </div>
         </div>
       )}
