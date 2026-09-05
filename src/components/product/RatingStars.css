@@ -1,4 +1,83 @@
-.rating-stars { display: inline-flex; align-items: center; gap: .5rem; }
-.rating-stars__icons { display: inline-flex; gap: .15rem; }
-.rating-stars__value { font-weight: 900; font-variant-numeric: tabular-nums; }
-.rating-stars__count { color: hsl(var(--muted-foreground)); font-size: .75rem; }
+.rating-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  line-height: 1;
+}
+
+.stars-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.star-icon {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.star-icon--filled {
+  color: #f59e0b;
+}
+
+.star-icon--empty {
+  color: #d1d5db;
+  opacity: 0.45;
+}
+
+.rating-number {
+  margin-left: 0.25rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.rating-count,
+.rating-label {
+  color: hsl(var(--muted-foreground));
+}
+
+.rating-stars.small .stars-wrapper {
+  gap: 0.0625rem;
+}
+
+.rating-stars.small .rating-number {
+  font-size: 12px !important;
+}
+
+.rating-stars.small .rating-count,
+.rating-stars.small .rating-label {
+  font-size: 11px !important;
+}
+
+.rating-stars.large .stars-wrapper {
+  gap: 0.25rem;
+}
+
+.rating-stars.large .rating-number {
+  font-size: 18px !important;
+}
+
+.rating-stars.large .rating-count,
+.rating-stars.large .rating-label {
+  font-size: 15px !important;
+}
+
+.rating-stars:hover .star-icon {
+  transform: scale(1.06);
+}
+
+.rating-stars .star-icon:nth-child(1) { transition-delay: 0ms; }
+.rating-stars .star-icon:nth-child(2) { transition-delay: 50ms; }
+.rating-stars .star-icon:nth-child(3) { transition-delay: 100ms; }
+.rating-stars .star-icon:nth-child(4) { transition-delay: 150ms; }
+.rating-stars .star-icon:nth-child(5) { transition-delay: 200ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rating-stars .star-icon {
+    transition: none;
+  }
+
+  .rating-stars:hover .star-icon {
+    transform: none;
+  }
+}
