@@ -171,13 +171,34 @@ export function ProductVideo({
     revealControls();
   };
 
+  const handleStageKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.target !== event.currentTarget) return;
+    if (event.key === ' ' || event.key === 'Enter') {
+      event.preventDefault();
+      void togglePlay();
+    } else if (event.key === 'm') {
+      event.preventDefault();
+      toggleMute();
+    } else if (event.key === 'f') {
+      event.preventDefault();
+      void toggleFullscreen();
+    } else if (event.key === 'c' && (caption || subtitleUrl)) {
+      event.preventDefault();
+      toggleCaptions();
+    }
+  };
+
   return (
     <div className="product-video-premium">
       <div
         ref={stageRef}
         className="product-video-stage"
+        tabIndex={0}
+        role="region"
+        aria-label={title ? `Player de vídeo: ${title}` : 'Player de vídeo'}
         onMouseMove={revealControls}
         onTouchStart={revealControls}
+        onKeyDown={handleStageKeyDown}
       >
         <video
           ref={videoRef}
