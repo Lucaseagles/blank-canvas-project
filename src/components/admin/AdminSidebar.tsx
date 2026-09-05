@@ -3,7 +3,7 @@ import {
   LayoutDashboard, ShoppingBag, Play, Store, Folders,
   Settings, Users, Target, BarChart3, Megaphone,
   Send, Bell, Gift, GitBranch, ShieldCheck, Mail, MessageSquare,
-  LogOut, Video, Package, ClipboardCheck
+  LogOut, Video, Package, ClipboardCheck, BookOpen
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +27,7 @@ const ADMIN_ROUTES = [
   { name: "Notifications", path: "/admin/notifications", icon: Bell },
   { name: "Referrals", path: "/admin/referrals", icon: Gift },
   { name: "Automations", path: "/admin/automations", icon: GitBranch },
+  { name: "Support / Base", path: "/admin/support-knowledge", icon: BookOpen },
   { name: "Settings", path: "/admin/settings", icon: Settings },
   { name: "Offers", path: "/admin/offers", icon: Mail },
   { name: "Social Proof", path: "/admin/social-proof", icon: MessageSquare },
@@ -34,11 +35,7 @@ const ADMIN_ROUTES = [
   { name: "Auditoria V1", path: "/admin/v1-audit", icon: ClipboardCheck },
 ];
 
-type AdminSidebarProps = {
-  mobile?: boolean;
-  onNavigate?: () => void;
-  authorized?: boolean;
-};
+type AdminSidebarProps = { mobile?: boolean; onNavigate?: () => void; authorized?: boolean };
 
 export function AdminSidebar({ mobile = false, onNavigate, authorized: authorizedProp }: AdminSidebarProps) {
   const [localAuthorized, setLocalAuthorized] = useState(false);
@@ -51,46 +48,26 @@ export function AdminSidebar({ mobile = false, onNavigate, authorized: authorize
     let active = true;
     const verify = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session || session.user.email?.toLowerCase() !== OWNER_EMAIL) {
-        if (active) navigate({ to: "/", replace: true });
-        return;
-      }
+      if (!session || session.user.email?.toLowerCase() !== OWNER_EMAIL) { if (active) navigate({ to: "/", replace: true }); return; }
       const { data, error } = await supabase.rpc("has_role", { _user_id: session.user.id, _role: "owner" });
-      if (active && !error && data === true) setLocalAuthorized(true);
-      else if (active) navigate({ to: "/", replace: true });
+      if (active && !error && data === true) setLocalAuthorized(true); else if (active) navigate({ to: "/", replace: true });
     };
     verify();
     return () => { active = false; };
   }, [controlledAuthorization, navigate]);
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    navigate({ to: "/auth", replace: true });
-  };
-
+  const signOut = async () => { await supabase.auth.signOut(); navigate({ to: "/auth", replace: true }); };
   if (!authorized) return null;
 
   const content = (
     <div className={mobile ? "flex h-full min-h-0 flex-col gap-4 p-4 pr-2 overflow-hidden" : "flex min-h-screen flex-col gap-8 p-6 w-64 bg-glass-fallback border-r border-glass-border"}>
-      <div className="flex shrink-0 items-center gap-3 pr-10">
-        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-black italic">A</div>
-        <span className="font-black tracking-tighter uppercase italic">Admin Panel</span>
-      </div>
+      <div className="flex shrink-0 items-center gap-3 pr-10"><div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-black italic">A</div><span className="font-black tracking-tighter uppercase italic">Admin Panel</span></div>
       <nav className={mobile ? "flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain pr-1 pb-4 [scrollbar-width:thin]" : "flex flex-col gap-1"} aria-label="Navegação administrativa">
-        {ADMIN_ROUTES.map((route) => (
-          <Link key={route.path} to={route.path as any} onClick={onNavigate} className="flex shrink-0 items-center gap-3 px-4 py-3 rounded-xl min-h-[44px] text-xs font-bold uppercase tracking-widest text-muted-foreground hover:bg-primary/10 hover:text-primary transition-all [&.active]:bg-primary [&.active]:text-primary-foreground">
-            <route.icon size={16} aria-hidden="true" />
-            <span>{route.name}</span>
-          </Link>
-        ))}
+        {ADMIN_ROUTES.map((route) => <Link key={route.path} to={route.path as any} onClick={onNavigate} className="flex shrink-0 items-center gap-3 px-4 py-3 rounded-xl min-h-[44px] text-xs font-bold uppercase tracking-widest text-muted-foreground hover:bg-primary/10 hover:text-primary transition-all [&.active]:bg-primary [&.active]:text-primary-foreground"><route.icon size={16} aria-hidden="true" /><span>{route.name}</span></Link>)}
       </nav>
-      <Button variant="ghost" onClick={signOut} className="shrink-0 min-h-[44px] justify-start gap-3 rounded-xl text-xs font-bold uppercase tracking-widest text-muted-foreground">
-        <LogOut size={16} aria-hidden="true" />
-        Sair
-      </Button>
+      <Button variant="ghost" onClick={signOut} className="shrink-0 min-h-[44px] justify-start gap-3 rounded-xl text-xs font-bold uppercase tracking-widest text-muted-foreground"><LogOut size={16} aria-hidden="true" />Sair</Button>
     </div>
   );
-
   if (mobile) return content;
   return <aside className="hidden lg:block">{content}</aside>;
 }
