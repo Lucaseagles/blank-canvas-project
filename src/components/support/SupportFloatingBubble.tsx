@@ -102,7 +102,8 @@ export function SupportFloatingBubble() {
   const handleWhatsApp = async () => {
     if (!whatsappNumber) return;
     const message = "Olá! Preciso de ajuda com o AffiliatePro.";
-    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
+    const whatsappUrl = `https://web.whatsapp.com/send?phone=${whatsappNumber}&text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
     await persistConversation(messages, true);
   };
 
