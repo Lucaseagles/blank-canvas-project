@@ -47,6 +47,8 @@ import { Route as AdminReferralsRouteImport } from './routes/admin/referrals'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as AdminSocialChannelsRouteImport } from './routes/admin/social-channels'
 import { Route as AdminSocialProofRouteImport } from './routes/admin/social-proof'
+import { Route as AdminSupportRouteImport } from './routes/admin/support'
+import { Route as AdminSupportKnowledgeRouteImport } from './routes/admin/support-knowledge'
 import { Route as AdminTelegramRouteImport } from './routes/admin/telegram'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminV1AuditRouteImport } from './routes/admin/v1-audit'
@@ -247,6 +249,16 @@ const AdminSocialProofRoute = AdminSocialProofRouteImport.update({
   path: '/social-proof',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminSupportRoute = AdminSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSupportKnowledgeRoute = AdminSupportKnowledgeRouteImport.update({
+  id: '/support-knowledge',
+  path: '/support-knowledge',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminTelegramRoute = AdminTelegramRouteImport.update({
   id: '/telegram',
   path: '/telegram',
@@ -332,6 +344,8 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/social-channels': typeof AdminSocialChannelsRoute
   '/admin/social-proof': typeof AdminSocialProofRoute
+  '/admin/support': typeof AdminSupportRoute
+  '/admin/support-knowledge': typeof AdminSupportKnowledgeRoute
   '/admin/telegram': typeof AdminTelegramRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/v1-audit': typeof AdminV1AuditRoute
@@ -381,6 +395,8 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/social-channels': typeof AdminSocialChannelsRoute
   '/admin/social-proof': typeof AdminSocialProofRoute
+  '/admin/support': typeof AdminSupportRoute
+  '/admin/support-knowledge': typeof AdminSupportKnowledgeRoute
   '/admin/telegram': typeof AdminTelegramRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/v1-audit': typeof AdminV1AuditRoute
@@ -431,6 +447,8 @@ export interface FileRoutesById {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/social-channels': typeof AdminSocialChannelsRoute
   '/admin/social-proof': typeof AdminSocialProofRoute
+  '/admin/support': typeof AdminSupportRoute
+  '/admin/support-knowledge': typeof AdminSupportKnowledgeRoute
   '/admin/telegram': typeof AdminTelegramRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/v1-audit': typeof AdminV1AuditRoute
@@ -482,6 +500,8 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/social-channels'
     | '/admin/social-proof'
+    | '/admin/support'
+    | '/admin/support-knowledge'
     | '/admin/telegram'
     | '/admin/users'
     | '/admin/v1-audit'
@@ -531,6 +551,8 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/social-channels'
     | '/admin/social-proof'
+    | '/admin/support'
+    | '/admin/support-knowledge'
     | '/admin/telegram'
     | '/admin/users'
     | '/admin/v1-audit'
@@ -580,6 +602,8 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/social-channels'
     | '/admin/social-proof'
+    | '/admin/support'
+    | '/admin/support-knowledge'
     | '/admin/telegram'
     | '/admin/users'
     | '/admin/v1-audit'
@@ -884,6 +908,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSocialProofRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/support': {
+      id: '/admin/support'
+      path: '/support'
+      fullPath: '/admin/support'
+      preLoaderRoute: typeof AdminSupportRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/support-knowledge': {
+      id: '/admin/support-knowledge'
+      path: '/support-knowledge'
+      fullPath: '/admin/support-knowledge'
+      preLoaderRoute: typeof AdminSupportKnowledgeRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/telegram': {
       id: '/admin/telegram'
       path: '/telegram'
@@ -972,6 +1010,8 @@ interface AdminRouteChildren {
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminSocialChannelsRoute: typeof AdminSocialChannelsRoute
   AdminSocialProofRoute: typeof AdminSocialProofRoute
+  AdminSupportRoute: typeof AdminSupportRoute
+  AdminSupportKnowledgeRoute: typeof AdminSupportKnowledgeRoute
   AdminTelegramRoute: typeof AdminTelegramRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminV1AuditRoute: typeof AdminV1AuditRoute
@@ -1000,6 +1040,8 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminSettingsRoute: AdminSettingsRoute,
   AdminSocialChannelsRoute: AdminSocialChannelsRoute,
   AdminSocialProofRoute: AdminSocialProofRoute,
+  AdminSupportRoute: AdminSupportRoute,
+  AdminSupportKnowledgeRoute: AdminSupportKnowledgeRoute,
   AdminTelegramRoute: AdminTelegramRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminV1AuditRoute: AdminV1AuditRoute,

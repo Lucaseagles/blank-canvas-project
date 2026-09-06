@@ -640,27 +640,36 @@ export type Database = {
       }
       categories: {
         Row: {
+          color: string | null
           created_at: string | null
+          display_order: number
           icon: string | null
           id: string
+          image_url: string | null
           is_active: boolean | null
           name: string
           parent_id: string | null
           slug: string
         }
         Insert: {
+          color?: string | null
           created_at?: string | null
+          display_order?: number
           icon?: string | null
           id?: string
+          image_url?: string | null
           is_active?: boolean | null
           name: string
           parent_id?: string | null
           slug: string
         }
         Update: {
+          color?: string | null
           created_at?: string | null
+          display_order?: number
           icon?: string | null
           id?: string
+          image_url?: string | null
           is_active?: boolean | null
           name?: string
           parent_id?: string | null
@@ -1539,6 +1548,7 @@ export type Database = {
           discount: number | null
           external_product_id: string | null
           flash_deal_ends_at: string | null
+          free_shipping: boolean
           id: string
           images: string[] | null
           is_best_offer: boolean | null
@@ -1565,6 +1575,7 @@ export type Database = {
           discount?: number | null
           external_product_id?: string | null
           flash_deal_ends_at?: string | null
+          free_shipping?: boolean
           id?: string
           images?: string[] | null
           is_best_offer?: boolean | null
@@ -1591,6 +1602,7 @@ export type Database = {
           discount?: number | null
           external_product_id?: string | null
           flash_deal_ends_at?: string | null
+          free_shipping?: boolean
           id?: string
           images?: string[] | null
           is_best_offer?: boolean | null
@@ -1634,11 +1646,14 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string | null
+          current_tier_id: string | null
           display_name: string | null
           id: string
           location_city: string | null
           location_state: string | null
           role: string | null
+          show_on_leaderboard: boolean
+          total_referrals: number
           updated_at: string | null
           user_id: string | null
           whatsapp_opt_in: boolean
@@ -1647,11 +1662,14 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          current_tier_id?: string | null
           display_name?: string | null
           id?: string
           location_city?: string | null
           location_state?: string | null
           role?: string | null
+          show_on_leaderboard?: boolean
+          total_referrals?: number
           updated_at?: string | null
           user_id?: string | null
           whatsapp_opt_in?: boolean
@@ -1660,18 +1678,29 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          current_tier_id?: string | null
           display_name?: string | null
           id?: string
           location_city?: string | null
           location_state?: string | null
           role?: string | null
+          show_on_leaderboard?: boolean
+          total_referrals?: number
           updated_at?: string | null
           user_id?: string | null
           whatsapp_opt_in?: boolean
           whatsapp_opt_in_at?: string | null
           whatsapp_opt_in_source?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_current_tier_id_fkey"
+            columns: ["current_tier_id"]
+            isOneToOne: false
+            referencedRelation: "referral_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       push_subscriptions: {
         Row: {
@@ -1796,6 +1825,59 @@ export type Database = {
           target_activations?: number
         }
         Relationships: []
+      }
+      referral_tiers: {
+        Row: {
+          badge_id: string | null
+          color: string
+          created_at: string
+          display_order: number
+          icon: string
+          id: string
+          is_active: boolean
+          min_referrals: number
+          reward_description: string
+          tier_key: string
+          tier_name: string
+          updated_at: string
+        }
+        Insert: {
+          badge_id?: string | null
+          color?: string
+          created_at?: string
+          display_order?: number
+          icon?: string
+          id?: string
+          is_active?: boolean
+          min_referrals: number
+          reward_description: string
+          tier_key: string
+          tier_name: string
+          updated_at?: string
+        }
+        Update: {
+          badge_id?: string | null
+          color?: string
+          created_at?: string
+          display_order?: number
+          icon?: string
+          id?: string
+          is_active?: boolean
+          min_referrals?: number
+          reward_description?: string
+          tier_key?: string
+          tier_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_tiers_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "badges"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       referrals: {
         Row: {
@@ -1973,6 +2055,77 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      support_ai_config: {
+        Row: {
+          config_key: string
+          config_value: Json
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          config_key: string
+          config_value: Json
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          config_key?: string
+          config_value?: Json
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      support_chat_log: {
+        Row: {
+          ai_confidence: number | null
+          ai_model: string | null
+          ai_used: boolean
+          confidence_score: number | null
+          created_at: string
+          id: string
+          matched_article_id: string | null
+          question: string
+          session_id: string
+          source: string
+          user_id: string | null
+        }
+        Insert: {
+          ai_confidence?: number | null
+          ai_model?: string | null
+          ai_used?: boolean
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          matched_article_id?: string | null
+          question: string
+          session_id: string
+          source?: string
+          user_id?: string | null
+        }
+        Update: {
+          ai_confidence?: number | null
+          ai_model?: string | null
+          ai_used?: boolean
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          matched_article_id?: string | null
+          question?: string
+          session_id?: string
+          source?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_chat_log_matched_article_id_fkey"
+            columns: ["matched_article_id"]
+            isOneToOne: false
+            referencedRelation: "support_faq"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       support_conversations: {
         Row: {
@@ -2562,6 +2715,23 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_categories_with_counts: {
+        Args: never
+        Returns: {
+          color: string
+          has_children: boolean
+          icon: string
+          id: string
+          image_url: string
+          name: string
+          product_count: number
+          slug: string
+        }[]
+      }
+      get_category_product_count: {
+        Args: { category_id: string }
+        Returns: number
+      }
       get_content_affinity_summary: {
         Args: { p_content_id: string }
         Returns: Json
@@ -2628,6 +2798,22 @@ export type Database = {
               title: string
             }[]
           }
+      get_referral_leaderboard: {
+        Args: { limit_count?: number }
+        Returns: {
+          display_name: string
+          ranking_position: number
+          tier_color: string
+          tier_icon: string
+          tier_name: string
+          total_referrals: number
+          user_id: string
+        }[]
+      }
+      get_referral_leaderboard_position: {
+        Args: { p_user_id: string }
+        Returns: number
+      }
       get_social_cross_promo_summary: {
         Args: never
         Returns: {
@@ -2671,6 +2857,10 @@ export type Database = {
         Returns: string
       }
       refresh_demand_and_trend_scores: { Args: never; Returns: undefined }
+      refresh_referral_profile_stats: {
+        Args: { p_referrer_user_id: string }
+        Returns: undefined
+      }
       refresh_user_interest_decay: { Args: never; Returns: undefined }
       refresh_user_segments: { Args: never; Returns: undefined }
       run_retention_engine: {
@@ -2678,6 +2868,17 @@ export type Database = {
         Returns: number
       }
       sanitize_admin_audit_json: { Args: { value: Json }; Returns: Json }
+      search_knowledge_base: {
+        Args: { min_similarity?: number; search_query: string }
+        Returns: {
+          answer: string
+          id: string
+          keywords: string[]
+          priority: number
+          question: string
+          similarity_score: number
+        }[]
+      }
       search_products_fuzzy: {
         Args: { search_query: string }
         Returns: {
@@ -2704,15 +2905,22 @@ export type Database = {
         Args: { p_field_key: string; p_platform_id: string; p_value: string }
         Returns: string
       }
+      set_referral_leaderboard_visibility: {
+        Args: { p_show: boolean }
+        Returns: boolean
+      }
       set_whatsapp_opt_in: {
         Args: { p_enabled: boolean; p_source?: string }
         Returns: {
           created_at: string | null
+          current_tier_id: string | null
           display_name: string | null
           id: string
           location_city: string | null
           location_state: string | null
           role: string | null
+          show_on_leaderboard: boolean
+          total_referrals: number
           updated_at: string | null
           user_id: string | null
           whatsapp_opt_in: boolean
