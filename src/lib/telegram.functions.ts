@@ -1,140 +1,16 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
+import { requireOwnerRole } from '@/lib/auth-guards.server';
 
-export const getTelegramConfig = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async () => {
-    const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
-    const { data, error } = await supabaseAdmin
-      .from('telegram_config' as any)
-      .select('*')
-      .maybeSingle();
-    
-    if (error) throw error;
-    
-    if (!data) return null;
-    const config = data as any;
-    
-    // Don't return the real secret ref to client, just its existence
-    return {
-      id: config.id,
-      channel_id: config.channel_id,
-      is_active: config.is_active,
-      hasToken: !!config.bot_token_secret_ref
-    };
-  });
+const ConfigSchema = z.object({ channelId: z.string().trim().min(1).max(200), isActive: z.boolean(), botToken: z.string().trim().min(10).max(300).optional().nullable() });
+async function getConfig(supabaseAdmin: any) { const { data, error } = await supabaseAdmin.from('telegram_config' as any).select('*').maybeSingle(); if (error) throw error; return data as any; }
 
-export const saveTelegramConfig = createServerFn({ method: "POST" })
-  .validator((data: { channelId: string; isActive: boolean; botToken?: string | null }) => 
-    z.object({
-      channelId: z.string(),
-      isActive: z.boolean(),
-      botToken: z.string().nullable().optional()
-    }).parse(data)
-  )
+export const getTelegramConfig = createServerFn({ method: "GET" }).middleware([requireOwnerRole]).handler(async () => { const { supabaseAdmin } = await import('@/integrations/supabase/client.server'); const c = await getConfig(supabaseAdmin); return c ? { id: c.id, channel_id: c.channel_id, is_active: c.is_active, hasToken: Boolean(c.bot_token_secret_ref) } : null; });
 
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
-    
-    const configData: any = {
-      channel_id: data.channelId,
-      is_active: data.isActive,
-      updated_at: new Date().toISOString()
-    };
-    
-    if (data.botToken) {
-      configData.bot_token_secret_ref = 'vault_ref_' + Math.random().toString(36).substring(7);
-    }
+export const saveTelegramConfig = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => ConfigSchema.parse(data)).handler(async ({ data }) => { const { supabaseAdmin } = await import('@/integrations/supabase/client.server'); const current = await getConfig(supabaseAdmin); const payload: Record<string, unknown> = { channel_id: data.channelId, is_active: data.isActive, updated_at: new Date().toISOString() }; if (data.botToken) payload.bot_token_secret_ref = `telegram:${crypto.randomUUID()}`; const { error } = current?.id ? await supabaseAdmin.from('telegram_config' as any).update(payload).eq('id', current.id) : await supabaseAdmin.from('telegram_config' as any).insert(payload); if (error) throw error; return { success: true }; });
 
-    const { error } = await supabaseAdmin
-      .from('telegram_config' as any)
-      .upsert(configData, { onConflict: 'id' as any });
+export const testTelegramConnection = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ message: z.string().trim().min(1).max(4000).default('🧪 Mensagem de teste do Admin') }).parse(data ?? {})).handler(async () => { const { supabaseAdmin } = await import('@/integrations/supabase/client.server'); const c = await getConfig(supabaseAdmin); if (!c?.is_active) return { success: false, error: 'Telegram integration is inactive.' }; return { success: false, error: 'Telegram token is referenced but no secure server-side secret provider is configured for this deployment.' }; });
 
-    if (error) throw error;
-    return { success: true };
-  });
+export const composeTelegramMessage = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ productId: z.string().uuid().optional(), offerGroupId: z.string().uuid().optional(), campaignId: z.string().uuid().optional() }).refine(v => Boolean(v.productId || v.offerGroupId)).parse(data)).handler(async ({ data }) => { const { supabaseAdmin } = await import('@/integrations/supabase/client.server'); let q = supabaseAdmin.from('products').select('*, marketplaces(name)'); q = data.productId ? q.eq('id', data.productId) : q.eq('offer_group_id', data.offerGroupId!).eq('is_best_offer', true); const { data: product, error } = await q.maybeSingle(); if (error) throw error; if (!product) return { error: 'Product not found' }; const p = product as any; return { message: [`🔥 *${String(p.title).toUpperCase()}*`, '', `💰 De: ~R$ ${p.previous_price?.toLocaleString('pt-BR') || '---'}~`, `✅ *Por: R$ ${Number(p.current_price).toLocaleString('pt-BR')}*`, `📉 Desconto: ${p.discount ?? 0}% OFF`, '', `📍 Vendido por: ${p.marketplaces?.name || 'Parceiro'}`, '', `🔗 Compre aqui: ${p.affiliate_url}${p.affiliate_url?.includes('?') ? '&' : '?'}utm_source=telegram${data.campaignId ? `&campaign_id=${data.campaignId}` : ''}`].join('\n') }; });
 
-export const composeTelegramMessage = createServerFn({ method: "POST" })
-  .validator((data: { productId?: string; offerGroupId?: string; campaignId?: string }) => 
-    z.object({
-      productId: z.string().optional(),
-      offerGroupId: z.string().optional(),
-      campaignId: z.string().optional()
-    }).parse(data)
-  )
-  .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
-    
-    let product;
-    if (data.productId) {
-      const { data: p } = await supabaseAdmin
-        .from('products')
-        .select('*, marketplaces(name)')
-        .eq('id', data.productId)
-        .single();
-      product = p as any;
-    } else if (data.offerGroupId) {
-      const { data: p } = await supabaseAdmin
-        .from('products')
-        .select('*, marketplaces(name)')
-        .eq('offer_group_id', data.offerGroupId)
-        .eq('is_best_offer', true)
-        .single();
-      product = p as any;
-    }
-
-    if (!product) return { error: 'Product not found' };
-
-    const message = `
-🔥 *${product.title.toUpperCase()}*
-
-💰 De: ~R$ ${product.previous_price?.toLocaleString('pt-BR') || '---'}~
-✅ *Por: R$ ${product.current_price.toLocaleString('pt-BR')}*
-📉 Desconto: ${product.discount}% OFF
-
-📍 Vendido por: ${product.marketplaces?.name || 'Parceiro'}
-
-🔗 Compre aqui: ${product.affiliate_url}${product.affiliate_url?.includes('?') ? '&' : '?'}utm_source=telegram${data.campaignId ? `&campaign_id=${data.campaignId}` : ''}
-    `.trim();
-
-    return { message };
-  });
-
-export const sendTelegramManual = createServerFn({ method: "POST" })
-  .validator((data: { productId: string; message: string }) => 
-    z.object({
-      productId: z.string(),
-      message: z.string()
-    }).parse(data)
-  )
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
-    
-    const { data: configData } = await supabaseAdmin
-      .from('telegram_config' as any)
-      .select('*')
-      .maybeSingle();
-
-    const config = configData as any;
-    if (!config || !config.is_active) {
-      return { success: false, error: 'Telegram integration not active' };
-    }
-
-    // In a real app, this is where we'd call the Telegram API using the token from vault
-    console.log('TELEGRAM BROADCAST SIMULATED:', data.message);
-
-    const { error } = await supabaseAdmin
-      .from('telegram_messages' as any)
-      .insert({
-        product_id: data.productId,
-        message_text: data.message,
-        status: 'sent', // For simulation
-        sent_at: new Date().toISOString()
-      });
-
-    if (error) throw error;
-    return { success: true };
-  });
+export const sendTelegramManual = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ productId: z.string().uuid(), message: z.string().trim().min(1).max(4000) }).parse(data)).handler(async ({ data }) => { const { supabaseAdmin } = await import('@/integrations/supabase/client.server'); const c = await getConfig(supabaseAdmin); if (!c?.is_active) return { success: false, error: 'Telegram integration not active' }; const { error } = await supabaseAdmin.from('telegram_messages' as any).insert({ product_id: data.productId, message_text: data.message, status: 'failed', sent_at: null }); if (error) throw error; return { success: false, error: 'Telegram token is not available through a configured secure server-side secret provider.' }; });
