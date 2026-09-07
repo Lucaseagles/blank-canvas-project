@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BookOpen, Check, Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { BookOpen, Check, Loader2, Plus, Save, Search, Trash2, Power } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -22,15 +22,25 @@ export function SupportKnowledgeBase({ initialQuestion = "" }: SupportKnowledgeB
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedSearch(search.trim().toLowerCase()), 300);
+    return () => window.clearTimeout(timer);
+  }, [search]);
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await (supabase as any).from("support_faq").select("id,question,answer,keywords,priority,is_active,created_at").order("priority", { ascending: false }).order("created_at", { ascending: false });
+    let query = (supabase as any).from("support_faq").select("id,question,answer,keywords,priority,is_active,created_at").order("priority", { ascending: false }).order("created_at", { ascending: false });
+    if (debouncedSearch) query = query.or(`question.ilike.%${debouncedSearch}%,answer.ilike.%${debouncedSearch}%`);
+    const { data, error } = await query;
     if (error) { toast.error("Não foi possível carregar a base de conhecimento"); console.error(error); }
     else setItems((data ?? []) as Faq[]);
     setLoading(false);
   };
-  useEffect(() => { void load(); }, []);
+
+  useEffect(() => { void load(); }, [debouncedSearch]);
 
   const reset = () => { setEditingId(null); setQuestion(""); setAnswer(""); setKeywords(""); setPriority("0"); setCategory("geral"); };
   const edit = (item: Faq) => { setEditingId(item.id); setQuestion(item.question); setAnswer(item.answer); setKeywords(item.keywords?.join(", ") ?? ""); setPriority(String(item.priority)); const found = CATEGORIES.find((value) => item.keywords?.includes(`categoria:${value}`)); setCategory(found ?? "geral"); window.scrollTo({ top: 0, behavior: "smooth" }); };
@@ -45,7 +55,13 @@ export function SupportKnowledgeBase({ initialQuestion = "" }: SupportKnowledgeB
     if (error) { toast.error("Não foi possível salvar o artigo"); console.error(error); return; }
     toast.success(editingId ? "Artigo atualizado" : "Artigo criado"); reset(); await load();
   };
+  const toggle = async (item: Faq) => {
+    const { error } = await (supabase as any).from("support_faq").update({ is_active: !item.is_active }).eq("id", item.id);
+    if (error) { toast.error("Não foi possível alterar o status"); return; }
+    toast.success(item.is_active ? "Artigo desativado" : "Artigo ativado"); await load();
+  };
   const remove = async (id: string) => {
+    if (!window.confirm("Excluir este artigo permanentemente?")) return;
     const { error } = await (supabase as any).from("support_faq").delete().eq("id", id);
     if (error) { toast.error("Não foi possível excluir o artigo"); console.error(error); return; }
     toast.success("Artigo excluído"); if (editingId === id) reset(); await load();
@@ -54,7 +70,7 @@ export function SupportKnowledgeBase({ initialQuestion = "" }: SupportKnowledgeB
   return <div className="container mx-auto max-w-6xl space-y-8 px-4 py-8 lg:px-8 lg:py-12">
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><div className="mb-2 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-primary"><BookOpen className="h-3.5 w-3.5" /> Suporte</div><h1 className="text-3xl font-black uppercase italic tracking-tighter lg:text-5xl">Base de Conhecimento</h1><p className="mt-2 text-sm text-muted-foreground">Uma única fonte para as respostas usadas pelo atendimento.</p></div><Button variant="outline" onClick={reset} className="gap-2 rounded-xl font-bold"><Plus className="h-4 w-4" /> Novo artigo</Button></div>
     <Card className="rounded-3xl border-glass-border bg-glass-fallback backdrop-blur-xl"><CardHeader><CardTitle className="text-sm font-black uppercase tracking-widest">{editingId ? "Editar artigo" : "Criar artigo"}</CardTitle><CardDescription>A pergunta pode chegar preenchida automaticamente a partir de uma lacuna.</CardDescription></CardHeader><CardContent className="space-y-5"><div className="space-y-2"><Label>Pergunta</Label><Input maxLength={300} value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="Ex.: Como funciona o benefício X?" /></div><div className="space-y-2"><Label>Resposta</Label><Textarea maxLength={3000} value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder="Escreva uma resposta objetiva e confiável..." className="min-h-32 resize-y" /></div><div className="grid gap-4 md:grid-cols-3"><div className="space-y-2"><Label>Categoria</Label><select value={category} onChange={(e) => setCategory(e.target.value as (typeof CATEGORIES)[number])} className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm"><option value="geral">Geral</option>{CATEGORIES.slice(1).map((value) => <option key={value} value={value}>{value}</option>)}</select></div><div className="space-y-2"><Label>Palavras-chave</Label><Input value={keywords} onChange={(e) => setKeywords(e.target.value)} placeholder="termo 1, termo 2" /></div><div className="space-y-2"><Label>Prioridade</Label><Input type="number" min={0} value={priority} onChange={(e) => setPriority(e.target.value)} /></div></div><div className="flex flex-col gap-2 sm:flex-row sm:justify-end"><Button variant="ghost" onClick={reset} disabled={saving}>Cancelar</Button><Button onClick={() => void save()} disabled={saving} className="gap-2 rounded-xl font-black">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}{editingId ? "Salvar alterações" : "Publicar artigo"}</Button></div></CardContent></Card>
-    <Card className="rounded-3xl border-glass-border bg-glass-fallback backdrop-blur-xl"><CardHeader><CardTitle className="text-sm font-black uppercase tracking-widest">Artigos ativos</CardTitle><CardDescription>{items.length} registro(s) na fonte de conhecimento do suporte.</CardDescription></CardHeader><CardContent>{loading ? <div className="flex items-center justify-center py-10 text-sm font-bold text-muted-foreground"><Loader2 className="mr-2 h-4 w-4 animate-spin" />Carregando...</div> : items.length === 0 ? <div className="py-10 text-center text-sm text-muted-foreground">Nenhum artigo cadastrado ainda.</div> : <div className="space-y-3">{items.map((item) => <div key={item.id} className="flex flex-col gap-4 rounded-2xl border border-border/60 p-4 md:flex-row md:items-center md:justify-between"><div className="min-w-0"><p className="font-bold">{item.question}</p><p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{item.answer}</p><div className="mt-2 flex flex-wrap gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground"><span>{item.is_active ? "Ativo" : "Inativo"}</span><span>Prioridade {item.priority}</span></div></div><div className="flex shrink-0 gap-2"><Button size="sm" variant="outline" onClick={() => edit(item)}>Editar</Button><Button size="icon" variant="ghost" onClick={() => void remove(item.id)} aria-label={`Excluir ${item.question}`}><Trash2 className="h-4 w-4 text-destructive" /></Button></div></div>)}</div>}</CardContent></Card>
+    <Card className="rounded-3xl border-glass-border bg-glass-fallback backdrop-blur-xl"><CardHeader><div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"><div><CardTitle className="text-sm font-black uppercase tracking-widest">Artigos</CardTitle><CardDescription>{items.length} registro(s) encontrados.</CardDescription></div><div className="relative w-full md:w-96"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar pergunta ou resposta..." className="pl-10" /></div></div></CardHeader><CardContent>{loading ? <div className="flex items-center justify-center py-10 text-sm font-bold text-muted-foreground"><Loader2 className="mr-2 h-4 w-4 animate-spin" />Carregando...</div> : items.length === 0 ? <div className="py-10 text-center text-sm text-muted-foreground">Nenhum artigo encontrado.</div> : <div className="space-y-3">{items.map((item) => <div key={item.id} className="flex flex-col gap-4 rounded-2xl border border-border/60 p-4 md:flex-row md:items-center md:justify-between"><div className="min-w-0"><p className="font-bold">{item.question}</p><p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{item.answer}</p><div className="mt-2 flex flex-wrap gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground"><span>{item.is_active ? "Ativo" : "Inativo"}</span><span>Prioridade {item.priority}</span></div></div><div className="flex shrink-0 gap-2"><Button size="sm" variant="outline" onClick={() => edit(item)}>Editar</Button><Button size="icon" variant="ghost" onClick={() => void toggle(item)} aria-label={item.is_active ? "Desativar artigo" : "Ativar artigo"}><Power className={item.is_active ? "h-4 w-4" : "h-4 w-4 text-muted-foreground"} /></Button><Button size="icon" variant="ghost" onClick={() => void remove(item.id)} aria-label={`Excluir ${item.question}`}><Trash2 className="h-4 w-4 text-destructive" /></Button></div></div>)}</div>}</CardContent></Card>
     <div className="flex items-center gap-2 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-xs font-semibold text-muted-foreground"><Check className="h-4 w-4 shrink-0 text-emerald-500" />Esta tela grava diretamente em <code className="rounded bg-muted px-1">support_faq</code>, a mesma fonte que o chat público consulta.</div>
   </div>;
 }
