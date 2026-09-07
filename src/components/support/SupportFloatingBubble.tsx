@@ -30,7 +30,7 @@ export function SupportFloatingBubble() {
   const [input, setInput] = React.useState("");
   const [isTyping, setIsTyping] = React.useState(false);
   const [faqs, setFaqs] = React.useState<FAQ[]>(FALLBACK_FAQS);
-  const [whatsappNumber, setWhatsappNumber] = React.useState("");
+  const [whatsappNumber, setWhatsappNumber] = React.useState("5581995734813");
   const [conversationId, setConversationId] = React.useState<string | null>(null);
   const [messages, setMessages] = React.useState<SupportMessage[]>([{ id: "welcome", type: "bot", text: "Olá! Como posso ajudar você hoje? 👋" }]);
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
@@ -102,8 +102,8 @@ export function SupportFloatingBubble() {
   const handleWhatsApp = async () => {
     if (!whatsappNumber) return;
     const message = "Olá! Preciso de ajuda com o AffiliatePro.";
-    const whatsappUrl = `https://web.whatsapp.com/send?phone=${whatsappNumber}&text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+    const whatsappUrl = `https://wa.me/${whatsappNumber || "5581995734813"}?text=${encodeURIComponent(message)}`;
+    window.location.href = whatsappUrl;
     await persistConversation(messages, true);
   };
 
