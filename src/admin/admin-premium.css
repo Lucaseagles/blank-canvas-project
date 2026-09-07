@@ -1,0 +1,122 @@
+/* Consistência visual das telas administrativas */
+.admin-page {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+  color: var(--text-primary, hsl(var(--foreground)));
+}
+
+.admin-page h1 {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+
+.admin-page .subtitle {
+  font-size: 14px;
+  color: var(--text-secondary, hsl(var(--muted-foreground)));
+  margin: 0 0 24px;
+}
+
+.admin-card {
+  background: var(--glass-bg, hsl(var(--card) / 0.72));
+  border: 1px solid var(--glass-border, hsl(var(--border)));
+  border-radius: 16px;
+  padding: 20px 24px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.admin-card:hover {
+  background: var(--glass-hover, hsl(var(--card) / 0.86));
+}
+
+.admin-table-wrapper {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border, hsl(var(--border)));
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.admin-table thead {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.admin-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-secondary, hsl(var(--muted-foreground)));
+  border-bottom: 1px solid var(--glass-border, hsl(var(--border)));
+}
+
+.admin-table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  color: var(--text-primary, hsl(var(--foreground)));
+}
+
+.admin-table tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.progress-indicator {
+  padding: 16px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--glass-border, hsl(var(--border)));
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text-secondary, hsl(var(--muted-foreground)));
+  margin-bottom: 6px;
+}
+
+.progress-track {
+  position: relative;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6366F1, #8B5CF6);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-spinner {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  color: #6366F1;
+  animation: admin-progress-spin 0.8s linear infinite;
+}
+
+@keyframes admin-progress-spin {
+  to { transform: translateY(-50%) rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+  .admin-page { padding: 16px; }
+  .admin-card { padding: 16px; }
+  .admin-table { font-size: 12px; }
+  .admin-table th, .admin-table td { padding: 6px 8px; }
+}
+
+.admin-table-wrapper::-webkit-scrollbar { height: 4px; }
+.admin-table-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
