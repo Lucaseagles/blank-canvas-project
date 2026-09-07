@@ -1,87 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { User, Shield, Calendar, Mail } from "lucide-react";
-
-export const Route = createFileRoute("/admin/users")({
-  component: AdminUsersPage,
-});
-
+import { User, Shield, Search, Ban, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
+export const Route = createFileRoute("/admin/users")({ component: AdminUsersPage });
+type AdminUser = { user_id: string; email: string | null; display_name: string | null; role: string; created_at: string | null; total_referrals: number; current_tier_id: string | null; is_banned: boolean };
 function AdminUsersPage() {
-  const { data: users, isLoading } = useQuery({
-    queryKey: ["admin-users"],
-    queryFn: async () => {
-      // In a real app, we would query auth.users via a secure view or edge function
-      // For now, we query the public profiles table which mirrors users
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*, user_roles(role)")
-        .order("created_at", { ascending: false });
-      
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  return (
-    <div className="container mx-auto py-12 px-4 max-w-7xl space-y-8">
-      <div className="space-y-2">
-        <Badge className="bg-primary/10 text-primary border-primary/20 font-bold px-3">Identity Pipeline</Badge>
-        <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase italic">User Control</h1>
-      </div>
-
-      <div className="bg-glass-fallback border border-glass-border rounded-[2.5rem] backdrop-blur-xl overflow-hidden shadow-2xl reveal-on-scroll">
-        <Table>
-          <TableHeader className="bg-muted/30">
-            <TableRow className="border-glass-border">
-              <TableHead className="font-black text-xs uppercase tracking-widest text-muted-foreground py-6 pl-8">Operator</TableHead>
-              <TableHead className="font-black text-xs uppercase tracking-widest text-muted-foreground">Access Level</TableHead>
-              <TableHead className="font-black text-xs uppercase tracking-widest text-muted-foreground">Identity Sector</TableHead>
-              <TableHead className="font-black text-xs uppercase tracking-widest text-muted-foreground text-right pr-8">Joined</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              [...Array(3)].map((_, i) => (
-                <TableRow key={i} className="border-glass-border">
-                  <TableCell className="pl-8 py-6"><div className="h-4 w-48 bg-muted animate-pulse rounded" /></TableCell>
-                  <TableCell><div className="h-4 w-24 bg-muted animate-pulse rounded" /></TableCell>
-                  <TableCell><div className="h-4 w-32 bg-muted animate-pulse rounded" /></TableCell>
-                  <TableCell className="text-right pr-8"><div className="h-4 w-20 ml-auto bg-muted animate-pulse rounded" /></TableCell>
-                </TableRow>
-              ))
-            ) : users?.map((user) => (
-              <TableRow key={user.id} className="hover:bg-white/5 border-glass-border transition-colors group">
-                <TableCell className="font-bold py-6 pl-8">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                      <User size={18} />
-                    </div>
-                    <div>
-                      <p className="font-black uppercase tracking-tight italic">{user.display_name || 'Anonymous'}</p>
-                      <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">UID: {user.user_id?.slice(0, 8)}</p>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge className="rounded-full px-3 py-0.5 text-[10px] font-black uppercase bg-primary/10 text-primary border-primary/20">
-                    {(user.user_roles as any)?.[0]?.role || 'User'}
-                  </Badge>
-                </TableCell>
-                <TableCell className="font-medium text-muted-foreground text-xs uppercase italic flex items-center gap-2">
-                  <Shield size={12} className="text-primary/40" />
-                  Protocol: {(user.user_roles as any)?.[0]?.role === 'owner' ? 'ROOT' : 'STANDARD'}
-                </TableCell>
-                <TableCell className="text-right pr-8 font-bold tabular-nums text-xs text-muted-foreground">
-                  {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
-  );
+ const queryClient=useQueryClient(); const [search,setSearch]=useState(""); const [banned,setBanned]=useState<"all"|"active"|"banned">("all"); const [page,setPage]=useState(0);
+ const {data,isLoading,isError}=useQuery({queryKey:["admin-users",search,banned,page],queryFn:async()=>{const p_search=search.trim()||null;const p_banned=banned==="all"?null:banned==="banned";const [rows,count]=await Promise.all([supabase.rpc("admin_list_users" as any,{p_limit:25,p_offset:page*25,p_search,p_banned}),supabase.rpc("admin_count_users" as any,{p_search,p_banned})]);if(rows.error)throw rows.error;if(count.error)throw count.error;return {rows:(rows.data??[]) as AdminUser[],count:Number(count.data??0)}}});
+ const mutation=useMutation({mutationFn:async({userId,value}:{userId:string;value:boolean})=>{const {data:ok,error}=await supabase.rpc("admin_set_profile_banned" as any,{p_user_id:userId,p_banned:value});if(error)throw error;if(!ok)throw new Error("Usuário não encontrado");return value},onSuccess:value=>{queryClient.invalidateQueries({queryKey:["admin-users"]});toast.success(value?"Usuário bloqueado.":"Usuário desbloqueado.")},onError:e=>toast.error(e.message)});
+ const totalPages=Math.max(1,Math.ceil((data?.count??0)/25));
+ return <div className="container mx-auto max-w-7xl space-y-8 px-4 py-10 lg:py-14"><header><Badge className="mb-3 gap-2"><Shield className="h-3 w-3"/> Owner Only</Badge><h1 className="text-4xl font-black uppercase italic tracking-tighter lg:text-6xl">Controle de usuários</h1><p className="mt-2 text-sm text-muted-foreground">Lista real de usuários, busca por nome/e-mail e bloqueio persistido no perfil.</p></header><div className="flex flex-col gap-3 md:flex-row"><div className="relative flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"/><Input value={search} onChange={e=>{setSearch(e.target.value);setPage(0)}} placeholder="Buscar nome ou e-mail..." className="pl-10"/></div><select value={banned} onChange={e=>{setBanned(e.target.value as typeof banned);setPage(0)}} className="h-10 rounded-md border bg-background px-3 text-sm"><option value="all">Todos</option><option value="active">Ativos</option><option value="banned">Bloqueados</option></select></div><div className="overflow-hidden rounded-3xl border border-glass-border bg-glass-fallback"><Table><TableHeader><TableRow><TableHead>Usuário</TableHead><TableHead>Função</TableHead><TableHead>Indicações</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Ação</TableHead></TableRow></TableHeader><TableBody>{isLoading?<TableRow><TableCell colSpan={5} className="py-12 text-center">Carregando usuários…</TableCell></TableRow>:isError?<TableRow><TableCell colSpan={5} className="py-12 text-center text-destructive">Falha ao carregar usuários.</TableCell></TableRow>:data?.rows.length?data.rows.map(user=><TableRow key={user.user_id}><TableCell><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary"><User className="h-4 w-4"/></div><div><p className="font-bold">{user.display_name||"Sem nome"}</p><p className="text-xs text-muted-foreground">{user.email||"E-mail indisponível"}</p></div></div></TableCell><TableCell><Badge variant="outline">{user.role}</Badge></TableCell><TableCell>{user.total_referrals??0}</TableCell><TableCell>{user.is_banned?<Badge variant="destructive">Bloqueado</Badge>:<Badge className="gap-1"><CheckCircle2 className="h-3 w-3"/>Ativo</Badge>}</TableCell><TableCell className="text-right"><Button size="sm" variant={user.is_banned?"outline":"destructive"} disabled={mutation.isPending||user.role==="owner"} onClick={()=>mutation.mutate({userId:user.user_id,value:!user.is_banned})}><Ban className="mr-2 h-4 w-4"/>{user.is_banned?"Desbloquear":"Bloquear"}</Button></TableCell></TableRow>):<TableRow><TableCell colSpan={5} className="py-12 text-center text-muted-foreground">Nenhum usuário encontrado.</TableCell></TableRow>}</TableBody></Table></div><div className="flex items-center justify-between text-sm text-muted-foreground"><span>{data?.count??0} usuário(s) · Página {page+1} de {totalPages}</span><div className="flex gap-2"><Button variant="outline" disabled={page===0} onClick={()=>setPage(page-1)}>Anterior</Button><Button variant="outline" disabled={page+1>=totalPages} onClick={()=>setPage(page+1)}>Próxima</Button></div></div></div>;
 }
