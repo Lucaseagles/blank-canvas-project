@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import "@/styles.css";
 import "@/category-filter-premium.css";
 import "@/components/support/SupportFloatingBubble.css";
+import "@/admin/admin-premium.css";
 const rootQueryClient = new QueryClient();
 export const Route = createRootRoute({
   head: () => ({ meta: [{ charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1" }, { title: "Ofertas Inteligentes — Descoberta e Video Commerce" }, { name: "description", content: "Motor de descoberta de ofertas com curadoria inteligente, vídeos e alertas de preço em vários marketplaces." }] }),
