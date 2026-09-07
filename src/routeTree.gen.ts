@@ -58,8 +58,14 @@ import { Route as BundleSlugRouteImport } from './routes/bundle/$slug'
 import { Route as CategorySlugRouteImport } from './routes/category/$slug'
 import { Route as DevSocialProofPreviewRouteImport } from './routes/dev.social-proof-preview'
 import { Route as ProductSlugRouteImport } from './routes/product/$slug'
+import { Route as AdminMarketplacesNewRouteImport } from './routes/admin/marketplaces.new'
+import { Route as AdminOffersNewRouteImport } from './routes/admin/offers.new'
+import { Route as AdminProductsExportRouteImport } from './routes/admin/products.export'
+import { Route as AdminProductsImportRouteImport } from './routes/admin/products.import'
 import { Route as AdminProductsNewRouteImport } from './routes/admin/products.new'
+import { Route as AdminVideosNewRouteImport } from './routes/admin/videos.new'
 import { Route as AdminProductsIdEditRouteImport } from './routes/admin/products.$id.edit'
+import { Route as AdminVideosIdEditRouteImport } from './routes/admin/videos.$id.edit'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -306,15 +312,45 @@ const ProductSlugRoute = ProductSlugRouteImport.update({
   path: '/product/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminMarketplacesNewRoute = AdminMarketplacesNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AdminMarketplacesRoute,
+} as any)
+const AdminOffersNewRoute = AdminOffersNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AdminOffersRoute,
+} as any)
+const AdminProductsExportRoute = AdminProductsExportRouteImport.update({
+  id: '/export',
+  path: '/export',
+  getParentRoute: () => AdminProductsRoute,
+} as any)
+const AdminProductsImportRoute = AdminProductsImportRouteImport.update({
+  id: '/import',
+  path: '/import',
+  getParentRoute: () => AdminProductsRoute,
+} as any)
 const AdminProductsNewRoute = AdminProductsNewRouteImport.update({
   id: '/new',
   path: '/new',
   getParentRoute: () => AdminProductsRoute,
 } as any)
+const AdminVideosNewRoute = AdminVideosNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AdminVideosRoute,
+} as any)
 const AdminProductsIdEditRoute = AdminProductsIdEditRouteImport.update({
   id: '/$id/edit',
   path: '/$id/edit',
   getParentRoute: () => AdminProductsRoute,
+} as any)
+const AdminVideosIdEditRoute = AdminVideosIdEditRouteImport.update({
+  id: '/$id/edit',
+  path: '/$id/edit',
+  getParentRoute: () => AdminVideosRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -344,11 +380,11 @@ export interface FileRoutesByFullPath {
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
-  '/admin/marketplaces': typeof AdminMarketplacesRoute
+  '/admin/marketplaces': typeof AdminMarketplacesRouteWithChildren
   '/admin/metrics': typeof AdminMetricsRoute
   '/admin/modules': typeof AdminModulesRoute
   '/admin/notifications': typeof AdminNotificationsRoute
-  '/admin/offers': typeof AdminOffersRoute
+  '/admin/offers': typeof AdminOffersRouteWithChildren
   '/admin/products': typeof AdminProductsRouteWithChildren
   '/admin/publishing': typeof AdminPublishingRoute
   '/admin/recommendations': typeof AdminRecommendationsRoute
@@ -361,14 +397,20 @@ export interface FileRoutesByFullPath {
   '/admin/telegram': typeof AdminTelegramRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/v1-audit': typeof AdminV1AuditRoute
-  '/admin/videos': typeof AdminVideosRoute
+  '/admin/videos': typeof AdminVideosRouteWithChildren
   '/api/scheduled-publishing': typeof ApiScheduledPublishingRoute
   '/bundle/$slug': typeof BundleSlugRoute
   '/category/$slug': typeof CategorySlugRoute
   '/dev/social-proof-preview': typeof DevSocialProofPreviewRoute
   '/product/$slug': typeof ProductSlugRoute
+  '/admin/marketplaces/new': typeof AdminMarketplacesNewRoute
+  '/admin/offers/new': typeof AdminOffersNewRoute
+  '/admin/products/export': typeof AdminProductsExportRoute
+  '/admin/products/import': typeof AdminProductsImportRoute
   '/admin/products/new': typeof AdminProductsNewRoute
+  '/admin/videos/new': typeof AdminVideosNewRoute
   '/admin/products/$id/edit': typeof AdminProductsIdEditRoute
+  '/admin/videos/$id/edit': typeof AdminVideosIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -397,11 +439,11 @@ export interface FileRoutesByTo {
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
-  '/admin/marketplaces': typeof AdminMarketplacesRoute
+  '/admin/marketplaces': typeof AdminMarketplacesRouteWithChildren
   '/admin/metrics': typeof AdminMetricsRoute
   '/admin/modules': typeof AdminModulesRoute
   '/admin/notifications': typeof AdminNotificationsRoute
-  '/admin/offers': typeof AdminOffersRoute
+  '/admin/offers': typeof AdminOffersRouteWithChildren
   '/admin/products': typeof AdminProductsRouteWithChildren
   '/admin/publishing': typeof AdminPublishingRoute
   '/admin/recommendations': typeof AdminRecommendationsRoute
@@ -414,14 +456,20 @@ export interface FileRoutesByTo {
   '/admin/telegram': typeof AdminTelegramRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/v1-audit': typeof AdminV1AuditRoute
-  '/admin/videos': typeof AdminVideosRoute
+  '/admin/videos': typeof AdminVideosRouteWithChildren
   '/api/scheduled-publishing': typeof ApiScheduledPublishingRoute
   '/bundle/$slug': typeof BundleSlugRoute
   '/category/$slug': typeof CategorySlugRoute
   '/dev/social-proof-preview': typeof DevSocialProofPreviewRoute
   '/product/$slug': typeof ProductSlugRoute
+  '/admin/marketplaces/new': typeof AdminMarketplacesNewRoute
+  '/admin/offers/new': typeof AdminOffersNewRoute
+  '/admin/products/export': typeof AdminProductsExportRoute
+  '/admin/products/import': typeof AdminProductsImportRoute
   '/admin/products/new': typeof AdminProductsNewRoute
+  '/admin/videos/new': typeof AdminVideosNewRoute
   '/admin/products/$id/edit': typeof AdminProductsIdEditRoute
+  '/admin/videos/$id/edit': typeof AdminVideosIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -451,11 +499,11 @@ export interface FileRoutesById {
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
-  '/admin/marketplaces': typeof AdminMarketplacesRoute
+  '/admin/marketplaces': typeof AdminMarketplacesRouteWithChildren
   '/admin/metrics': typeof AdminMetricsRoute
   '/admin/modules': typeof AdminModulesRoute
   '/admin/notifications': typeof AdminNotificationsRoute
-  '/admin/offers': typeof AdminOffersRoute
+  '/admin/offers': typeof AdminOffersRouteWithChildren
   '/admin/products': typeof AdminProductsRouteWithChildren
   '/admin/publishing': typeof AdminPublishingRoute
   '/admin/recommendations': typeof AdminRecommendationsRoute
@@ -468,14 +516,20 @@ export interface FileRoutesById {
   '/admin/telegram': typeof AdminTelegramRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/v1-audit': typeof AdminV1AuditRoute
-  '/admin/videos': typeof AdminVideosRoute
+  '/admin/videos': typeof AdminVideosRouteWithChildren
   '/api/scheduled-publishing': typeof ApiScheduledPublishingRoute
   '/bundle/$slug': typeof BundleSlugRoute
   '/category/$slug': typeof CategorySlugRoute
   '/dev/social-proof-preview': typeof DevSocialProofPreviewRoute
   '/product/$slug': typeof ProductSlugRoute
+  '/admin/marketplaces/new': typeof AdminMarketplacesNewRoute
+  '/admin/offers/new': typeof AdminOffersNewRoute
+  '/admin/products/export': typeof AdminProductsExportRoute
+  '/admin/products/import': typeof AdminProductsImportRoute
   '/admin/products/new': typeof AdminProductsNewRoute
+  '/admin/videos/new': typeof AdminVideosNewRoute
   '/admin/products/$id/edit': typeof AdminProductsIdEditRoute
+  '/admin/videos/$id/edit': typeof AdminVideosIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -529,8 +583,14 @@ export interface FileRouteTypes {
     | '/category/$slug'
     | '/dev/social-proof-preview'
     | '/product/$slug'
+    | '/admin/marketplaces/new'
+    | '/admin/offers/new'
+    | '/admin/products/export'
+    | '/admin/products/import'
     | '/admin/products/new'
+    | '/admin/videos/new'
     | '/admin/products/$id/edit'
+    | '/admin/videos/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -582,8 +642,14 @@ export interface FileRouteTypes {
     | '/category/$slug'
     | '/dev/social-proof-preview'
     | '/product/$slug'
+    | '/admin/marketplaces/new'
+    | '/admin/offers/new'
+    | '/admin/products/export'
+    | '/admin/products/import'
     | '/admin/products/new'
+    | '/admin/videos/new'
     | '/admin/products/$id/edit'
+    | '/admin/videos/$id/edit'
   id:
     | '__root__'
     | '/'
@@ -635,8 +701,14 @@ export interface FileRouteTypes {
     | '/category/$slug'
     | '/dev/social-proof-preview'
     | '/product/$slug'
+    | '/admin/marketplaces/new'
+    | '/admin/offers/new'
+    | '/admin/products/export'
+    | '/admin/products/import'
     | '/admin/products/new'
+    | '/admin/videos/new'
     | '/admin/products/$id/edit'
+    | '/admin/videos/$id/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1009,12 +1081,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/marketplaces/new': {
+      id: '/admin/marketplaces/new'
+      path: '/new'
+      fullPath: '/admin/marketplaces/new'
+      preLoaderRoute: typeof AdminMarketplacesNewRouteImport
+      parentRoute: typeof AdminMarketplacesRoute
+    }
+    '/admin/offers/new': {
+      id: '/admin/offers/new'
+      path: '/new'
+      fullPath: '/admin/offers/new'
+      preLoaderRoute: typeof AdminOffersNewRouteImport
+      parentRoute: typeof AdminOffersRoute
+    }
+    '/admin/products/export': {
+      id: '/admin/products/export'
+      path: '/export'
+      fullPath: '/admin/products/export'
+      preLoaderRoute: typeof AdminProductsExportRouteImport
+      parentRoute: typeof AdminProductsRoute
+    }
+    '/admin/products/import': {
+      id: '/admin/products/import'
+      path: '/import'
+      fullPath: '/admin/products/import'
+      preLoaderRoute: typeof AdminProductsImportRouteImport
+      parentRoute: typeof AdminProductsRoute
+    }
     '/admin/products/new': {
       id: '/admin/products/new'
       path: '/new'
       fullPath: '/admin/products/new'
       preLoaderRoute: typeof AdminProductsNewRouteImport
       parentRoute: typeof AdminProductsRoute
+    }
+    '/admin/videos/new': {
+      id: '/admin/videos/new'
+      path: '/new'
+      fullPath: '/admin/videos/new'
+      preLoaderRoute: typeof AdminVideosNewRouteImport
+      parentRoute: typeof AdminVideosRoute
     }
     '/admin/products/$id/edit': {
       id: '/admin/products/$id/edit'
@@ -1023,21 +1130,69 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminProductsIdEditRouteImport
       parentRoute: typeof AdminProductsRoute
     }
+    '/admin/videos/$id/edit': {
+      id: '/admin/videos/$id/edit'
+      path: '/$id/edit'
+      fullPath: '/admin/videos/$id/edit'
+      preLoaderRoute: typeof AdminVideosIdEditRouteImport
+      parentRoute: typeof AdminVideosRoute
+    }
   }
 }
 
+interface AdminMarketplacesRouteChildren {
+  AdminMarketplacesNewRoute: typeof AdminMarketplacesNewRoute
+}
+
+const AdminMarketplacesRouteChildren: AdminMarketplacesRouteChildren = {
+  AdminMarketplacesNewRoute: AdminMarketplacesNewRoute,
+}
+
+const AdminMarketplacesRouteWithChildren =
+  AdminMarketplacesRoute._addFileChildren(AdminMarketplacesRouteChildren)
+
+interface AdminOffersRouteChildren {
+  AdminOffersNewRoute: typeof AdminOffersNewRoute
+}
+
+const AdminOffersRouteChildren: AdminOffersRouteChildren = {
+  AdminOffersNewRoute: AdminOffersNewRoute,
+}
+
+const AdminOffersRouteWithChildren = AdminOffersRoute._addFileChildren(
+  AdminOffersRouteChildren,
+)
+
 interface AdminProductsRouteChildren {
+  AdminProductsExportRoute: typeof AdminProductsExportRoute
+  AdminProductsImportRoute: typeof AdminProductsImportRoute
   AdminProductsNewRoute: typeof AdminProductsNewRoute
   AdminProductsIdEditRoute: typeof AdminProductsIdEditRoute
 }
 
 const AdminProductsRouteChildren: AdminProductsRouteChildren = {
+  AdminProductsExportRoute: AdminProductsExportRoute,
+  AdminProductsImportRoute: AdminProductsImportRoute,
   AdminProductsNewRoute: AdminProductsNewRoute,
   AdminProductsIdEditRoute: AdminProductsIdEditRoute,
 }
 
 const AdminProductsRouteWithChildren = AdminProductsRoute._addFileChildren(
   AdminProductsRouteChildren,
+)
+
+interface AdminVideosRouteChildren {
+  AdminVideosNewRoute: typeof AdminVideosNewRoute
+  AdminVideosIdEditRoute: typeof AdminVideosIdEditRoute
+}
+
+const AdminVideosRouteChildren: AdminVideosRouteChildren = {
+  AdminVideosNewRoute: AdminVideosNewRoute,
+  AdminVideosIdEditRoute: AdminVideosIdEditRoute,
+}
+
+const AdminVideosRouteWithChildren = AdminVideosRoute._addFileChildren(
+  AdminVideosRouteChildren,
 )
 
 interface AdminRouteChildren {
@@ -1050,11 +1205,11 @@ interface AdminRouteChildren {
   AdminCategoriesRoute: typeof AdminCategoriesRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdminIntegrationsRoute: typeof AdminIntegrationsRoute
-  AdminMarketplacesRoute: typeof AdminMarketplacesRoute
+  AdminMarketplacesRoute: typeof AdminMarketplacesRouteWithChildren
   AdminMetricsRoute: typeof AdminMetricsRoute
   AdminModulesRoute: typeof AdminModulesRoute
   AdminNotificationsRoute: typeof AdminNotificationsRoute
-  AdminOffersRoute: typeof AdminOffersRoute
+  AdminOffersRoute: typeof AdminOffersRouteWithChildren
   AdminProductsRoute: typeof AdminProductsRouteWithChildren
   AdminPublishingRoute: typeof AdminPublishingRoute
   AdminRecommendationsRoute: typeof AdminRecommendationsRoute
@@ -1067,7 +1222,7 @@ interface AdminRouteChildren {
   AdminTelegramRoute: typeof AdminTelegramRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminV1AuditRoute: typeof AdminV1AuditRoute
-  AdminVideosRoute: typeof AdminVideosRoute
+  AdminVideosRoute: typeof AdminVideosRouteWithChildren
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
@@ -1080,11 +1235,11 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminCategoriesRoute: AdminCategoriesRoute,
   AdminDashboardRoute: AdminDashboardRoute,
   AdminIntegrationsRoute: AdminIntegrationsRoute,
-  AdminMarketplacesRoute: AdminMarketplacesRoute,
+  AdminMarketplacesRoute: AdminMarketplacesRouteWithChildren,
   AdminMetricsRoute: AdminMetricsRoute,
   AdminModulesRoute: AdminModulesRoute,
   AdminNotificationsRoute: AdminNotificationsRoute,
-  AdminOffersRoute: AdminOffersRoute,
+  AdminOffersRoute: AdminOffersRouteWithChildren,
   AdminProductsRoute: AdminProductsRouteWithChildren,
   AdminPublishingRoute: AdminPublishingRoute,
   AdminRecommendationsRoute: AdminRecommendationsRoute,
@@ -1097,7 +1252,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminTelegramRoute: AdminTelegramRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminV1AuditRoute: AdminV1AuditRoute,
-  AdminVideosRoute: AdminVideosRoute,
+  AdminVideosRoute: AdminVideosRouteWithChildren,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
