@@ -18,7 +18,11 @@ const AUDIT_REGISTRY: AuditDefinition[] = [
   { key: "price_alerts", category: "Engagement", label: "Price Alerts", table: "price_alerts" },
   { key: "referrals", category: "Growth", label: "Referrals", table: "referrals" },
   { key: "referral_events", category: "Growth", label: "Referral Events", table: "referral_events" },
+  { key: "referral_tiers", category: "Growth", label: "Referral Tiers", table: "referral_tiers", route: "/admin/referrals" },
   { key: "social_channels", category: "Growth", label: "Social Channels", table: "social_channels", route: "/admin/social-channels" },
+  { key: "social_proof_config", category: "Growth", label: "Social Proof", table: "social_proof_config", route: "/admin/social-proof" },
+  { key: "support_faq", category: "Support", label: "Support Knowledge Base", table: "support_faq", route: "/admin/support-knowledge" },
+  { key: "telegram_config", category: "Integrations", label: "Telegram", table: "telegram_config", route: "/admin/telegram" },
   { key: "campaigns", category: "Automation", label: "Campaigns", table: "campaigns", route: "/admin/campaigns" },
   { key: "campaign_channels", category: "Automation", label: "Campaign Channels", table: "campaign_channels" },
   { key: "scheduled_posts", category: "Publishing", label: "Scheduled Posts", table: "scheduled_posts", route: "/admin/publishing" },
@@ -42,7 +46,7 @@ async function tableHealth(supabaseAdmin: any, definition: AuditDefinition): Pro
 export const runAdminAudit = createServerFn({ method: "GET" })
   .middleware([requireOwnerRole])
   .validator((data: unknown) => AuditInputSchema.parse(data ?? {}))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const checkedAt = new Date().toISOString();
     const definitions = data.includeOptional ? AUDIT_REGISTRY : AUDIT_REGISTRY.filter((item) => item.required);
@@ -53,14 +57,11 @@ export const runAdminAudit = createServerFn({ method: "GET" })
     }));
 
     const stats: AuditStats = { total: 0, functional: 0, bug: 0, no_data: 0, no_ui: 0, unavailable: 0 };
-    for (const item of items) {
-      stats.total += 1;
-      stats[item.status] += 1;
-    }
+    for (const item of items) { stats.total += 1; stats[item.status] += 1; }
 
     const { error: logError } = await (supabaseAdmin as any).from("admin_audit_log").insert({
-      actor_user_id: null,
-      actor_email: "eaglesfr49@gmail.com",
+      actor_user_id: context.userId,
+      actor_email: context.userEmail ?? null,
       action_type: "ADMIN_AUDIT_RUN",
       entity_type: "system",
       entity_id: null,
