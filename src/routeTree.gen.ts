@@ -58,6 +58,8 @@ import { Route as BundleSlugRouteImport } from './routes/bundle/$slug'
 import { Route as CategorySlugRouteImport } from './routes/category/$slug'
 import { Route as DevSocialProofPreviewRouteImport } from './routes/dev.social-proof-preview'
 import { Route as ProductSlugRouteImport } from './routes/product/$slug'
+import { Route as AdminProductsNewRouteImport } from './routes/admin/products.new'
+import { Route as AdminProductsIdEditRouteImport } from './routes/admin/products.$id.edit'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -304,6 +306,16 @@ const ProductSlugRoute = ProductSlugRouteImport.update({
   path: '/product/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminProductsNewRoute = AdminProductsNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AdminProductsRoute,
+} as any)
+const AdminProductsIdEditRoute = AdminProductsIdEditRouteImport.update({
+  id: '/$id/edit',
+  path: '/$id/edit',
+  getParentRoute: () => AdminProductsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -337,7 +349,7 @@ export interface FileRoutesByFullPath {
   '/admin/modules': typeof AdminModulesRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/offers': typeof AdminOffersRoute
-  '/admin/products': typeof AdminProductsRoute
+  '/admin/products': typeof AdminProductsRouteWithChildren
   '/admin/publishing': typeof AdminPublishingRoute
   '/admin/recommendations': typeof AdminRecommendationsRoute
   '/admin/referrals': typeof AdminReferralsRoute
@@ -355,6 +367,8 @@ export interface FileRoutesByFullPath {
   '/category/$slug': typeof CategorySlugRoute
   '/dev/social-proof-preview': typeof DevSocialProofPreviewRoute
   '/product/$slug': typeof ProductSlugRoute
+  '/admin/products/new': typeof AdminProductsNewRoute
+  '/admin/products/$id/edit': typeof AdminProductsIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -388,7 +402,7 @@ export interface FileRoutesByTo {
   '/admin/modules': typeof AdminModulesRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/offers': typeof AdminOffersRoute
-  '/admin/products': typeof AdminProductsRoute
+  '/admin/products': typeof AdminProductsRouteWithChildren
   '/admin/publishing': typeof AdminPublishingRoute
   '/admin/recommendations': typeof AdminRecommendationsRoute
   '/admin/referrals': typeof AdminReferralsRoute
@@ -406,6 +420,8 @@ export interface FileRoutesByTo {
   '/category/$slug': typeof CategorySlugRoute
   '/dev/social-proof-preview': typeof DevSocialProofPreviewRoute
   '/product/$slug': typeof ProductSlugRoute
+  '/admin/products/new': typeof AdminProductsNewRoute
+  '/admin/products/$id/edit': typeof AdminProductsIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -440,7 +456,7 @@ export interface FileRoutesById {
   '/admin/modules': typeof AdminModulesRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/offers': typeof AdminOffersRoute
-  '/admin/products': typeof AdminProductsRoute
+  '/admin/products': typeof AdminProductsRouteWithChildren
   '/admin/publishing': typeof AdminPublishingRoute
   '/admin/recommendations': typeof AdminRecommendationsRoute
   '/admin/referrals': typeof AdminReferralsRoute
@@ -458,6 +474,8 @@ export interface FileRoutesById {
   '/category/$slug': typeof CategorySlugRoute
   '/dev/social-proof-preview': typeof DevSocialProofPreviewRoute
   '/product/$slug': typeof ProductSlugRoute
+  '/admin/products/new': typeof AdminProductsNewRoute
+  '/admin/products/$id/edit': typeof AdminProductsIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -511,6 +529,8 @@ export interface FileRouteTypes {
     | '/category/$slug'
     | '/dev/social-proof-preview'
     | '/product/$slug'
+    | '/admin/products/new'
+    | '/admin/products/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -562,6 +582,8 @@ export interface FileRouteTypes {
     | '/category/$slug'
     | '/dev/social-proof-preview'
     | '/product/$slug'
+    | '/admin/products/new'
+    | '/admin/products/$id/edit'
   id:
     | '__root__'
     | '/'
@@ -613,6 +635,8 @@ export interface FileRouteTypes {
     | '/category/$slug'
     | '/dev/social-proof-preview'
     | '/product/$slug'
+    | '/admin/products/new'
+    | '/admin/products/$id/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -985,8 +1009,36 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/products/new': {
+      id: '/admin/products/new'
+      path: '/new'
+      fullPath: '/admin/products/new'
+      preLoaderRoute: typeof AdminProductsNewRouteImport
+      parentRoute: typeof AdminProductsRoute
+    }
+    '/admin/products/$id/edit': {
+      id: '/admin/products/$id/edit'
+      path: '/$id/edit'
+      fullPath: '/admin/products/$id/edit'
+      preLoaderRoute: typeof AdminProductsIdEditRouteImport
+      parentRoute: typeof AdminProductsRoute
+    }
   }
 }
+
+interface AdminProductsRouteChildren {
+  AdminProductsNewRoute: typeof AdminProductsNewRoute
+  AdminProductsIdEditRoute: typeof AdminProductsIdEditRoute
+}
+
+const AdminProductsRouteChildren: AdminProductsRouteChildren = {
+  AdminProductsNewRoute: AdminProductsNewRoute,
+  AdminProductsIdEditRoute: AdminProductsIdEditRoute,
+}
+
+const AdminProductsRouteWithChildren = AdminProductsRoute._addFileChildren(
+  AdminProductsRouteChildren,
+)
 
 interface AdminRouteChildren {
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
@@ -1003,7 +1055,7 @@ interface AdminRouteChildren {
   AdminModulesRoute: typeof AdminModulesRoute
   AdminNotificationsRoute: typeof AdminNotificationsRoute
   AdminOffersRoute: typeof AdminOffersRoute
-  AdminProductsRoute: typeof AdminProductsRoute
+  AdminProductsRoute: typeof AdminProductsRouteWithChildren
   AdminPublishingRoute: typeof AdminPublishingRoute
   AdminRecommendationsRoute: typeof AdminRecommendationsRoute
   AdminReferralsRoute: typeof AdminReferralsRoute
@@ -1033,7 +1085,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminModulesRoute: AdminModulesRoute,
   AdminNotificationsRoute: AdminNotificationsRoute,
   AdminOffersRoute: AdminOffersRoute,
-  AdminProductsRoute: AdminProductsRoute,
+  AdminProductsRoute: AdminProductsRouteWithChildren,
   AdminPublishingRoute: AdminPublishingRoute,
   AdminRecommendationsRoute: AdminRecommendationsRoute,
   AdminReferralsRoute: AdminReferralsRoute,
