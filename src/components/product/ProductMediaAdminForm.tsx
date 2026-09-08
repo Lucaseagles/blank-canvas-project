@@ -86,7 +86,7 @@ export function ProductMediaAdminForm({ product, onSaved, onClose }: ProductMedi
     setImages((current) => {
       const next = [...current];
       const [item] = next.splice(from, 1);
-      next.splice(to, 0, item);
+      next.splice(to, 0, item!);
       return next;
     });
   };

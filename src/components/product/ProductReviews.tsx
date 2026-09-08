@@ -38,7 +38,7 @@ export function ProductReviews({ rating, reviewCount, reviews }: ProductReviewsP
                   <article key={`${review.author ?? 'review'}-${index}`} className="rounded-xl border border-glass-border bg-background/30 p-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className="text-sm font-bold">{review.author || 'Cliente do marketplace'}</span>
-                      {reviewRating > 0 && <RatingStars rating={reviewRating} reviewCount={0} showCount={false} size="small" label={`Avaliação de ${review.author || 'cliente'}`} />}
+                      {reviewRating > 0 && <RatingStars rating={reviewRating} reviewCount={0} showCount={false} size="small" />}
                     </div>
                     <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{review.comment}</p>
                     {review.date && <time className="mt-2 block text-[10px] text-muted-foreground/60">{review.date}</time>}

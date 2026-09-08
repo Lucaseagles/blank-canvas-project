@@ -5,7 +5,7 @@ import { createNativeVideo, getNativeVideo, updateNativeVideo, NativeVideoFormDa
 export function NativeVideoForm({mode,videoId,onBack}:{mode:"create"|"edit";videoId?:string;onBack:()=>void}){
  const [products,setProducts]=useState<any[]>([]); const [loading,setLoading]=useState(mode==="edit"); const [saving,setSaving]=useState(false);
  const [data,setData]=useState<NativeVideoFormData>({title:"",description:null,video_url:"",thumbnail_url:null,caption:null,product_id:null,affiliate_url:null,status:"draft",is_active:false});
- useEffect(()=>{listProducts({limit:200}).then(r=>setProducts(r.data??[])).catch(console.error);if(mode==="edit"&&videoId)getNativeVideo(videoId).then(v=>{if(v)setData(v as NativeVideoFormData);setLoading(false)})},[mode,videoId]);
+ useEffect(()=>{listProducts({limit:200}).then(r=>setProducts(r.data??[])).catch(console.error);if(mode==="edit"&&videoId)getNativeVideo(videoId).then(v=>{if(v)setData(v as unknown as NativeVideoFormData);setLoading(false)})},[mode,videoId]);
  const set=(k:keyof NativeVideoFormData,v:any)=>setData(d=>({...d,[k]:v}));
  async function submit(e:FormEvent){e.preventDefault();if(!data.title.trim()||!data.video_url.trim())return alert("Preencha título e URL do vídeo.");setSaving(true);const r=mode==="create"?await createNativeVideo(data):await updateNativeVideo(videoId!,data);setSaving(false);if(!r.success)return alert(r.error);onBack()}
  if(loading)return <div>Carregando vídeo...</div>;

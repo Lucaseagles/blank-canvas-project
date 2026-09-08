@@ -1,4 +1,6 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase as typedSupabase } from "@/integrations/supabase/client";
+
+const supabase = typedSupabase as any;
 
 export interface ExternalVideo {
   id: string;
