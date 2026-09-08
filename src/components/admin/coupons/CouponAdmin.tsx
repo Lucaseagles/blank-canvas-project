@@ -11,7 +11,6 @@ type Option = { id: string; name: string; icon?: string | null };
 type Coupon = { id: string; code: string; description: string | null; discount_type: string; discount_value: number; valid_from: string; valid_until: string | null; marketplace_id: string; product_id: string | null; category_id: string | null; is_active: boolean; is_real: boolean; max_uses: number | null; used_count: number; marketplaces?: { name?: string; icon?: string | null } | null };
 
 const emptyForm = { code: "", description: "", discount_type: "percentage", discount_value: 0, valid_from: "", valid_until: "", marketplace_id: "", product_id: "", category_id: "", is_active: true, max_uses: null as number | null };
-
 function localDateTime(value: string | null | undefined) { return value ? new Date(value).toISOString().slice(0, 16) : ""; }
 function toIso(value: string) { return value ? new Date(value).toISOString() : null; }
 
@@ -28,14 +27,22 @@ export function CouponAdmin() {
       client.from("products").select("id, title").eq("status", "active").order("title").limit(200),
       client.from("categories").select("id, name").eq("is_active", true).order("name"),
     ]);
-    if (c.error) toast.error(c.error.message); setCoupons(c.data ?? []); setMarketplaces(m.data ?? []); setProducts((p.data ?? []).map((x: any) => ({ id: x.id, name: x.title }))); setCategories(cat.data ?? []); setLoading(false);
+    const firstError = [c, m, p, cat].find((result: any) => result.error)?.error;
+    if (firstError) {
+      toast.error(firstError.message);
+      setLoading(false);
+      return;
+    }
+    setCoupons(c.data ?? []);
+    setMarketplaces(m.data ?? []);
+    setProducts((p.data ?? []).map((x: any) => ({ id: x.id, name: x.title })));
+    setCategories(cat.data ?? []);
+    setLoading(false);
   }
   useEffect(() => { void loadData(); }, []);
-
   function startCreate() { setCreating(true); setEditingId(null); setConfirmReal(false); setForm({ ...emptyForm, valid_from: localDateTime(new Date().toISOString()), valid_until: localDateTime(new Date(Date.now() + 30 * 86400000).toISOString()) }); }
   function startEdit(c: Coupon) { setCreating(false); setEditingId(c.id); setConfirmReal(c.is_real); setForm({ code: c.code, description: c.description ?? "", discount_type: c.discount_type, discount_value: Number(c.discount_value), valid_from: localDateTime(c.valid_from), valid_until: localDateTime(c.valid_until), marketplace_id: c.marketplace_id, product_id: c.product_id ?? "", category_id: c.category_id ?? "", is_active: c.is_active, max_uses: c.max_uses }); }
   function closeForm() { setCreating(false); setEditingId(null); setConfirmReal(false); }
-
   async function save() {
     if (!form.code.trim() || !form.marketplace_id) return toast.error("Código e marketplace são obrigatórios.");
     if (!confirmReal) return toast.error("Confirme que o cupom é REAL e oficial do marketplace.");
