@@ -19,7 +19,7 @@ export const getAdminIntelligenceData = createServerFn({ method: "GET" }).middle
     supabaseAdmin.from("products").select("*", { count: 'exact', head: true }).eq("status", "published"),
     supabaseAdmin.from("videos").select("*", { count: 'exact', head: true }).eq("status", "published"),
     supabaseAdmin.from("favorites").select("*", { count: 'exact', head: true }).gte("created_at", startDateISO),
-    supabaseAdmin.from("price_alerts").select("*", { count: 'exact", head: true }).eq("is_active", true),
+    supabaseAdmin.from("price_alerts").select("*", { count: 'exact', head: true }).eq("is_active", true),
     supabaseAdmin.from("analytics_events").select("*", { count: 'exact', head: true }).eq("event_type", "OUTBOUND_CLICK").gte("created_at", startDateISO),
     supabaseAdmin.from("analytics_events").select("*", { count: 'exact', head: true }).eq("event_type", "OUTBOUND_CLICK").gte("created_at", prevStartDateISO).lt("created_at", startDateISO),
     supabaseAdmin.from("analytics_events").select("*", { count: 'exact', head: true }).eq("event_type", "PRODUCT_VIEW").gte("created_at", startDateISO),
