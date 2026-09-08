@@ -20,7 +20,7 @@ export const saveCampaign = createServerFn({ method: "POST" }).middleware([requi
     const { error } = await supabaseAdmin.from("campaigns" as any).update({ name: campaign.name, description: campaign.description, starts_at: campaign.starts_at, ends_at: campaign.ends_at, status: campaign.status, updated_at: new Date().toISOString() } as any).eq("id", campaignId);
     if (error) throw error;
   } else {
-    const { data: newCampaign, error } = await supabaseAdmin.from("campaigns" as any).insert({ name: campaign.name, description: campaign.description, starts_at: campaign.starts_at, ends_at: campaign.ends_at, status: campaign.status } as any).select().single();
+    const { data: newCampaign, error } = await supabaseAdmin.from("campaigns" as any).insert({ name: campaign.name, description: campaign.description, starts_at: campaign.starts_at, ends_at: campaign.ends_at, status: campaign.status }).select().single();
     if (error) throw error;
     campaignId = (newCampaign as any).id;
   }
@@ -36,6 +36,16 @@ export const saveCampaign = createServerFn({ method: "POST" }).middleware([requi
     if (error) throw error;
   }
   return { success: true, id: campaignId };
+});
+
+export const terminateCampaign = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data)).handler(async ({ data: { id } }) => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: existing, error: fetchError } = await supabaseAdmin.from("campaigns" as any).select("id,status").eq("id", id).single();
+  if (fetchError) throw fetchError;
+  if ((existing as any).status === "ended") return { success: true, id, status: "ended" };
+  const { error } = await supabaseAdmin.from("campaigns" as any).update({ status: "ended", ends_at: new Date().toISOString(), updated_at: new Date().toISOString() } as any).eq("id", id);
+  if (error) throw error;
+  return { success: true, id, status: "ended" };
 });
 
 export const duplicateCampaign = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ id: z.string() }).parse(data)).handler(async ({ data: { id } }) => {
