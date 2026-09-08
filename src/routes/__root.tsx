@@ -48,7 +48,7 @@ export const Route = createRootRoute({
 
 function RootComponent() {
   const router = useRouter();
-  const queryClient = router.options.context.queryClient;
+  const queryClient = (router.options.context as any).queryClient;
 
   React.useEffect(() => {
     const observer = new IntersectionObserver(

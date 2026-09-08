@@ -7,7 +7,7 @@ export async function getCategories(){ const {data,error}=await supabase.from("c
 export async function getMarketplaces(){ const {data,error}=await supabase.from("marketplaces").select("id,name").order("name"); if(error)throw error; return data??[]; }
 
 function productPayload(data: Partial<ProductFormData>) {
-  const payload: Record<string, unknown> = {};
+  const payload: any = {};
   if (data.title !== undefined) payload.title = data.title.trim();
   if (data.description !== undefined) payload.description = data.description?.trim() || null;
   if (data.category_id !== undefined) payload.category_id = data.category_id || null;

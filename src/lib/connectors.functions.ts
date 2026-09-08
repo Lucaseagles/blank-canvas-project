@@ -10,7 +10,7 @@ export const updateMarketplaceCredentials = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ marketplaceId: z.string().uuid(), credentials: z.record(z.unknown()) }).parse(data))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.from("marketplaces").update({ api_config: data.credentials, status: "pending", api_status: "pending", updated_at: new Date().toISOString() }).eq("id", data.marketplaceId);
+    const { error } = await supabaseAdmin.from("marketplaces").update({ api_config: data.credentials as any, status: "pending", api_status: "pending", updated_at: new Date().toISOString() }).eq("id", data.marketplaceId);
     if (error) throw new Error(`Não foi possível salvar as credenciais: ${error.message}`);
     return { success: true };
   });
