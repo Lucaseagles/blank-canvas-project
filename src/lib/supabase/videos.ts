@@ -30,7 +30,7 @@ export interface NativeVideoFormData {
 export async function createNativeVideo(data: NativeVideoFormData) {
   const { data: result, error } = await supabase
     .from("videos")
-    .insert({ ...data, is_active: data.status === "published" })
+    .insert({ ...data, is_active: data.status === "published" } as any)
     .select()
     .single();
   if (error) return { success: false as const, error: error.message };
@@ -40,7 +40,7 @@ export async function createNativeVideo(data: NativeVideoFormData) {
 export async function updateNativeVideo(id: string, data: Partial<NativeVideoFormData>) {
   const { data: result, error } = await supabase
     .from("videos")
-    .update({ ...data, updated_at: new Date().toISOString() })
+    .update({ ...data, updated_at: new Date().toISOString() } as any)
     .eq("id", id)
     .select()
     .single();

@@ -16,7 +16,7 @@ export function OfferGroupForm() {
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     const value = name.trim();
-    if (!value) return toast.error("Informe o nome da oferta.");
+    if (!value) { toast.error("Informe o nome da oferta."); return; }
     setSaving(true);
     try {
       const result = await saveOffer({ data: { canonical_title: value } });

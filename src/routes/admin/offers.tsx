@@ -30,14 +30,14 @@ function AdminOffersPage() {
   const edit = async (id: string) => {
     try {
       const result = await getDetails({ data: { id } });
-      setEditing({ id, canonical_title: result.group.canonical_title });
+      setEditing({ id, canonical_title: (result.group as any).canonical_title });
     } catch (e: any) {
       toast.error(e?.message || "Não foi possível carregar a oferta.");
     }
   };
 
   const save = async () => {
-    if (!editing?.canonical_title.trim()) return toast.error("Informe o nome da oferta.");
+    if (!editing?.canonical_title.trim()) { toast.error("Informe o nome da oferta."); return; }
     setSaving(true);
     try {
       await saveGroup({ data: { id: editing.id, canonical_title: editing.canonical_title.trim() } });

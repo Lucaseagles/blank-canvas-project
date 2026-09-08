@@ -36,7 +36,7 @@ export function MarketplaceForm({ marketplaceId }: { marketplaceId?: string }) {
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     const normalizedSlug = slug.trim().toLowerCase().replace(/\s+/g, "-");
-    if (!name.trim() || !normalizedSlug) return toast.error("Nome e slug são obrigatórios.");
+    if (!name.trim() || !normalizedSlug) { toast.error("Nome e slug são obrigatórios."); return; }
     setSaving(true);
     try {
       const payload = { name: name.trim(), slug: normalizedSlug, status: status.trim() || "active", affiliate_link_structure: affiliateStructure.trim() || null, updated_at: new Date().toISOString() };

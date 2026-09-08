@@ -19,10 +19,35 @@ type ProductRow = {
 
 type EventRow = { product_id: string | null; category_id: string | null; event_type: string; created_at: string };
 
+type PerformanceProduct = {
+  id: string;
+  slug: string;
+  title: string;
+  current_price: number | null;
+  status: string;
+  category_id: string | null;
+  affiliate_url: string | null;
+  images: string[] | null;
+  offer_score: number | null;
+  category_name: string;
+  views: number;
+  clicks: number;
+  ctr: number;
+  has_affiliate_link: boolean;
+};
+
+type SellerPerformance = {
+  periodDays: number;
+  summary: { products: number; published: number; linkedProducts: number; totalViews: number; totalClicks: number; ctr: number };
+  products: PerformanceProduct[];
+  categories: { id: string; name: string; views: number; clicks: number; products: number }[];
+  trending: PerformanceProduct[];
+};
+
 export const getSellerPerformance = createServerFn({ method: "GET" })
   .middleware([requireOwnerRole])
   .inputValidator((data) => periodSchema.parse(data ?? {}))
-  .handler(async ({ data }) => {
+  .handler(async ({ data }): Promise<SellerPerformance> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const since = new Date(Date.now() - data.days * 86400000).toISOString();
 
@@ -61,11 +86,13 @@ export const getSellerPerformance = createServerFn({ method: "GET" })
       }
     }
 
-    const performance = products.map((product) => {
+    const performance: PerformanceProduct[] = products.map((product) => {
       const productViews = views.get(product.id) ?? 0;
       const productClicks = clicks.get(product.id) ?? 0;
+      const { categories, images, ...rest } = product;
       return {
-        ...product,
+        ...rest,
+        images: Array.isArray(images) ? (images as string[]) : null,
         category_name: product.categories?.name ?? "Sem categoria",
         views: productViews,
         clicks: productClicks,

@@ -1147,6 +1147,7 @@ export type Database = {
       }
       marketplaces: {
         Row: {
+          affiliate_link_structure: string | null
           api_config: Json | null
           api_status: string | null
           created_at: string | null
@@ -1154,8 +1155,10 @@ export type Database = {
           name: string
           slug: string
           status: string | null
+          updated_at: string
         }
         Insert: {
+          affiliate_link_structure?: string | null
           api_config?: Json | null
           api_status?: string | null
           created_at?: string | null
@@ -1163,8 +1166,10 @@ export type Database = {
           name: string
           slug: string
           status?: string | null
+          updated_at?: string
         }
         Update: {
+          affiliate_link_structure?: string | null
           api_config?: Json | null
           api_status?: string | null
           created_at?: string | null
@@ -1172,6 +1177,7 @@ export type Database = {
           name?: string
           slug?: string
           status?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1205,6 +1211,39 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_logs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          payload: Json
+          sent_at: string | null
+          status: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          payload?: Json
+          sent_at?: string | null
+          status?: string
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          payload?: Json
+          sent_at?: string | null
+          status?: string
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           created_at: string
@@ -1232,6 +1271,33 @@ export type Database = {
           retention_enabled?: boolean
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      notification_templates: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          template: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          template: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          template?: string
+          type?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1296,6 +1362,42 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      offer_products: {
+        Row: {
+          created_at: string
+          id: string
+          offer_id: string
+          product_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          offer_id: string
+          product_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          offer_id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_products_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offer_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offer_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       personalization_weights: {
         Row: {
@@ -1649,6 +1751,7 @@ export type Database = {
           current_tier_id: string | null
           display_name: string | null
           id: string
+          is_banned: boolean
           location_city: string | null
           location_state: string | null
           role: string | null
@@ -1665,6 +1768,7 @@ export type Database = {
           current_tier_id?: string | null
           display_name?: string | null
           id?: string
+          is_banned?: boolean
           location_city?: string | null
           location_state?: string | null
           role?: string | null
@@ -1681,6 +1785,7 @@ export type Database = {
           current_tier_id?: string | null
           display_name?: string | null
           id?: string
+          is_banned?: boolean
           location_city?: string | null
           location_state?: string | null
           role?: string | null
@@ -1760,6 +1865,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      recommendation_config: {
+        Row: {
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value?: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
       }
       referral_events: {
         Row: {
@@ -2669,6 +2792,51 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_count_users: {
+        Args: { p_banned?: boolean; p_search?: string }
+        Returns: number
+      }
+      admin_list_profiles: {
+        Args: {
+          p_banned?: boolean
+          p_limit?: number
+          p_offset?: number
+          p_search?: string
+        }
+        Returns: {
+          created_at: string
+          current_tier_id: string
+          display_name: string
+          id: string
+          is_banned: boolean
+          role: string
+          total_referrals: number
+          updated_at: string
+          user_id: string
+        }[]
+      }
+      admin_list_users: {
+        Args: {
+          p_banned?: boolean
+          p_limit?: number
+          p_offset?: number
+          p_search?: string
+        }
+        Returns: {
+          created_at: string
+          current_tier_id: string
+          display_name: string
+          email: string
+          is_banned: boolean
+          role: string
+          total_referrals: number
+          user_id: string
+        }[]
+      }
+      admin_set_profile_banned: {
+        Args: { p_banned: boolean; p_user_id: string }
+        Returns: boolean
+      }
       append_admin_audit: {
         Args: {
           p_action_type: string
@@ -2916,6 +3084,7 @@ export type Database = {
           current_tier_id: string | null
           display_name: string | null
           id: string
+          is_banned: boolean
           location_city: string | null
           location_state: string | null
           role: string | null
