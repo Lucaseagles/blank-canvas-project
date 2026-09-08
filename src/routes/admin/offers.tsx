@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Plus, Pencil, Trash2, Layers, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { getOfferGroups, getOfferGroupDetails, saveOfferGroup, deleteOfferGroup } from "@/lib/admin_intel.functions";
+import { OfferFeaturedControl } from "@/components/admin/offers/OfferFeaturedControl";
 
 export const Route = createFileRoute("/admin/offers")({ component: AdminOffersPage });
 
@@ -62,11 +63,13 @@ function AdminOffersPage() {
     }
   };
 
-  return <div className="container mx-auto py-12 px-4 max-w-7xl min-h-[80vh] space-y-8">
+  return <div className="container mx-auto py-12 px-4 max-w-7xl min-h-[80vh] space-y-10">
     <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
       <div><Badge className="bg-primary/10 text-primary border-primary/20 font-bold px-3">Offer Intelligence</Badge><h1 className="mt-3 text-4xl sm:text-5xl font-black tracking-tighter uppercase italic">Direct Offers</h1><p className="mt-2 max-w-2xl text-muted-foreground">Gerencie grupos de ofertas e acompanhe os produtos vinculados.</p></div>
       <div className="flex gap-2"><Button variant="outline" onClick={() => refetch()} disabled={isLoading}><RefreshCw className={isLoading ? "animate-spin" : ""} />Atualizar</Button><Button onClick={() => navigate({ to: "/admin/offers/new" })} className="h-11 rounded-2xl px-6 font-black uppercase italic gap-2"><Plus className="h-4 w-4" />New Offer</Button></div>
     </div>
+
+    <OfferFeaturedControl />
 
     {isError && <Card className="border-destructive/30"><CardContent className="p-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between"><p className="text-sm font-medium text-destructive">{(error as any)?.message || "Erro ao carregar ofertas."}</p><Button variant="outline" onClick={() => refetch()}>Tentar novamente</Button></CardContent></Card>}
 
