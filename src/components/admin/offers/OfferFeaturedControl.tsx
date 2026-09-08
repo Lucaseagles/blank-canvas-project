@@ -19,27 +19,24 @@ export function OfferFeaturedControl() {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const client = supabase as any;
 
   const loadOffers = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from('offer_groups')
       .select('id, canonical_title, is_featured_on_hub, featured_priority, featured_starts_at, featured_ends_at')
       .order('canonical_title');
-
-    if (error) {
-      toast.error(`Erro ao carregar destaques: ${error.message}`);
-    } else {
-      setOffers((data ?? []) as Offer[]);
-    }
+    if (error) toast.error(`Erro ao carregar destaques: ${error.message}`);
+    else setOffers((data ?? []) as Offer[]);
     setLoading(false);
   };
 
   useEffect(() => { void loadOffers(); }, []);
 
-  const updateOffer = async (id: string, patch: Partial<Offer>, successMessage: string) => {
+  const updateOffer = async (id: string, patch: Record<string, unknown>, successMessage: string) => {
     setSavingId(id);
-    const { error } = await supabase.from('offer_groups').update(patch).eq('id', id);
+    const { error } = await client.from('offer_groups').update(patch).eq('id', id);
     if (error) toast.error(`Erro: ${error.message}`);
     else {
       toast.success(successMessage);
@@ -79,7 +76,6 @@ export function OfferFeaturedControl() {
             const outsideWindow = active && Boolean(offer.featured_starts_at && offer.featured_ends_at) && (
               Date.now() < new Date(offer.featured_starts_at!).getTime() || Date.now() > new Date(offer.featured_ends_at!).getTime()
             );
-
             return (
               <div key={offer.id} className="rounded-3xl border border-glass-border bg-glass p-5 backdrop-blur-xl">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -91,47 +87,24 @@ export function OfferFeaturedControl() {
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground">Menor prioridade = aparece primeiro.</p>
                   </div>
-
                   <div className="flex flex-wrap items-center gap-3">
                     {active && (
                       <>
                         <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
                           Prioridade
-                          <Input
-                            type="number"
-                            min={0}
-                            max={100}
-                            value={offer.featured_priority ?? 0}
-                            disabled={savingId === offer.id}
-                            onChange={(event) => void updateOffer(offer.id, { featured_priority: Number(event.target.value) || 0 }, 'Prioridade atualizada.')}
-                            className="h-10 w-20 rounded-xl"
-                          />
+                          <Input type="number" min={0} max={100} value={offer.featured_priority ?? 0} disabled={savingId === offer.id} onChange={(event) => void updateOffer(offer.id, { featured_priority: Number(event.target.value) || 0 }, 'Prioridade atualizada.')} className="h-10 w-20 rounded-xl" />
                         </label>
                         <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
                           <Calendar className="h-4 w-4" /> Início
-                          <Input
-                            type="datetime-local"
-                            value={offer.featured_starts_at?.slice(0, 16) ?? ''}
-                            disabled={savingId === offer.id}
-                            onChange={(event) => void updateOffer(offer.id, { featured_starts_at: event.target.value ? new Date(event.target.value).toISOString() : null }, 'Data de início atualizada.')}
-                            className="h-10 w-52 rounded-xl"
-                          />
+                          <Input type="datetime-local" value={offer.featured_starts_at?.slice(0, 16) ?? ''} disabled={savingId === offer.id} onChange={(event) => void updateOffer(offer.id, { featured_starts_at: event.target.value ? new Date(event.target.value).toISOString() : null }, 'Data de início atualizada.')} className="h-10 w-52 rounded-xl" />
                         </label>
                         <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
                           <Calendar className="h-4 w-4" /> Fim
-                          <Input
-                            type="datetime-local"
-                            value={offer.featured_ends_at?.slice(0, 16) ?? ''}
-                            disabled={savingId === offer.id}
-                            onChange={(event) => void updateOffer(offer.id, { featured_ends_at: event.target.value ? new Date(event.target.value).toISOString() : null }, 'Data final atualizada.')}
-                            className="h-10 w-52 rounded-xl"
-                          />
+                          <Input type="datetime-local" value={offer.featured_ends_at?.slice(0, 16) ?? ''} disabled={savingId === offer.id} onChange={(event) => void updateOffer(offer.id, { featured_ends_at: event.target.value ? new Date(event.target.value).toISOString() : null }, 'Data final atualizada.')} className="h-10 w-52 rounded-xl" />
                         </label>
                       </>
                     )}
-                    <Button type="button" variant={active ? 'outline' : 'default'} disabled={savingId === offer.id} onClick={() => toggleFeatured(offer)} className="gap-2 rounded-xl font-black uppercase">
-                      <Zap className="h-4 w-4" /> {active ? 'Desativar' : 'Ativar'}
-                    </Button>
+                    <Button type="button" variant={active ? 'outline' : 'default'} disabled={savingId === offer.id} onClick={() => toggleFeatured(offer)} className="gap-2 rounded-xl font-black uppercase"><Zap className="h-4 w-4" /> {active ? 'Desativar' : 'Ativar'}</Button>
                   </div>
                 </div>
               </div>
