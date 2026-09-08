@@ -1,16 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { ShoppingBag, Sparkles, Tag } from "lucide-react";
-import { ProductCard, type ProductCardProps } from "@/components/products/ProductCard";
+import { ProductCard, type ProductCardProps } from "@/components/product/ProductCard";
 import { supabase } from "@/integrations/supabase/client";
 
 type OfferGroup = { id: string; is_featured_on_hub: boolean; featured_priority: number | null; featured_starts_at: string | null; featured_ends_at: string | null };
 type ProductRow = { id: string; slug: string | null; title: string; current_price: number | null; previous_price: number | null; discount_percentage: number | null; image_url: string | null; marketplace_id: string | null; category_id: string | null; rating: number | null; review_count: number | null; offer_score: number | null };
 
-export const Route = createFileRoute("/offers/")({ component: OffersPage });
+export const Route = createFileRoute("/offers/" as any)({ component: OffersPage });
 
 function mapProduct(p: ProductRow, marketplace = "Marketplace"): ProductCardProps {
-  return { id: p.id, slug: p.slug ?? p.id, categoryId: p.category_id, title: p.title, price: p.current_price ?? 0, previousPrice: p.previous_price, discount: p.discount_percentage, image: p.image_url ?? "", marketplace, rating: p.rating, reviewCount: p.review_count ?? 0, offerScore: p.offer_score ?? 0, key: p.id } as ProductCardProps;
+  return { id: p.id, slug: p.slug ?? p.id, categoryId: p.category_id, title: p.title, price: p.current_price ?? 0, previousPrice: p.previous_price, discount: p.discount_percentage, image: p.image_url ?? "", marketplace, rating: p.rating, reviewCount: p.review_count ?? 0, offerScore: p.offer_score ?? 0 } as ProductCardProps;
 }
 
 function OfferSection({ icon, title, products, trailing }: { icon: ReactNode; title: string; products: ProductCardProps[]; trailing?: ReactNode }) {
