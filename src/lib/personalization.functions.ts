@@ -38,9 +38,24 @@ export const getPersonalizedFeed = createServerFn({ method: "GET" })
     await verifyOptionalUser(userId);
     try {
       const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
-      const relevantCount = userId ? Math.max(1, Math.round(limit * 0.7)) : 0;
-      const relatedCount = userId ? Math.max(0, Math.round(limit * 0.2)) : 0;
-      const discoveryCount = limit - relevantCount - relatedCount;
+
+      const { data: feedMix, error: feedMixError } = await supabaseAdmin
+        .from("feed_mix_config")
+        .select("relevant_pct, related_pct, discovery_pct")
+        .limit(1)
+        .maybeSingle();
+      if (feedMixError) throw feedMixError;
+
+      const rawRelevant = Number(feedMix?.relevant_pct ?? 70);
+      const rawRelated = Number(feedMix?.related_pct ?? 20);
+      const rawDiscovery = Number(feedMix?.discovery_pct ?? 10);
+      const mixTotal = rawRelevant + rawRelated + rawDiscovery;
+      const relevantPct = mixTotal > 0 ? rawRelevant / mixTotal : 0.7;
+      const relatedPct = mixTotal > 0 ? rawRelated / mixTotal : 0.2;
+      const relevantCount = userId ? Math.max(0, Math.round(limit * relevantPct)) : 0;
+      const relatedCount = userId ? Math.max(0, Math.round(limit * relatedPct)) : 0;
+      const discoveryCount = Math.max(0, limit - relevantCount - relatedCount);
+
       let categoryIds: string[] = [];
       let recentlyShownIds: string[] = [];
       if (userId) {
@@ -100,8 +115,6 @@ export const getPersonalizedFeed = createServerFn({ method: "GET" })
       const finalProducts = [...relevantProducts, ...relatedProducts, ...discoveryProducts].slice(0, limit);
       if (userId && finalProducts.length) await supabaseAdmin.from("recently_shown").insert(finalProducts.map(p => ({ user_id: userId, product_id: p.id, shown_at: new Date().toISOString() })));
 
-      // Affinity is already calculated by the content-affinity pipeline. Read the
-      // latest stored score in one batched query; never calculate it in the client.
       const affinityByProduct = new Map<string, number>();
       let affinityThreshold = 70;
       if (userId && finalProducts.length) {
