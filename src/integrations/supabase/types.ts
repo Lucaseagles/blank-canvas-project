@@ -868,6 +868,85 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_coupons: {
+        Row: {
+          category_id: string | null
+          code: string
+          created_at: string
+          description: string | null
+          discount_type: string
+          discount_value: number
+          id: string
+          is_active: boolean
+          is_real: boolean
+          marketplace_id: string
+          max_uses: number | null
+          product_id: string | null
+          updated_at: string
+          used_count: number
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          code: string
+          created_at?: string
+          description?: string | null
+          discount_type: string
+          discount_value: number
+          id?: string
+          is_active?: boolean
+          is_real?: boolean
+          marketplace_id: string
+          max_uses?: number | null
+          product_id?: string | null
+          updated_at?: string
+          used_count?: number
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          code?: string
+          created_at?: string
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          id?: string
+          is_active?: boolean
+          is_real?: boolean
+          marketplace_id?: string
+          max_uses?: number | null
+          product_id?: string | null
+          updated_at?: string
+          used_count?: number
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_coupons_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_coupons_marketplace_id_fkey"
+            columns: ["marketplace_id"]
+            isOneToOne: false
+            referencedRelation: "marketplaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_coupons_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       external_channel_metrics: {
         Row: {
           channel_id: string | null
@@ -1346,19 +1425,31 @@ export type Database = {
         Row: {
           canonical_title: string
           created_at: string
+          featured_ends_at: string | null
+          featured_priority: number
+          featured_starts_at: string | null
           id: string
+          is_featured_on_hub: boolean
           updated_at: string
         }
         Insert: {
           canonical_title: string
           created_at?: string
+          featured_ends_at?: string | null
+          featured_priority?: number
+          featured_starts_at?: string | null
           id?: string
+          is_featured_on_hub?: boolean
           updated_at?: string
         }
         Update: {
           canonical_title?: string
           created_at?: string
+          featured_ends_at?: string | null
+          featured_priority?: number
+          featured_starts_at?: string | null
           id?: string
+          is_featured_on_hub?: boolean
           updated_at?: string
         }
         Relationships: []
@@ -2903,6 +2994,20 @@ export type Database = {
       get_content_affinity_summary: {
         Args: { p_content_id: string }
         Returns: Json
+      }
+      get_daily_clicks: {
+        Args: { start_date: string }
+        Returns: {
+          count: number
+          day: string
+        }[]
+      }
+      get_daily_user_growth: {
+        Args: { start_date: string }
+        Returns: {
+          count: number
+          day: string
+        }[]
       }
       get_eligible_popup: {
         Args: { p_user_id: string }
