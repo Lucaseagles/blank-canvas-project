@@ -19,6 +19,7 @@ import { Route as DealsRouteImport } from './routes/deals'
 import { Route as FavoritesRouteImport } from './routes/favorites'
 import { Route as FeedRouteImport } from './routes/feed'
 import { Route as HistoryRouteImport } from './routes/history'
+import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as ProductsRouteImport } from './routes/products'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as RegisterRouteImport } from './routes/register'
@@ -44,6 +45,7 @@ import { Route as AdminProductsRouteImport } from './routes/admin/products'
 import { Route as AdminPublishingRouteImport } from './routes/admin/publishing'
 import { Route as AdminRecommendationsRouteImport } from './routes/admin/recommendations'
 import { Route as AdminReferralsRouteImport } from './routes/admin/referrals'
+import { Route as AdminSellerCenterRouteImport } from './routes/admin/seller-center'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as AdminSocialChannelsRouteImport } from './routes/admin/social-channels'
 import { Route as AdminSocialProofRouteImport } from './routes/admin/social-proof'
@@ -58,6 +60,7 @@ import { Route as BundleSlugRouteImport } from './routes/bundle/$slug'
 import { Route as CategorySlugRouteImport } from './routes/category/$slug'
 import { Route as DevSocialProofPreviewRouteImport } from './routes/dev.social-proof-preview'
 import { Route as ProductSlugRouteImport } from './routes/product/$slug'
+import { Route as AdminMarketplacesIdRouteImport } from './routes/admin/marketplaces.$id'
 import { Route as AdminMarketplacesNewRouteImport } from './routes/admin/marketplaces.new'
 import { Route as AdminOffersNewRouteImport } from './routes/admin/offers.new'
 import { Route as AdminProductsExportRouteImport } from './routes/admin/products.export'
@@ -115,6 +118,11 @@ const FeedRoute = FeedRouteImport.update({
 const HistoryRoute = HistoryRouteImport.update({
   id: '/history',
   path: '/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeaderboardRoute = LeaderboardRouteImport.update({
+  id: '/leaderboard',
+  path: '/leaderboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProductsRoute = ProductsRouteImport.update({
@@ -242,6 +250,11 @@ const AdminReferralsRoute = AdminReferralsRouteImport.update({
   path: '/referrals',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminSellerCenterRoute = AdminSellerCenterRouteImport.update({
+  id: '/seller-center',
+  path: '/seller-center',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminSettingsRoute = AdminSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -312,6 +325,11 @@ const ProductSlugRoute = ProductSlugRouteImport.update({
   path: '/product/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminMarketplacesIdRoute = AdminMarketplacesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AdminMarketplacesRoute,
+} as any)
 const AdminMarketplacesNewRoute = AdminMarketplacesNewRouteImport.update({
   id: '/new',
   path: '/new',
@@ -364,6 +382,7 @@ export interface FileRoutesByFullPath {
   '/favorites': typeof FavoritesRoute
   '/feed': typeof FeedRoute
   '/history': typeof HistoryRoute
+  '/leaderboard': typeof LeaderboardRoute
   '/products': typeof ProductsRoute
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
@@ -389,6 +408,7 @@ export interface FileRoutesByFullPath {
   '/admin/publishing': typeof AdminPublishingRoute
   '/admin/recommendations': typeof AdminRecommendationsRoute
   '/admin/referrals': typeof AdminReferralsRoute
+  '/admin/seller-center': typeof AdminSellerCenterRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/social-channels': typeof AdminSocialChannelsRoute
   '/admin/social-proof': typeof AdminSocialProofRoute
@@ -403,6 +423,7 @@ export interface FileRoutesByFullPath {
   '/category/$slug': typeof CategorySlugRoute
   '/dev/social-proof-preview': typeof DevSocialProofPreviewRoute
   '/product/$slug': typeof ProductSlugRoute
+  '/admin/marketplaces/$id': typeof AdminMarketplacesIdRoute
   '/admin/marketplaces/new': typeof AdminMarketplacesNewRoute
   '/admin/offers/new': typeof AdminOffersNewRoute
   '/admin/products/export': typeof AdminProductsExportRoute
@@ -423,6 +444,7 @@ export interface FileRoutesByTo {
   '/favorites': typeof FavoritesRoute
   '/feed': typeof FeedRoute
   '/history': typeof HistoryRoute
+  '/leaderboard': typeof LeaderboardRoute
   '/products': typeof ProductsRoute
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
@@ -448,6 +470,7 @@ export interface FileRoutesByTo {
   '/admin/publishing': typeof AdminPublishingRoute
   '/admin/recommendations': typeof AdminRecommendationsRoute
   '/admin/referrals': typeof AdminReferralsRoute
+  '/admin/seller-center': typeof AdminSellerCenterRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/social-channels': typeof AdminSocialChannelsRoute
   '/admin/social-proof': typeof AdminSocialProofRoute
@@ -462,6 +485,7 @@ export interface FileRoutesByTo {
   '/category/$slug': typeof CategorySlugRoute
   '/dev/social-proof-preview': typeof DevSocialProofPreviewRoute
   '/product/$slug': typeof ProductSlugRoute
+  '/admin/marketplaces/$id': typeof AdminMarketplacesIdRoute
   '/admin/marketplaces/new': typeof AdminMarketplacesNewRoute
   '/admin/offers/new': typeof AdminOffersNewRoute
   '/admin/products/export': typeof AdminProductsExportRoute
@@ -483,6 +507,7 @@ export interface FileRoutesById {
   '/favorites': typeof FavoritesRoute
   '/feed': typeof FeedRoute
   '/history': typeof HistoryRoute
+  '/leaderboard': typeof LeaderboardRoute
   '/products': typeof ProductsRoute
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
@@ -508,6 +533,7 @@ export interface FileRoutesById {
   '/admin/publishing': typeof AdminPublishingRoute
   '/admin/recommendations': typeof AdminRecommendationsRoute
   '/admin/referrals': typeof AdminReferralsRoute
+  '/admin/seller-center': typeof AdminSellerCenterRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/social-channels': typeof AdminSocialChannelsRoute
   '/admin/social-proof': typeof AdminSocialProofRoute
@@ -522,6 +548,7 @@ export interface FileRoutesById {
   '/category/$slug': typeof CategorySlugRoute
   '/dev/social-proof-preview': typeof DevSocialProofPreviewRoute
   '/product/$slug': typeof ProductSlugRoute
+  '/admin/marketplaces/$id': typeof AdminMarketplacesIdRoute
   '/admin/marketplaces/new': typeof AdminMarketplacesNewRoute
   '/admin/offers/new': typeof AdminOffersNewRoute
   '/admin/products/export': typeof AdminProductsExportRoute
@@ -544,6 +571,7 @@ export interface FileRouteTypes {
     | '/favorites'
     | '/feed'
     | '/history'
+    | '/leaderboard'
     | '/products'
     | '/profile'
     | '/register'
@@ -569,6 +597,7 @@ export interface FileRouteTypes {
     | '/admin/publishing'
     | '/admin/recommendations'
     | '/admin/referrals'
+    | '/admin/seller-center'
     | '/admin/settings'
     | '/admin/social-channels'
     | '/admin/social-proof'
@@ -583,6 +612,7 @@ export interface FileRouteTypes {
     | '/category/$slug'
     | '/dev/social-proof-preview'
     | '/product/$slug'
+    | '/admin/marketplaces/$id'
     | '/admin/marketplaces/new'
     | '/admin/offers/new'
     | '/admin/products/export'
@@ -603,6 +633,7 @@ export interface FileRouteTypes {
     | '/favorites'
     | '/feed'
     | '/history'
+    | '/leaderboard'
     | '/products'
     | '/profile'
     | '/register'
@@ -628,6 +659,7 @@ export interface FileRouteTypes {
     | '/admin/publishing'
     | '/admin/recommendations'
     | '/admin/referrals'
+    | '/admin/seller-center'
     | '/admin/settings'
     | '/admin/social-channels'
     | '/admin/social-proof'
@@ -642,6 +674,7 @@ export interface FileRouteTypes {
     | '/category/$slug'
     | '/dev/social-proof-preview'
     | '/product/$slug'
+    | '/admin/marketplaces/$id'
     | '/admin/marketplaces/new'
     | '/admin/offers/new'
     | '/admin/products/export'
@@ -662,6 +695,7 @@ export interface FileRouteTypes {
     | '/favorites'
     | '/feed'
     | '/history'
+    | '/leaderboard'
     | '/products'
     | '/profile'
     | '/register'
@@ -687,6 +721,7 @@ export interface FileRouteTypes {
     | '/admin/publishing'
     | '/admin/recommendations'
     | '/admin/referrals'
+    | '/admin/seller-center'
     | '/admin/settings'
     | '/admin/social-channels'
     | '/admin/social-proof'
@@ -701,6 +736,7 @@ export interface FileRouteTypes {
     | '/category/$slug'
     | '/dev/social-proof-preview'
     | '/product/$slug'
+    | '/admin/marketplaces/$id'
     | '/admin/marketplaces/new'
     | '/admin/offers/new'
     | '/admin/products/export'
@@ -722,6 +758,7 @@ export interface RootRouteChildren {
   FavoritesRoute: typeof FavoritesRoute
   FeedRoute: typeof FeedRoute
   HistoryRoute: typeof HistoryRoute
+  LeaderboardRoute: typeof LeaderboardRoute
   ProductsRoute: typeof ProductsRoute
   ProfileRoute: typeof ProfileRoute
   RegisterRoute: typeof RegisterRoute
@@ -806,6 +843,13 @@ declare module '@tanstack/react-router' {
       path: '/history'
       fullPath: '/history'
       preLoaderRoute: typeof HistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/leaderboard': {
+      id: '/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/leaderboard'
+      preLoaderRoute: typeof LeaderboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/products': {
@@ -983,6 +1027,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminReferralsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/seller-center': {
+      id: '/admin/seller-center'
+      path: '/seller-center'
+      fullPath: '/admin/seller-center'
+      preLoaderRoute: typeof AdminSellerCenterRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/settings': {
       id: '/admin/settings'
       path: '/settings'
@@ -1081,6 +1132,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/marketplaces/$id': {
+      id: '/admin/marketplaces/$id'
+      path: '/$id'
+      fullPath: '/admin/marketplaces/$id'
+      preLoaderRoute: typeof AdminMarketplacesIdRouteImport
+      parentRoute: typeof AdminMarketplacesRoute
+    }
     '/admin/marketplaces/new': {
       id: '/admin/marketplaces/new'
       path: '/new'
@@ -1141,10 +1199,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminMarketplacesRouteChildren {
+  AdminMarketplacesIdRoute: typeof AdminMarketplacesIdRoute
   AdminMarketplacesNewRoute: typeof AdminMarketplacesNewRoute
 }
 
 const AdminMarketplacesRouteChildren: AdminMarketplacesRouteChildren = {
+  AdminMarketplacesIdRoute: AdminMarketplacesIdRoute,
   AdminMarketplacesNewRoute: AdminMarketplacesNewRoute,
 }
 
@@ -1214,6 +1274,7 @@ interface AdminRouteChildren {
   AdminPublishingRoute: typeof AdminPublishingRoute
   AdminRecommendationsRoute: typeof AdminRecommendationsRoute
   AdminReferralsRoute: typeof AdminReferralsRoute
+  AdminSellerCenterRoute: typeof AdminSellerCenterRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminSocialChannelsRoute: typeof AdminSocialChannelsRoute
   AdminSocialProofRoute: typeof AdminSocialProofRoute
@@ -1244,6 +1305,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminPublishingRoute: AdminPublishingRoute,
   AdminRecommendationsRoute: AdminRecommendationsRoute,
   AdminReferralsRoute: AdminReferralsRoute,
+  AdminSellerCenterRoute: AdminSellerCenterRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminSocialChannelsRoute: AdminSocialChannelsRoute,
   AdminSocialProofRoute: AdminSocialProofRoute,
@@ -1268,6 +1330,7 @@ const rootRouteChildren: RootRouteChildren = {
   FavoritesRoute: FavoritesRoute,
   FeedRoute: FeedRoute,
   HistoryRoute: HistoryRoute,
+  LeaderboardRoute: LeaderboardRoute,
   ProductsRoute: ProductsRoute,
   ProfileRoute: ProfileRoute,
   RegisterRoute: RegisterRoute,
