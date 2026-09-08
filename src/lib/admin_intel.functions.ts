@@ -2,18 +2,59 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireOwnerRole } from "./auth-guards.server";
 
-const DashboardInputSchema = z.object({ days: z.number().default(7) });
+const DashboardInputSchema = z.object({ days: z.coerce.number().int().refine((v) => [7, 30, 90].includes(v), "days must be 7, 30 or 90").default(7) });
 
 export const getAdminIntelligenceData = createServerFn({ method: "GET" }).middleware([requireOwnerRole]).validator((data: unknown) => DashboardInputSchema.parse(data)).handler(async ({ data: { days } }) => {
   const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
-  const now = new Date(); const startDate = new Date(); startDate.setDate(now.getDate() - days); const startDateISO = startDate.toISOString();
-  const prevStartDate = new Date(); prevStartDate.setDate(now.getDate() - days * 2); const prevStartDateISO = prevStartDate.toISOString();
-  const [{ count: totalUsers },{ count: newUsers },{ count: prevNewUsers },{ count: totalProducts },{ count: publishedProducts },{ count: publishedVideos },{ count: totalFavorites },{ count: activeAlerts },{ count: periodClicks },{ count: prevPeriodClicks },{ count: productViews },{ count: totalReferrals },{ count: activatedReferrals }] = await Promise.all([
-    supabaseAdmin.from("profiles").select("*", { count:'exact', head:true }),supabaseAdmin.from("profiles").select("*", { count:'exact', head:true }).gte("created_at",startDateISO),supabaseAdmin.from("profiles").select("*", { count:'exact', head:true }).gte("created_at",prevStartDateISO).lt("created_at",startDateISO),supabaseAdmin.from("products").select("*", { count:'exact', head:true }),supabaseAdmin.from("products").select("*", { count:'exact', head:true }).eq("status","published"),supabaseAdmin.from("videos").select("*", { count:'exact', head:true }).eq("status","published"),supabaseAdmin.from("favorites").select("*", { count:'exact', head:true }).gte("created_at",startDateISO),supabaseAdmin.from("price_alerts").select("*", { count:'exact', head:true }).eq("is_active",true),supabaseAdmin.from("analytics_events").select("*", { count:'exact', head:true }).eq("event_type","OUTBOUND_CLICK").gte("created_at",startDateISO),supabaseAdmin.from("analytics_events").select("*", { count:'exact', head:true }).eq("event_type","OUTBOUND_CLICK").gte("created_at",prevStartDateISO).lt("created_at",startDateISO),supabaseAdmin.from("analytics_events").select("*", { count:'exact', head:true }).eq("event_type","PRODUCT_VIEW").gte("created_at",startDateISO),supabaseAdmin.from("referrals" as any).select("*", { count:'exact', head:true }).gte("created_at",startDateISO),supabaseAdmin.from("referral_events" as any).select("*", { count:'exact', head:true }).eq("status","activated").gte("created_at",startDateISO)
+  const now = new Date();
+  const startDate = new Date(now.getTime() - days * 86400000);
+  const startDateISO = startDate.toISOString();
+  const prevStartDate = new Date(now.getTime() - days * 2 * 86400000);
+  const prevStartDateISO = prevStartDate.toISOString();
+  const queries = await Promise.all([
+    supabaseAdmin.from("profiles").select("*", { count: 'exact', head: true }),
+    supabaseAdmin.from("profiles").select("*", { count: 'exact', head: true }).gte("created_at", startDateISO),
+    supabaseAdmin.from("profiles").select("*", { count: 'exact', head: true }).gte("created_at", prevStartDateISO).lt("created_at", startDateISO),
+    supabaseAdmin.from("products").select("*", { count: 'exact', head: true }),
+    supabaseAdmin.from("products").select("*", { count: 'exact', head: true }).eq("status", "published"),
+    supabaseAdmin.from("videos").select("*", { count: 'exact', head: true }).eq("status", "published"),
+    supabaseAdmin.from("favorites").select("*", { count: 'exact', head: true }).gte("created_at", startDateISO),
+    supabaseAdmin.from("price_alerts").select("*", { count: 'exact", head: true }).eq("is_active", true),
+    supabaseAdmin.from("analytics_events").select("*", { count: 'exact', head: true }).eq("event_type", "OUTBOUND_CLICK").gte("created_at", startDateISO),
+    supabaseAdmin.from("analytics_events").select("*", { count: 'exact', head: true }).eq("event_type", "OUTBOUND_CLICK").gte("created_at", prevStartDateISO).lt("created_at", startDateISO),
+    supabaseAdmin.from("analytics_events").select("*", { count: 'exact', head: true }).eq("event_type", "PRODUCT_VIEW").gte("created_at", startDateISO),
+    supabaseAdmin.from("referrals" as any).select("*", { count: 'exact', head: true }).gte("created_at", startDateISO),
+    supabaseAdmin.from("referral_events" as any).select("*", { count: 'exact', head: true }).eq("status", "activated").gte("created_at", startDateISO),
   ]);
-  const { data: clickHistory } = await supabaseAdmin.rpc('get_daily_clicks' as any,{start_date:startDateISO}); const { data:userGrowth } = await supabaseAdmin.rpc('get_daily_user_growth' as any,{start_date:startDateISO});
-  const { data:topEvents } = await supabaseAdmin.from('analytics_events').select('metadata,event_type').eq('event_type','OUTBOUND_CLICK').gte('created_at',startDateISO).limit(100); const { data:marketplaceEvents } = await supabaseAdmin.from('analytics_events').select('metadata,event_type').eq('event_type','OUTBOUND_CLICK').gte('created_at',startDateISO);
-  return { kpis:{users:{total:totalUsers||0,new:newUsers||0,prevNew:prevNewUsers||0},products:{total:totalProducts||0,published:publishedProducts||0},videos:{published:publishedVideos||0},clicks:{period:periodClicks||0,prevPeriod:prevPeriodClicks||0},favorites:{total:totalFavorites||0},alerts:{active:activeAlerts||0},ctr:productViews?((periodClicks||0)/productViews)*100:0,referrals:{total:totalReferrals||0,activated:activatedReferrals||0}},charts:{clickHistory:clickHistory||[],userGrowth:userGrowth||[],topProducts:topEvents||[],marketplaceDist:marketplaceEvents||[]},timestamp:new Date().toISOString() };
+  const labels = ["totalUsers", "newUsers", "prevNewUsers", "totalProducts", "publishedProducts", "publishedVideos", "totalFavorites", "activeAlerts", "periodClicks", "prevPeriodClicks", "productViews", "totalReferrals", "activatedReferrals"];
+  const failed = queries.findIndex((q) => q.error);
+  if (failed >= 0) throw new Error(`Dashboard query failed: ${labels[failed]}`);
+  const [
+    { count: totalUsers }, { count: newUsers }, { count: prevNewUsers }, { count: totalProducts },
+    { count: publishedProducts }, { count: publishedVideos }, { count: totalFavorites }, { count: activeAlerts },
+    { count: periodClicks }, { count: prevPeriodClicks }, { count: productViews }, { count: totalReferrals }, { count: activatedReferrals },
+  ] = queries;
+  const [{ data: clickHistory, error: clickHistoryError }, { data: userGrowth, error: userGrowthError }, { data: topEvents, error: topEventsError }, { data: marketplaceEvents, error: marketplaceEventsError }] = await Promise.all([
+    supabaseAdmin.rpc('get_daily_clicks' as any, { start_date: startDateISO }),
+    supabaseAdmin.rpc('get_daily_user_growth' as any, { start_date: startDateISO }),
+    supabaseAdmin.from('analytics_events').select('metadata,event_type').eq('event_type', 'OUTBOUND_CLICK').gte('created_at', startDateISO).limit(100),
+    supabaseAdmin.from('analytics_events').select('metadata,event_type').eq('event_type', 'OUTBOUND_CLICK').gte('created_at', startDateISO),
+  ]);
+  if (clickHistoryError || userGrowthError || topEventsError || marketplaceEventsError) throw new Error("Dashboard chart query failed");
+  return {
+    kpis: {
+      users: { total: totalUsers ?? 0, new: newUsers ?? 0, prevNew: prevNewUsers ?? 0 },
+      products: { total: totalProducts ?? 0, published: publishedProducts ?? 0 },
+      videos: { published: publishedVideos ?? 0 },
+      clicks: { period: periodClicks ?? 0, prevPeriod: prevPeriodClicks ?? 0 },
+      favorites: { total: totalFavorites ?? 0 },
+      alerts: { active: activeAlerts ?? 0 },
+      ctr: productViews ? ((periodClicks ?? 0) / productViews) * 100 : 0,
+      referrals: { total: totalReferrals ?? 0, activated: activatedReferrals ?? 0 },
+    },
+    charts: { clickHistory: clickHistory ?? [], userGrowth: userGrowth ?? [], topProducts: topEvents ?? [], marketplaceDist: marketplaceEvents ?? [] },
+    timestamp: new Date().toISOString(),
+  };
 });
 
 export const getAdminMetrics = createServerFn({ method:"GET" }).middleware([requireOwnerRole]).handler(async()=>{ const {supabaseAdmin}=await import('@/integrations/supabase/client.server'); const [{count:users},{count:products},{count:videos},{count:favorites},{count:alerts},{count:clicks}]=await Promise.all([supabaseAdmin.from("profiles").select("*",{count:'exact',head:true}),supabaseAdmin.from("products").select("*",{count:'exact',head:true}),supabaseAdmin.from("videos").select("*",{count:'exact',head:true}),supabaseAdmin.from("favorites").select("*",{count:'exact',head:true}),supabaseAdmin.from("price_alerts").select("*",{count:'exact',head:true}),supabaseAdmin.from("analytics_events").select("*",{count:'exact',head:true}).eq("event_type","OUTBOUND_CLICK")]); return {users:users||0,products:products||0,videos:videos||0,favorites:favorites||0,alerts:alerts||0,clicks:clicks||0,timestamp:new Date().toISOString()}; });
