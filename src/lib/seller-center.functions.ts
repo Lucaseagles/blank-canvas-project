@@ -86,11 +86,13 @@ export const getSellerPerformance = createServerFn({ method: "GET" })
       }
     }
 
-    const performance = products.map((product) => {
+    const performance: PerformanceProduct[] = products.map((product) => {
       const productViews = views.get(product.id) ?? 0;
       const productClicks = clicks.get(product.id) ?? 0;
+      const { categories, images, ...rest } = product;
       return {
-        ...product,
+        ...rest,
+        images: Array.isArray(images) ? (images as string[]) : null,
         category_name: product.categories?.name ?? "Sem categoria",
         views: productViews,
         clicks: productClicks,
