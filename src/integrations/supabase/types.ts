@@ -642,6 +642,7 @@ export type Database = {
         Row: {
           color: string | null
           created_at: string | null
+          description: string | null
           display_order: number
           icon: string | null
           id: string
@@ -654,6 +655,7 @@ export type Database = {
         Insert: {
           color?: string | null
           created_at?: string | null
+          description?: string | null
           display_order?: number
           icon?: string | null
           id?: string
@@ -666,6 +668,7 @@ export type Database = {
         Update: {
           color?: string | null
           created_at?: string | null
+          description?: string | null
           display_order?: number
           icon?: string | null
           id?: string
@@ -675,7 +678,15 @@ export type Database = {
           parent_id?: string | null
           slug?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       category_highlights: {
         Row: {
@@ -1230,6 +1241,7 @@ export type Database = {
           api_config: Json | null
           api_status: string | null
           created_at: string | null
+          icon: string | null
           id: string
           name: string
           slug: string
@@ -1241,6 +1253,7 @@ export type Database = {
           api_config?: Json | null
           api_status?: string | null
           created_at?: string | null
+          icon?: string | null
           id?: string
           name: string
           slug: string
@@ -1252,6 +1265,7 @@ export type Database = {
           api_config?: Json | null
           api_status?: string | null
           created_at?: string | null
+          icon?: string | null
           id?: string
           name?: string
           slug?: string
@@ -2755,40 +2769,55 @@ export type Database = {
       }
       videos: {
         Row: {
+          campaign_id: string | null
+          caption: string | null
           category_id: string | null
           created_at: string
           duration_seconds: number | null
           external_url: string | null
           id: string
           product_id: string | null
+          scheduled_for: string | null
           status: string
           storage_path: string | null
+          subtitle_text: string | null
+          subtitle_url: string | null
           thumbnail_url: string | null
           title: string
           video_url: string
         }
         Insert: {
+          campaign_id?: string | null
+          caption?: string | null
           category_id?: string | null
           created_at?: string
           duration_seconds?: number | null
           external_url?: string | null
           id?: string
           product_id?: string | null
+          scheduled_for?: string | null
           status?: string
           storage_path?: string | null
+          subtitle_text?: string | null
+          subtitle_url?: string | null
           thumbnail_url?: string | null
           title: string
           video_url: string
         }
         Update: {
+          campaign_id?: string | null
+          caption?: string | null
           category_id?: string | null
           created_at?: string
           duration_seconds?: number | null
           external_url?: string | null
           id?: string
           product_id?: string | null
+          scheduled_for?: string | null
           status?: string
           storage_path?: string | null
+          subtitle_text?: string | null
+          subtitle_url?: string | null
           thumbnail_url?: string | null
           title?: string
           video_url?: string
@@ -2975,6 +3004,16 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      get_campaign_funnel: {
+        Args: { _campaign_id: string }
+        Returns: {
+          awareness_count: number
+          channel: string
+          consideration_count: number
+          conversion_count: number
+          video_views: number
+        }[]
       }
       get_categories_with_counts: {
         Args: never
