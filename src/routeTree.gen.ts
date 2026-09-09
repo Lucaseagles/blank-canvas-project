@@ -20,6 +20,8 @@ import { Route as FavoritesRouteImport } from './routes/favorites'
 import { Route as FeedRouteImport } from './routes/feed'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
+import { Route as MyCouponsRouteImport } from './routes/my-coupons'
+import { Route as OffersRouteImport } from './routes/offers'
 import { Route as ProductsRouteImport } from './routes/products'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as RegisterRouteImport } from './routes/register'
@@ -123,6 +125,16 @@ const HistoryRoute = HistoryRouteImport.update({
 const LeaderboardRoute = LeaderboardRouteImport.update({
   id: '/leaderboard',
   path: '/leaderboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyCouponsRoute = MyCouponsRouteImport.update({
+  id: '/my-coupons',
+  path: '/my-coupons',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OffersRoute = OffersRouteImport.update({
+  id: '/offers',
+  path: '/offers',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProductsRoute = ProductsRouteImport.update({
@@ -383,6 +395,8 @@ export interface FileRoutesByFullPath {
   '/feed': typeof FeedRoute
   '/history': typeof HistoryRoute
   '/leaderboard': typeof LeaderboardRoute
+  '/my-coupons': typeof MyCouponsRoute
+  '/offers': typeof OffersRoute
   '/products': typeof ProductsRoute
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
@@ -445,6 +459,8 @@ export interface FileRoutesByTo {
   '/feed': typeof FeedRoute
   '/history': typeof HistoryRoute
   '/leaderboard': typeof LeaderboardRoute
+  '/my-coupons': typeof MyCouponsRoute
+  '/offers': typeof OffersRoute
   '/products': typeof ProductsRoute
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
@@ -508,6 +524,8 @@ export interface FileRoutesById {
   '/feed': typeof FeedRoute
   '/history': typeof HistoryRoute
   '/leaderboard': typeof LeaderboardRoute
+  '/my-coupons': typeof MyCouponsRoute
+  '/offers': typeof OffersRoute
   '/products': typeof ProductsRoute
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
@@ -572,6 +590,8 @@ export interface FileRouteTypes {
     | '/feed'
     | '/history'
     | '/leaderboard'
+    | '/my-coupons'
+    | '/offers'
     | '/products'
     | '/profile'
     | '/register'
@@ -634,6 +654,8 @@ export interface FileRouteTypes {
     | '/feed'
     | '/history'
     | '/leaderboard'
+    | '/my-coupons'
+    | '/offers'
     | '/products'
     | '/profile'
     | '/register'
@@ -696,6 +718,8 @@ export interface FileRouteTypes {
     | '/feed'
     | '/history'
     | '/leaderboard'
+    | '/my-coupons'
+    | '/offers'
     | '/products'
     | '/profile'
     | '/register'
@@ -759,6 +783,8 @@ export interface RootRouteChildren {
   FeedRoute: typeof FeedRoute
   HistoryRoute: typeof HistoryRoute
   LeaderboardRoute: typeof LeaderboardRoute
+  MyCouponsRoute: typeof MyCouponsRoute
+  OffersRoute: typeof OffersRoute
   ProductsRoute: typeof ProductsRoute
   ProfileRoute: typeof ProfileRoute
   RegisterRoute: typeof RegisterRoute
@@ -850,6 +876,20 @@ declare module '@tanstack/react-router' {
       path: '/leaderboard'
       fullPath: '/leaderboard'
       preLoaderRoute: typeof LeaderboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/my-coupons': {
+      id: '/my-coupons'
+      path: '/my-coupons'
+      fullPath: '/my-coupons'
+      preLoaderRoute: typeof MyCouponsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/offers': {
+      id: '/offers'
+      path: '/offers'
+      fullPath: '/offers'
+      preLoaderRoute: typeof OffersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/products': {
@@ -1331,6 +1371,8 @@ const rootRouteChildren: RootRouteChildren = {
   FeedRoute: FeedRoute,
   HistoryRoute: HistoryRoute,
   LeaderboardRoute: LeaderboardRoute,
+  MyCouponsRoute: MyCouponsRoute,
+  OffersRoute: OffersRoute,
   ProductsRoute: ProductsRoute,
   ProfileRoute: ProfileRoute,
   RegisterRoute: RegisterRoute,
