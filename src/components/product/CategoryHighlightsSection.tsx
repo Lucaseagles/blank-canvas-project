@@ -21,7 +21,7 @@ export function CategoryHighlightsSection({
   
   const { data: highlights, isLoading } = useQuery({
     queryKey: ["category-highlights", categoryId, limit],
-    queryFn: () => fetchHighlights({ data: { categoryId: categoryId!, limit } }),
+    queryFn: () => fetchHighlights({ data: categoryId ? { categoryId, limit } : { limit } }),
   });
 
   if (!isLoading && (!highlights || highlights.length === 0)) return null;

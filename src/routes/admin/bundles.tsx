@@ -71,7 +71,7 @@ function AdminBundlesPage() {
     const slug = form.slug.trim().toLowerCase();
     if (!title || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) { toast.error('Informe um título e um slug válido (ex.: meu-bundle).'); return; }
     if (form.bundle_discount_price && (!Number.isFinite(Number(form.bundle_discount_price)) || Number(form.bundle_discount_price) < 0)) { toast.error('Preço promocional inválido.'); return; }
-    saveMutation.mutate({ ...form, title, slug, id: editing?.id });
+    saveMutation.mutate(editing ? { ...form, title, slug, id: editing.id } : { ...form, title, slug });
   }
 
   const bundles = (bundlesQuery.data ?? []) as Bundle[];

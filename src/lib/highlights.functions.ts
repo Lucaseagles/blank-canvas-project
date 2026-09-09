@@ -31,7 +31,7 @@ export const saveManualHighlight = createServerFn({ method: "POST" })
     if (!category) throw new Error("Categoria não encontrada");
     if (!product) throw new Error("Produto não encontrado");
     if (product.category_id !== data.categoryId) throw new Error("O produto não pertence à categoria selecionada");
-    if (!['active','published'].includes(product.status)) throw new Error("Somente produtos ativos podem ser recomendados");
+    if (!product.status || !['active','published'].includes(product.status)) throw new Error("Somente produtos ativos podem ser recomendados");
     const { error } = await supabaseAdmin.from("category_highlights" as any).upsert({ category_id: data.categoryId, product_id: data.productId, rank: data.rank, offer_score: Number(product.offer_score ?? 0), is_manual_override: true, calculated_at: new Date().toISOString() }, { onConflict: 'category_id,rank' } as any);
     if (error) throw error;
     return { success: true };
@@ -65,7 +65,10 @@ export const recalculateCategoryHighlights = createServerFn({ method: "POST" })
         if (pe) throw pe;
         const selected = (candidates ?? []).filter((p: any) => !manualProducts.has(p.id)).slice(0, ranks.length);
         for (let i=0;i<selected.length;i++) {
-          const { error } = await supabaseAdmin.from("category_highlights" as any).upsert({ category_id: cat.id, product_id: selected[i].id, rank: ranks[i], offer_score: Number(selected[i].offer_score ?? 0), is_manual_override: false, calculated_at: new Date().toISOString() }, { onConflict: 'category_id,rank' } as any);
+          const product = selected[i];
+          const rank = ranks[i];
+          if (!product || rank === undefined) continue;
+          const { error } = await supabaseAdmin.from("category_highlights" as any).upsert({ category_id: cat.id, product_id: product.id, rank, offer_score: Number(product.offer_score ?? 0), is_manual_override: false, calculated_at: new Date().toISOString() }, { onConflict: 'category_id,rank' } as any);
           if (error) throw error;
         }
       }
