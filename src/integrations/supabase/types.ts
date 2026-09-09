@@ -2924,10 +2924,12 @@ export type Database = {
           user_id: string
         }[]
       }
-      admin_set_profile_banned: {
-        Args: { p_banned: boolean; p_user_id: string }
-        Returns: boolean
-      }
+      admin_set_profile_banned:
+        | { Args: { p_banned: boolean; p_user_id: string }; Returns: boolean }
+        | {
+            Args: { p_actor?: string; p_banned: boolean; p_user_id: string }
+            Returns: boolean
+          }
       append_admin_audit: {
         Args: {
           p_action_type: string
