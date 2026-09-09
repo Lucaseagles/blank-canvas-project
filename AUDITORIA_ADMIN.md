@@ -52,7 +52,7 @@ As tabelas `integration_platforms`, `integration_credentials` e `integration_cre
 | Analytics/Metrics | `/admin/analytics`, `/admin/metrics` | ⏳ |
 | Modules/Banners | `/admin/modules` | ⏳ |
 | Notifications | `/admin/notifications` | ⏳ |
-| Referrals | `/admin/referrals` | ⏳ |
+| Referrals | `/admin/referrals` | 🟢 código + banco endurecidos; E2E de atribuição depende de autenticação com duas contas |
 | Social | `/admin/social-channels`, `/admin/social-proof` | ⏳ |
 | Support | `/admin/support`, `/admin/support-knowledge`, `/admin/telegram` | ⏳ |
 | Users/Settings | `/admin/users`, `/admin/settings` | ⏳ |
