@@ -1342,6 +1342,7 @@ export type Database = {
           created_at: string
           frequency_cap_days: number
           id: string
+          last_retention_sent_at: string | null
           push_enabled: boolean
           retention_enabled: boolean
           updated_at: string
@@ -1351,6 +1352,7 @@ export type Database = {
           created_at?: string
           frequency_cap_days?: number
           id?: string
+          last_retention_sent_at?: string | null
           push_enabled?: boolean
           retention_enabled?: boolean
           updated_at?: string
@@ -1360,6 +1362,7 @@ export type Database = {
           created_at?: string
           frequency_cap_days?: number
           id?: string
+          last_retention_sent_at?: string | null
           push_enabled?: boolean
           retention_enabled?: boolean
           updated_at?: string
