@@ -1,3 +1,4 @@
+import { fetchLeaderboardPosition, fetchReferralLeaderboard } from "@/lib/leaderboard.functions";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface ReferralTier {
@@ -52,8 +53,7 @@ export async function getUserReferralStats(userId: string): Promise<UserReferral
 
   let leaderboardPosition: number | null = null;
   if (p.show_on_leaderboard) {
-    const { data: position } = await supabase.rpc("get_referral_leaderboard_position" as never, { p_user_id: userId } as never);
-    leaderboardPosition = (position as number | null) ?? null;
+    leaderboardPosition = await fetchLeaderboardPosition({ data: { userId } });
   }
 
   return { totalReferrals: total, currentTier, nextTier, progressToNext, leaderboardPosition, showOnLeaderboard: p.show_on_leaderboard ?? false };
@@ -76,8 +76,7 @@ export interface LeaderboardEntry {
 }
 
 export async function getLeaderboard(limit = 50): Promise<LeaderboardEntry[]> {
-  const { data, error } = await supabase.rpc("get_referral_leaderboard" as never, { limit_count: Math.min(100, Math.max(1, limit)) } as never);
-  if (error) throw error;
+  const data = await fetchReferralLeaderboard({ data: { limit } });
   return ((data ?? []) as unknown as Array<{ ranking_position: number; user_id: string; display_name: string; total_referrals: number; tier_name: string; tier_icon: string; tier_color: string }>).map((row) => ({
     position: Number(row.ranking_position), userId: row.user_id, name: row.display_name, totalReferrals: row.total_referrals, tierName: row.tier_name, tierIcon: row.tier_icon, tierColor: row.tier_color,
   }));
