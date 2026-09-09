@@ -8,7 +8,7 @@ export const getRelatedProducts = createServerFn({ method: "GET" })
   .handler(async ({ data }) => getProductRelationships(data.productId));
 
 export const getBundleDetails = createServerFn({ method: "GET" })
-  .inputValidator((data) => z.string().parse(data))
+  .inputValidator((data) => z.string().trim().min(1).max(200).parse(data))
   .handler(async ({ data: slug }) => getBundleBySlug(slug));
 
 export const listBundles = createServerFn({ method: "GET" }).handler(async () => getBundles());
@@ -29,12 +29,12 @@ export const getStrategicPopup = createServerFn({ method: "GET" }).handler(async
 const BundleInput = z.object({
   id: z.string().uuid().optional(),
   title: z.string().trim().min(1).max(200),
-  slug: z.string().trim().min(1).max(200),
-  description: z.string().max(5000).optional(),
-  image_url: z.string().url().optional().or(z.literal('')),
+  slug: z.string().trim().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).min(1).max(200),
+  description: z.string().trim().max(5000).optional().nullable(),
+  image_url: z.string().url().max(2000).optional().or(z.literal('')).nullable(),
   is_active: z.boolean().default(true),
-  bundle_discount_price: z.number().finite().positive().optional(),
-  products: z.array(z.object({ id: z.string().uuid(), position: z.number().int().min(0) })).optional()
+  bundle_discount_price: z.number().finite().nonnegative().optional().nullable(),
+  products: z.array(z.object({ id: z.string().uuid(), position: z.number().int().nonnegative() })).max(100).optional()
 });
 
 export const saveBundle = createServerFn({ method: "POST" })
