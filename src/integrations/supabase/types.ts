@@ -2246,6 +2246,8 @@ export type Database = {
           is_enabled: boolean
           low_volume_threshold: number
           min_events_for_counter: number
+          min_interval_seconds: number
+          recency_window_minutes: number
           show_aggregated_counters: boolean
           show_location: boolean
           simulated_volume_boost: number
@@ -2263,6 +2265,8 @@ export type Database = {
           is_enabled?: boolean
           low_volume_threshold?: number
           min_events_for_counter?: number
+          min_interval_seconds?: number
+          recency_window_minutes?: number
           show_aggregated_counters?: boolean
           show_location?: boolean
           simulated_volume_boost?: number
@@ -2280,6 +2284,8 @@ export type Database = {
           is_enabled?: boolean
           low_volume_threshold?: number
           min_events_for_counter?: number
+          min_interval_seconds?: number
+          recency_window_minutes?: number
           show_aggregated_counters?: boolean
           show_location?: boolean
           simulated_volume_boost?: number

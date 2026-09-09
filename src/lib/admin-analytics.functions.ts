@@ -40,7 +40,12 @@ export const getAdminMarketingAnalytics = createServerFn({ method: "GET" })
       return { strategy, views: v, clicks: c, ctr: v ? c / v * 100 : 0 };
     });
     const hour = Array.from({ length: 24 }, (_, h) => ({ hour: h, views: 0, clicks: 0 }));
-    popupEvents.forEach((e: any) => { const h = new Date(e.created_at).getHours(); if (e.event_type === "view") hour[h].views++; if (e.event_type === "click") hour[h].clicks++; });
+    popupEvents.forEach((e: any) => {
+      const bucket = hour[new Date(e.created_at).getHours()];
+      if (!bucket) return;
+      if (e.event_type === "view") bucket.views++;
+      if (e.event_type === "click") bucket.clicks++;
+    });
     const generalViews = events.filter((e: any) => ["NOTIFICATION_VIEW", "PUSH_OPEN", "IN_APP_NOTIFICATION_VIEW"].includes(e.event_type)).length;
     const generalClicks = events.filter((e: any) => ["NOTIFICATION_CLICK", "PUSH_CLICK", "IN_APP_NOTIFICATION_CLICK"].includes(e.event_type)).length;
     const roiAvailable = events.some((e: any) => typeof e.metadata?.commission_amount === "number");

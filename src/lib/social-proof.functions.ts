@@ -5,7 +5,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const DEFAULT_EVENT_TYPES = ["SESSION_START", "PRODUCT_VIEW", "OUTBOUND_CLICK", "ADD_FAVORITE", "PRICE_ALERT_CONVERSION", "VIDEO_COMPLETE", "video_complete"];
 export const DEFAULT_FORMATS = ["session", "favorite", "offer_click", "price_alert_conversion", "aggregate_count", "video_complete", "badge_unlock", "referral_activated"];
-const ConfigSchema = z.object({ is_enabled: z.boolean(), allowed_event_types: z.array(z.string().trim().min(1).max(80)).max(30), min_interval_seconds: z.number().int().min(1).max(86400), recency_window_minutes: z.number().int().min(1).max(10080), show_aggregated_counters: z.boolean(), min_events_for_counter: z.number().int().min(1).max(1000000), counter_window_hours: z.number().int().min(1).max(720), show_location: z.boolean().optional() });
+const ConfigSchema = z.object({ is_enabled: z.boolean(), allowed_event_types: z.array(z.string().trim().min(1).max(80)).max(30), min_interval_seconds: z.number().int().min(1).max(86400), recency_window_minutes: z.number().int().min(1).max(10080), show_aggregated_counters: z.boolean(), min_events_for_counter: z.number().int().min(1).max(1000000), counter_window_hours: z.number().int().min(1).max(720), show_location: z.boolean().default(false) });
 
 export const getSocialProofEvents = createServerFn({ method: "GET" }).handler(async () => {
  const { supabaseAdmin } = await import("@/integrations/supabase/client.server"); const { data: config, error: ce } = await supabaseAdmin.from("social_proof_config").select("is_enabled,allowed_event_types,recency_window_minutes").eq("is_enabled", true).single(); if (ce || !config) return [];
