@@ -5,75 +5,22 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const DEFAULT_EVENT_TYPES = ["SESSION_START", "PRODUCT_VIEW", "OUTBOUND_CLICK", "ADD_FAVORITE", "PRICE_ALERT_CONVERSION", "VIDEO_COMPLETE", "video_complete"];
 export const DEFAULT_FORMATS = ["session", "favorite", "offer_click", "price_alert_conversion", "aggregate_count", "video_complete", "badge_unlock", "referral_activated"];
-
-const ConfigSchema = z.object({
-  is_enabled: z.boolean(),
-  allowed_event_types: z.array(z.string().trim().min(1).max(80)).max(30),
-  min_interval_seconds: z.number().int().min(1).max(86400),
-  recency_window_minutes: z.number().int().min(1).max(10080),
-  show_aggregated_counters: z.boolean(),
-  min_events_for_counter: z.number().int().min(1).max(1000000),
-  counter_window_hours: z.number().int().min(1).max(720),
-  show_location: z.boolean().optional(),
-});
+const ConfigSchema = z.object({ is_enabled: z.boolean(), allowed_event_types: z.array(z.string().trim().min(1).max(80)).max(30), min_interval_seconds: z.number().int().min(1).max(86400), recency_window_minutes: z.number().int().min(1).max(10080), show_aggregated_counters: z.boolean(), min_events_for_counter: z.number().int().min(1).max(1000000), counter_window_hours: z.number().int().min(1).max(720), show_location: z.boolean().optional() });
 
 export const getSocialProofEvents = createServerFn({ method: "GET" }).handler(async () => {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data: config, error: ce } = await supabaseAdmin.from("social_proof_config").select("is_enabled,allowed_event_types,recency_window_minutes").eq("is_enabled", true).single();
-  if (ce || !config) return [];
-  const minutes = config.recency_window_minutes || 120;
-  const start = new Date(Date.now() - minutes * 60000).toISOString();
-  const types = Array.isArray(config.allowed_event_types) && config.allowed_event_types.length ? config.allowed_event_types : DEFAULT_EVENT_TYPES;
-  const { data: events, error } = await supabaseAdmin.from("analytics_events").select("id,event_type,created_at,metadata,product_id").in("event_type", types).gte("created_at", start).order("created_at", { ascending: false }).limit(100);
-  if (error) throw error;
-  const analyticsEvents = (events || []).map((e: any) => {
-    const m = e.metadata && typeof e.metadata === "object" ? e.metadata : {};
-    return { id: e.id, type: e.event_type, userName: "Um cliente", productId: e.product_id || m.product_id || m.productId || undefined, badgeName: m.badge_name || m.badgeName || undefined, timestamp: e.created_at };
-  });
-  const badgeEvents = types.includes("BADGE_UNLOCKED") ? await supabaseAdmin.from("user_badges").select("id,earned_at,badges(name)").gte("earned_at", start).order("earned_at", { ascending: false }).limit(25) : { data: [], error: null };
-  if (badgeEvents.error) throw badgeEvents.error;
-  const badges = (badgeEvents.data || []).map((b: any) => ({ id: `badge-${b.id}`, type: "BADGE_UNLOCKED", userName: "Um cliente", badgeName: b.badges?.name || "uma conquista", timestamp: b.earned_at }));
-  const referralEvents = types.includes("REFERRAL_ACTIVATED") ? await supabaseAdmin.from("referral_events").select("id,created_at").eq("status", "activated").gte("created_at", start).order("created_at", { ascending: false }).limit(25) : { data: [], error: null };
-  if (referralEvents.error) throw referralEvents.error;
-  const referrals = (referralEvents.data || []).map((r: any) => ({ id: `referral-${r.id}`, type: "REFERRAL_ACTIVATED", userName: "Um cliente", timestamp: r.created_at }));
-  return [...analyticsEvents, ...badges, ...referrals].filter((e: any) => e.type === "SESSION_START" || e.type === "BADGE_UNLOCKED" || e.type === "REFERRAL_ACTIVATED" || Boolean(e.productId));
+ const { supabaseAdmin } = await import("@/integrations/supabase/client.server"); const { data: config, error: ce } = await supabaseAdmin.from("social_proof_config").select("is_enabled,allowed_event_types,recency_window_minutes").eq("is_enabled", true).single(); if (ce || !config) return [];
+ const start = new Date(Date.now() - (config.recency_window_minutes || 120) * 60000).toISOString(); const types = Array.isArray(config.allowed_event_types) && config.allowed_event_types.length ? config.allowed_event_types : DEFAULT_EVENT_TYPES;
+ const { data: events, error } = await supabaseAdmin.from("analytics_events").select("id,event_type,created_at,metadata,product_id").in("event_type", types).gte("created_at", start).order("created_at", { ascending: false }).limit(100); if (error) throw error;
+ const analyticsEvents = (events || []).map((e: any) => { const m = e.metadata && typeof e.metadata === "object" ? e.metadata : {}; return { id:e.id,type:e.event_type,userName:"Um cliente",productId:e.product_id || m.product_id || m.productId || undefined,badgeName:m.badge_name || m.badgeName || undefined,timestamp:e.created_at }; });
+ const badgeEvents = types.includes("BADGE_UNLOCKED") ? await supabaseAdmin.from("user_badges").select("id,earned_at,badges(name)").gte("earned_at", start).order("earned_at", { ascending:false }).limit(25) : {data:[],error:null}; if (badgeEvents.error) throw badgeEvents.error;
+ const badges = (badgeEvents.data || []).map((b:any)=>({id:`badge-${b.id}`,type:"BADGE_UNLOCKED",userName:"Um cliente",badgeName:b.badges?.name || "uma conquista",timestamp:b.earned_at}));
+ const referralEvents = types.includes("REFERRAL_ACTIVATED") ? await supabaseAdmin.from("referral_events").select("id,created_at").eq("status","activated").gte("created_at",start).order("created_at",{ascending:false}).limit(25) : {data:[],error:null}; if (referralEvents.error) throw referralEvents.error;
+ const referrals = (referralEvents.data || []).map((r:any)=>({id:`referral-${r.id}`,type:"REFERRAL_ACTIVATED",userName:"Um cliente",timestamp:r.created_at}));
+ return [...analyticsEvents,...badges,...referrals].filter((e:any)=>e.type === "SESSION_START" || e.type === "BADGE_UNLOCKED" || e.type === "REFERRAL_ACTIVATED" || Boolean(e.productId));
 });
 
-export const getSocialProofConfig = createServerFn({ method: "GET" }).middleware([requireOwnerRole]).handler(async () => {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data, error } = await supabaseAdmin.from("social_proof_config").select("*").single();
-  if (error) throw error;
-  return data;
-});
-
-export const updateSocialProofConfig = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).inputValidator((data: unknown) => ConfigSchema.parse(data)).handler(async ({ data }) => {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data: current, error: readError } = await supabaseAdmin.from("social_proof_config").select("id").single();
-  if (readError || !current) throw new Error("Configuração de prova social não encontrada.");
-  const { error } = await supabaseAdmin.from("social_proof_config").update({ ...data, updated_at: new Date().toISOString() }).eq("id", current.id);
-  if (error) throw error;
-  return { success: true };
-});
-
-export const updateSocialProofOptOut = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((data: unknown) => z.object({ enabled: z.boolean() }).parse(data)).handler(async ({ data, context }) => {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { error } = await supabaseAdmin.from("user_preferences").update({ show_in_social_proof: data.enabled } as any).eq("user_id", context.userId);
-  if (error) throw error;
-  return { success: true };
-});
-
-export const getAggregatedSocialProof = createServerFn({ method: "GET" }).inputValidator((data: unknown) => z.object({ productId: z.string().uuid() }).parse(data)).handler(async ({ data }) => {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data: config, error: configError } = await supabaseAdmin.from("social_proof_config").select("is_enabled,show_aggregated_counters,min_events_for_counter,counter_window_hours").single();
-  if (configError || !config || !config.is_enabled || !config.show_aggregated_counters) return null;
-  const hours = config.counter_window_hours || 24;
-  const start = new Date(Date.now() - hours * 3600000).toISOString();
-  const min = config.min_events_for_counter || 1;
-  const [views, favorites] = await Promise.all([
-    supabaseAdmin.from("analytics_events").select("id", { count: "exact", head: true }).eq("event_type", "PRODUCT_VIEW").eq("product_id", data.productId).gte("created_at", start),
-    supabaseAdmin.from("analytics_events").select("id", { count: "exact", head: true }).eq("event_type", "ADD_FAVORITE").eq("product_id", data.productId).gte("created_at", start),
-  ]);
-  if (views.error) throw views.error;
-  if (favorites.error) throw favorites.error;
-  return { views: (views.count || 0) >= min ? views.count || 0 : 0, favorites: (favorites.count || 0) >= min ? favorites.count || 0 : 0, windowHours: hours };
-});
+export const getSocialProofPublicConfig = createServerFn({ method: "GET" }).handler(async () => { const { supabaseAdmin } = await import("@/integrations/supabase/client.server"); const { data, error } = await supabaseAdmin.from("social_proof_config").select("is_enabled,allowed_event_types,enabled_formats,show_aggregated_counters,min_events_for_counter,counter_window_hours").single(); if (error) return null; return data; });
+export const getSocialProofConfig = createServerFn({ method: "GET" }).middleware([requireOwnerRole]).handler(async () => { const { supabaseAdmin } = await import("@/integrations/supabase/client.server"); const { data,error } = await supabaseAdmin.from("social_proof_config").select("*").single(); if (error) throw error; return data; });
+export const updateSocialProofConfig = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).inputValidator((data: unknown)=>ConfigSchema.parse(data)).handler(async ({data})=>{ const {supabaseAdmin}=await import("@/integrations/supabase/client.server"); const {data:current,error:readError}=await supabaseAdmin.from("social_proof_config").select("id").single(); if(readError||!current) throw new Error("Configuração de prova social não encontrada."); const {error}=await supabaseAdmin.from("social_proof_config").update({...data,updated_at:new Date().toISOString()}).eq("id",current.id); if(error) throw error; return {success:true}; });
+export const updateSocialProofOptOut = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((data: unknown)=>z.object({enabled:z.boolean()}).parse(data)).handler(async ({data,context})=>{ const {supabaseAdmin}=await import("@/integrations/supabase/client.server"); const {error}=await supabaseAdmin.from("user_preferences").update({show_in_social_proof:data.enabled} as any).eq("user_id",context.userId); if(error) throw error; return {success:true}; });
+export const getAggregatedSocialProof = createServerFn({ method: "GET" }).inputValidator((data: unknown)=>z.object({productId:z.string().uuid()}).parse(data)).handler(async ({data})=>{ const {supabaseAdmin}=await import("@/integrations/supabase/client.server"); const {data:config,error:configError}=await supabaseAdmin.from("social_proof_config").select("is_enabled,show_aggregated_counters,min_events_for_counter,counter_window_hours").single(); if(configError||!config||!config.is_enabled||!config.show_aggregated_counters)return null; const start=new Date(Date.now()-(config.counter_window_hours||24)*3600000).toISOString(); const min=config.min_events_for_counter||1; const [views,favorites]=await Promise.all([supabaseAdmin.from("analytics_events").select("id",{count:"exact",head:true}).eq("event_type","PRODUCT_VIEW").eq("product_id",data.productId).gte("created_at",start),supabaseAdmin.from("analytics_events").select("id",{count:"exact",head:true}).eq("event_type","ADD_FAVORITE").eq("product_id",data.productId).gte("created_at",start)]); if(views.error)throw views.error;if(favorites.error)throw favorites.error; return {views:(views.count||0)>=min?views.count||0:0,favorites:(favorites.count||0)>=min?favorites.count||0:0,windowHours:config.counter_window_hours||24}; });
