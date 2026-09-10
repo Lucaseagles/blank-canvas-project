@@ -3,6 +3,10 @@ import { z } from "zod";
 import { requireOwnerRole } from "@/lib/auth-guards.server";
 
 const periodSchema = z.object({ days: z.number().int().min(1).max(90).default(30) });
+const VIEW_EVENTS = ["PRODUCT_VIEW", "product_view"] as const;
+const CLICK_EVENTS = ["OUTBOUND_CLICK", "AFFILIATE_CLICK", "outbound_click"] as const;
+const TRACKED_EVENTS = [...VIEW_EVENTS, ...CLICK_EVENTS] as const;
+const PAGE_SIZE = 1000;
 
 type ProductRow = {
   id: string;
@@ -51,38 +55,49 @@ export const getSellerPerformance = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const since = new Date(Date.now() - data.days * 86400000).toISOString();
 
-    const [productsRes, eventsRes] = await Promise.all([
-      supabaseAdmin
+    const products: ProductRow[] = [];
+    for (let from = 0; ; from += PAGE_SIZE) {
+      const { data: page, error } = await supabaseAdmin
         .from("products")
         .select("id,slug,title,current_price,status,category_id,affiliate_url,images,offer_score,categories:category_id(name)")
         .order("offer_score", { ascending: false, nullsFirst: false })
-        .limit(200),
-      supabaseAdmin
+        .range(from, from + PAGE_SIZE - 1);
+      if (error) throw error;
+      const rows = (page ?? []) as unknown as ProductRow[];
+      products.push(...rows);
+      if (rows.length < PAGE_SIZE) break;
+    }
+
+    const events: EventRow[] = [];
+    for (let from = 0; ; from += PAGE_SIZE) {
+      const { data: page, error } = await supabaseAdmin
         .from("analytics_events")
         .select("product_id,category_id,event_type,created_at")
         .gte("created_at", since)
-        .in("event_type", ["PRODUCT_VIEW", "product_view", "OUTBOUND_CLICK", "AFFILIATE_CLICK", "outbound_click"])
-        .limit(20000),
-    ]);
+        .in("event_type", TRACKED_EVENTS)
+        .order("created_at", { ascending: true })
+        .range(from, from + PAGE_SIZE - 1);
+      if (error) throw error;
+      const rows = (page ?? []) as EventRow[];
+      events.push(...rows);
+      if (rows.length < PAGE_SIZE) break;
+    }
 
-    if (productsRes.error) throw productsRes.error;
-    if (eventsRes.error) throw eventsRes.error;
-
-    const products = (productsRes.data ?? []) as unknown as ProductRow[];
-    const events = (eventsRes.data ?? []) as EventRow[];
     const views = new Map<string, number>();
     const clicks = new Map<string, number>();
     const categoryViews = new Map<string, number>();
     const categoryClicks = new Map<string, number>();
 
     for (const event of events) {
+      const isView = VIEW_EVENTS.includes(event.event_type as (typeof VIEW_EVENTS)[number]);
+      const isClick = CLICK_EVENTS.includes(event.event_type as (typeof CLICK_EVENTS)[number]);
       if (event.product_id) {
-        if (["PRODUCT_VIEW", "product_view"].includes(event.event_type)) views.set(event.product_id, (views.get(event.product_id) ?? 0) + 1);
-        if (["OUTBOUND_CLICK", "AFFILIATE_CLICK", "outbound_click"].includes(event.event_type)) clicks.set(event.product_id, (clicks.get(event.product_id) ?? 0) + 1);
+        if (isView) views.set(event.product_id, (views.get(event.product_id) ?? 0) + 1);
+        if (isClick) clicks.set(event.product_id, (clicks.get(event.product_id) ?? 0) + 1);
       }
       if (event.category_id) {
-        if (["PRODUCT_VIEW", "product_view"].includes(event.event_type)) categoryViews.set(event.category_id, (categoryViews.get(event.category_id) ?? 0) + 1);
-        if (["OUTBOUND_CLICK", "AFFILIATE_CLICK", "outbound_click"].includes(event.event_type)) categoryClicks.set(event.category_id, (categoryClicks.get(event.category_id) ?? 0) + 1);
+        if (isView) categoryViews.set(event.category_id, (categoryViews.get(event.category_id) ?? 0) + 1);
+        if (isClick) categoryClicks.set(event.category_id, (categoryClicks.get(event.category_id) ?? 0) + 1);
       }
     }
 
@@ -104,15 +119,21 @@ export const getSellerPerformance = createServerFn({ method: "GET" })
     const categoryMap = new Map<string, { id: string; name: string; views: number; clicks: number; products: number }>();
     for (const product of products) {
       if (!product.category_id) continue;
-      const current = categoryMap.get(product.category_id) ?? { id: product.category_id, name: product.categories?.name ?? "Sem categoria", views: 0, clicks: 0, products: 0 };
+      const current = categoryMap.get(product.category_id) ?? {
+        id: product.category_id,
+        name: product.categories?.name ?? "Sem categoria",
+        views: 0,
+        clicks: 0,
+        products: 0,
+      };
       current.views = categoryViews.get(product.category_id) ?? 0;
       current.clicks = categoryClicks.get(product.category_id) ?? 0;
       current.products += 1;
       categoryMap.set(product.category_id, current);
     }
 
-    const totalViews = events.filter((e) => ["PRODUCT_VIEW", "product_view"].includes(e.event_type)).length;
-    const totalClicks = events.filter((e) => ["OUTBOUND_CLICK", "AFFILIATE_CLICK", "outbound_click"].includes(e.event_type)).length;
+    const totalViews = events.reduce((total, event) => total + (VIEW_EVENTS.includes(event.event_type as (typeof VIEW_EVENTS)[number]) ? 1 : 0), 0);
+    const totalClicks = events.reduce((total, event) => total + (CLICK_EVENTS.includes(event.event_type as (typeof CLICK_EVENTS)[number]) ? 1 : 0), 0);
     const linkedProducts = products.filter((p) => Boolean(p.affiliate_url)).length;
 
     return {
@@ -141,17 +162,22 @@ export const setSellerProductStatus = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: current, error: readError } = await supabaseAdmin.from("products").select("id,status").eq("id", data.id).single();
     if (readError) throw readError;
-    const { error } = await supabaseAdmin.from("products").update({ status: data.status, updated_at: new Date().toISOString() }).eq("id", data.id);
+    if (current.status === data.status) return { success: true, id: data.id, status: data.status, changed: false };
+
+    const { error } = await supabaseAdmin
+      .from("products")
+      .update({ status: data.status, updated_at: new Date().toISOString() })
+      .eq("id", data.id);
     if (error) throw error;
-    const { error: auditError } = await (supabaseAdmin as any).from("admin_audit_log").insert({
-      actor_user_id: context.userId,
-      actor_email: context.userEmail ?? null,
-      action_type: "SELLER_PRODUCT_STATUS_CHANGED",
-      entity_type: "product",
-      entity_id: data.id,
-      previous_value: { status: current.status },
-      new_value: { status: data.status },
+
+    const { error: auditError } = await context.supabase.rpc("append_admin_audit", {
+      p_action_type: "SELLER_PRODUCT_STATUS_CHANGED",
+      p_entity_type: "product",
+      p_entity_id: data.id,
+      p_previous_value: { status: current.status },
+      p_new_value: { status: data.status },
     });
     if (auditError) throw auditError;
-    return { success: true, id: data.id, status: data.status };
+
+    return { success: true, id: data.id, status: data.status, changed: true };
   });
