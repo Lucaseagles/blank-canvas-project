@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
-export const Route = createFileRoute(`/my-coupons`)({ component: MyCouponsPage });
+export const Route = createFileRoute("/my-coupons")({ component: MyCouponsPage });
 
 type Coupon = { id: string; code: string; description: string | null; discount_type: string; discount_value: number; valid_until: string | null; marketplace_id: string; product_id: string | null; marketplaces?: { name?: string; icon?: string | null } | null; products?: { title?: string; slug?: string | null } | null };
 
