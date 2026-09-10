@@ -50,7 +50,7 @@ export const getAdminSettings = createServerFn({ method: "GET" }).middleware([re
   }));
 });
 
-export const updateAdminSetting = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ source: z.string().min(1), id: z.string().uuid(), patch: z.record(z.string(), z.unknown()) }).parse(data)).handler(async ({ data, context }) => {
+export const updateAdminSetting = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).inputValidator((data: unknown) => z.object({ source: z.string().trim().min(1).max(100), id: z.string().uuid(), patch: z.record(z.string(), z.unknown()) }).parse(data)).handler(async ({ data, context }) => {
   const entry = registryEntry(data.source);
   const patch: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(data.patch)) {
@@ -82,7 +82,7 @@ export const updateAdminSetting = createServerFn({ method: "POST" }).middleware(
   return { success: true, row: sanitize(after) };
 });
 
-export const getAdminAuditLog = createServerFn({ method: "GET" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ page: z.number().int().min(0).default(0), pageSize: z.number().int().min(1).max(100).default(25), actionType: z.string().trim().max(80).optional(), entityType: z.string().trim().max(120).optional() }).parse(data)).handler(async ({ data }) => {
+export const getAdminAuditLog = createServerFn({ method: "GET" }).middleware([requireOwnerRole]).inputValidator((data: unknown) => z.object({ page: z.number().int().min(0).default(0), pageSize: z.number().int().min(1).max(100).default(25), actionType: z.string().trim().max(80).optional(), entityType: z.string().trim().max(120).optional() }).parse(data)).handler(async ({ data }) => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const db = supabaseAdmin as any;
   let query = db.from("admin_audit_log").select("id,actor_user_id,actor_email,action_type,entity_type,entity_id,previous_value,new_value,created_at", { count: "exact" }).order("created_at", { ascending: false }).range(data.page * data.pageSize, (data.page + 1) * data.pageSize - 1);
