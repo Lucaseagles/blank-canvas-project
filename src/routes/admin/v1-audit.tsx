@@ -38,7 +38,8 @@ const KNOWN_ROUTES = [
   "/admin/marketplaces", "/admin/categories", "/admin/integrations", "/admin/users",
   "/admin/recommendations", "/admin/analytics", "/admin/campaigns", "/admin/telegram",
   "/admin/notifications", "/admin/referrals", "/admin/automations", "/admin/settings",
-  "/admin/offers", "/admin/social-proof", "/admin/bundles", "/admin/v1-audit",
+  "/admin/offers", "/admin/coupons", "/admin/social-proof", "/admin/bundles",
+  "/admin/seller-center", "/admin/v1-audit",
 ];
 
 function statusTone(status: Status) {
@@ -70,7 +71,6 @@ function V1AuditPage() {
   const runAudit = useCallback(async () => {
     setRunning(true);
 
-    // ---- Rotas (verificadas contra o route tree gerado) ----
     const routeChecks: Check[] = [];
     try {
       const mod = await import("@/routeTree.gen");
@@ -96,7 +96,6 @@ function V1AuditPage() {
       routeChecks.push({ id: "route:tree", label: "Route tree", status: "FAIL", evidence: String(err) });
     }
 
-    // ---- Dados / integrações Supabase ----
     const dbChecks = await Promise.all([
       tableCheck("products", "Catálogo de produtos"),
       tableCheck("categories", "Categorias"),
@@ -111,7 +110,6 @@ function V1AuditPage() {
       tableCheck("price_alerts", "Alertas de preço"),
     ]);
 
-    // ---- Reviews reais ----
     const contentChecks: Check[] = [];
     try {
       const { data, error } = await supabase
@@ -161,7 +159,6 @@ function V1AuditPage() {
       contentChecks.push({ id: "content:redirect", label: "Compra / redirect afiliado", status: "FAIL", evidence: String(err) });
     }
 
-    // Social proof config
     try {
       const { data, error } = await supabase.from("social_proof_config" as never).select("*").limit(1).maybeSingle();
       contentChecks.push({
@@ -174,7 +171,6 @@ function V1AuditPage() {
       contentChecks.push({ id: "content:socialproof", label: "Social Proof (config real)", status: "FAIL", evidence: String(err) });
     }
 
-    // Suporte IA/FAQ + WhatsApp
     try {
       const { data, error } = await supabase.from("support_faqs" as never).select("id").limit(5);
       contentChecks.push({
@@ -190,16 +186,15 @@ function V1AuditPage() {
       id: "content:whatsapp",
       label: "Suporte — WhatsApp",
       status: "PENDING EXTERNAL",
-      evidence: "Depende de número público configurado (support config / VITE_SUPPORT_WHATSAPP_NUMBER). Entrega via app externo não é verificável no cliente.",
+      evidence: "Depende de número público configurado e de serviço externo. O cliente não pode provar entrega externa.",
     });
     contentChecks.push({
       id: "content:marketplace-api",
       label: "APIs de marketplace (ingestão automática)",
       status: "PENDING EXTERNAL",
-      evidence: "Conectores existem no código; credenciais/quotas externas não configuradas ou não verificáveis daqui.",
+      evidence: "Conectores existem no código; credenciais, quotas e disponibilidade do provedor são dependências externas.",
     });
 
-    // ---- Cenários V1 ----
     const scenarioChecks: Check[] = [];
     try {
       const { data: p } = await supabase.from("products").select("slug").limit(1);
@@ -207,7 +202,7 @@ function V1AuditPage() {
         id: "scn:purchase",
         label: "Jornada de compra (feed → produto → redirect)",
         status: "NOT MEASURED",
-        evidence: p && p.length > 0 ? `Pré-condição confirmada: produto navegável em /product/${(p[0] as any).slug}. A jornada completa e o destino externo não foram automatizados.` : "Sem produtos no banco para percorrer a jornada",
+        evidence: p && p.length > 0 ? `Pré-condição confirmada: produto navegável em /product/${(p[0] as any).slug}. A jornada completa e o destino externo exigem teste de navegador.` : "Sem produtos no banco para percorrer a jornada",
       });
       const { data: v } = await supabase.from("video_products" as never).select("video_id").limit(1);
       scenarioChecks.push({
@@ -223,7 +218,7 @@ function V1AuditPage() {
       id: "scn:support",
       label: "Suporte inteligente (FAQ + bolha flutuante)",
       status: typeof document !== "undefined" && document.querySelector(".support-bubble, [data-support-bubble]") ? "PASS" : "NOT MEASURED",
-      evidence: "Bolha de suporte é montada no root; presença no DOM do /admin pode variar.",
+      evidence: "Presença da bolha depende da montagem do root e da rota atual.",
     });
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -231,7 +226,7 @@ function V1AuditPage() {
         id: "scn:profile",
         label: "Perfil premium / loja do usuário",
         status: user ? "PASS" : "NOT MEASURED",
-        evidence: user ? `Sessão autenticada ativa (${user.email}); /profile lê favoritos e conquistas reais.` : "Sem sessão para validar",
+        evidence: user ? "Sessão autenticada ativa; pré-condição de acesso ao perfil confirmada." : "Sem sessão para validar",
       });
     } catch (err) {
       scenarioChecks.push({ id: "scn:profile", label: "Perfil premium", status: "FAIL", evidence: String(err) });
@@ -240,17 +235,15 @@ function V1AuditPage() {
       id: "scn:admin-mobile",
       label: "Admin mobile (hamburger + menu completo)",
       status: "NOT MEASURED",
-      evidence: `Pré-condição de código: sidebar declara ${KNOWN_ROUTES.filter((r) => r.startsWith("/admin/")).length} destinos e gatilho abaixo de lg. Interação owner autenticada não foi medida. Viewport atual: ${typeof window !== "undefined" ? window.innerWidth : "?"}px`,
+      evidence: `Código declara ${KNOWN_ROUTES.filter((r) => r.startsWith("/admin/")).length} destinos administrativos; interação em viewport móvel exige teste de navegador.`,
     });
 
-    // ---- Performance (medida via Performance API quando disponível) ----
     const perfChecks: Check[] = [];
-    const push = (id: string, label: string, status: Status, evidence: string) =>
-      perfChecks.push({ id, label, status, evidence });
+    const push = (id: string, label: string, status: Status, evidence: string) => perfChecks.push({ id, label, status, evidence });
     if (typeof performance !== "undefined" && performance.getEntriesByType) {
       const paints = performance.getEntriesByType("paint");
       const fcp = paints.find((p) => p.name === "first-contentful-paint");
-      push("perf:fcp", "FCP", fcp ? "PASS" : "NOT MEASURED", fcp ? `${Math.round(fcp.startTime)} ms (PerformanceObserver paint)` : "Entrada de paint indisponível");
+      push("perf:fcp", "FCP", fcp ? "PASS" : "NOT MEASURED", fcp ? `${Math.round(fcp.startTime)} ms` : "Entrada de paint indisponível");
 
       const lcp = await new Promise<number | null>((resolve) => {
         try {
@@ -286,30 +279,28 @@ function V1AuditPage() {
       push("perf:tbt", "TBT (aproximado por longtasks)", longTasks.length ? "PASS" : "NOT MEASURED", longTasks.length ? `${Math.round(tbt)} ms em ${longTasks.length} long tasks` : "Long Task API sem entradas neste navegador");
 
       const resources = performance.getEntriesByType("resource") as PerformanceResourceTiming[];
-      const sum = (filter: (r: PerformanceResourceTiming) => boolean) =>
-        resources.filter(filter).reduce((acc, r) => acc + (r.transferSize || r.encodedBodySize || 0), 0);
+      const sum = (filter: (r: PerformanceResourceTiming) => boolean) => resources.filter(filter).reduce((acc, r) => acc + (r.transferSize || r.encodedBodySize || 0), 0);
       const js = sum((r) => r.name.includes(".js") || r.initiatorType === "script");
       const css = sum((r) => r.name.includes(".css") || r.initiatorType === "link");
-      push("perf:js", "Bundle JS transferido", js > 0 ? "PASS" : "NOT MEASURED", js > 0 ? `${(js / 1024).toFixed(1)} KB (dev server, não representa produção)` : "transferSize indisponível");
+      push("perf:js", "Bundle JS transferido", js > 0 ? "PASS" : "NOT MEASURED", js > 0 ? `${(js / 1024).toFixed(1)} KB` : "transferSize indisponível");
       push("perf:css", "CSS transferido", css > 0 ? "PASS" : "NOT MEASURED", css > 0 ? `${(css / 1024).toFixed(1)} KB` : "transferSize indisponível");
       const chunks = resources.filter((r) => /\.(m?js)(\?|$)/.test(r.name)).length;
       push("perf:split", "Code splitting", chunks > 1 ? "PASS" : "NOT MEASURED", `${chunks} módulos JS carregados nesta rota`);
 
       const imgs = typeof document !== "undefined" ? Array.from(document.images) : [];
       const lazy = imgs.filter((i) => i.loading === "lazy").length;
-      push("perf:img", "Imagens com lazy loading", imgs.length === 0 ? "NOT MEASURED" : lazy === imgs.length ? "PASS" : "FAIL", imgs.length === 0 ? "Sem <img> nesta rota" : `${lazy}/${imgs.length} com loading="lazy"`);
+      push("perf:img", "Imagens com lazy loading", imgs.length === 0 ? "NOT MEASURED" : lazy === imgs.length ? "PASS" : "FAIL", imgs.length === 0 ? "Sem <img> nesta rota" : `${lazy}/${imgs.length} com loading=lazy`);
       const webp = imgs.filter((i) => /\.(webp|avif)(\?|$)/i.test(i.currentSrc || i.src)).length;
-      push("perf:webp", "Imagens WebP/AVIF", imgs.length === 0 ? "NOT MEASURED" : "NOT MEASURED", `${webp}/${imgs.length} em WebP/AVIF — formato depende da CDN do marketplace de origem`);
+      push("perf:webp", "Imagens WebP/AVIF", "NOT MEASURED", `${webp}/${imgs.length} em WebP/AVIF — formato depende da origem/CDN`);
 
       const mem = (performance as never as { memory?: { usedJSHeapSize: number } }).memory;
-      push("perf:mem", "Memória JS", mem ? "PASS" : "NOT MEASURED", mem ? `${(mem.usedJSHeapSize / 1048576).toFixed(1)} MB usados` : "performance.memory indisponível (não-Chromium)");
+      push("perf:mem", "Memória JS", mem ? "PASS" : "NOT MEASURED", mem ? `${(mem.usedJSHeapSize / 1048576).toFixed(1)} MB usados` : "performance.memory indisponível");
     }
-    push("perf:tti", "TTI", "NOT MEASURED", "Requer Lighthouse/trace externo — não medível dentro do app");
+    push("perf:tti", "TTI", "NOT MEASURED", "Requer Lighthouse/trace externo");
     push("perf:si", "Speed Index", "NOT MEASURED", "Requer captura de vídeo/Lighthouse externo");
     push("perf:cpu", "Mobile CPU / network throttling", "NOT MEASURED", "Requer DevTools/Lighthouse com throttling");
     push("perf:fps", "FPS sustentado", "NOT MEASURED", "Requer profiler de renderização externo");
 
-    // ---- Segurança ----
     const secChecks: Check[] = [];
     const isHttps = typeof location !== "undefined" && location.protocol === "https:";
     const isLocal = typeof location !== "undefined" && /^(localhost|127\.)/.test(location.hostname);
@@ -317,7 +308,7 @@ function V1AuditPage() {
       id: "sec:https",
       label: "HTTPS",
       status: isLocal ? "NOT MEASURED" : isHttps ? "PASS" : "FAIL",
-      evidence: isLocal ? "Preview local em http — runtime de produção não avaliado aqui" : `protocol=${typeof location !== "undefined" ? location.protocol : "?"}`,
+      evidence: isLocal ? "Preview local em http — produção não medida aqui" : `protocol=${typeof location !== "undefined" ? location.protocol : "?"}`,
     });
     const envKeys = Object.keys(import.meta.env ?? {});
     const leaked = envKeys.filter((k) => /SERVICE_ROLE|SECRET/i.test(k));
@@ -335,7 +326,7 @@ function V1AuditPage() {
           id: "sec:owner",
           label: "Autorização owner-only do /admin",
           status: error ? "FAIL" : hasRole ? "PASS" : "FAIL",
-          evidence: error ? error.message : hasRole ? "has_role(owner) = true para a sessão atual; layout /admin redireciona quem falha na checagem." : "Sessão atual não possui role owner",
+          evidence: error ? error.message : hasRole ? "has_role(owner) = true para a sessão atual" : "Sessão atual não possui role owner",
         });
       } else {
         secChecks.push({ id: "sec:owner", label: "Autorização owner-only do /admin", status: "NOT MEASURED", evidence: "Sem sessão ativa" });
@@ -343,11 +334,11 @@ function V1AuditPage() {
     } catch (err) {
       secChecks.push({ id: "sec:owner", label: "Autorização owner-only", status: "FAIL", evidence: String(err) });
     }
-    secChecks.push({ id: "sec:xss", label: "XSS / sanitização de entrada", status: "PASS", evidence: "Nenhum uso de dangerouslySetInnerHTML em código de aplicação (apenas no componente shadcn chart, com CSS gerado internamente); React escapa a saída por padrão." });
-    secChecks.push({ id: "sec:csrf", label: "CSRF", status: "PASS", evidence: "Arquitetura sem cookies de sessão: token bearer em header por server-function middleware — requests cross-site não carregam credenciais." });
-    secChecks.push({ id: "sec:rls", label: "RLS / policies", status: "NOT MEASURED", evidence: "Cobertura completa de policies exige varredura server-side; use o scanner de segurança do projeto." });
-    secChecks.push({ id: "sec:rate", label: "Rate limiting", status: "NOT MEASURED", evidence: "Não há limitador aplicativo; limites do gateway Supabase não são observáveis daqui." });
-    secChecks.push({ id: "sec:leakedpw", label: "Proteção de senha vazada (Supabase Auth)", status: "PENDING EXTERNAL", evidence: "Toggle do painel Supabase (Authentication → Passwords)." });
+    secChecks.push({ id: "sec:xss", label: "XSS / sanitização de entrada", status: "NOT MEASURED", evidence: "A auditoria de superfície completa exige scanner estático e revisão de sinks/inputs; esta tela não deve declarar PASS apenas por inspeção parcial." });
+    secChecks.push({ id: "sec:csrf", label: "CSRF", status: "NOT MEASURED", evidence: "Requer validação do modelo de sessão, cookies, headers e endpoints mutáveis em ambiente de produção." });
+    secChecks.push({ id: "sec:rls", label: "RLS / policies", status: "NOT MEASURED", evidence: "Cobertura completa de policies exige varredura server-side e testes de papéis anon/authenticated/owner." });
+    secChecks.push({ id: "sec:rate", label: "Rate limiting", status: "NOT MEASURED", evidence: "Limites do gateway e das Edge Functions não são observáveis somente no cliente." });
+    secChecks.push({ id: "sec:leakedpw", label: "Proteção de senha vazada (Supabase Auth)", status: "PENDING EXTERNAL", evidence: "Configuração depende do painel Supabase Authentication → Passwords." });
 
     setGroups({
       "Rotas": routeChecks,
@@ -382,12 +373,8 @@ function V1AuditPage() {
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-black uppercase italic tracking-tighter sm:text-3xl">Auditoria V1</h1>
-          <p className="text-sm text-muted-foreground">
-            Verificações executadas no cliente contra dados reais. Nada é marcado como verde sem evidência.
-          </p>
-          <p className="mt-1 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-            Última execução: {ranAt ? new Date(ranAt).toLocaleString("pt-BR") : "—"}
-          </p>
+          <p className="text-sm text-muted-foreground">Verificações executadas contra dados reais. Nada é marcado como verde sem evidência.</p>
+          <p className="mt-1 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Última execução: {ranAt ? new Date(ranAt).toLocaleString("pt-BR") : "—"}</p>
         </div>
         <Button onClick={() => void runAudit()} disabled={running} className="gap-2 font-black uppercase italic">
           <RefreshCw size={16} className={running ? "animate-spin" : ""} aria-hidden="true" />
@@ -411,25 +398,17 @@ function V1AuditPage() {
         return (
           <Card key={group} className="glass-surface border-glass-border">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-sm font-black uppercase tracking-widest">
-                <Icon size={16} aria-hidden="true" />
-                {group}
-              </CardTitle>
+              <CardTitle className="flex items-center gap-2 text-sm font-black uppercase tracking-widest"><Icon size={16} aria-hidden="true" />{group}</CardTitle>
               <CardDescription>{checks.length} verificações</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
               {checks.map((check) => (
-                <div
-                  key={check.id}
-                  className="flex flex-col gap-2 rounded-xl border border-white/5 bg-white/5 p-3 sm:flex-row sm:items-start sm:justify-between"
-                >
+                <div key={check.id} className="flex flex-col gap-2 rounded-xl border border-white/5 bg-white/5 p-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
                     <p className="text-sm font-bold">{check.label}</p>
                     <p className="mt-0.5 break-words text-xs text-muted-foreground">{check.evidence}</p>
                   </div>
-                  <Badge variant="outline" className={`shrink-0 rounded-full text-[9px] font-black uppercase tracking-widest ${statusTone(check.status)}`}>
-                    {check.status}
-                  </Badge>
+                  <Badge variant="outline" className={`shrink-0 rounded-full text-[9px] font-black uppercase tracking-widest ${statusTone(check.status)}`}>{check.status}</Badge>
                 </div>
               ))}
             </CardContent>
