@@ -1,0 +1,18 @@
+create or replace function public._generate_collection_candidates_internal(p_collection_id uuid)
+returns jsonb language plpgsql security definer set search_path=public as $$
+declare r jsonb; n integer:=0; c record; v_min_discount numeric:=0; v_min_trend numeric:=0; v_min_demand numeric:=0; v_min_offer numeric:=0; v_require boolean:=false;
+begin
+ select candidate_rules into r from curated_collections where id=p_collection_id; if not found then raise exception 'collection not found'; end if;
+ begin if jsonb_typeof(r->'min_discount')='number' then v_min_discount:=greatest(0,least(100,(r->>'min_discount')::numeric)); end if; exception when others then null; end;
+ begin if jsonb_typeof(r->'min_trend_velocity')='number' then v_min_trend:=greatest(0,(r->>'min_trend_velocity')::numeric); end if; exception when others then null; end;
+ begin if jsonb_typeof(r->'min_demand_score')='number' then v_min_demand:=greatest(0,(r->>'min_demand_score')::numeric); end if; exception when others then null; end;
+ begin if jsonb_typeof(r->'min_offer_score')='number' then v_min_offer:=greatest(0,(r->>'min_offer_score')::numeric); end if; exception when others then null; end;
+ if jsonb_typeof(r->'require_active_offer')='boolean' then v_require:=(r->>'require_active_offer')::boolean; end if;
+ for c in select p.id,p.discount,p.trend_velocity,p.demand_score,p.offer_score,p.offer_group_id,p.is_best_offer from products p where p.status in ('active','published') and coalesce(p.discount,0)>=v_min_discount and coalesce(p.trend_velocity,0)>=v_min_trend and coalesce(p.demand_score,0)>=v_min_demand and coalesce(p.offer_score,0)>=v_min_offer and (not v_require or (p.offer_group_id is not null and p.is_best_offer=true)) and not exists(select 1 from collection_items i where i.collection_id=p_collection_id and i.product_id=p.id) loop
+  insert into collection_candidates(collection_id,product_id,matched_signal,status,priority,suggested_at) values(p_collection_id,c.id,jsonb_build_object('discount',c.discount,'trend_velocity',c.trend_velocity,'demand_score',c.demand_score,'offer_score',c.offer_score,'matched_rules',r),'pending',0,now()) on conflict(collection_id,product_id) do update set matched_signal=excluded.matched_signal,suggested_at=excluded.suggested_at where collection_candidates.status='pending'; n:=n+1;
+ end loop; return jsonb_build_object('generated',n,'rules',r);
+end $$;
+create or replace function public.generate_collection_candidates(p_collection_id uuid) returns jsonb language plpgsql security definer set search_path=public as $$ begin if not has_role(auth.uid(),'owner'::app_role) then raise exception 'not authorized'; end if; return public._generate_collection_candidates_internal(p_collection_id); end $$;
+create or replace function public.generate_all_collection_candidates() returns jsonb language plpgsql security definer set search_path=public as $$ declare c record; processed integer:=0; generated integer:=0; r jsonb; begin for c in select id from curated_collections where is_active=true and collection_type in ('achadinhos','trending','offers','seasonal') loop r:=public._generate_collection_candidates_internal(c.id); processed:=processed+1; generated:=generated+coalesce((r->>'generated')::integer,0); end loop; return jsonb_build_object('collections_processed',processed,'candidates_generated',generated); end $$;
+revoke all on function public._generate_collection_candidates_internal(uuid) from public,anon,authenticated;
+revoke all on function public.generate_all_collection_candidates() from public,anon,authenticated;
