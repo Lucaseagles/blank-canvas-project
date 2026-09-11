@@ -6,6 +6,7 @@ import { requireOwnerRole } from "./auth-guards.server";
 const SETTINGS_REGISTRY = [
   { key: "personalization_weights", label: "Pesos de Personalização", category: "Personalização", table: "personalization_weights", editable: ["weight"] },
   { key: "feed_mix_config", label: "Mix do Feed", category: "Personalização", table: "feed_mix_config", editable: ["relevant_pct", "related_pct", "discovery_pct"] },
+  { key: "banners", label: "Banners", category: "Conteúdo", table: "banners", editable: ["title", "image_url", "link_url", "starts_at", "ends_at", "is_active", "position"] },
   { key: "social_proof_config", label: "Prova Social", category: "Prova Social", table: "social_proof_config", editable: ["is_enabled", "hybrid_simulation_enabled", "show_location", "simulated_volume_boost", "show_aggregated_counters", "min_events_for_counter", "counter_window_hours", "allowed_event_types", "enabled_formats", "content_affinity_threshold", "low_volume_threshold", "adaptive_priority_enabled"] },
   { key: "popup_rules", label: "Regras de Pop-up", category: "Marketing Estratégico", table: "popup_rules", editable: ["priority", "cooldown_minutes", "frequency_cap_per_day", "starts_at", "ends_at", "content", "cta_label", "cta_target", "is_active"] },
   { key: "ab_experiments", label: "Experimentos A/B", category: "Marketing Estratégico", table: "ab_experiments", editable: ["variant_a", "variant_b", "target", "is_active"] },
