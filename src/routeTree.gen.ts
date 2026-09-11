@@ -36,6 +36,8 @@ import { Route as AdminBridgeVideosRouteImport } from './routes/admin/bridge-vid
 import { Route as AdminBundlesRouteImport } from './routes/admin/bundles'
 import { Route as AdminCampaignsRouteImport } from './routes/admin/campaigns'
 import { Route as AdminCategoriesRouteImport } from './routes/admin/categories'
+import { Route as AdminChannelStrategyMatrixRouteImport } from './routes/admin/channel-strategy-matrix'
+import { Route as AdminCollectionsRouteImport } from './routes/admin/collections'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
 import { Route as AdminIntegrationsRouteImport } from './routes/admin/integrations'
 import { Route as AdminMarketplacesRouteImport } from './routes/admin/marketplaces'
@@ -43,6 +45,7 @@ import { Route as AdminMetricsRouteImport } from './routes/admin/metrics'
 import { Route as AdminModulesRouteImport } from './routes/admin/modules'
 import { Route as AdminNotificationsRouteImport } from './routes/admin/notifications'
 import { Route as AdminOffersRouteImport } from './routes/admin/offers'
+import { Route as AdminOpportunitiesRouteImport } from './routes/admin/opportunities'
 import { Route as AdminProductsRouteImport } from './routes/admin/products'
 import { Route as AdminPublishingRouteImport } from './routes/admin/publishing'
 import { Route as AdminRecommendationsRouteImport } from './routes/admin/recommendations'
@@ -51,6 +54,8 @@ import { Route as AdminSellerCenterRouteImport } from './routes/admin/seller-cen
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as AdminSocialChannelsRouteImport } from './routes/admin/social-channels'
 import { Route as AdminSocialProofRouteImport } from './routes/admin/social-proof'
+import { Route as AdminSocialStrategyRouteImport } from './routes/admin/social-strategy'
+import { Route as AdminStrategyOrchestratorRouteImport } from './routes/admin/strategy-orchestrator'
 import { Route as AdminSupportRouteImport } from './routes/admin/support'
 import { Route as AdminSupportKnowledgeRouteImport } from './routes/admin/support-knowledge'
 import { Route as AdminTelegramRouteImport } from './routes/admin/telegram'
@@ -60,6 +65,7 @@ import { Route as AdminVideosRouteImport } from './routes/admin/videos'
 import { Route as ApiScheduledPublishingRouteImport } from './routes/api/scheduled-publishing'
 import { Route as BundleSlugRouteImport } from './routes/bundle/$slug'
 import { Route as CategorySlugRouteImport } from './routes/category/$slug'
+import { Route as CollectionsSlugRouteImport } from './routes/collections/$slug'
 import { Route as DevSocialProofPreviewRouteImport } from './routes/dev.social-proof-preview'
 import { Route as ProductSlugRouteImport } from './routes/product/$slug'
 import { Route as AdminMarketplacesIdRouteImport } from './routes/admin/marketplaces.$id'
@@ -207,6 +213,17 @@ const AdminCategoriesRoute = AdminCategoriesRouteImport.update({
   path: '/categories',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminChannelStrategyMatrixRoute =
+  AdminChannelStrategyMatrixRouteImport.update({
+    id: '/channel-strategy-matrix',
+    path: '/channel-strategy-matrix',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminCollectionsRoute = AdminCollectionsRouteImport.update({
+  id: '/collections',
+  path: '/collections',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminDashboardRoute = AdminDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -240,6 +257,11 @@ const AdminNotificationsRoute = AdminNotificationsRouteImport.update({
 const AdminOffersRoute = AdminOffersRouteImport.update({
   id: '/offers',
   path: '/offers',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminOpportunitiesRoute = AdminOpportunitiesRouteImport.update({
+  id: '/opportunities',
+  path: '/opportunities',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminProductsRoute = AdminProductsRouteImport.update({
@@ -282,6 +304,17 @@ const AdminSocialProofRoute = AdminSocialProofRouteImport.update({
   path: '/social-proof',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminSocialStrategyRoute = AdminSocialStrategyRouteImport.update({
+  id: '/social-strategy',
+  path: '/social-strategy',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminStrategyOrchestratorRoute =
+  AdminStrategyOrchestratorRouteImport.update({
+    id: '/strategy-orchestrator',
+    path: '/strategy-orchestrator',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminSupportRoute = AdminSupportRouteImport.update({
   id: '/support',
   path: '/support',
@@ -325,6 +358,11 @@ const BundleSlugRoute = BundleSlugRouteImport.update({
 const CategorySlugRoute = CategorySlugRouteImport.update({
   id: '/category/$slug',
   path: '/category/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CollectionsSlugRoute = CollectionsSlugRouteImport.update({
+  id: '/collections/$slug',
+  path: '/collections/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DevSocialProofPreviewRoute = DevSocialProofPreviewRouteImport.update({
@@ -411,6 +449,8 @@ export interface FileRoutesByFullPath {
   '/admin/bundles': typeof AdminBundlesRoute
   '/admin/campaigns': typeof AdminCampaignsRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/channel-strategy-matrix': typeof AdminChannelStrategyMatrixRoute
+  '/admin/collections': typeof AdminCollectionsRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
   '/admin/marketplaces': typeof AdminMarketplacesRouteWithChildren
@@ -418,6 +458,7 @@ export interface FileRoutesByFullPath {
   '/admin/modules': typeof AdminModulesRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/offers': typeof AdminOffersRouteWithChildren
+  '/admin/opportunities': typeof AdminOpportunitiesRoute
   '/admin/products': typeof AdminProductsRouteWithChildren
   '/admin/publishing': typeof AdminPublishingRoute
   '/admin/recommendations': typeof AdminRecommendationsRoute
@@ -426,6 +467,8 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/social-channels': typeof AdminSocialChannelsRoute
   '/admin/social-proof': typeof AdminSocialProofRoute
+  '/admin/social-strategy': typeof AdminSocialStrategyRoute
+  '/admin/strategy-orchestrator': typeof AdminStrategyOrchestratorRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/support-knowledge': typeof AdminSupportKnowledgeRoute
   '/admin/telegram': typeof AdminTelegramRoute
@@ -435,6 +478,7 @@ export interface FileRoutesByFullPath {
   '/api/scheduled-publishing': typeof ApiScheduledPublishingRoute
   '/bundle/$slug': typeof BundleSlugRoute
   '/category/$slug': typeof CategorySlugRoute
+  '/collections/$slug': typeof CollectionsSlugRoute
   '/dev/social-proof-preview': typeof DevSocialProofPreviewRoute
   '/product/$slug': typeof ProductSlugRoute
   '/admin/marketplaces/$id': typeof AdminMarketplacesIdRoute
@@ -475,6 +519,8 @@ export interface FileRoutesByTo {
   '/admin/bundles': typeof AdminBundlesRoute
   '/admin/campaigns': typeof AdminCampaignsRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/channel-strategy-matrix': typeof AdminChannelStrategyMatrixRoute
+  '/admin/collections': typeof AdminCollectionsRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
   '/admin/marketplaces': typeof AdminMarketplacesRouteWithChildren
@@ -482,6 +528,7 @@ export interface FileRoutesByTo {
   '/admin/modules': typeof AdminModulesRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/offers': typeof AdminOffersRouteWithChildren
+  '/admin/opportunities': typeof AdminOpportunitiesRoute
   '/admin/products': typeof AdminProductsRouteWithChildren
   '/admin/publishing': typeof AdminPublishingRoute
   '/admin/recommendations': typeof AdminRecommendationsRoute
@@ -490,6 +537,8 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/social-channels': typeof AdminSocialChannelsRoute
   '/admin/social-proof': typeof AdminSocialProofRoute
+  '/admin/social-strategy': typeof AdminSocialStrategyRoute
+  '/admin/strategy-orchestrator': typeof AdminStrategyOrchestratorRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/support-knowledge': typeof AdminSupportKnowledgeRoute
   '/admin/telegram': typeof AdminTelegramRoute
@@ -499,6 +548,7 @@ export interface FileRoutesByTo {
   '/api/scheduled-publishing': typeof ApiScheduledPublishingRoute
   '/bundle/$slug': typeof BundleSlugRoute
   '/category/$slug': typeof CategorySlugRoute
+  '/collections/$slug': typeof CollectionsSlugRoute
   '/dev/social-proof-preview': typeof DevSocialProofPreviewRoute
   '/product/$slug': typeof ProductSlugRoute
   '/admin/marketplaces/$id': typeof AdminMarketplacesIdRoute
@@ -540,6 +590,8 @@ export interface FileRoutesById {
   '/admin/bundles': typeof AdminBundlesRoute
   '/admin/campaigns': typeof AdminCampaignsRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/channel-strategy-matrix': typeof AdminChannelStrategyMatrixRoute
+  '/admin/collections': typeof AdminCollectionsRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
   '/admin/marketplaces': typeof AdminMarketplacesRouteWithChildren
@@ -547,6 +599,7 @@ export interface FileRoutesById {
   '/admin/modules': typeof AdminModulesRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/offers': typeof AdminOffersRouteWithChildren
+  '/admin/opportunities': typeof AdminOpportunitiesRoute
   '/admin/products': typeof AdminProductsRouteWithChildren
   '/admin/publishing': typeof AdminPublishingRoute
   '/admin/recommendations': typeof AdminRecommendationsRoute
@@ -555,6 +608,8 @@ export interface FileRoutesById {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/social-channels': typeof AdminSocialChannelsRoute
   '/admin/social-proof': typeof AdminSocialProofRoute
+  '/admin/social-strategy': typeof AdminSocialStrategyRoute
+  '/admin/strategy-orchestrator': typeof AdminStrategyOrchestratorRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/support-knowledge': typeof AdminSupportKnowledgeRoute
   '/admin/telegram': typeof AdminTelegramRoute
@@ -564,6 +619,7 @@ export interface FileRoutesById {
   '/api/scheduled-publishing': typeof ApiScheduledPublishingRoute
   '/bundle/$slug': typeof BundleSlugRoute
   '/category/$slug': typeof CategorySlugRoute
+  '/collections/$slug': typeof CollectionsSlugRoute
   '/dev/social-proof-preview': typeof DevSocialProofPreviewRoute
   '/product/$slug': typeof ProductSlugRoute
   '/admin/marketplaces/$id': typeof AdminMarketplacesIdRoute
@@ -606,6 +662,8 @@ export interface FileRouteTypes {
     | '/admin/bundles'
     | '/admin/campaigns'
     | '/admin/categories'
+    | '/admin/channel-strategy-matrix'
+    | '/admin/collections'
     | '/admin/dashboard'
     | '/admin/integrations'
     | '/admin/marketplaces'
@@ -613,6 +671,7 @@ export interface FileRouteTypes {
     | '/admin/modules'
     | '/admin/notifications'
     | '/admin/offers'
+    | '/admin/opportunities'
     | '/admin/products'
     | '/admin/publishing'
     | '/admin/recommendations'
@@ -621,6 +680,8 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/social-channels'
     | '/admin/social-proof'
+    | '/admin/social-strategy'
+    | '/admin/strategy-orchestrator'
     | '/admin/support'
     | '/admin/support-knowledge'
     | '/admin/telegram'
@@ -630,6 +691,7 @@ export interface FileRouteTypes {
     | '/api/scheduled-publishing'
     | '/bundle/$slug'
     | '/category/$slug'
+    | '/collections/$slug'
     | '/dev/social-proof-preview'
     | '/product/$slug'
     | '/admin/marketplaces/$id'
@@ -670,6 +732,8 @@ export interface FileRouteTypes {
     | '/admin/bundles'
     | '/admin/campaigns'
     | '/admin/categories'
+    | '/admin/channel-strategy-matrix'
+    | '/admin/collections'
     | '/admin/dashboard'
     | '/admin/integrations'
     | '/admin/marketplaces'
@@ -677,6 +741,7 @@ export interface FileRouteTypes {
     | '/admin/modules'
     | '/admin/notifications'
     | '/admin/offers'
+    | '/admin/opportunities'
     | '/admin/products'
     | '/admin/publishing'
     | '/admin/recommendations'
@@ -685,6 +750,8 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/social-channels'
     | '/admin/social-proof'
+    | '/admin/social-strategy'
+    | '/admin/strategy-orchestrator'
     | '/admin/support'
     | '/admin/support-knowledge'
     | '/admin/telegram'
@@ -694,6 +761,7 @@ export interface FileRouteTypes {
     | '/api/scheduled-publishing'
     | '/bundle/$slug'
     | '/category/$slug'
+    | '/collections/$slug'
     | '/dev/social-proof-preview'
     | '/product/$slug'
     | '/admin/marketplaces/$id'
@@ -734,6 +802,8 @@ export interface FileRouteTypes {
     | '/admin/bundles'
     | '/admin/campaigns'
     | '/admin/categories'
+    | '/admin/channel-strategy-matrix'
+    | '/admin/collections'
     | '/admin/dashboard'
     | '/admin/integrations'
     | '/admin/marketplaces'
@@ -741,6 +811,7 @@ export interface FileRouteTypes {
     | '/admin/modules'
     | '/admin/notifications'
     | '/admin/offers'
+    | '/admin/opportunities'
     | '/admin/products'
     | '/admin/publishing'
     | '/admin/recommendations'
@@ -749,6 +820,8 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/social-channels'
     | '/admin/social-proof'
+    | '/admin/social-strategy'
+    | '/admin/strategy-orchestrator'
     | '/admin/support'
     | '/admin/support-knowledge'
     | '/admin/telegram'
@@ -758,6 +831,7 @@ export interface FileRouteTypes {
     | '/api/scheduled-publishing'
     | '/bundle/$slug'
     | '/category/$slug'
+    | '/collections/$slug'
     | '/dev/social-proof-preview'
     | '/product/$slug'
     | '/admin/marketplaces/$id'
@@ -795,6 +869,7 @@ export interface RootRouteChildren {
   ApiScheduledPublishingRoute: typeof ApiScheduledPublishingRoute
   BundleSlugRoute: typeof BundleSlugRoute
   CategorySlugRoute: typeof CategorySlugRoute
+  CollectionsSlugRoute: typeof CollectionsSlugRoute
   DevSocialProofPreviewRoute: typeof DevSocialProofPreviewRoute
   ProductSlugRoute: typeof ProductSlugRoute
 }
@@ -990,6 +1065,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCategoriesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/channel-strategy-matrix': {
+      id: '/admin/channel-strategy-matrix'
+      path: '/channel-strategy-matrix'
+      fullPath: '/admin/channel-strategy-matrix'
+      preLoaderRoute: typeof AdminChannelStrategyMatrixRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/collections': {
+      id: '/admin/collections'
+      path: '/collections'
+      fullPath: '/admin/collections'
+      preLoaderRoute: typeof AdminCollectionsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/dashboard': {
       id: '/admin/dashboard'
       path: '/dashboard'
@@ -1037,6 +1126,13 @@ declare module '@tanstack/react-router' {
       path: '/offers'
       fullPath: '/admin/offers'
       preLoaderRoute: typeof AdminOffersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/opportunities': {
+      id: '/admin/opportunities'
+      path: '/opportunities'
+      fullPath: '/admin/opportunities'
+      preLoaderRoute: typeof AdminOpportunitiesRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/products': {
@@ -1093,6 +1189,20 @@ declare module '@tanstack/react-router' {
       path: '/social-proof'
       fullPath: '/admin/social-proof'
       preLoaderRoute: typeof AdminSocialProofRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/social-strategy': {
+      id: '/admin/social-strategy'
+      path: '/social-strategy'
+      fullPath: '/admin/social-strategy'
+      preLoaderRoute: typeof AdminSocialStrategyRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/strategy-orchestrator': {
+      id: '/admin/strategy-orchestrator'
+      path: '/strategy-orchestrator'
+      fullPath: '/admin/strategy-orchestrator'
+      preLoaderRoute: typeof AdminStrategyOrchestratorRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/support': {
@@ -1156,6 +1266,13 @@ declare module '@tanstack/react-router' {
       path: '/category/$slug'
       fullPath: '/category/$slug'
       preLoaderRoute: typeof CategorySlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/collections/$slug': {
+      id: '/collections/$slug'
+      path: '/collections/$slug'
+      fullPath: '/collections/$slug'
+      preLoaderRoute: typeof CollectionsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dev/social-proof-preview': {
@@ -1303,6 +1420,8 @@ interface AdminRouteChildren {
   AdminBundlesRoute: typeof AdminBundlesRoute
   AdminCampaignsRoute: typeof AdminCampaignsRoute
   AdminCategoriesRoute: typeof AdminCategoriesRoute
+  AdminChannelStrategyMatrixRoute: typeof AdminChannelStrategyMatrixRoute
+  AdminCollectionsRoute: typeof AdminCollectionsRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdminIntegrationsRoute: typeof AdminIntegrationsRoute
   AdminMarketplacesRoute: typeof AdminMarketplacesRouteWithChildren
@@ -1310,6 +1429,7 @@ interface AdminRouteChildren {
   AdminModulesRoute: typeof AdminModulesRoute
   AdminNotificationsRoute: typeof AdminNotificationsRoute
   AdminOffersRoute: typeof AdminOffersRouteWithChildren
+  AdminOpportunitiesRoute: typeof AdminOpportunitiesRoute
   AdminProductsRoute: typeof AdminProductsRouteWithChildren
   AdminPublishingRoute: typeof AdminPublishingRoute
   AdminRecommendationsRoute: typeof AdminRecommendationsRoute
@@ -1318,6 +1438,8 @@ interface AdminRouteChildren {
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminSocialChannelsRoute: typeof AdminSocialChannelsRoute
   AdminSocialProofRoute: typeof AdminSocialProofRoute
+  AdminSocialStrategyRoute: typeof AdminSocialStrategyRoute
+  AdminStrategyOrchestratorRoute: typeof AdminStrategyOrchestratorRoute
   AdminSupportRoute: typeof AdminSupportRoute
   AdminSupportKnowledgeRoute: typeof AdminSupportKnowledgeRoute
   AdminTelegramRoute: typeof AdminTelegramRoute
@@ -1334,6 +1456,8 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminBundlesRoute: AdminBundlesRoute,
   AdminCampaignsRoute: AdminCampaignsRoute,
   AdminCategoriesRoute: AdminCategoriesRoute,
+  AdminChannelStrategyMatrixRoute: AdminChannelStrategyMatrixRoute,
+  AdminCollectionsRoute: AdminCollectionsRoute,
   AdminDashboardRoute: AdminDashboardRoute,
   AdminIntegrationsRoute: AdminIntegrationsRoute,
   AdminMarketplacesRoute: AdminMarketplacesRouteWithChildren,
@@ -1341,6 +1465,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminModulesRoute: AdminModulesRoute,
   AdminNotificationsRoute: AdminNotificationsRoute,
   AdminOffersRoute: AdminOffersRouteWithChildren,
+  AdminOpportunitiesRoute: AdminOpportunitiesRoute,
   AdminProductsRoute: AdminProductsRouteWithChildren,
   AdminPublishingRoute: AdminPublishingRoute,
   AdminRecommendationsRoute: AdminRecommendationsRoute,
@@ -1349,6 +1474,8 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminSettingsRoute: AdminSettingsRoute,
   AdminSocialChannelsRoute: AdminSocialChannelsRoute,
   AdminSocialProofRoute: AdminSocialProofRoute,
+  AdminSocialStrategyRoute: AdminSocialStrategyRoute,
+  AdminStrategyOrchestratorRoute: AdminStrategyOrchestratorRoute,
   AdminSupportRoute: AdminSupportRoute,
   AdminSupportKnowledgeRoute: AdminSupportKnowledgeRoute,
   AdminTelegramRoute: AdminTelegramRoute,
@@ -1383,6 +1510,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiScheduledPublishingRoute: ApiScheduledPublishingRoute,
   BundleSlugRoute: BundleSlugRoute,
   CategorySlugRoute: CategorySlugRoute,
+  CollectionsSlugRoute: CollectionsSlugRoute,
   DevSocialProofPreviewRoute: DevSocialProofPreviewRoute,
   ProductSlugRoute: ProductSlugRoute,
 }
