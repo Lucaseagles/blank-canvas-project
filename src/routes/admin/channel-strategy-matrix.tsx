@@ -19,7 +19,7 @@ function ChannelStrategyMatrixPage() {
     </header>
 
     <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-      {[["Estratégias", totals.strategies, Target], ["Canais", totals.channels, Radio], ["Coleções ligadas", totals.collections, Layers3], ["Campanhas ligadas", totals.campaigns, BarChart3]].map(([label, value, Icon]) => <Card key={String(label)} className="rounded-2xl"><CardContent className="p-4"><Icon className="mb-2 h-4 w-4 text-primary"/><p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{label}</p><p className="mt-1 text-2xl font-black">{Number(value).toLocaleString("pt-BR")}</p></CardContent></Card>)}
+      {[{label:"Estratégias",value:totals.strategies,Icon:Target},{label:"Canais",value:totals.channels,Icon:Radio},{label:"Coleções ligadas",value:totals.collections,Icon:Layers3},{label:"Campanhas ligadas",value:totals.campaigns,Icon:BarChart3}].map(({label, value, Icon}) => <Card key={String(label)} className="rounded-2xl"><CardContent className="p-4"><Icon className="mb-2 h-4 w-4 text-primary"/><p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{label}</p><p className="mt-1 text-2xl font-black">{Number(value).toLocaleString("pt-BR")}</p></CardContent></Card>)}
     </div>
 
     <Card className="overflow-hidden rounded-[2rem]">

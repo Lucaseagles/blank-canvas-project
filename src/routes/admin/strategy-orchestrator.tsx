@@ -29,7 +29,7 @@ function StrategyOrchestratorPage() {
   const approve = useMutation({ mutationFn: approveStrategyOrchestration, onSuccess: (r) => { refresh(); toast.success(r.approved ? "Estratégia aprovada" : "Aprovação não permitida neste estado"); }, onError: () => toast.error("Não foi possível aprovar") });
   const pause = useMutation({ mutationFn: pauseStrategyOrchestration, onSuccess: () => { refresh(); toast.success("Orquestração pausada"); }, onError: () => toast.error("Não foi possível pausar") });
 
-  const submit = (e: React.FormEvent) => { e.preventDefault(); if (!name.trim()) return toast.error("Nome obrigatório"); if (!selected.length) return toast.error("Selecione pelo menos uma estratégia"); create.mutate({ data: { name: name.trim(), objective, priority, notes: notes || null, strategy_ids: selected } }); };
+  const submit = (e: React.FormEvent) => { e.preventDefault(); if (!name.trim()) { toast.error("Nome obrigatório"); return; } if (!selected.length) { toast.error("Selecione pelo menos uma estratégia"); return; } create.mutate({ data: { name: name.trim(), objective, priority, notes: notes || null, strategy_ids: selected } }); };
   const toggle = (id: string) => setSelected(v => v.includes(id) ? v.filter(x => x !== id) : [...v, id]);
 
   return <div className="mx-auto max-w-7xl space-y-8 p-4 lg:p-8">

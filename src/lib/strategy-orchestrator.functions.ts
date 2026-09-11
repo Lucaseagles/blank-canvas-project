@@ -10,7 +10,7 @@ export type StrategyOrchestration = {
   objective: z.infer<typeof Objective>;
   status: "draft" | "ready" | "approved" | "paused" | "completed";
   priority: number;
-  plan: Record<string, unknown>;
+  plan: any;
   notes: string | null;
   scheduled_start: string | null;
   scheduled_end: string | null;
@@ -48,7 +48,7 @@ export const generateStrategyOrchestrationPlan = createServerFn({ method: "POST"
   const supabase = await db();
   const { data: plan, error } = await supabase.rpc("generate_strategy_orchestration_plan", { p_orchestration_id: data.id });
   if (error) throw error;
-  return plan as Record<string, unknown>;
+  return plan as any;
 });
 
 export const approveStrategyOrchestration = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data)).handler(async ({ data }) => {
