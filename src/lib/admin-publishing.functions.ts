@@ -6,7 +6,7 @@ import { runScheduledPublishing, type ScheduledPost } from "./scheduled-publishi
 const db = async () => (await import("@/integrations/supabase/client.server")).supabaseAdmin as any;
 
 const postSchema = z.object({
-  content_type: z.string().trim().min(1).max(50),
+  content_type: z.enum(["offer", "video", "bundle"]),
   content_id: z.string().uuid(),
   channels: z.array(z.enum(["telegram"])).min(1),
   scheduled_for: z.string().datetime({ offset: true }),
@@ -14,6 +14,13 @@ const postSchema = z.object({
 });
 
 export { type ScheduledPost };
+
+async function assertContentExists(client: any, contentType: "offer" | "video" | "bundle", contentId: string) {
+  const table = contentType === "offer" ? "offers" : contentType === "video" ? "videos" : "bundles";
+  const { data, error } = await client.from(table).select("id").eq("id", contentId).maybeSingle();
+  if (error) throw new Error(`Não foi possível validar o conteúdo: ${error.message}`);
+  if (!data) throw new Error(`O conteúdo selecionado não existe em ${table}.`);
+}
 
 export const getScheduledPosts = createServerFn({ method: "GET" })
   .middleware([requireOwnerRole])
@@ -36,6 +43,8 @@ export const createScheduledPost = createServerFn({ method: "POST" })
     if (scheduledFor.getTime() <= Date.now()) throw new Error("A data de publicação precisa estar no futuro.");
 
     const client = await db();
+    await assertContentExists(client, data.content_type, data.content_id);
+
     const { data: created, error } = await client
       .from("scheduled_posts")
       .insert({
@@ -69,6 +78,31 @@ export const cancelScheduledPost = createServerFn({ method: "POST" })
       .eq("id", data.id)
       .eq("status", "pending");
     if (error) throw new Error(`Não foi possível cancelar: ${error.message}`);
+    return { success: true };
+  });
+
+export const retryScheduledPost = createServerFn({ method: "POST" })
+  .middleware([requireOwnerRole])
+  .validator((value: unknown) => z.object({ id: z.string().uuid() }).parse(value))
+  .handler(async ({ data }) => {
+    const client = await db();
+    const { data: post, error: readError } = await client
+      .from("scheduled_posts")
+      .select("id,status,content_type,content_id")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (readError) throw new Error(`Não foi possível localizar a publicação: ${readError.message}`);
+    if (!post) throw new Error("Publicação não encontrada.");
+    if (post.status !== "failed") throw new Error("Somente publicações com falha podem ser reprocessadas.");
+
+    await assertContentExists(client, post.content_type, post.content_id);
+
+    const { error } = await client
+      .from("scheduled_posts")
+      .update({ status: "pending", scheduled_for: new Date().toISOString(), error_message: null })
+      .eq("id", data.id)
+      .eq("status", "failed");
+    if (error) throw new Error(`Não foi possível reprocessar: ${error.message}`);
     return { success: true };
   });
 
