@@ -62,21 +62,63 @@ export const processVideoLaunches = createServerFn({ method: "POST" }).middlewar
   const now = new Date().toISOString();
   const { data: scheduledVideos, error } = await supabaseAdmin.from("videos").select("id,title,campaign_id,scheduled_for").eq("status", "draft").not("scheduled_for", "is", null).lte("scheduled_for", now);
   if (error) throw error;
+
   let processed = 0;
+  let queued = 0;
+  let unsupported = 0;
+
   for (const video of scheduledVideos ?? []) {
-    const { error: publishError } = await supabaseAdmin.from("videos").update({ status: "published" }).eq("id", video.id).eq("status", "draft");
+    const { data: publishedVideo, error: publishError } = await supabaseAdmin.from("videos").update({ status: "published" }).eq("id", video.id).eq("status", "draft").select("id,title").maybeSingle();
     if (publishError) throw publishError;
+    if (!publishedVideo) continue;
     processed++;
     if (!video.campaign_id) continue;
+
     const { data: channels, error: channelsError } = await supabaseAdmin.from("campaign_channels").select("channel").eq("campaign_id", video.campaign_id).eq("is_enabled", true);
     if (channelsError) throw channelsError;
-    const { data: rule, error: ruleError } = await supabaseAdmin.from("automation_rules").select("id").eq("action_type", "PUBLISH_SCHEDULED_POSTS").maybeSingle();
+    const { data: rule, error: ruleError } = await supabaseAdmin.from("automation_rules").select("id,is_active").eq("action_type", "PUBLISH_SCHEDULED_POSTS").maybeSingle();
     if (ruleError) throw ruleError;
-    if (!rule) continue;
-    for (const channel of channels ?? []) {
-      const { error: logError } = await supabaseAdmin.rpc("log_automation_activity", { _rule_id: rule.id, _context: { campaign_id: video.campaign_id, video_id: video.id, channel: channel.channel, type: "VIDEO_LAUNCH" }, _result: `Video published; ${channel.channel} dispatch requires configured channel adapter`, _status: "queued_for_review" });
+    if (!rule?.is_active) continue;
+
+    const requestedChannels = Array.from(new Set((channels ?? []).map((entry: { channel: string }) => entry.channel).filter(Boolean)));
+    const telegramRequested = requestedChannels.includes("telegram");
+    const unsupportedChannels = requestedChannels.filter((channel) => channel !== "telegram");
+    unsupported += unsupportedChannels.length;
+
+    if (telegramRequested) {
+      const { data: existing } = await supabaseAdmin
+        .from("scheduled_posts")
+        .select("id")
+        .eq("content_id", video.id)
+        .contains("channels", ["telegram"])
+        .in("status", ["pending", "processing", "published"])
+        .limit(1)
+        .maybeSingle();
+
+      if (!existing) {
+        const { error: queueError } = await supabaseAdmin.from("scheduled_posts").insert({
+          content_type: "video",
+          content_id: video.id,
+          channels: ["telegram"],
+          scheduled_for: now,
+          status: "pending",
+          message_template: `Novo vídeo: ${video.title}`,
+        });
+        if (queueError) throw queueError;
+        queued++;
+      }
+    }
+
+    if (unsupportedChannels.length) {
+      const { error: logError } = await supabaseAdmin.rpc("log_automation_activity", {
+        _rule_id: rule.id,
+        _context: { campaign_id: video.campaign_id, video_id: video.id, channels: unsupportedChannels, type: "VIDEO_LAUNCH" },
+        _result: `Canais sem adapter de publicação: ${unsupportedChannels.join(", ")}`,
+        _status: "queued_for_review",
+      });
       if (logError) throw logError;
     }
   }
-  return { success: true, processed };
+
+  return { success: true, processed, queued, unsupported };
 });
