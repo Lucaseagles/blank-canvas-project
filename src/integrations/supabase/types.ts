@@ -739,6 +739,96 @@ export type Database = {
           },
         ]
       }
+      collection_candidates: {
+        Row: {
+          collection_id: string
+          id: string
+          matched_signal: Json
+          priority: number
+          product_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          suggested_at: string
+        }
+        Insert: {
+          collection_id: string
+          id?: string
+          matched_signal?: Json
+          priority?: number
+          product_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          suggested_at?: string
+        }
+        Update: {
+          collection_id?: string
+          id?: string
+          matched_signal?: Json
+          priority?: number
+          product_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          suggested_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collection_candidates_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "curated_collections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collection_candidates_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collection_items: {
+        Row: {
+          collection_id: string
+          created_at: string
+          id: string
+          position: number
+          product_id: string
+        }
+        Insert: {
+          collection_id: string
+          created_at?: string
+          id?: string
+          position?: number
+          product_id: string
+        }
+        Update: {
+          collection_id?: string
+          created_at?: string
+          id?: string
+          position?: number
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collection_items_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "curated_collections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collection_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       compliance_audit_log: {
         Row: {
           detected_at: string | null
@@ -876,6 +966,45 @@ export type Database = {
           id?: string
           processed_at?: string | null
           status?: string
+        }
+        Relationships: []
+      }
+      curated_collections: {
+        Row: {
+          candidate_rules: Json
+          collection_type: string
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          candidate_rules?: Json
+          collection_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          candidate_rules?: Json
+          collection_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          slug?: string
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1506,6 +1635,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      opportunity_alerts: {
+        Row: {
+          created_at: string
+          id: string
+          opportunity_type: string
+          priority: number
+          reasons: Json
+          recommended_action: string
+          score: number
+          source_id: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          opportunity_type: string
+          priority?: number
+          reasons?: Json
+          recommended_action: string
+          score?: number
+          source_id: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          opportunity_type?: string
+          priority?: number
+          reasons?: Json
+          recommended_action?: string
+          score?: number
+          source_id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       personalization_weights: {
         Row: {
@@ -2200,6 +2371,92 @@ export type Database = {
         }
         Relationships: []
       }
+      social_channel_strategies: {
+        Row: {
+          audience_segment: string | null
+          campaign_id: string | null
+          category_id: string | null
+          channel_id: string
+          collection_id: string | null
+          content_pillars: string[]
+          created_at: string
+          cta: string | null
+          id: string
+          is_active: boolean
+          name: string
+          objective: string
+          posting_frequency_per_week: number
+          preferred_formats: string[]
+          priority: number
+          updated_at: string
+        }
+        Insert: {
+          audience_segment?: string | null
+          campaign_id?: string | null
+          category_id?: string | null
+          channel_id: string
+          collection_id?: string | null
+          content_pillars?: string[]
+          created_at?: string
+          cta?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          objective?: string
+          posting_frequency_per_week?: number
+          preferred_formats?: string[]
+          priority?: number
+          updated_at?: string
+        }
+        Update: {
+          audience_segment?: string | null
+          campaign_id?: string | null
+          category_id?: string | null
+          channel_id?: string
+          collection_id?: string | null
+          content_pillars?: string[]
+          created_at?: string
+          cta?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          objective?: string
+          posting_frequency_per_week?: number
+          preferred_formats?: string[]
+          priority?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_channel_strategies_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_channel_strategies_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_channel_strategies_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "social_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_channel_strategies_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "curated_collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       social_channels: {
         Row: {
           channel_name: string
@@ -2289,6 +2546,90 @@ export type Database = {
           show_aggregated_counters?: boolean
           show_location?: boolean
           simulated_volume_boost?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      strategy_orchestration_items: {
+        Row: {
+          created_at: string
+          id: string
+          orchestration_id: string
+          position: number
+          strategy_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          orchestration_id: string
+          position?: number
+          strategy_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          orchestration_id?: string
+          position?: number
+          strategy_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "strategy_orchestration_items_orchestration_id_fkey"
+            columns: ["orchestration_id"]
+            isOneToOne: false
+            referencedRelation: "strategy_orchestrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "strategy_orchestration_items_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "social_channel_strategies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      strategy_orchestrations: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+          notes: string | null
+          objective: string
+          plan: Json
+          priority: number
+          scheduled_end: string | null
+          scheduled_start: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          name: string
+          notes?: string | null
+          objective?: string
+          plan?: Json
+          priority?: number
+          scheduled_end?: string | null
+          scheduled_start?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          objective?: string
+          plan?: Json
+          priority?: number
+          scheduled_end?: string | null
+          scheduled_start?: string | null
+          status?: string
           updated_at?: string
         }
         Relationships: []
@@ -2921,6 +3262,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _generate_collection_candidates_internal: {
+        Args: { p_collection_id: string }
+        Returns: Json
+      }
       admin_count_users: {
         Args: { p_banned?: boolean; p_search?: string }
         Returns: number
@@ -2978,6 +3323,14 @@ export type Database = {
         }
         Returns: string
       }
+      approve_collection_candidate: {
+        Args: { p_candidate_id: string }
+        Returns: string
+      }
+      approve_strategy_orchestration: {
+        Args: { p_orchestration_id: string }
+        Returns: boolean
+      }
       calculate_content_affinity: {
         Args: { p_content_id: string; p_content_type?: string }
         Returns: {
@@ -2995,6 +3348,25 @@ export type Database = {
       }
       classify_user_segment: { Args: { p_user_id: string }; Returns: string }
       cleanup_recently_shown: { Args: never; Returns: undefined }
+      create_strategy_orchestration: {
+        Args: {
+          p_name: string
+          p_notes: string
+          p_objective: string
+          p_priority: number
+          p_strategy_ids: string[]
+        }
+        Returns: string
+      }
+      generate_all_collection_candidates: { Args: never; Returns: Json }
+      generate_collection_candidates: {
+        Args: { p_collection_id: string }
+        Returns: Json
+      }
+      generate_strategy_orchestration_plan: {
+        Args: { p_orchestration_id: string }
+        Returns: Json
+      }
       get_active_social_channels: {
         Args: never
         Returns: {
@@ -3041,6 +3413,10 @@ export type Database = {
         Args: { category_id: string }
         Returns: number
       }
+      get_collection_candidate_stats: {
+        Args: { p_collection_id: string }
+        Returns: Json
+      }
       get_content_affinity_summary: {
         Args: { p_content_id: string }
         Returns: Json
@@ -3085,6 +3461,28 @@ export type Database = {
       get_integration_secret: {
         Args: { p_field_key: string; p_platform_id: string }
         Returns: string
+      }
+      get_opportunity_alerts: {
+        Args: { p_status?: string }
+        Returns: {
+          created_at: string
+          id: string
+          opportunity_type: string
+          priority: number
+          reasons: Json
+          recommended_action: string
+          score: number
+          source_id: string
+          status: string
+          title: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "opportunity_alerts"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       get_personalized_recommendations:
         | {
@@ -3145,6 +3543,8 @@ export type Database = {
           platform: string
         }[]
       }
+      get_social_strategy_options: { Args: never; Returns: Json }
+      get_social_strategy_overview: { Args: never; Returns: Json }
       grant_points: {
         Args: { _action_key: string; _ref_id?: string; _user_id: string }
         Returns: undefined
@@ -3180,12 +3580,17 @@ export type Database = {
         Returns: string
       }
       refresh_demand_and_trend_scores: { Args: never; Returns: undefined }
+      refresh_opportunity_alerts: { Args: never; Returns: number }
       refresh_referral_profile_stats: {
         Args: { p_referrer_user_id: string }
         Returns: undefined
       }
       refresh_user_interest_decay: { Args: never; Returns: undefined }
       refresh_user_segments: { Args: never; Returns: undefined }
+      reject_collection_candidate: {
+        Args: { p_candidate_id: string }
+        Returns: boolean
+      }
       run_retention_engine: {
         Args: { _inactive_days?: number }
         Returns: number
@@ -3260,6 +3665,10 @@ export type Database = {
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      simulate_collection_candidates: {
+        Args: { p_collection_id: string; p_rules: Json }
+        Returns: Json
+      }
       touch_video_watch_progress: {
         Args: { p_seconds: number; p_video_id: string }
         Returns: undefined
@@ -3291,6 +3700,10 @@ export type Database = {
             }
             Returns: string
           }
+      update_opportunity_alert_status: {
+        Args: { p_id: string; p_status: string }
+        Returns: boolean
+      }
       update_user_streak: { Args: { _user_id: string }; Returns: undefined }
     }
     Enums: {
