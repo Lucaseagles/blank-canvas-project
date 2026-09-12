@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { getCommandCenterPulse, setCommandCenterFeatureFlag } from "@/lib/command-center.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -19,22 +20,27 @@ const FLAG_LABELS: Record<string, string> = {
 };
 
 export function CommandCenterPulse() {
+  const getPulse = useServerFn(getCommandCenterPulse);
+  const setFeatureFlag = useServerFn(setCommandCenterFeatureFlag);
   const [flags, setFlags] = useState<Flag[]>([]);
   const [events, setEvents] = useState<EventRow[]>([]);
   const [experiments, setExperiments] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const refresh = async () => {
     setLoading(true);
-    const [{ data: flagData }, { data: eventData }, { count }] = await Promise.all([
-      supabase.from("feature_flags").select("id,key,is_enabled").order("key"),
-      supabase.from("analytics_events").select("event_name,campaign_id,created_at,metadata").in("event_name", ["recommendation_view", "recommendation_click", "popup_view", "popup_click", "promotion_view", "promotion_click"]).gte("created_at", new Date(Date.now() - 7 * 86400000).toISOString()).limit(1000),
-      supabase.from("ab_experiments").select("id", { count: "exact", head: true }).eq("is_active", true),
-    ]);
-    setFlags((flagData ?? []) as Flag[]);
-    setEvents((eventData ?? []) as EventRow[]);
-    setExperiments(count ?? 0);
-    setLoading(false);
+    setError(null);
+    try {
+      const data = await getPulse();
+      setFlags(data.flags as Flag[]);
+      setEvents(data.events as EventRow[]);
+      setExperiments(data.activeExperiments);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível carregar o Command Center.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { void refresh(); }, []);
@@ -55,9 +61,14 @@ export function CommandCenterPulse() {
 
   const toggleFlag = async (flag: Flag, enabled: boolean) => {
     const previous = flags;
+    setError(null);
     setFlags(flags.map(f => f.id === flag.id ? { ...f, is_enabled: enabled } : f));
-    const { error } = await supabase.from("feature_flags").update({ is_enabled: enabled, updated_at: new Date().toISOString() }).eq("id", flag.id);
-    if (error) setFlags(previous);
+    try {
+      await setFeatureFlag({ data: { id: flag.id, is_enabled: enabled } });
+    } catch (err) {
+      setFlags(previous);
+      setError(err instanceof Error ? err.message : "Não foi possível atualizar a feature flag.");
+    }
   };
 
   return (
@@ -71,6 +82,8 @@ export function CommandCenterPulse() {
         <Badge variant="secondary" className="w-fit">{experiments} experimento(s) ativo(s)</Badge>
       </div>
 
+      {error && <Card className="border-destructive/30"><CardContent className="p-4 text-sm text-destructive">{error}</CardContent></Card>}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <Metric icon={Sparkles} label="Recomendações" value={metrics.recViews} detail={metrics.recCtr == null ? "Dados insuficientes" : `CTR ${metrics.recCtr.toFixed(2)}%`} />
         <Metric icon={MousePointerClick} label="Cliques de recomendação" value={metrics.recClicks} detail="Eventos reais" />
@@ -81,7 +94,7 @@ export function CommandCenterPulse() {
       <Card className="rounded-3xl border-glass-border bg-glass-fallback">
         <CardHeader><CardTitle className="text-sm font-black uppercase tracking-widest">Feature Flags operacionais</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {loading ? <p className="text-sm text-muted-foreground">Carregando estado real…</p> : flags.map(flag => (
+          {loading ? <p className="text-sm text-muted-foreground">Carregando estado real…</p> : flags.length === 0 ? <p className="text-sm text-muted-foreground">Nenhuma feature flag cadastrada.</p> : flags.map(flag => (
             <div key={flag.id} className="flex items-center justify-between gap-3 rounded-2xl border border-glass-border p-4">
               <div><p className="text-xs font-black uppercase">{FLAG_LABELS[flag.key] ?? flag.key}</p><p className="text-[10px] text-muted-foreground">{flag.is_enabled ? "Ativo" : "Desligado"}</p></div>
               <Switch checked={flag.is_enabled} onCheckedChange={value => void toggleFlag(flag, value)} aria-label={`Alternar ${flag.key}`} />
