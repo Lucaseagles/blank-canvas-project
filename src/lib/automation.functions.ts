@@ -4,6 +4,22 @@ import { requireOwnerRole } from "./auth-guards.server";
 
 const UUID = z.string().uuid();
 
+async function logAutomationActivity(
+  supabaseAdmin: typeof import("@/integrations/supabase/client.server").supabaseAdmin,
+  ruleId: string,
+  context: Record<string, unknown>,
+  result: string,
+  status: "success" | "failed" | "queued_for_review" | "skipped",
+) {
+  const { error } = await supabaseAdmin.rpc("log_automation_activity", {
+    _rule_id: ruleId,
+    _context: context,
+    _result: result,
+    _status: status,
+  });
+  if (error) throw error;
+}
+
 export const getAutomationRules = createServerFn({ method: "GET" }).middleware([requireOwnerRole]).handler(async () => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await supabaseAdmin.from("automation_rules").select("*").order("created_at", { ascending: false });
@@ -33,13 +49,12 @@ export const recalculateTrendingManual = createServerFn({ method: "POST" }).midd
   if (!rule.is_active) return { success: false, processed: 0, error: "Trending rule is disabled" };
   const { error: refreshError } = await supabaseAdmin.rpc("refresh_demand_and_trend_scores");
   if (refreshError) {
-    await supabaseAdmin.rpc("log_automation_activity", { _rule_id: rule.id, _context: { triggered_by: "admin_manual" }, _result: refreshError.message, _status: "failed" });
+    await logAutomationActivity(supabaseAdmin, rule.id, { triggered_by: "admin_manual" }, refreshError.message, "failed");
     throw refreshError;
   }
   const { count, error: countError } = await supabaseAdmin.from("products").select("id", { count: "exact", head: true });
   if (countError) throw countError;
-  const { error: logError } = await supabaseAdmin.rpc("log_automation_activity", { _rule_id: rule.id, _context: { triggered_by: "admin_manual" }, _result: `Trending scores refreshed for ${count ?? 0} products`, _status: "success" });
-  if (logError) throw logError;
+  await logAutomationActivity(supabaseAdmin, rule.id, { triggered_by: "admin_manual" }, `Trending scores refreshed for ${count ?? 0} products`, "success");
   return { success: true, processed: count ?? 0 };
 });
 
@@ -51,15 +66,22 @@ export const runRetentionCheck = createServerFn({ method: "POST" }).middleware([
   if (!rule.is_active) return { success: false, notifications_queued: 0, error: "Retention rule is disabled" };
   const { data: queued, error } = await supabaseAdmin.rpc("run_retention_engine", { _inactive_days: 3 });
   if (error) {
-    await supabaseAdmin.rpc("log_automation_activity", { _rule_id: rule.id, _context: { inactive_days: 3, triggered_by: "admin_manual" }, _result: error.message, _status: "failed" });
+    await logAutomationActivity(supabaseAdmin, rule.id, { inactive_days: 3, triggered_by: "admin_manual" }, error.message, "failed");
     throw error;
   }
-  return { success: true, notifications_queued: Number(queued ?? 0) };
+  const notificationsQueued = Number(queued ?? 0);
+  await logAutomationActivity(supabaseAdmin, rule.id, { inactive_days: 3, triggered_by: "admin_manual", notifications_queued: notificationsQueued }, `Retention processed: ${notificationsQueued} notifications queued`, "success");
+  return { success: true, notifications_queued: notificationsQueued };
 });
 
 export const processVideoLaunches = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).handler(async () => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const now = new Date().toISOString();
+  const { data: rule, error: ruleError } = await supabaseAdmin.from("automation_rules").select("id,is_active").eq("action_type", "PUBLISH_SCHEDULED_POSTS").maybeSingle();
+  if (ruleError) throw ruleError;
+  if (!rule) return { success: false, processed: 0, queued: 0, unsupported: 0, error: "Scheduled publishing rule not found" };
+  if (!rule.is_active) return { success: false, processed: 0, queued: 0, unsupported: 0, error: "Scheduled publishing rule is disabled" };
+
   const { data: scheduledVideos, error } = await supabaseAdmin.from("videos").select("id,title,campaign_id,scheduled_for").eq("status", "draft").not("scheduled_for", "is", null).lte("scheduled_for", now);
   if (error) throw error;
 
@@ -72,13 +94,14 @@ export const processVideoLaunches = createServerFn({ method: "POST" }).middlewar
     if (publishError) throw publishError;
     if (!publishedVideo) continue;
     processed++;
-    if (!video.campaign_id) continue;
+
+    if (!video.campaign_id) {
+      await logAutomationActivity(supabaseAdmin, rule.id, { video_id: video.id, type: "VIDEO_LAUNCH" }, "Vídeo publicado sem campanha vinculada", "skipped");
+      continue;
+    }
 
     const { data: channels, error: channelsError } = await supabaseAdmin.from("campaign_channels").select("channel").eq("campaign_id", video.campaign_id).eq("is_enabled", true);
     if (channelsError) throw channelsError;
-    const { data: rule, error: ruleError } = await supabaseAdmin.from("automation_rules").select("id,is_active").eq("action_type", "PUBLISH_SCHEDULED_POSTS").maybeSingle();
-    if (ruleError) throw ruleError;
-    if (!rule?.is_active) continue;
 
     const requestedChannels = Array.from(new Set((channels ?? []).map((entry: { channel: string }) => entry.channel).filter(Boolean)));
     const telegramRequested = requestedChannels.includes("telegram");
@@ -86,7 +109,7 @@ export const processVideoLaunches = createServerFn({ method: "POST" }).middlewar
     unsupported += unsupportedChannels.length;
 
     if (telegramRequested) {
-      const { data: existing } = await supabaseAdmin
+      const { data: existing, error: existingError } = await supabaseAdmin
         .from("scheduled_posts")
         .select("id")
         .eq("content_id", video.id)
@@ -94,6 +117,7 @@ export const processVideoLaunches = createServerFn({ method: "POST" }).middlewar
         .in("status", ["pending", "processing", "published"])
         .limit(1)
         .maybeSingle();
+      if (existingError) throw existingError;
 
       if (!existing) {
         const { error: queueError } = await supabaseAdmin.from("scheduled_posts").insert({
@@ -110,14 +134,14 @@ export const processVideoLaunches = createServerFn({ method: "POST" }).middlewar
     }
 
     if (unsupportedChannels.length) {
-      const { error: logError } = await supabaseAdmin.rpc("log_automation_activity", {
-        _rule_id: rule.id,
-        _context: { campaign_id: video.campaign_id, video_id: video.id, channels: unsupportedChannels, type: "VIDEO_LAUNCH" },
-        _result: `Canais sem adapter de publicação: ${unsupportedChannels.join(", ")}`,
-        _status: "queued_for_review",
-      });
-      if (logError) throw logError;
+      await logAutomationActivity(supabaseAdmin, rule.id, { campaign_id: video.campaign_id, video_id: video.id, channels: unsupportedChannels, type: "VIDEO_LAUNCH" }, `Canais sem adapter de publicação: ${unsupportedChannels.join(", ")}`, "queued_for_review");
+    } else {
+      await logAutomationActivity(supabaseAdmin, rule.id, { campaign_id: video.campaign_id, video_id: video.id, channels: requestedChannels, queued_telegram: telegramRequested }, telegramRequested ? "Vídeo publicado e publicação Telegram enfileirada" : "Vídeo publicado; nenhum canal com adapter disponível", telegramRequested ? "success" : "skipped");
     }
+  }
+
+  if (processed === 0) {
+    await logAutomationActivity(supabaseAdmin, rule.id, { triggered_by: "automation_run" }, "Nenhum vídeo agendado estava pronto para publicação", "skipped");
   }
 
   return { success: true, processed, queued, unsupported };
