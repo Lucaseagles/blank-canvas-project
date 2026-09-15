@@ -22,9 +22,11 @@ export const Route = createFileRoute("/")({
 function Index() {
   const navigate = useNavigate();
   const { data: products } = useSuspenseQuery({ queryKey: ["personalizedFeed", null, 4], queryFn: () => getPersonalizedFeed({ data: { userId: null, limit: 4 } }) });
-  const { data: modules = [] } = useQuery({ queryKey: ["public-home-modules"], queryFn: () => getPublicHomeModules(), staleTime: 30_000 });
-  const enabled = new Set(modules.map((m) => m.module_key));
-  const hasConfig = modules.length > 0;
+  const { data: modules = [], isLoading: modulesLoading, isError: modulesError } = useQuery({ queryKey: ["public-home-modules"], queryFn: () => getPublicHomeModules(), staleTime: 30_000 });
+  // The configuration is authoritative once it exists. Only a truly empty table
+  // uses the legacy defaults, preventing disabled-all configurations from reappearing.
+  const hasConfig = modules.length > 0 || modulesLoading || modulesError;
+  const enabled = new Set(modules.filter((m) => m.is_enabled).map((m) => m.module_key));
   const show = (key: string) => !hasConfig || enabled.has(key);
   const order = (key: string) => modules.find((m) => m.module_key === key)?.display_order ?? 999;
   const sectionStyle = (key: string) => ({ order: order(key) });
