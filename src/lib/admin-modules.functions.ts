@@ -48,11 +48,13 @@ export const setBadgeEnabled = createServerFn({ method: "POST" }).middleware([re
 });
 
 export const getPublicHomeModules = createServerFn({ method: "GET" }).handler(async () => {
-  const client = await db(); const { data, error } = await client.from("home_modules_config").select("id,module_key,module_name,is_enabled,display_order,config,updated_at").eq("is_enabled", true).order("display_order", { ascending: true });
+  // Return the complete configuration so the Home can distinguish between
+  // "no configuration exists" and "configuration exists but every module is disabled".
+  const client = await db(); const { data, error } = await client.from("home_modules_config").select("id,module_key,module_name,is_enabled,display_order,config,updated_at").order("display_order", { ascending: true });
   if (error) throw new Error(error.message); return (data ?? []) as HomeModule[];
 });
 
 export const getPublicBadgeConfig = createServerFn({ method: "GET" }).handler(async () => {
-  const client = await db(); const { data, error } = await client.from("badges_config").select("id,badge_key,badge_name,badge_text,icon,color,threshold,is_enabled,updated_at").eq("is_enabled", true).order("badge_name", { ascending: true });
+  const client = await db(); const { data, error } = await client.from("badges_config").select("id,badge_key,badge_name,badge_text,config,updated_at").eq("is_enabled", true).order("badge_name", { ascending: true });
   if (error) throw new Error(error.message); return (data ?? []) as BadgeConfig[];
 });
