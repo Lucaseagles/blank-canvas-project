@@ -37,9 +37,9 @@ export const getStrategyOrchestrationOptions = createServerFn({ method: "GET" })
   return (data ?? []) as Array<{ id: string; name: string; objective: string; priority: number; channel?: { channel_name: string; platform: string } | null }>;
 });
 
-export const createStrategyOrchestration = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ name: z.string().trim().min(2).max(160), objective: Objective, priority: z.number().int().min(0).max(100), notes: z.string().trim().max(1000).optional().nullable(), strategy_ids: z.array(z.string().uuid()).max(50) }).parse(data)).handler(async ({ data }) => {
+export const createStrategyOrchestration = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ name: z.string().trim().min(2).max(160), objective: Objective, priority: z.number().int().min(0).max(100), notes: z.string().trim().max(1000).optional().nullable(), strategy_ids: z.array(z.string().uuid()).max(50), video_ids: z.array(z.string().uuid()).max(100).default([]) }).parse(data)).handler(async ({ data }) => {
   const supabase = await db();
-  const { data: id, error } = await supabase.rpc("create_strategy_orchestration", { p_name: data.name, p_objective: data.objective, p_priority: data.priority, p_notes: data.notes ?? null, p_strategy_ids: data.strategy_ids });
+  const { data: id, error } = await supabase.rpc("create_strategy_orchestration", { p_name: data.name, p_objective: data.objective, p_priority: data.priority, p_notes: data.notes ?? null, p_strategy_ids: data.strategy_ids, p_video_ids: data.video_ids });
   if (error) throw error;
   return { id: id as string };
 });
