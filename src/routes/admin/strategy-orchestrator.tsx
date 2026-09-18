@@ -21,15 +21,17 @@ function StrategyOrchestratorPage() {
   const [priority, setPriority] = useState(50);
   const [notes, setNotes] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
+  const [videoIds, setVideoIds] = useState<string[]>([]);
   const { data: items = [], isLoading } = useQuery({ queryKey: ["strategy-orchestrations"], queryFn: listStrategyOrchestrations });
   const { data: options = [] } = useQuery({ queryKey: ["strategy-orchestration-options"], queryFn: getStrategyOrchestrationOptions });
+  const { data: videos = [] } = useQuery({ queryKey: ["strategy-orchestration-videos"], queryFn: async () => { const { supabase } = await import("@/integrations/supabase/client"); const { data, error } = await (supabase as any).from("videos").select("id,title,platform,video_url,external_url,thumbnail_url").order("created_at",{ascending:false}).limit(100); if(error) throw error; return data ?? []; } });
   const refresh = () => qc.invalidateQueries({ queryKey: ["strategy-orchestrations"] });
-  const create = useMutation({ mutationFn: createStrategyOrchestration, onSuccess: () => { refresh(); setName(""); setNotes(""); setSelected([]); toast.success("Orquestração criada"); }, onError: () => toast.error("Não foi possível criar a orquestração") });
+  const create = useMutation({ mutationFn: createStrategyOrchestration, onSuccess: () => { refresh(); setName(""); setNotes(""); setSelected([]); setVideoIds([]); toast.success("Orquestração criada"); }, onError: () => toast.error("Não foi possível criar a orquestração") });
   const generate = useMutation({ mutationFn: generateStrategyOrchestrationPlan, onSuccess: () => { refresh(); toast.success("Plano estratégico gerado"); }, onError: () => toast.error("Não foi possível gerar o plano") });
   const approve = useMutation({ mutationFn: approveStrategyOrchestration, onSuccess: (r) => { refresh(); toast.success(r.approved ? "Estratégia aprovada" : "Aprovação não permitida neste estado"); }, onError: () => toast.error("Não foi possível aprovar") });
   const pause = useMutation({ mutationFn: pauseStrategyOrchestration, onSuccess: () => { refresh(); toast.success("Orquestração pausada"); }, onError: () => toast.error("Não foi possível pausar") });
 
-  const submit = (e: React.FormEvent) => { e.preventDefault(); if (!name.trim()) { toast.error("Nome obrigatório"); return; } if (!selected.length) { toast.error("Selecione pelo menos uma estratégia"); return; } create.mutate({ data: { name: name.trim(), objective, priority, notes: notes || null, strategy_ids: selected } }); };
+  const submit = (e: React.FormEvent) => { e.preventDefault(); if (!name.trim()) { toast.error("Nome obrigatório"); return; } if (!selected.length) { toast.error("Selecione pelo menos uma estratégia"); return; } create.mutate({ data: { name: name.trim(), objective, priority, notes: notes || null, strategy_ids: selected, video_ids: videoIds } }); };
   const toggle = (id: string) => setSelected(v => v.includes(id) ? v.filter(x => x !== id) : [...v, id]);
 
   return <div className="mx-auto max-w-7xl space-y-8 p-4 lg:p-8">
@@ -40,6 +42,7 @@ function StrategyOrchestratorPage() {
         <div><Label>Objetivo</Label><select value={objective} onChange={e=>setObjective(e.target.value as typeof objective)} className="mt-2 h-10 w-full rounded-xl border bg-background px-3 text-sm">{objectives.map(v=><option key={v}>{v}</option>)}</select></div>
         <div><Label>Prioridade</Label><Input className="mt-2 rounded-xl" type="number" min={0} max={100} value={priority} onChange={e=>setPriority(Number(e.target.value))}/></div>
         <div><Label>Observações</Label><Textarea className="mt-2 rounded-xl" value={notes} onChange={e=>setNotes(e.target.value)} maxLength={1000}/></div>
+        <div><Label>Vídeos associados (opcional)</Label><div className="mt-2 max-h-48 space-y-2 overflow-auto">{videos.length===0?<p className="text-xs text-muted-foreground">Nenhum vídeo disponível.</p>:videos.map((v:any)=><button type="button" key={v.id} onClick={()=>setVideoIds(ids=>ids.includes(v.id)?ids.filter(x=>x!==v.id):[...ids,v.id])} className={`w-full rounded-xl border p-3 text-left text-xs transition ${videoIds.includes(v.id)?"border-primary bg-primary/10":"hover:bg-muted/50"}`}><div className="font-bold">{v.title || "Vídeo sem título"}</div><div className="mt-1 text-muted-foreground">{v.platform || "native"} · {v.video_url || v.external_url ? "link configurado" : "sem link"}</div></button>)}</div></div>
         <div><Label>Estratégias existentes</Label><div className="mt-2 max-h-72 space-y-2 overflow-auto">{options.length===0?<p className="text-xs text-muted-foreground">Nenhuma estratégia ativa disponível.</p>:options.map(s=><button type="button" key={s.id} onClick={()=>toggle(s.id)} className={`w-full rounded-xl border p-3 text-left text-xs transition ${selected.includes(s.id)?"border-primary bg-primary/10":"hover:bg-muted/50"}`}><div className="font-bold">{s.name}</div><div className="mt-1 text-muted-foreground">{s.channel?.platform} · {s.channel?.channel_name} · {s.objective}</div></button>)}</div></div>
         <Button type="submit" className="w-full rounded-xl font-black uppercase" disabled={create.isPending}>Criar orquestração</Button>
       </form></CardContent></Card>
