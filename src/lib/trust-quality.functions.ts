@@ -8,7 +8,7 @@ export const getTrustQualityOverview = createServerFn({ method: "GET" })
     const db = supabaseAdmin as any;
 
     const [{ data: products, error: productsError }, { data: rules, error: rulesError }, { data: violations, error: violationsError }] = await Promise.all([
-      db.from("products").select("id,title,status,rating,review_count,affiliate_url,current_price,description,images").limit(500),
+      db.from("products").select("id,title,status,rating,review_count,affiliate_url,current_price,description,images,updated_at").limit(500),
       db.from("compliance_rules").select("id,marketplace_id,rule_key,is_enforced,reviewed_at").limit(500),
       db.from("compliance_audit_log").select("id,marketplace_id,product_id,rule_key,violation_detail,detected_at").order("detected_at", { ascending: false }).limit(100),
     ]);
@@ -20,13 +20,17 @@ export const getTrustQualityOverview = createServerFn({ method: "GET" })
       const issues: string[] = [];
       if (!String(product.title ?? "").trim()) issues.push("missing_title");
       if (!String(product.description ?? "").trim()) issues.push("missing_description");
-      if (!String(product.affiliate_url ?? "").trim()) issues.push("missing_affiliate_url");
+      const affiliateUrl = String(product.affiliate_url ?? "").trim();
+      if (!affiliateUrl) issues.push("missing_affiliate_url");
+      else { try { const parsed = new URL(affiliateUrl); if (!["http:","https:"].includes(parsed.protocol)) issues.push("invalid_affiliate_url"); } catch { issues.push("invalid_affiliate_url"); } }
       if (product.current_price == null || Number(product.current_price) <= 0) issues.push("invalid_price");
       if (product.rating != null && (Number(product.rating) < 0 || Number(product.rating) > 5)) issues.push("invalid_rating");
       if (product.review_count != null && Number(product.review_count) < 0) issues.push("invalid_review_count");
       const images = Array.isArray(product.images) ? product.images.filter(Boolean) : [];
       if (images.length === 0) issues.push("missing_images");
-      return { id: product.id, title: product.title, status: product.status, issues, score: Math.max(0, 100 - issues.length * 15) };
+      const updatedAt = product.updated_at ? new Date(product.updated_at).getTime() : 0;
+      if (!updatedAt || Date.now() - updatedAt > 1000 * 60 * 60 * 24 * 90) issues.push("stale_product_data");
+      return { id: product.id, title: product.title, status: product.status, issues, score: Math.max(0, 100 - issues.length * 12) };
     });
 
     const enforcedRules = (rules ?? []).filter((rule: any) => rule.is_enforced).length;
