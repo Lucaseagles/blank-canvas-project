@@ -23,7 +23,7 @@ function ExperiencePopupPage() {
   if (query.isLoading) return <div className="container mx-auto px-4 py-12 text-sm text-muted-foreground">Carregando Experience Engine…</div>;
   if (query.isError) return <div className="container mx-auto px-4 py-12 text-sm text-destructive">Falha ao carregar Experience Engine: {query.error.message}</div>;
 
-  const rules = query.data ?? [];
+  const rules = (query.data ?? []) as any[];
   return <div className="container mx-auto space-y-8 px-4 py-8 lg:px-8 lg:py-12">
     <header><Badge className="mb-3 gap-2"><ShieldCheck className="h-3 w-3" /> Owner Only</Badge><h1 className="text-4xl font-black uppercase italic tracking-tighter lg:text-6xl">Experience <span className="text-primary">Engine</span></h1><p className="mt-3 max-w-3xl text-sm text-muted-foreground">Controle das experiências contextuais já existentes. A seleção continua server-side e usa popup_rules, popup_events, personalização, relacionamento de produtos e benefícios reais.</p></header>
     <div className="grid gap-4 md:grid-cols-4"><Metric title="Regras" value={rules.length} /><Metric title="Views 30d" value={rules.reduce((n, r) => n + r.views, 0)} /><Metric title="Cliques 30d" value={rules.reduce((n, r) => n + r.clicks, 0)} /><Metric title="CTR global" value={`${globalCtr(rules)}%`} /></div>

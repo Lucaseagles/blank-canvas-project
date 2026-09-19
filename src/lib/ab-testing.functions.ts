@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "./auth-middleware";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireOwnerRole } from "./auth-guards.server";
 
 const variantSchema = z.object({ experimentId: z.string().uuid() });

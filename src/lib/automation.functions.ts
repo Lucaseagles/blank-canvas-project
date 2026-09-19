@@ -13,7 +13,7 @@ async function logAutomationActivity(
 ) {
   const { error } = await supabaseAdmin.rpc("log_automation_activity", {
     _rule_id: ruleId,
-    _context: context,
+    _context: context as any,
     _result: result,
     _status: status,
   });
