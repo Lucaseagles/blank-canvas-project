@@ -150,7 +150,7 @@ export const prepareStrategyPublishing = createServerFn({ method: "POST" })
         orchestration_id: data.orchestration_id,
       });
       if (insertError) throw new Error(`Não foi possível preparar a publicação: ${insertError.message}`);
-      results.push({ video_id: video.id, status: "queued", reason: unsupportedChannels.length ? `Telegram preparado; sem adapter para: ${unsupportedChannels.join(", ")}.` : undefined });
+      results.push({ video_id: video.id, status: "queued", ...(unsupportedChannels.length ? { reason: `Telegram preparado; sem adapter para: ${unsupportedChannels.join(", ")}.` } : {}) });
     }
 
     return {

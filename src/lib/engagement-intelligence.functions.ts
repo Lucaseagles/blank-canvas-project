@@ -39,13 +39,13 @@ export const getEngagementIntelligence = createServerFn({ method: "GET" })
         pointRecords: (points.data ?? []).length,
         configuredBadges: (badges.data ?? []).length,
         configuredMissions: (missions.data ?? []).length,
-        activeMissions: ((missions.data ?? []) as Array<Record<string, unknown>>).filter((row) => row.is_active === true).length,
+        activeMissions: ((missions.data ?? []) as Array<Record<string, unknown>>).filter((row) => row["is_active"] === true).length,
       },
       personalization: {
         configuredWeights: (weights.data ?? []).length,
         weights: (weights.data ?? []).map((row: Record<string, unknown>) => ({
-          key: row.signal_key ?? row.key ?? row.name ?? row.id,
-          weight: row.weight,
+          key: row["signal_key"] ?? row["key"] ?? row["name"] ?? row["id"],
+          weight: row["weight"],
         })),
       },
       errors,
