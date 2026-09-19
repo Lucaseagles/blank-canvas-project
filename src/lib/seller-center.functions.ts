@@ -42,7 +42,22 @@ type PerformanceProduct = {
 
 type SellerPerformance = {
   periodDays: number;
-  summary: { products: number; published: number; linkedProducts: number; totalViews: number; totalClicks: number; ctr: number };
+  summary: {
+    products: number;
+    published: number;
+    linkedProducts: number;
+    withoutAffiliateLink: number;
+    totalViews: number;
+    totalClicks: number;
+    ctr: number;
+  };
+  trend: { date: string; views: number; clicks: number }[];
+  insights: {
+    type: "opportunity" | "attention" | "positive";
+    title: string;
+    description: string;
+    productId?: string;
+  }[];
   products: PerformanceProduct[];
   categories: { id: string; name: string; views: number; clicks: number; products: number }[];
   trending: PerformanceProduct[];
@@ -83,21 +98,31 @@ export const getSellerPerformance = createServerFn({ method: "GET" })
       if (rows.length < PAGE_SIZE) break;
     }
 
+    const productMap = new Map(products.map((product) => [product.id, product]));
     const views = new Map<string, number>();
     const clicks = new Map<string, number>();
     const categoryViews = new Map<string, number>();
     const categoryClicks = new Map<string, number>();
+    const daily = new Map<string, { views: number; clicks: number }>();
 
     for (const event of events) {
       const isView = VIEW_EVENTS.includes(event.event_type as (typeof VIEW_EVENTS)[number]);
       const isClick = CLICK_EVENTS.includes(event.event_type as (typeof CLICK_EVENTS)[number]);
+      const date = event.created_at.slice(0, 10);
+      const day = daily.get(date) ?? { views: 0, clicks: 0 };
+      if (isView) day.views += 1;
+      if (isClick) day.clicks += 1;
+      daily.set(date, day);
+
       if (event.product_id) {
         if (isView) views.set(event.product_id, (views.get(event.product_id) ?? 0) + 1);
         if (isClick) clicks.set(event.product_id, (clicks.get(event.product_id) ?? 0) + 1);
       }
-      if (event.category_id) {
-        if (isView) categoryViews.set(event.category_id, (categoryViews.get(event.category_id) ?? 0) + 1);
-        if (isClick) categoryClicks.set(event.category_id, (categoryClicks.get(event.category_id) ?? 0) + 1);
+
+      const categoryId = event.category_id ?? (event.product_id ? productMap.get(event.product_id)?.category_id ?? null : null);
+      if (categoryId) {
+        if (isView) categoryViews.set(categoryId, (categoryViews.get(categoryId) ?? 0) + 1);
+        if (isClick) categoryClicks.set(categoryId, (categoryClicks.get(categoryId) ?? 0) + 1);
       }
     }
 
@@ -132,26 +157,70 @@ export const getSellerPerformance = createServerFn({ method: "GET" })
       categoryMap.set(product.category_id, current);
     }
 
-    const totalViews = events.reduce((total, event) => total + (VIEW_EVENTS.includes(event.event_type as (typeof VIEW_EVENTS)[number]) ? 1 : 0), 0);
-    const totalClicks = events.reduce((total, event) => total + (CLICK_EVENTS.includes(event.event_type as (typeof CLICK_EVENTS)[number]) ? 1 : 0), 0);
-    const linkedProducts = products.filter((p) => Boolean(p.affiliate_url)).length;
+    const totalViews = events.filter((event) => VIEW_EVENTS.includes(event.event_type as (typeof VIEW_EVENTS)[number])).length;
+    const totalClicks = events.filter((event) => CLICK_EVENTS.includes(event.event_type as (typeof CLICK_EVENTS)[number])).length;
+    const linkedProducts = products.filter((product) => Boolean(product.affiliate_url)).length;
+    const withoutAffiliateLink = products.filter((product) => !product.affiliate_url).length;
+    const topCtr = performance.filter((product) => product.views >= 5).sort((a, b) => b.ctr - a.ctr)[0];
+
+    const insights: SellerPerformance["insights"] = [];
+    const zeroClickTraffic = performance.filter((product) => product.views >= 5 && product.clicks === 0).sort((a, b) => b.views - a.views)[0];
+    const publishedWithoutLink = performance.find((product) => (product.status === "published" || product.status === "active") && !product.affiliate_url);
+    if (zeroClickTraffic) {
+      insights.push({
+        type: "opportunity",
+        title: "Tráfego sem cliques",
+        description: `${zeroClickTraffic.title} recebeu ${zeroClickTraffic.views.toLocaleString("pt-BR")} views, mas nenhum clique no período.`,
+        productId: zeroClickTraffic.id,
+      });
+    }
+    if (publishedWithoutLink) {
+      insights.push({
+        type: "attention",
+        title: "Produto publicado sem afiliado",
+        description: `${publishedWithoutLink.title} está publicado, mas ainda não possui link de afiliado configurado.`,
+        productId: publishedWithoutLink.id,
+      });
+    }
+    if (topCtr) {
+      insights.push({
+        type: "positive",
+        title: "Melhor CTR entre produtos com tráfego",
+        description: `${topCtr.title} está com ${topCtr.ctr.toFixed(2)}% de CTR em ${topCtr.views.toLocaleString("pt-BR")} views.`,
+        productId: topCtr.id,
+      });
+    }
+    if (withoutAffiliateLink > 0 && insights.length < 3) {
+      insights.push({
+        type: "attention",
+        title: "Links de afiliado pendentes",
+        description: `${withoutAffiliateLink.toLocaleString("pt-BR")} produtos ainda estão sem link de afiliado.`,
+      });
+    }
+
+    const trend: SellerPerformance["trend"] = [];
+    for (let i = data.days - 1; i >= 0; i -= 1) {
+      const date = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
+      const day = daily.get(date) ?? { views: 0, clicks: 0 };
+      trend.push({ date, views: day.views, clicks: day.clicks });
+    }
 
     return {
       periodDays: data.days,
       summary: {
         products: products.length,
-        published: products.filter((p) => p.status === "published" || p.status === "active").length,
+        published: products.filter((product) => product.status === "published" || product.status === "active").length,
         linkedProducts,
+        withoutAffiliateLink,
         totalViews,
         totalClicks,
         ctr: totalViews > 0 ? (totalClicks / totalViews) * 100 : 0,
       },
+      trend,
+      insights,
       products: performance.sort((a, b) => b.clicks - a.clicks || b.views - a.views),
       categories: Array.from(categoryMap.values()).sort((a, b) => b.clicks - a.clicks || b.views - a.views),
-      trending: performance
-        .filter((p) => p.views > 0)
-        .sort((a, b) => b.views - a.views || b.clicks - a.clicks)
-        .slice(0, 10),
+      trending: performance.filter((product) => product.views > 0).sort((a, b) => b.views - a.views || b.clicks - a.clicks).slice(0, 10),
     };
   });
 
