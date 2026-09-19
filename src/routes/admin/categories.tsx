@@ -39,7 +39,7 @@ function AdminCategoriesPage(){
  const move=(id:string,target:string)=>{const ids=ordered.map(c=>c.id),from=ids.indexOf(id),to=ids.indexOf(target);if(from<0||to<0||from===to)return;ids.splice(from,1);ids.splice(to,0,id);reorder.mutate(ids)};
  const toggle=(cat:Category)=>save.mutate({...cat,is_active:!(cat.is_active??true)});
  const openCreate=()=>setEditing({...emptyForm,display_order:categories.length});
- const slugify=(value:string)=>value.normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,120);
+ const slugify=(value:string)=>value.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,120);
  const validate=()=>{if(!editing)return false; if(editing.name.trim().length<2){toast.error("O nome precisa ter pelo menos 2 caracteres.");return false;} const normalized=slugify(editing.slug); if(!normalized){toast.error("Informe um slug válido.");return false;} if(editing.image_url?.trim()){try{new URL(editing.image_url)}catch{toast.error("A URL da imagem não é válida.");return false;}} return true;};
  const submit=()=>{if(!validate()||!editing)return;save.mutate({...editing,name:editing.name.trim(),slug:slugify(editing.slug),description:editing.description?.trim()||null,image_url:editing.image_url?.trim()||null,icon:editing.icon?.trim()||null,color:editing.color?.trim()||null});};
  const moveBy=(id:string,direction:-1|1)=>{const index=ordered.findIndex(c=>c.id===id);const target=index+direction;if(index<0||target<0||target>=ordered.length)return;move(id,ordered[target].id);};
@@ -66,7 +66,7 @@ function AdminCategoriesPage(){
 
    {filtered.length===0&&<div className="rounded-3xl border border-dashed border-border bg-card/60 p-14 text-center"><div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary"><FolderIcon className="h-7 w-7"/></div><h2 className="text-lg font-black">{categories.length?"Nenhum resultado encontrado":"Nenhuma categoria cadastrada"}</h2><p className="mt-1 text-sm text-muted-foreground">{categories.length?"Ajuste a busca ou o filtro.":"Crie a primeira categoria para estruturar o catálogo."}</p>{!categories.length&&<Button onClick={openCreate} className="mt-5 rounded-xl font-black"><Plus className="mr-2 h-4 w-4"/> Criar categoria</Button>}</div>}
 
-   <div className="space-y-3">{filtered.map((cat,index)=>{
+   <div className="space-y-3">{filtered.map((cat)=>{
     const realIndex=ordered.findIndex(c=>c.id===cat.id);
     return <div key={cat.id} draggable onDragStart={()=>setDragId(cat.id)} onDragOver={e=>e.preventDefault()} onDrop={()=>{if(dragId){move(dragId,cat.id);setDragId(null)}}} className="group rounded-3xl border border-border/60 bg-card/80 p-4 shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-lg">
      <div className="flex flex-col gap-4 md:flex-row md:items-center">
