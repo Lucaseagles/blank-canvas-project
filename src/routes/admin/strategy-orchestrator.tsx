@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Activity, ArrowRight, BarChart3, CheckCircle2, ChevronDown, Clock3, Layers3, Pause, Play, Plus, Search, Send, Sparkles, Target, Video, X, Zap } from "lucide-react";
+import { Activity, ArrowRight, CheckCircle2, ChevronDown, Clock3, Layers3, Pause, Play, Plus, RefreshCw, Search, Send, Sparkles, Target, Video, X } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -107,7 +107,7 @@ function StrategyOrchestratorPage() {
               <h1 className="text-3xl font-black tracking-tight sm:text-5xl">Estratégia <span className="text-primary">→ Execução</span></h1>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">Transforme estratégias sociais existentes em orquestrações aprováveis, com plano, vídeos associados e preparação da fila de publicação sem criar outro motor.</p>
             </div>
-            <Button onClick={() => setForm(emptyForm)} className="h-11 rounded-xl px-5 font-black"><Plus className="mr-2 h-4 w-4" />Nova orquestração</Button>
+            <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => void refetch()} className="h-11 rounded-xl px-4 font-bold" disabled={isLoading}><RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />Atualizar</Button><Button onClick={() => setForm(emptyForm)} className="h-11 rounded-xl px-5 font-black"><Plus className="mr-2 h-4 w-4" />Nova orquestração</Button></div>
           </div>
         </header>
 
@@ -165,7 +165,7 @@ function StrategyOrchestratorPage() {
               </CardContent>
             </Card>
 
-            <div className="flex items-center justify-between px-1"><div><p className="text-sm font-black">Centro de execução</p><p className="text-xs text-muted-foreground">{filteredItems.length} de {items.length} orquestrações</p></div><div className="hidden items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground sm:flex"><Clock3 className="h-3.5 w-3.5" /> fluxo aprovado em etapas</div></div>
+            <div className="flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-black">Centro de execução</p><p className="text-xs text-muted-foreground">{filteredItems.length} de {items.length} orquestrações</p></div><div className="flex items-center gap-3"><div className="hidden items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground sm:flex"><Clock3 className="h-3.5 w-3.5" /> fluxo aprovado em etapas</div>{(search || statusFilter !== "all" || objectiveFilter !== "all") && <Button variant="ghost" size="sm" className="h-8 rounded-lg text-xs" onClick={() => { setSearch(""); setStatusFilter("all"); setObjectiveFilter("all"); }}>Limpar filtros</Button>}</div></div>
 
             {isLoading ? <Card className="rounded-[2rem]"><CardContent className="space-y-3 p-5">{[1, 2, 3].map(i => <div key={i} className="h-32 animate-pulse rounded-2xl bg-muted" />)}</CardContent></Card> :
               isError ? <Card className="rounded-[2rem] border-destructive/20"><CardContent className="flex flex-col items-center justify-center py-16 text-center"><p className="font-black">Não foi possível carregar as orquestrações.</p><Button variant="outline" className="mt-4 rounded-xl" onClick={() => void refetch()}>Tentar novamente</Button></CardContent></Card> :
