@@ -45,7 +45,13 @@ function BannerPreviewPage() {
             const active = Boolean(banner["is_active"]);
             return (
               <Card key={String(banner["id"])} className="overflow-hidden rounded-[2rem]">
-...
+                <div className="relative aspect-[16/7] overflow-hidden bg-muted">
+                  {imageUrl ? <img src={imageUrl} alt={title} className="h-full w-full object-cover" loading="lazy" /> : <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Sem imagem</div>}
+                  <div className="absolute left-4 top-4"><Badge variant={active ? "default" : "secondary"}>{active ? "Ativo" : "Inativo"}</Badge></div>
+                </div>
+                <CardHeader className="pb-3"><CardTitle className="text-lg font-black">{title}</CardTitle></CardHeader>
+                <CardContent className="space-y-3 text-xs">
+                  <div className="grid grid-cols-2 gap-3">
                     <Meta label="Posição" value={String(banner["position"] ?? 0)} />
                     <Meta label="ID" value={String(banner["id"]).slice(0, 8)} />
                     <Meta label="Início" value={formatDate(banner["starts_at"])} />
