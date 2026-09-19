@@ -109,7 +109,7 @@ export function SupportFloatingBubble() {
 
   return (
     <>
-      <button type="button" onClick={() => setIsOpen((open) => !open)} aria-expanded={isOpen} aria-controls="support-floating-chat" aria-label={isOpen ? "Fechar suporte" : "Abrir suporte"} className={cn("fixed bottom-[84px] right-4 z-[110] flex h-14 w-14 items-center justify-center rounded-full border border-white/15 bg-primary text-primary-foreground shadow-2xl shadow-primary/30 transition-all duration-300 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:bottom-6 md:right-6", isOpen && "rotate-0 bg-foreground text-background")}>
+      <button type="button" onClick={() => setIsOpen((open) => !open)} aria-expanded={isOpen} aria-controls="support-floating-chat" aria-label={isOpen ? "Fechar suporte" : "Abrir suporte"} className={cn("fixed bottom-[112px] right-4 z-[110] flex h-14 w-14 items-center justify-center rounded-full border border-white/15 bg-primary text-primary-foreground shadow-2xl shadow-primary/30 transition-all duration-300 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:bottom-10 md:right-6", isOpen && "rotate-0 bg-foreground text-background")}>
         {isOpen ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
       </button>
       {isOpen && (
