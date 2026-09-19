@@ -153,12 +153,7 @@ function AdminVideosPage() {
           </div>
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => setEditingVideo(null)} className="h-12 px-8 font-black uppercase tracking-tighter italic gap-2 rounded-2xl shadow-2xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
-                <Plus className="w-4 h-4" />
-                New Video
-              </Button>
-            </DialogTrigger>
+            <Button asChild className="h-12 px-8 font-black uppercase tracking-tighter italic gap-2 rounded-2xl shadow-2xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"><a href="/admin/videos/new"><Plus className="w-4 h-4" />New Video</a></Button>
             <DialogContent className="bg-glass-fallback border-glass-border backdrop-blur-2xl text-foreground max-w-md rounded-[2.5rem] shadow-2xl">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-black tracking-tighter">
