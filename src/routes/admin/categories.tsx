@@ -42,7 +42,7 @@ function AdminCategoriesPage(){
  const slugify=(value:string)=>value.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,120);
  const validate=()=>{if(!editing)return false; if(editing.name.trim().length<2){toast.error("O nome precisa ter pelo menos 2 caracteres.");return false;} const normalized=slugify(editing.slug); if(!normalized){toast.error("Informe um slug válido.");return false;} if(editing.image_url?.trim()){try{new URL(editing.image_url)}catch{toast.error("A URL da imagem não é válida.");return false;}} return true;};
  const submit=()=>{if(!validate()||!editing)return;save.mutate({...editing,name:editing.name.trim(),slug:slugify(editing.slug),description:editing.description?.trim()||null,image_url:editing.image_url?.trim()||null,icon:editing.icon?.trim()||null,color:editing.color?.trim()||null});};
- const moveBy=(id:string,direction:-1|1)=>{const index=ordered.findIndex(c=>c.id===id);const target=index+direction;if(index<0||target<0||target>=ordered.length)return;move(id,ordered[target].id);};
+ const moveBy=(id:string,direction:-1|1)=>{const index=ordered.findIndex(c=>c.id===id);const target=index+direction;if(index<0||target<0||target>=ordered.length)return;const targetCat=ordered[target];if(!targetCat)return;move(id,targetCat.id);};
  const parentName=(id?:string|null)=>id?categories.find(c=>c.id===id)?.name??"Subcategoria":"Raiz";
 
  return <div className="relative min-h-full overflow-hidden pb-10">

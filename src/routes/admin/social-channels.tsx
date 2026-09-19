@@ -89,7 +89,7 @@ function AdminSocialChannelsPage() {
     const name = form.channel_name.trim();
     const url = form.channel_url.trim();
     if (name.length < 2) { toast.error("Informe um nome de canal válido."); return; }
-    if (!/^https?:\\/\\//i.test(url)) { toast.error("Use uma URL pública começando com https://"); return; }
+    if (!/^https?:\/\//i.test(url)) { toast.error("Use uma URL pública começando com https://"); return; }
     save.mutate({ data: { id: editing?.id, ...form, channel_name: name, channel_url: url } });
   }
   function removeChannel(channel: Channel) {
