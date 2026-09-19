@@ -24,6 +24,8 @@ import { useProductSync } from "@/hooks/useProductSync";
 
 export const Route=createFileRoute("/admin/products")({component:AdminProductsPage});
 function AdminProductsPage(){
+ const location=useLocation();
+ if(location.pathname==="/admin/products/new") return <Outlet />;
  useProductSync(); const navigate=useNavigate();
  const qc=useQueryClient();const[search,setSearch]=useState("");const[status,setStatus]=useState("all");const[category,setCategory]=useState("all");const[selected,setSelected]=useState<string[]>([]);const[media,setMedia]=useState<any>(null);const[relProduct,setRelProduct]=useState<any>(null);const[groupProduct,setGroupProduct]=useState<any>(null);const[relId,setRelId]=useState("");const[relType,setRelType]=useState<'CROSS_SELL'|'UPSELL'|'DOWNSELL'>('CROSS_SELL');const[newGroup,setNewGroup]=useState("");
  const addRel=useServerFn(addRelationship);const getRel=useServerFn(getRelatedProducts);const getGroups=useServerFn(getOfferGroups);const saveGroup=useServerFn(saveOfferGroup);const updateGroup=useServerFn(updateProductOfferGroup);
