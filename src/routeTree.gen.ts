@@ -29,9 +29,11 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as TrendingRouteImport } from './routes/trending'
 import { Route as VideosRouteImport } from './routes/videos'
+import { Route as AdminAlgorithmControlRouteImport } from './routes/admin/algorithm-control'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin/analytics'
 import { Route as AdminAuditRouteImport } from './routes/admin/audit'
 import { Route as AdminAutomationsRouteImport } from './routes/admin/automations'
+import { Route as AdminBannerPreviewRouteImport } from './routes/admin/banner-preview'
 import { Route as AdminBridgeVideosRouteImport } from './routes/admin/bridge-videos'
 import { Route as AdminBundlesRouteImport } from './routes/admin/bundles'
 import { Route as AdminCampaignsRouteImport } from './routes/admin/campaigns'
@@ -39,10 +41,14 @@ import { Route as AdminCategoriesRouteImport } from './routes/admin/categories'
 import { Route as AdminChannelStrategyMatrixRouteImport } from './routes/admin/channel-strategy-matrix'
 import { Route as AdminCollectionsRouteImport } from './routes/admin/collections'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
+import { Route as AdminEcosystemGraphRouteImport } from './routes/admin/ecosystem-graph'
+import { Route as AdminEngagementIntelligenceRouteImport } from './routes/admin/engagement-intelligence'
+import { Route as AdminExperiencePopupRouteImport } from './routes/admin/experience-popup'
 import { Route as AdminIntegrationsRouteImport } from './routes/admin/integrations'
 import { Route as AdminMarketplacesRouteImport } from './routes/admin/marketplaces'
 import { Route as AdminMetricsRouteImport } from './routes/admin/metrics'
 import { Route as AdminModulesRouteImport } from './routes/admin/modules'
+import { Route as AdminNotificationIntelligenceRouteImport } from './routes/admin/notification-intelligence'
 import { Route as AdminNotificationsRouteImport } from './routes/admin/notifications'
 import { Route as AdminOffersRouteImport } from './routes/admin/offers'
 import { Route as AdminOpportunitiesRouteImport } from './routes/admin/opportunities'
@@ -59,6 +65,7 @@ import { Route as AdminStrategyOrchestratorRouteImport } from './routes/admin/st
 import { Route as AdminSupportRouteImport } from './routes/admin/support'
 import { Route as AdminSupportKnowledgeRouteImport } from './routes/admin/support-knowledge'
 import { Route as AdminTelegramRouteImport } from './routes/admin/telegram'
+import { Route as AdminTrustQualityRouteImport } from './routes/admin/trust-quality'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminV1AuditRouteImport } from './routes/admin/v1-audit'
 import { Route as AdminVideosRouteImport } from './routes/admin/videos'
@@ -178,6 +185,11 @@ const VideosRoute = VideosRouteImport.update({
   path: '/videos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminAlgorithmControlRoute = AdminAlgorithmControlRouteImport.update({
+  id: '/algorithm-control',
+  path: '/algorithm-control',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
@@ -191,6 +203,11 @@ const AdminAuditRoute = AdminAuditRouteImport.update({
 const AdminAutomationsRoute = AdminAutomationsRouteImport.update({
   id: '/automations',
   path: '/automations',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBannerPreviewRoute = AdminBannerPreviewRouteImport.update({
+  id: '/banner-preview',
+  path: '/banner-preview',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminBridgeVideosRoute = AdminBridgeVideosRouteImport.update({
@@ -229,6 +246,22 @@ const AdminDashboardRoute = AdminDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminEcosystemGraphRoute = AdminEcosystemGraphRouteImport.update({
+  id: '/ecosystem-graph',
+  path: '/ecosystem-graph',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminEngagementIntelligenceRoute =
+  AdminEngagementIntelligenceRouteImport.update({
+    id: '/engagement-intelligence',
+    path: '/engagement-intelligence',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminExperiencePopupRoute = AdminExperiencePopupRouteImport.update({
+  id: '/experience-popup',
+  path: '/experience-popup',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminIntegrationsRoute = AdminIntegrationsRouteImport.update({
   id: '/integrations',
   path: '/integrations',
@@ -249,6 +282,12 @@ const AdminModulesRoute = AdminModulesRouteImport.update({
   path: '/modules',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminNotificationIntelligenceRoute =
+  AdminNotificationIntelligenceRouteImport.update({
+    id: '/notification-intelligence',
+    path: '/notification-intelligence',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminNotificationsRoute = AdminNotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
@@ -328,6 +367,11 @@ const AdminSupportKnowledgeRoute = AdminSupportKnowledgeRouteImport.update({
 const AdminTelegramRoute = AdminTelegramRouteImport.update({
   id: '/telegram',
   path: '/telegram',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminTrustQualityRoute = AdminTrustQualityRouteImport.update({
+  id: '/trust-quality',
+  path: '/trust-quality',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
@@ -442,9 +486,11 @@ export interface FileRoutesByFullPath {
   '/search': typeof SearchRoute
   '/trending': typeof TrendingRoute
   '/videos': typeof VideosRoute
+  '/admin/algorithm-control': typeof AdminAlgorithmControlRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/automations': typeof AdminAutomationsRoute
+  '/admin/banner-preview': typeof AdminBannerPreviewRoute
   '/admin/bridge-videos': typeof AdminBridgeVideosRoute
   '/admin/bundles': typeof AdminBundlesRoute
   '/admin/campaigns': typeof AdminCampaignsRoute
@@ -452,10 +498,14 @@ export interface FileRoutesByFullPath {
   '/admin/channel-strategy-matrix': typeof AdminChannelStrategyMatrixRoute
   '/admin/collections': typeof AdminCollectionsRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/ecosystem-graph': typeof AdminEcosystemGraphRoute
+  '/admin/engagement-intelligence': typeof AdminEngagementIntelligenceRoute
+  '/admin/experience-popup': typeof AdminExperiencePopupRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
   '/admin/marketplaces': typeof AdminMarketplacesRouteWithChildren
   '/admin/metrics': typeof AdminMetricsRoute
   '/admin/modules': typeof AdminModulesRoute
+  '/admin/notification-intelligence': typeof AdminNotificationIntelligenceRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/offers': typeof AdminOffersRouteWithChildren
   '/admin/opportunities': typeof AdminOpportunitiesRoute
@@ -472,6 +522,7 @@ export interface FileRoutesByFullPath {
   '/admin/support': typeof AdminSupportRoute
   '/admin/support-knowledge': typeof AdminSupportKnowledgeRoute
   '/admin/telegram': typeof AdminTelegramRoute
+  '/admin/trust-quality': typeof AdminTrustQualityRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/v1-audit': typeof AdminV1AuditRoute
   '/admin/videos': typeof AdminVideosRouteWithChildren
@@ -512,9 +563,11 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/trending': typeof TrendingRoute
   '/videos': typeof VideosRoute
+  '/admin/algorithm-control': typeof AdminAlgorithmControlRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/automations': typeof AdminAutomationsRoute
+  '/admin/banner-preview': typeof AdminBannerPreviewRoute
   '/admin/bridge-videos': typeof AdminBridgeVideosRoute
   '/admin/bundles': typeof AdminBundlesRoute
   '/admin/campaigns': typeof AdminCampaignsRoute
@@ -522,10 +575,14 @@ export interface FileRoutesByTo {
   '/admin/channel-strategy-matrix': typeof AdminChannelStrategyMatrixRoute
   '/admin/collections': typeof AdminCollectionsRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/ecosystem-graph': typeof AdminEcosystemGraphRoute
+  '/admin/engagement-intelligence': typeof AdminEngagementIntelligenceRoute
+  '/admin/experience-popup': typeof AdminExperiencePopupRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
   '/admin/marketplaces': typeof AdminMarketplacesRouteWithChildren
   '/admin/metrics': typeof AdminMetricsRoute
   '/admin/modules': typeof AdminModulesRoute
+  '/admin/notification-intelligence': typeof AdminNotificationIntelligenceRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/offers': typeof AdminOffersRouteWithChildren
   '/admin/opportunities': typeof AdminOpportunitiesRoute
@@ -542,6 +599,7 @@ export interface FileRoutesByTo {
   '/admin/support': typeof AdminSupportRoute
   '/admin/support-knowledge': typeof AdminSupportKnowledgeRoute
   '/admin/telegram': typeof AdminTelegramRoute
+  '/admin/trust-quality': typeof AdminTrustQualityRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/v1-audit': typeof AdminV1AuditRoute
   '/admin/videos': typeof AdminVideosRouteWithChildren
@@ -583,9 +641,11 @@ export interface FileRoutesById {
   '/search': typeof SearchRoute
   '/trending': typeof TrendingRoute
   '/videos': typeof VideosRoute
+  '/admin/algorithm-control': typeof AdminAlgorithmControlRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/automations': typeof AdminAutomationsRoute
+  '/admin/banner-preview': typeof AdminBannerPreviewRoute
   '/admin/bridge-videos': typeof AdminBridgeVideosRoute
   '/admin/bundles': typeof AdminBundlesRoute
   '/admin/campaigns': typeof AdminCampaignsRoute
@@ -593,10 +653,14 @@ export interface FileRoutesById {
   '/admin/channel-strategy-matrix': typeof AdminChannelStrategyMatrixRoute
   '/admin/collections': typeof AdminCollectionsRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/ecosystem-graph': typeof AdminEcosystemGraphRoute
+  '/admin/engagement-intelligence': typeof AdminEngagementIntelligenceRoute
+  '/admin/experience-popup': typeof AdminExperiencePopupRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
   '/admin/marketplaces': typeof AdminMarketplacesRouteWithChildren
   '/admin/metrics': typeof AdminMetricsRoute
   '/admin/modules': typeof AdminModulesRoute
+  '/admin/notification-intelligence': typeof AdminNotificationIntelligenceRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/offers': typeof AdminOffersRouteWithChildren
   '/admin/opportunities': typeof AdminOpportunitiesRoute
@@ -613,6 +677,7 @@ export interface FileRoutesById {
   '/admin/support': typeof AdminSupportRoute
   '/admin/support-knowledge': typeof AdminSupportKnowledgeRoute
   '/admin/telegram': typeof AdminTelegramRoute
+  '/admin/trust-quality': typeof AdminTrustQualityRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/v1-audit': typeof AdminV1AuditRoute
   '/admin/videos': typeof AdminVideosRouteWithChildren
@@ -655,9 +720,11 @@ export interface FileRouteTypes {
     | '/search'
     | '/trending'
     | '/videos'
+    | '/admin/algorithm-control'
     | '/admin/analytics'
     | '/admin/audit'
     | '/admin/automations'
+    | '/admin/banner-preview'
     | '/admin/bridge-videos'
     | '/admin/bundles'
     | '/admin/campaigns'
@@ -665,10 +732,14 @@ export interface FileRouteTypes {
     | '/admin/channel-strategy-matrix'
     | '/admin/collections'
     | '/admin/dashboard'
+    | '/admin/ecosystem-graph'
+    | '/admin/engagement-intelligence'
+    | '/admin/experience-popup'
     | '/admin/integrations'
     | '/admin/marketplaces'
     | '/admin/metrics'
     | '/admin/modules'
+    | '/admin/notification-intelligence'
     | '/admin/notifications'
     | '/admin/offers'
     | '/admin/opportunities'
@@ -685,6 +756,7 @@ export interface FileRouteTypes {
     | '/admin/support'
     | '/admin/support-knowledge'
     | '/admin/telegram'
+    | '/admin/trust-quality'
     | '/admin/users'
     | '/admin/v1-audit'
     | '/admin/videos'
@@ -725,9 +797,11 @@ export interface FileRouteTypes {
     | '/search'
     | '/trending'
     | '/videos'
+    | '/admin/algorithm-control'
     | '/admin/analytics'
     | '/admin/audit'
     | '/admin/automations'
+    | '/admin/banner-preview'
     | '/admin/bridge-videos'
     | '/admin/bundles'
     | '/admin/campaigns'
@@ -735,10 +809,14 @@ export interface FileRouteTypes {
     | '/admin/channel-strategy-matrix'
     | '/admin/collections'
     | '/admin/dashboard'
+    | '/admin/ecosystem-graph'
+    | '/admin/engagement-intelligence'
+    | '/admin/experience-popup'
     | '/admin/integrations'
     | '/admin/marketplaces'
     | '/admin/metrics'
     | '/admin/modules'
+    | '/admin/notification-intelligence'
     | '/admin/notifications'
     | '/admin/offers'
     | '/admin/opportunities'
@@ -755,6 +833,7 @@ export interface FileRouteTypes {
     | '/admin/support'
     | '/admin/support-knowledge'
     | '/admin/telegram'
+    | '/admin/trust-quality'
     | '/admin/users'
     | '/admin/v1-audit'
     | '/admin/videos'
@@ -795,9 +874,11 @@ export interface FileRouteTypes {
     | '/search'
     | '/trending'
     | '/videos'
+    | '/admin/algorithm-control'
     | '/admin/analytics'
     | '/admin/audit'
     | '/admin/automations'
+    | '/admin/banner-preview'
     | '/admin/bridge-videos'
     | '/admin/bundles'
     | '/admin/campaigns'
@@ -805,10 +886,14 @@ export interface FileRouteTypes {
     | '/admin/channel-strategy-matrix'
     | '/admin/collections'
     | '/admin/dashboard'
+    | '/admin/ecosystem-graph'
+    | '/admin/engagement-intelligence'
+    | '/admin/experience-popup'
     | '/admin/integrations'
     | '/admin/marketplaces'
     | '/admin/metrics'
     | '/admin/modules'
+    | '/admin/notification-intelligence'
     | '/admin/notifications'
     | '/admin/offers'
     | '/admin/opportunities'
@@ -825,6 +910,7 @@ export interface FileRouteTypes {
     | '/admin/support'
     | '/admin/support-knowledge'
     | '/admin/telegram'
+    | '/admin/trust-quality'
     | '/admin/users'
     | '/admin/v1-audit'
     | '/admin/videos'
@@ -1016,6 +1102,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VideosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/algorithm-control': {
+      id: '/admin/algorithm-control'
+      path: '/algorithm-control'
+      fullPath: '/admin/algorithm-control'
+      preLoaderRoute: typeof AdminAlgorithmControlRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/analytics': {
       id: '/admin/analytics'
       path: '/analytics'
@@ -1035,6 +1128,13 @@ declare module '@tanstack/react-router' {
       path: '/automations'
       fullPath: '/admin/automations'
       preLoaderRoute: typeof AdminAutomationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/banner-preview': {
+      id: '/admin/banner-preview'
+      path: '/banner-preview'
+      fullPath: '/admin/banner-preview'
+      preLoaderRoute: typeof AdminBannerPreviewRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/bridge-videos': {
@@ -1086,6 +1186,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminDashboardRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/ecosystem-graph': {
+      id: '/admin/ecosystem-graph'
+      path: '/ecosystem-graph'
+      fullPath: '/admin/ecosystem-graph'
+      preLoaderRoute: typeof AdminEcosystemGraphRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/engagement-intelligence': {
+      id: '/admin/engagement-intelligence'
+      path: '/engagement-intelligence'
+      fullPath: '/admin/engagement-intelligence'
+      preLoaderRoute: typeof AdminEngagementIntelligenceRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/experience-popup': {
+      id: '/admin/experience-popup'
+      path: '/experience-popup'
+      fullPath: '/admin/experience-popup'
+      preLoaderRoute: typeof AdminExperiencePopupRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/integrations': {
       id: '/admin/integrations'
       path: '/integrations'
@@ -1112,6 +1233,13 @@ declare module '@tanstack/react-router' {
       path: '/modules'
       fullPath: '/admin/modules'
       preLoaderRoute: typeof AdminModulesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/notification-intelligence': {
+      id: '/admin/notification-intelligence'
+      path: '/notification-intelligence'
+      fullPath: '/admin/notification-intelligence'
+      preLoaderRoute: typeof AdminNotificationIntelligenceRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/notifications': {
@@ -1224,6 +1352,13 @@ declare module '@tanstack/react-router' {
       path: '/telegram'
       fullPath: '/admin/telegram'
       preLoaderRoute: typeof AdminTelegramRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/trust-quality': {
+      id: '/admin/trust-quality'
+      path: '/trust-quality'
+      fullPath: '/admin/trust-quality'
+      preLoaderRoute: typeof AdminTrustQualityRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/users': {
@@ -1413,9 +1548,11 @@ const AdminVideosRouteWithChildren = AdminVideosRoute._addFileChildren(
 )
 
 interface AdminRouteChildren {
+  AdminAlgorithmControlRoute: typeof AdminAlgorithmControlRoute
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminAuditRoute: typeof AdminAuditRoute
   AdminAutomationsRoute: typeof AdminAutomationsRoute
+  AdminBannerPreviewRoute: typeof AdminBannerPreviewRoute
   AdminBridgeVideosRoute: typeof AdminBridgeVideosRoute
   AdminBundlesRoute: typeof AdminBundlesRoute
   AdminCampaignsRoute: typeof AdminCampaignsRoute
@@ -1423,10 +1560,14 @@ interface AdminRouteChildren {
   AdminChannelStrategyMatrixRoute: typeof AdminChannelStrategyMatrixRoute
   AdminCollectionsRoute: typeof AdminCollectionsRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
+  AdminEcosystemGraphRoute: typeof AdminEcosystemGraphRoute
+  AdminEngagementIntelligenceRoute: typeof AdminEngagementIntelligenceRoute
+  AdminExperiencePopupRoute: typeof AdminExperiencePopupRoute
   AdminIntegrationsRoute: typeof AdminIntegrationsRoute
   AdminMarketplacesRoute: typeof AdminMarketplacesRouteWithChildren
   AdminMetricsRoute: typeof AdminMetricsRoute
   AdminModulesRoute: typeof AdminModulesRoute
+  AdminNotificationIntelligenceRoute: typeof AdminNotificationIntelligenceRoute
   AdminNotificationsRoute: typeof AdminNotificationsRoute
   AdminOffersRoute: typeof AdminOffersRouteWithChildren
   AdminOpportunitiesRoute: typeof AdminOpportunitiesRoute
@@ -1443,15 +1584,18 @@ interface AdminRouteChildren {
   AdminSupportRoute: typeof AdminSupportRoute
   AdminSupportKnowledgeRoute: typeof AdminSupportKnowledgeRoute
   AdminTelegramRoute: typeof AdminTelegramRoute
+  AdminTrustQualityRoute: typeof AdminTrustQualityRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminV1AuditRoute: typeof AdminV1AuditRoute
   AdminVideosRoute: typeof AdminVideosRouteWithChildren
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminAlgorithmControlRoute: AdminAlgorithmControlRoute,
   AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminAuditRoute: AdminAuditRoute,
   AdminAutomationsRoute: AdminAutomationsRoute,
+  AdminBannerPreviewRoute: AdminBannerPreviewRoute,
   AdminBridgeVideosRoute: AdminBridgeVideosRoute,
   AdminBundlesRoute: AdminBundlesRoute,
   AdminCampaignsRoute: AdminCampaignsRoute,
@@ -1459,10 +1603,14 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminChannelStrategyMatrixRoute: AdminChannelStrategyMatrixRoute,
   AdminCollectionsRoute: AdminCollectionsRoute,
   AdminDashboardRoute: AdminDashboardRoute,
+  AdminEcosystemGraphRoute: AdminEcosystemGraphRoute,
+  AdminEngagementIntelligenceRoute: AdminEngagementIntelligenceRoute,
+  AdminExperiencePopupRoute: AdminExperiencePopupRoute,
   AdminIntegrationsRoute: AdminIntegrationsRoute,
   AdminMarketplacesRoute: AdminMarketplacesRouteWithChildren,
   AdminMetricsRoute: AdminMetricsRoute,
   AdminModulesRoute: AdminModulesRoute,
+  AdminNotificationIntelligenceRoute: AdminNotificationIntelligenceRoute,
   AdminNotificationsRoute: AdminNotificationsRoute,
   AdminOffersRoute: AdminOffersRouteWithChildren,
   AdminOpportunitiesRoute: AdminOpportunitiesRoute,
@@ -1479,6 +1627,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminSupportRoute: AdminSupportRoute,
   AdminSupportKnowledgeRoute: AdminSupportKnowledgeRoute,
   AdminTelegramRoute: AdminTelegramRoute,
+  AdminTrustQualityRoute: AdminTrustQualityRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminV1AuditRoute: AdminV1AuditRoute,
   AdminVideosRoute: AdminVideosRouteWithChildren,

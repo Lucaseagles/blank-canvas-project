@@ -588,6 +588,13 @@ export type Database = {
             referencedRelation: "campaigns"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "campaign_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
         ]
       }
       campaigns: {
@@ -3367,6 +3374,10 @@ export type Database = {
         Args: { p_orchestration_id: string }
         Returns: Json
       }
+      get_ab_experiment_result: {
+        Args: { p_experiment_id: string }
+        Returns: Json
+      }
       get_active_social_channels: {
         Args: never
         Returns: {
@@ -3462,6 +3473,7 @@ export type Database = {
         Args: { p_field_key: string; p_platform_id: string }
         Returns: string
       }
+      get_notification_intelligence: { Args: never; Returns: Json }
       get_opportunity_alerts: {
         Args: { p_status?: string }
         Returns: {
@@ -3705,6 +3717,14 @@ export type Database = {
         Returns: boolean
       }
       update_user_streak: { Args: { _user_id: string }; Returns: undefined }
+      validate_campaign_configuration: {
+        Args: { p_campaign_id: string }
+        Returns: {
+          error_count: number
+          errors: Json
+          valid: boolean
+        }[]
+      }
     }
     Enums: {
       app_role: "owner" | "admin" | "user"
