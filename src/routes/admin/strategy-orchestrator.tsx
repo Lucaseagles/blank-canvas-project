@@ -160,7 +160,7 @@ function StrategyOrchestratorPage() {
               <CardContent className="p-4">
                 <div className="flex flex-col gap-3 lg:flex-row">
                   <div className="relative flex-1"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input className="h-10 rounded-xl bg-muted/40 pl-9" placeholder="Buscar por nome ou observação..." value={search} onChange={e => setSearch(e.target.value)} /></div>
-                  <div className="flex gap-2 overflow-x-auto"><FilterSelect value={statusFilter} onChange={setStatusFilter} options={[["all", "Todos os status"], ...Object.entries(statusLabels)]} /><FilterSelect value={objectiveFilter} onChange={setObjectiveFilter} options={[["all", "Todos os objetivos"], ...objectives.map(v => [v, objectiveLabels[v]])]} /></div>
+                  <div className="flex gap-2 overflow-x-auto"><FilterSelect value={statusFilter} onChange={setStatusFilter} options={[["all", "Todos os status"], ...Object.entries(statusLabels)]} /><FilterSelect value={objectiveFilter} onChange={setObjectiveFilter} options={[["all", "Todos os objetivos"], ...objectives.map(v => [v, objectiveLabels[v] ?? v] as [string, string])]} /></div>
                 </div>
               </CardContent>
             </Card>

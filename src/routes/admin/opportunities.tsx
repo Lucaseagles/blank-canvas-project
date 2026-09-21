@@ -18,7 +18,7 @@ function OpportunitiesPage() {
   const [type, setType] = useState("all");
   const { data, isLoading, isError, refetch } = useQuery({ queryKey: ["opportunity-alerts","open"], queryFn: () => getOpportunityAlerts({ data: { status: "open" } }) });
   const refresh = useMutation({ mutationFn: () => refreshOpportunityAlerts(), onSuccess: (result) => { void queryClient.invalidateQueries({ queryKey: ["opportunity-alerts"] }); toastSafe(`${result.count} sinal(is) processado(s)`); }, onError: () => toastSafe("Não foi possível atualizar os sinais", true) });
-  const update = useMutation({ mutationFn: updateOpportunityAlertStatus, onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["opportunity-alerts"]), onError: () => toastSafe("Não foi possível atualizar a oportunidade", true) });
+  const update = useMutation({ mutationFn: updateOpportunityAlertStatus, onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["opportunity-alerts"] }), onError: () => toastSafe("Não foi possível atualizar a oportunidade", true) });
   const alerts = data ?? [];
   const filtered = useMemo(() => alerts.filter(alert => {
     const q = search.trim().toLowerCase();
