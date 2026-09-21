@@ -36,9 +36,13 @@ function AlertsPage() {
   const markReadFn = useServerFn(markNotificationRead);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) setUserId(user.id);
+    supabase.auth.getSession().then(({ data }) => {
+      setUserId(data.session?.user?.id ?? null);
     });
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserId(session?.user?.id ?? null);
+    });
+    return () => sub.subscription.unsubscribe();
   }, []);
 
   const { data: alerts, isLoading: loadingAlerts } = useQuery({
