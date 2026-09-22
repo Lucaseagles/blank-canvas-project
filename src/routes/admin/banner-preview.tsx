@@ -61,7 +61,7 @@ function BannerPreviewPage() {
       if (editing?.["id"]) return update({ data: { source: "banners", id: String(editing["id"]), patch: clean } });
       return create({ data: clean });
     },
-    onSuccess: (result) => { toast.success(editing?.["id"] ? "Banner atualizado." : "Banner criado."); setEditorOpen(false); setEditing(null); setSelectedId(String(result.row["id"])); refresh(); },
+    onSuccess: (result) => { toast.success(editing?.["id"] ? "Banner atualizado." : "Banner criado."); setEditorOpen(false); setEditing(null); setSelectedId(String((result.row as any)?.["id"] ?? "")); refresh(); },
     onError: (error) => toast.error(error.message),
   });
   const deleteMutation = useMutation({
@@ -99,7 +99,7 @@ function BannerPreviewPage() {
               <Metric label="Ativos agora" value={counts.active} icon={<CheckCircle2 className="h-4 w-4" />} />
               <Metric label="Agendados" value={counts.scheduled} icon={<CalendarDays className="h-4 w-4" />} />
               <Metric label="Expirados" value={counts.expired} icon={<XCircle className="h-4 w-4" />} />
-              <Metric label="Inativos" value={counts.inactive} icon={<EyeIcon />} />
+              <Metric label="Inativos" value={counts.inactive} icon={<XCircle />} />
             </div>
 
             <Card className="rounded-[2rem] border-primary/10 shadow-sm">
@@ -113,7 +113,7 @@ function BannerPreviewPage() {
               <Card className="overflow-hidden rounded-[2rem] border-primary/10 shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between gap-4 border-b bg-muted/20 p-5">
                   <div><p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Preview real</p><CardTitle className="mt-1 text-lg font-black">{selected["title"] ? String(selected["title"]) : "Banner sem título"}</CardTitle></div>
-                  <div className="flex gap-2"><Button size="icon" variant="outline" className="rounded-xl" disabled={selectedIndex <= 0} onClick={() => setSelectedId(String(filtered[selectedIndex - 1]["id"]))}><ArrowLeft /></Button><Button size="icon" variant="outline" className="rounded-xl" disabled={selectedIndex < 0 || selectedIndex >= filtered.length - 1} onClick={() => setSelectedId(String(filtered[selectedIndex + 1]["id"]))}><ArrowRight /></Button></div>
+                  <div className="flex gap-2"><Button size="icon" variant="outline" className="rounded-xl" disabled={selectedIndex <= 0} onClick={() => setSelectedId(String((filtered[selectedIndex - 1] as any)?.["id"] ?? ""))}><ArrowLeft /></Button><Button size="icon" variant="outline" className="rounded-xl" disabled={selectedIndex < 0 || selectedIndex >= filtered.length - 1} onClick={() => setSelectedId(String((filtered[selectedIndex + 1] as any)?.["id"] ?? ""))}><ArrowRight /></Button></div>
                 </CardHeader>
                 <CardContent className="flex min-h-[440px] items-center justify-center bg-muted/30 p-5 md:p-8">
                   <PreviewFrame banner={selected} device={device} />
@@ -126,7 +126,7 @@ function BannerPreviewPage() {
                   <StateBadge state={stateOf(selected)} />
                   <div className="grid grid-cols-2 gap-3"><Validation label="Imagem" ok={Boolean(String(selected["image_url"] ?? "").trim())} /><Validation label="Destino" ok={!selected["link_url"] || isUrl(String(selected["link_url"]))} /><Validation label="Datas" ok={validDates(selected)} /><Validation label="Dispositivo" ok={["all", "desktop", "tablet", "mobile"].includes(String(selected["target_device"] ?? "all"))} /></div>
                   <div className="space-y-2 rounded-2xl border bg-muted/20 p-4 text-xs"><Meta label="Posição" value={String(selected["position"] ?? "0")} /><Meta label="Público" value={String(selected["audience_segment"] ?? "Todos")} /><Meta label="Dispositivo" value={deviceLabel(String(selected["target_device"] ?? "all"))} /><Meta label="Início" value={formatDate(selected["starts_at"])} /><Meta label="Fim" value={formatDate(selected["ends_at"])} /></div>
-                  <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1"><Button className="gap-2 rounded-xl" onClick={() => openEdit(selected)}><Edit3 className="h-4 w-4" /> Editar banner</Button><Button variant="outline" className="gap-2 rounded-xl" onClick={() => duplicate(selected)}><Copy className="h-4 w-4" /> Duplicar</Button>{selected["link_url"] && <Button asChild variant="outline" className="gap-2 rounded-xl"><a href={String(selected["link_url"])} target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4" /> Abrir destino</a></Button>}<Button variant="destructive" className="gap-2 rounded-xl" onClick={() => setDeleteOpen(true)}><Trash2 className="h-4 w-4" /> Excluir banner</Button></div>
+                  <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1"><Button className="gap-2 rounded-xl" onClick={() => openEdit(selected)}><Edit3 className="h-4 w-4" /> Editar banner</Button><Button variant="outline" className="gap-2 rounded-xl" onClick={() => duplicate(selected)}><Copy className="h-4 w-4" /> Duplicar</Button>{Boolean(selected["link_url"]) && <Button asChild variant="outline" className="gap-2 rounded-xl"><a href={String(selected["link_url"])} target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4" /> Abrir destino</a></Button>}<Button variant="destructive" className="gap-2 rounded-xl" onClick={() => setDeleteOpen(true)}><Trash2 className="h-4 w-4" /> Excluir banner</Button></div>
                 </CardContent>
               </Card>
             </div> : <Card className="rounded-[2rem] border-dashed"><CardContent className="py-16 text-center text-sm text-muted-foreground">Nenhum banner corresponde ao filtro.</CardContent></Card>}
@@ -168,7 +168,7 @@ function BannerEditor({ open, banner, pending, onOpenChange, onSave }: { open: b
 function PreviewFrame({ banner, device }: { banner: Banner; device: Device }) {
   const width = device === "mobile" ? "w-[270px]" : device === "tablet" ? "w-[560px]" : "w-full";
   const image = String(banner["image_url"] ?? "");
-  return <div className={`overflow-hidden rounded-[1.6rem] border-4 border-foreground/10 bg-background shadow-2xl ${width}`}><div className="flex h-7 items-center gap-1 border-b bg-muted px-3"><span className="h-2 w-2 rounded-full bg-muted-foreground/30" /><span className="h-2 w-2 rounded-full bg-muted-foreground/30" /><span className="h-2 w-2 rounded-full bg-muted-foreground/30" /><span className="ml-2 h-2 flex-1 rounded-full bg-background/70" /></div><div className="relative aspect-[16/7] overflow-hidden bg-muted">{image ? <img src={image} alt={String(banner["title"] ?? "")} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-muted-foreground"><ImageIcon className="mr-2 h-5 w-5" /> Sem imagem</div>}<div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-5 pt-16 text-white"><p className="font-black">{String(banner["title"] ?? "Banner")}</p>{banner["link_url"] && <span className="mt-2 inline-flex rounded-lg bg-white/15 px-3 py-1.5 text-xs font-bold backdrop-blur">Abrir oferta</span>}</div></div></div>;
+  return <div className={`overflow-hidden rounded-[1.6rem] border-4 border-foreground/10 bg-background shadow-2xl ${width}`}><div className="flex h-7 items-center gap-1 border-b bg-muted px-3"><span className="h-2 w-2 rounded-full bg-muted-foreground/30" /><span className="h-2 w-2 rounded-full bg-muted-foreground/30" /><span className="h-2 w-2 rounded-full bg-muted-foreground/30" /><span className="ml-2 h-2 flex-1 rounded-full bg-background/70" /></div><div className="relative aspect-[16/7] overflow-hidden bg-muted">{image ? <img src={image} alt={String(banner["title"] ?? "")} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-muted-foreground"><ImageIcon className="mr-2 h-5 w-5" /> Sem imagem</div>}<div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-5 pt-16 text-white"><p className="font-black">{String(banner["title"] ?? "Banner")}</p>{Boolean(banner["link_url"]) && <span className="mt-2 inline-flex rounded-lg bg-white/15 px-3 py-1.5 text-xs font-bold backdrop-blur">Abrir oferta</span>}</div></div></div>;
 }
 
 function BannerCard({ banner, selected, onSelect, onEdit }: { banner: Banner; selected: boolean; onSelect: () => void; onEdit: () => void }) {
