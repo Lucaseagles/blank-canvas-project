@@ -6,7 +6,7 @@ import { requireOwnerRole } from "./auth-guards.server";
 const SETTINGS_REGISTRY = [
   { key: "personalization_weights", label: "Pesos de Personalização", category: "Personalização", table: "personalization_weights", editable: ["weight"] },
   { key: "feed_mix_config", label: "Mix do Feed", category: "Personalização", table: "feed_mix_config", editable: ["relevant_pct", "related_pct", "discovery_pct"] },
-  { key: "banners", label: "Banners", category: "Conteúdo", table: "banners", editable: ["title", "image_url", "link_url", "starts_at", "ends_at", "is_active", "position"] },
+  { key: "banners", label: "Banners", category: "Conteúdo", table: "banners", editable: ["title", "image_url", "link_url", "starts_at", "ends_at", "is_active", "position", "audience_segment", "target_device", "target_category_id", "target_product_id", "campaign_id"] },
   { key: "social_proof_config", label: "Prova Social", category: "Prova Social", table: "social_proof_config", editable: ["is_enabled", "hybrid_simulation_enabled", "show_location", "simulated_volume_boost", "show_aggregated_counters", "min_events_for_counter", "counter_window_hours", "allowed_event_types", "enabled_formats", "content_affinity_threshold", "low_volume_threshold", "adaptive_priority_enabled"] },
   { key: "popup_rules", label: "Regras de Pop-up", category: "Marketing Estratégico", table: "popup_rules", editable: ["priority", "cooldown_minutes", "frequency_cap_per_day", "starts_at", "ends_at", "content", "cta_label", "cta_target", "is_active"] },
   { key: "ab_experiments", label: "Experimentos A/B", category: "Marketing Estratégico", table: "ab_experiments", editable: ["variant_a", "variant_b", "target", "is_active"] },
@@ -81,6 +81,79 @@ export const updateAdminSetting = createServerFn({ method: "POST" }).middleware(
   if (auditError) throw auditError;
 
   return { success: true, row: sanitize(after) };
+});
+
+export const createBanner = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).inputValidator((data: unknown) => z.object({
+  title: z.string().trim().min(1).max(180),
+  image_url: z.string().trim().url().max(2000),
+  link_url: z.string().trim().url().max(2000).optional().or(z.literal("")),
+  starts_at: z.string().datetime({ offset: true }).nullable().optional(),
+  ends_at: z.string().datetime({ offset: true }).nullable().optional(),
+  is_active: z.boolean().default(true),
+  position: z.number().int().min(0).max(100000).default(0),
+  audience_segment: z.string().trim().max(120).optional().or(z.literal("")),
+  target_device: z.enum(["all", "desktop", "tablet", "mobile"]).default("all"),
+  target_category_id: z.string().uuid().nullable().optional(),
+  target_product_id: z.string().uuid().nullable().optional(),
+  campaign_id: z.string().uuid().nullable().optional(),
+}).superRefine((value, ctx) => {
+  if (value.starts_at && value.ends_at && new Date(value.ends_at).getTime() < new Date(value.starts_at).getTime()) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["ends_at"], message: "A data de fim deve ser posterior ao início." });
+  }
+}).parse(data)).handler(async ({ data, context }) => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const db = supabaseAdmin as any;
+  const payload = {
+    title: data.title,
+    image_url: data.image_url,
+    link_url: data.link_url || null,
+    starts_at: data.starts_at ?? null,
+    ends_at: data.ends_at ?? null,
+    is_active: data.is_active,
+    position: data.position,
+    audience_segment: data.audience_segment || null,
+    target_device: data.target_device,
+    target_category_id: data.target_category_id ?? null,
+    target_product_id: data.target_product_id ?? null,
+    campaign_id: data.campaign_id ?? null,
+  };
+  const { data: row, error } = await db.from("banners").insert(payload).select("*").single();
+  if (error) throw error;
+
+  const authDb = context.supabase as any;
+  const { error: auditError } = await authDb.rpc("append_admin_audit", {
+    p_action_type: "CREATE",
+    p_entity_type: "banners",
+    p_entity_id: row.id,
+    p_previous_value: null,
+    p_new_value: sanitize(row),
+  });
+  if (auditError) throw auditError;
+
+  return { success: true, row: sanitize(row) };
+});
+
+export const deleteBanner = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).inputValidator((data: unknown) => z.object({
+  id: z.string().uuid(),
+}).parse(data)).handler(async ({ data, context }) => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const db = supabaseAdmin as any;
+  const { data: before, error: readError } = await db.from("banners").select("*").eq("id", data.id).single();
+  if (readError) throw readError;
+  const { error } = await db.from("banners").delete().eq("id", data.id);
+  if (error) throw error;
+
+  const authDb = context.supabase as any;
+  const { error: auditError } = await authDb.rpc("append_admin_audit", {
+    p_action_type: "DELETE",
+    p_entity_type: "banners",
+    p_entity_id: data.id,
+    p_previous_value: sanitize(before),
+    p_new_value: null,
+  });
+  if (auditError) throw auditError;
+
+  return { success: true, id: data.id };
 });
 
 export const getAdminAuditLog = createServerFn({ method: "GET" }).middleware([requireOwnerRole]).inputValidator((data: unknown) => z.object({ page: z.number().int().min(0).default(0), pageSize: z.number().int().min(1).max(100).default(25), actionType: z.string().trim().max(80).optional(), entityType: z.string().trim().max(120).optional() }).parse(data)).handler(async ({ data }) => {
