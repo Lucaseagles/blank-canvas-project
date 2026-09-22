@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, CalendarDays, CheckCircle2, Copy, Edit3, ExternalLink, ImageIcon, LayoutGrid, Monitor, Plus, RefreshCw, Smartphone, Tablet, Trash2, TriangleAlert, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -146,7 +146,7 @@ function BannerEditor({ open, banner, pending, onOpenChange, onSave }: { open: b
   const [form, setForm] = useState<Banner>({});
   const [lastKey, setLastKey] = useState<string | null>(null);
   const sourceKey = banner?.["id"] ? String(banner["id"]) : "new";
-  if (open && lastKey !== sourceKey) { setForm(banner ? { ...banner } : { is_active: true, position: 0, target_device: "all" }); setLastKey(sourceKey); }
+  useEffect(() => { if (open && lastKey !== sourceKey) { setForm(banner ? { ...banner } : { is_active: true, position: 0, target_device: "all" }); setLastKey(sourceKey); } }, [open, sourceKey, banner, lastKey]);
   const set = (key: string, value: unknown) => setForm((current) => ({ ...current, [key]: value }));
   const dateInput = (value: unknown) => value ? new Date(String(value)).toISOString().slice(0, 16) : "";
   const dateToIso = (value: string) => value ? new Date(value).toISOString() : null;
@@ -189,6 +189,4 @@ function Metric({ label, value, icon }: { label: string; value: number; icon: Re
 function DeviceButton({ active, icon, label, onClick }: { active: boolean; icon: ReactNode; label: string; onClick: () => void }) { return <Button size="sm" variant={active ? "default" : "outline"} className="gap-2 rounded-xl" onClick={onClick}>{icon}{label}</Button>; }
 function Meta({ label, value }: { label: string; value: string }) { return <div className="flex items-center justify-between gap-3"><span className="text-muted-foreground">{label}</span><span className="max-w-[65%] truncate text-right font-semibold">{value}</span></div>; }
 function Field({ label, required, children }: { label: string; required?: boolean; children: ReactNode }) { return <label className="space-y-1.5"><Label>{label}{required ? " *" : ""}</Label>{children}</label>; }
-function EyeIcon() { return <EyeIconBase />; }
-function EyeIconBase() { return <CheckCircle2 className="h-4 w-4" />; }
 function LoadingState() { return <div className="space-y-5"><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">{Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-24 animate-pulse rounded-[1.5rem] border bg-muted/30" />)}</div><div className="h-24 animate-pulse rounded-[2rem] border bg-muted/30" /><div className="h-[480px] animate-pulse rounded-[2rem] border bg-muted/30" /></div>; }
