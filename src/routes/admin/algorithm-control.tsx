@@ -2,13 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState, type ReactNode } from "react";
-import { BrainCircuit, CheckCircle2, Gauge, Info, RefreshCw, Save, Settings2, SlidersHorizontal, Sparkles, TriangleAlert } from "lucide-react";
+import { BrainCircuit, CheckCircle2, Clock3, Gauge, History, Info, RefreshCw, Save, Settings2, SlidersHorizontal, Sparkles, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { getAdminSettings, updateAdminSetting } from "@/lib/admin-settings.functions";
+import { getAdminAuditLog, getAdminSettings, updateAdminSetting } from "@/lib/admin-settings.functions";
 
 export const Route = createFileRoute("/admin/algorithm-control")({ component: AlgorithmControlPage });
 
@@ -19,13 +19,16 @@ const MIX_KEYS = ["relevant_pct", "related_pct", "discovery_pct"] as const;
 function AlgorithmControlPage() {
   const qc = useQueryClient();
   const getSettings = useServerFn(getAdminSettings);
+  const getAudit = useServerFn(getAdminAuditLog);
   const update = useServerFn(updateAdminSetting);
   const query = useQuery({ queryKey: ["admin-algorithm-control"], queryFn: () => getSettings({ data: undefined }) });
+  const auditQuery = useQuery({ queryKey: ["admin-algorithm-control-audit"], queryFn: () => getAudit({ data: { page: 0, pageSize: 8 } }) });
   const mutation = useMutation({
     mutationFn: (input: { source: string; id: string; patch: Record<string, unknown> }) => update({ data: input }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-algorithm-control"] });
       qc.invalidateQueries({ queryKey: ["admin-settings"] });
+      qc.invalidateQueries({ queryKey: ["admin-algorithm-control-audit"] });
       toast.success("Parâmetro atualizado e auditado");
     },
     onError: (error) => toast.error(error.message),
@@ -44,6 +47,9 @@ function AlgorithmControlPage() {
   const maxWeight = Math.max(...weightRows.map((row) => Math.abs(Number(row["weight"] ?? 0))), 0);
   const availableSources = sources.filter((source) => source.available).length;
   const unavailableSources = sources.length - availableSources;
+  const weightsReady = Boolean(weights?.available && weightRows.length > 0);
+  const engineReady = mixIsBalanced && weightsReady && unavailableSources === 0;
+  const auditRows = ((auditQuery.data?.rows ?? []) as Array<Record<string, unknown>>).filter((row) => row["entity_type"] === "personalization_weights" || row["entity_type"] === "feed_mix_config");
 
   const updatedAt = query.dataUpdatedAt ? new Date(query.dataUpdatedAt).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : null;
 
@@ -64,8 +70,8 @@ function AlgorithmControlPage() {
             </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               {updatedAt && <span className="text-xs text-muted-foreground">Atualizado {updatedAt}</span>}
-              <Button variant="outline" className="gap-2 rounded-xl" onClick={() => query.refetch()} disabled={query.isFetching}>
-                <RefreshCw className={`h-4 w-4 ${query.isFetching ? "animate-spin" : ""}`} /> {query.isFetching ? "Atualizando…" : "Atualizar"}
+              <Button variant="outline" className="gap-2 rounded-xl" onClick={() => { void query.refetch(); void auditQuery.refetch(); }} disabled={query.isFetching || auditQuery.isFetching}>
+                <RefreshCw className={`h-4 w-4 ${query.isFetching || auditQuery.isFetching ? "animate-spin" : ""}`} /> {query.isFetching || auditQuery.isFetching ? "Atualizando…" : "Atualizar"}
               </Button>
             </div>
           </div>
@@ -91,6 +97,15 @@ function AlgorithmControlPage() {
               <MetricCard icon={<BrainCircuit className="h-4 w-4" />} label="Estado do motor" value={mixIsBalanced && unavailableSources === 0 ? "Operacional" : "Atenção"} detail="Baseado nas fontes carregadas" />
             </div>
 
+            <Card className="rounded-[2rem] border-primary/10 shadow-sm">
+              <CardContent className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
+                <div className="flex gap-4">
+                  <div className={engineReady ? "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600" : "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600"}>{engineReady ? <CheckCircle2 className="h-5 w-5" /> : <TriangleAlert className="h-5 w-5" />}</div>
+                  <div><p className="font-black">{engineReady ? "Diagnóstico: configuração pronta" : "Diagnóstico: atenção necessária"}</p><p className="mt-1 text-xs leading-5 text-muted-foreground">{engineReady ? "As fontes principais estão disponíveis, existem sinais configurados e o mix totaliza 100%." : "Revise os indicadores abaixo antes de considerar a configuração pronta para operação."}</p></div>
+                </div>
+                <Badge variant={engineReady ? "secondary" : "outline"} className="w-fit rounded-full">{engineReady ? "OK para revisão operacional" : "Revisar configuração"}</Badge>
+              </CardContent>
+            </Card>
             <section className="grid gap-6 lg:grid-cols-[1.15fr_.85fr]">
               <Card className="overflow-hidden rounded-[2rem] border-primary/10 shadow-sm">
                 <CardHeader className="border-b bg-muted/20 p-6">
@@ -143,6 +158,24 @@ function AlgorithmControlPage() {
               </Card>
             </section>
 
+            <section className="grid gap-6 lg:grid-cols-[.9fr_1.1fr]">
+              <Card className="rounded-[2rem] border-primary/10 shadow-sm">
+                <CardHeader className="p-6 pb-3"><div className="flex items-center gap-2"><Info className="h-5 w-5 text-primary" /><CardTitle className="text-lg font-black">Checklist operacional</CardTitle></div></CardHeader>
+                <CardContent className="space-y-2 p-6 pt-3">
+                  <CheckItem ok={Boolean(weights?.available)} label="Fonte de pesos disponível" detail={weights?.available ? "Leitura realizada" : "Fonte indisponível"} />
+                  <CheckItem ok={weightRows.length > 0} label="Existem sinais configurados" detail={String(weightRows.length) + " registro(s)"} />
+                  <CheckItem ok={Boolean(feedMix?.available && mixRow)} label="Configuração de mix disponível" detail={mixRow ? "Registro encontrado" : "Nenhum registro"} />
+                  <CheckItem ok={mixIsBalanced} label="Mix totaliza 100%" detail={mixTotal.toFixed(2) + "% calculado"} />
+                  <CheckItem ok={unavailableSources === 0} label="Fontes administrativas sem erro" detail={unavailableSources ? String(unavailableSources) + " fonte(s) com erro" : "Todas disponíveis"} />
+                </CardContent>
+              </Card>
+              <Card className="rounded-[2rem] border-primary/10 shadow-sm">
+                <CardHeader className="p-6 pb-3"><div className="flex items-center justify-between gap-3"><div className="flex items-center gap-2"><History className="h-5 w-5 text-primary" /><CardTitle className="text-lg font-black">Últimas alterações</CardTitle></div><Badge variant="outline" className="rounded-full">Auditoria existente</Badge></div></CardHeader>
+                <CardContent className="p-6 pt-3">
+                  {auditQuery.isError ? <div className="rounded-2xl border border-dashed p-6 text-center text-xs text-muted-foreground">Histórico indisponível no momento.</div> : auditRows.length === 0 ? <div className="rounded-2xl border border-dashed p-6 text-center text-xs text-muted-foreground">Nenhuma alteração recente encontrada para estes parâmetros.</div> : <div className="space-y-2">{auditRows.map((row) => <AuditItem key={String(row["id"])} row={row} />)}</div>}
+                </CardContent>
+              </Card>
+            </section>
             {unavailableSources > 0 && (
               <Card className="rounded-[2rem] border-amber-500/30 bg-amber-500/[0.04]">
                 <CardContent className="flex gap-3 p-5 text-sm">
@@ -180,6 +213,19 @@ function MixRow({ label, value, pending, onSave }: { label: string; value: numbe
   const [draft, setDraft] = useState(String(value));
   const valid = Number.isFinite(Number(draft)) && Number(draft) >= 0 && Number(draft) <= 100;
   return <div className="rounded-2xl border bg-background/70 p-4"><div className="flex items-center justify-between gap-2"><p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{label}</p><span className="text-xs font-bold text-muted-foreground">%</span></div><Input className="mt-2 rounded-xl" type="number" min="0" max="100" step="1" value={draft} onChange={(e) => setDraft(e.target.value)} /><Button size="sm" className="mt-3 w-full gap-2 rounded-xl" disabled={pending || !valid} onClick={() => onSave(Number(draft))}><Save className="h-4 w-4" />Salvar</Button></div>;
+}
+
+function CheckItem({ ok, label, detail }: { ok: boolean; label: string; detail: string }) {
+  return <div className="flex items-center gap-3 rounded-xl border bg-background/60 p-3"><div className={ok ? "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600" : "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600"}>{ok ? <CheckCircle2 className="h-4 w-4" /> : <TriangleAlert className="h-4 w-4" />}</div><div className="min-w-0"><p className="text-sm font-semibold">{label}</p><p className="text-[10px] text-muted-foreground">{detail}</p></div></div>;
+}
+
+function AuditItem({ row }: { row: Record<string, unknown> }) {
+  const label = row["entity_type"] === "personalization_weights" ? "Peso de personalização" : "Mix do feed";
+  const before = (row["previous_value"] ?? {}) as Record<string, unknown>;
+  const after = (row["new_value"] ?? {}) as Record<string, unknown>;
+  const changedKey = Object.keys(after).find((key) => String(before[key] ?? "") !== String(after[key] ?? "")) ?? "configuração";
+  const createdAt = String(row["created_at"] ?? "");
+  return <div className="flex gap-3 rounded-xl border bg-background/60 p-3"><div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><Clock3 className="h-4 w-4" /></div><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center justify-between gap-2"><p className="text-xs font-bold">{label}</p><span className="text-[10px] text-muted-foreground">{createdAt ? new Date(createdAt).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "—"}</span></div><p className="mt-1 text-[10px] text-muted-foreground">{changedKey}: {String(before[changedKey] ?? "—")} → {String(after[changedKey] ?? "—")} · {String(row["actor_email"] ?? "Usuário autenticado")}</p></div></div>;
 }
 
 function Empty({ text, icon }: { text: string; icon: ReactNode }) {
