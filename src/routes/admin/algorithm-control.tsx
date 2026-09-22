@@ -139,7 +139,7 @@ function AlgorithmControlPage() {
                     <>
                       <div className="mb-6 overflow-hidden rounded-2xl border bg-muted/20">
                         <div className="flex h-3">
-                          {MIX_KEYS.map((key, index) => <div key={key} className="bg-primary transition-all" style={{ width: `${Math.max(0, Math.min(100, mixValues[index]))}%`, opacity: 1 - index * 0.18 }} />)}
+                          {MIX_KEYS.map((key, index) => <div key={key} className="bg-primary transition-all" style={{ width: `${Math.max(0, Math.min(100, mixValues[index] ?? 0))}%`, opacity: 1 - index * 0.18 }} />)}
                         </div>
                         <div className="grid grid-cols-3 divide-x text-center">
                           {MIX_KEYS.map((key, index) => <div key={key} className="p-3"><p className="text-lg font-black">{mixValues[index]}%</p><p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{key.replace("_pct", "")}</p></div>)}
