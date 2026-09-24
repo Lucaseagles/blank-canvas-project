@@ -110,8 +110,17 @@ export const saveSocialStrategy = createServerFn({ method: "POST" })
     const query = data.id
       ? supabase.from("social_channel_strategies").update(payload).eq("id", data.id)
       : supabase.from("social_channel_strategies").insert(payload);
-    const { error } = await query;
+    const { data: saved, error } = await query.select("*").single();
     if (error) throw error;
+
+    const { error: auditError } = await supabase.rpc("append_admin_audit", {
+      p_action_type: data.id ? "UPDATE" : "CREATE",
+      p_entity_type: "social_channel_strategies",
+      p_entity_id: saved.id,
+      p_previous_value: null,
+      p_new_value: saved,
+    });
+    if (auditError) throw auditError;
     return { success: true };
   });
 
