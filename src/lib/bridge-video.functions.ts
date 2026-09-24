@@ -13,6 +13,8 @@ const bridgeVideoInput = z.object({
   is_active: z.boolean().default(true),
 });
 
+const productIdInput = z.object({ product_id: z.string().uuid() });
+
 export const getAdminBridgeVideos = createServerFn({ method: 'GET' })
   .middleware([requireOwnerRole])
   .handler(async () => {
@@ -25,11 +27,37 @@ export const getAdminBridgeVideos = createServerFn({ method: 'GET' })
     return data ?? [];
   });
 
+export const getAdminBridgeProducts = createServerFn({ method: 'GET' })
+  .middleware([requireOwnerRole])
+  .handler(async () => {
+    const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+    const { data, error } = await supabaseAdmin
+      .from('products')
+      .select('id,title,status')
+      .neq('status', 'deleted')
+      .order('title', { ascending: true });
+    if (error) throw error;
+    return data ?? [];
+  });
+
 export const saveBridgeVideo = createServerFn({ method: 'POST' })
   .middleware([requireOwnerRole])
   .validator((data: unknown) => bridgeVideoInput.parse(data))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+
+    const { data: product, error: productError } = await supabaseAdmin
+      .from('products')
+      .select('id')
+      .eq('id', data.product_id)
+      .neq('status', 'deleted')
+      .maybeSingle();
+
+    if (productError) throw productError;
+    if (!product) {
+      throw new Error('O produto selecionado não existe ou está excluído.');
+    }
+
     const payload = {
       product_id: data.product_id,
       title: data.title,
@@ -39,12 +67,23 @@ export const saveBridgeVideo = createServerFn({ method: 'POST' })
       link: data.link,
       is_active: data.is_active,
     };
+
     if (data.id) {
-      const { data: row, error } = await supabaseAdmin.from('bridge_videos').update(payload).eq('id', data.id).select('*').single();
+      const { data: row, error } = await supabaseAdmin
+        .from('bridge_videos')
+        .update(payload)
+        .eq('id', data.id)
+        .select('*')
+        .single();
       if (error) throw error;
       return row;
     }
-    const { data: row, error } = await supabaseAdmin.from('bridge_videos').insert(payload).select('*').single();
+
+    const { data: row, error } = await supabaseAdmin
+      .from('bridge_videos')
+      .insert(payload)
+      .select('*')
+      .single();
     if (error) throw error;
     return row;
   });
