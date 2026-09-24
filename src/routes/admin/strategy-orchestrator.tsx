@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { createStrategyOrchestration, generateStrategyOrchestrationPlan, approveStrategyOrchestration, listStrategyOrchestrations, getStrategyOrchestrationOptions, pauseStrategyOrchestration, type StrategyOrchestration } from "@/lib/strategy-orchestrator.functions";
+import { createStrategyOrchestration, generateStrategyOrchestrationPlan, approveStrategyOrchestration, listStrategyOrchestrations, getStrategyOrchestrationOptions, getStrategyOrchestrationVideos, pauseStrategyOrchestration, type StrategyOrchestration } from "@/lib/strategy-orchestrator.functions";
 import { prepareStrategyPublishing } from "@/lib/admin-publishing.functions";
 
 export const Route = createFileRoute("/admin/strategy-orchestrator")({ component: StrategyOrchestratorPage });
@@ -29,12 +29,7 @@ function StrategyOrchestratorPage() {
   const { data: options = [] } = useQuery({ queryKey: ["strategy-orchestration-options"], queryFn: getStrategyOrchestrationOptions });
   const { data: videos = [] } = useQuery({
     queryKey: ["strategy-orchestration-videos"],
-    queryFn: async () => {
-      const { supabase } = await import("@/integrations/supabase/client");
-      const { data, error } = await (supabase as any).from("videos").select("id,title,platform,video_url,external_url,thumbnail_url").order("created_at", { ascending: false }).limit(100);
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: getStrategyOrchestrationVideos,
   });
 
   const refresh = () => {
