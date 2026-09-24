@@ -53,6 +53,8 @@ export const getAdminSettings = createServerFn({ method: "GET" }).middleware([re
 
 export const updateAdminSetting = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).inputValidator((data: unknown) => z.object({ source: z.string().trim().min(1).max(100), id: z.string().uuid(), patch: z.record(z.string(), z.unknown()) }).parse(data)).handler(async ({ data, context }) => {
   const entry = registryEntry(data.source);
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const db = supabaseAdmin as any;
   const patch: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(data.patch)) {
     if (!entry.editable.includes(key as never)) continue;
@@ -92,8 +94,6 @@ export const updateAdminSetting = createServerFn({ method: "POST" }).middleware(
 
   if (HAS_UPDATED_AT.has(entry.key)) patch["updated_at"] = new Date().toISOString();
 
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const db = supabaseAdmin as any;
   const { data: before, error: readError } = await db.from(entry.table).select("*").eq("id", data.id).single();
   if (readError) throw readError;
   const { data: after, error } = await db.from(entry.table).update(patch).eq("id", data.id).select("*").single();
