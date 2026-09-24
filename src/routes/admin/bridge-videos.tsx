@@ -3,8 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { Plus, Pencil, Trash2, ExternalLink, Link2, Video, Search, Play, Layers3, CheckCircle2, XCircle } from 'lucide-react';
 import { useServerFn } from '@tanstack/react-start';
-import { getAdminBridgeVideos, saveBridgeVideo, deleteBridgeVideo } from '@/lib/bridge-video.functions';
-import { supabase } from '@/integrations/supabase/client';
+import { getAdminBridgeVideos, getAdminBridgeProducts, saveBridgeVideo, deleteBridgeVideo } from '@/lib/bridge-video.functions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -58,6 +57,7 @@ const platformTone: Record<Platform, string> = {
 function AdminBridgeVideosPage() {
   const queryClient = useQueryClient();
   const getFn = useServerFn(getAdminBridgeVideos);
+  const getProductsFn = useServerFn(getAdminBridgeProducts);
   const saveFn = useServerFn(saveBridgeVideo);
   const deleteFn = useServerFn(deleteBridgeVideo);
   const [open, setOpen] = useState(false);
@@ -71,17 +71,9 @@ function AdminBridgeVideosPage() {
     queryFn: () => getFn(),
   });
 
-  const { data: products = [], isLoading: productsLoading } = useQuery({
+  const { data: products = [], isLoading: productsLoading, isError: productsError } = useQuery({
     queryKey: ['admin-bridge-products'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select('id,title,status')
-        .eq('status', 'active')
-        .order('title');
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => getProductsFn(),
   });
 
   const mutation = useMutation({
@@ -205,32 +197,18 @@ function AdminBridgeVideosPage() {
         <section className="flex flex-col gap-3 rounded-2xl border border-border/60 bg-card/70 p-3 shadow-sm backdrop-blur-xl md:flex-row md:items-center">
           <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por vídeo, produto ou plataforma..."
-              className="h-11 border-0 bg-background/70 pl-9 shadow-none focus-visible:ring-1"
-            />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por vídeo, produto ou plataforma..." className="h-11 border-0 bg-background/70 pl-9 shadow-none focus-visible:ring-1" />
           </div>
           <div className="grid grid-cols-3 gap-1 rounded-xl bg-muted/60 p-1 md:w-auto">
             {(['all', 'active', 'inactive'] as const).map((value) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setFilter(value)}
-                className={`rounded-lg px-4 py-2 text-xs font-black transition ${filter === value ? 'bg-background shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-              >
+              <button key={value} type="button" onClick={() => setFilter(value)} className={`rounded-lg px-4 py-2 text-xs font-black transition ${filter === value ? 'bg-background shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
                 {value === 'all' ? 'Todos' : value === 'active' ? 'Ativos' : 'Inativos'}
               </button>
             ))}
           </div>
         </section>
 
-        {isLoading && (
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {[1, 2, 3].map((item) => <div key={item} className="h-[330px] animate-pulse rounded-3xl border border-border/60 bg-muted/40" />)}
-          </div>
-        )}
+        {isLoading && <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">{[1, 2, 3].map((item) => <div key={item} className="h-[330px] animate-pulse rounded-3xl border border-border/60 bg-muted/40" />)}</div>}
 
         {isError && (
           <Card className="rounded-3xl border-destructive/20 bg-destructive/5">
@@ -258,41 +236,20 @@ function AdminBridgeVideosPage() {
             {filteredVideos.map((video: any) => (
               <Card key={video.id} className="group overflow-hidden rounded-3xl border-border/60 bg-card/80 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/5">
                 <div className="relative aspect-video overflow-hidden bg-muted">
-                  {video.thumbnail ? (
-                    <img src={video.thumbnail} alt="" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]" loading="lazy" />
-                  ) : (
-                    <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
-                      <Video className="h-8 w-8 opacity-40" />
-                      <span className="text-xs font-bold">Sem thumbnail</span>
-                    </div>
-                  )}
+                  {video.thumbnail ? <img src={video.thumbnail} alt="" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]" loading="lazy" /> : <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground"><Video className="h-8 w-8 opacity-40" /><span className="text-xs font-bold">Sem thumbnail</span></div>}
                   <div className="absolute inset-x-0 top-0 flex items-center justify-between p-3">
-                    <Badge className={`border-0 font-black ${platformTone[video.platform as Platform] ?? 'bg-muted text-foreground'}`}>
-                      {platformLabel[video.platform as Platform] ?? video.platform}
-                    </Badge>
-                    <Badge variant={video.is_active ? 'default' : 'secondary'} className="font-black shadow-sm">
-                      {video.is_active ? 'Ativo' : 'Inativo'}
-                    </Badge>
+                    <Badge className={`border-0 font-black ${platformTone[video.platform as Platform] ?? 'bg-muted text-foreground'}`}>{platformLabel[video.platform as Platform] ?? video.platform}</Badge>
+                    <Badge variant={video.is_active ? 'default' : 'secondary'} className="font-black shadow-sm">{video.is_active ? 'Ativo' : 'Inativo'}</Badge>
                   </div>
                   <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/55 to-transparent opacity-0 transition group-hover:opacity-100" />
-                  <button type="button" onClick={() => window.open(video.link, '_blank', 'noopener,noreferrer')} className="absolute bottom-3 left-3 flex h-10 items-center gap-2 rounded-xl bg-background/90 px-3 text-xs font-black opacity-0 shadow-lg backdrop-blur transition group-hover:opacity-100">
-                    <Play className="h-3.5 w-3.5" /> Abrir vídeo
-                  </button>
+                  <button type="button" onClick={() => window.open(video.link, '_blank', 'noopener,noreferrer')} className="absolute bottom-3 left-3 flex h-10 items-center gap-2 rounded-xl bg-background/90 px-3 text-xs font-black opacity-0 shadow-lg backdrop-blur transition group-hover:opacity-100"><Play className="h-3.5 w-3.5" /> Abrir vídeo</button>
                 </div>
 
                 <CardContent className="space-y-4 p-5">
-                  <div className="min-w-0">
-                    <h2 className="line-clamp-2 text-base font-black leading-snug">{video.title}</h2>
-                    <p className="mt-1 line-clamp-1 text-xs font-semibold text-muted-foreground">{video.products?.title ?? 'Produto removido'}</p>
-                  </div>
+                  <div className="min-w-0"><h2 className="line-clamp-2 text-base font-black leading-snug">{video.title}</h2><p className="mt-1 line-clamp-1 text-xs font-semibold text-muted-foreground">{video.products?.title ?? 'Produto removido'}</p></div>
                   {video.subtitle && <p className="line-clamp-2 text-sm leading-5 text-muted-foreground">{video.subtitle}</p>}
                   <Separator />
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="inline-flex min-w-0 items-center gap-2 text-xs font-bold text-muted-foreground">
-                      <Link2 className="h-3.5 w-3.5 shrink-0 text-primary" />
-                      <span className="truncate">{video.link}</span>
-                    </span>
-                  </div>
+                  <div className="flex items-center justify-between gap-2"><span className="inline-flex min-w-0 items-center gap-2 text-xs font-bold text-muted-foreground"><Link2 className="h-3.5 w-3.5 shrink-0 text-primary" /><span className="truncate">{video.link}</span></span></div>
                   <div className="grid grid-cols-3 gap-2">
                     <Button variant="outline" className="rounded-xl" onClick={() => openEdit(video)} aria-label="Editar vídeo"><Pencil className="h-4 w-4" /></Button>
                     <Button variant="outline" className="rounded-xl" onClick={() => window.open(video.link, '_blank', 'noopener,noreferrer')} aria-label="Abrir link"><ExternalLink className="h-4 w-4" /></Button>
@@ -308,27 +265,23 @@ function AdminBridgeVideosPage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[92vh] overflow-y-auto rounded-3xl border-border/70 bg-background/95 p-0 shadow-2xl backdrop-blur-xl sm:max-w-2xl">
           <DialogHeader className="border-b border-border/60 bg-card/70 px-6 py-5">
-            <div className="mb-1 inline-flex w-fit items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-primary">
-              <Video className="h-3 w-3" /> {form.id ? 'Edição' : 'Novo cadastro'}
-            </div>
+            <div className="mb-1 inline-flex w-fit items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-primary"><Video className="h-3 w-3" /> {form.id ? 'Edição' : 'Novo cadastro'}</div>
             <DialogTitle className="text-2xl font-black tracking-tight">{form.id ? 'Editar vídeo ponte' : 'Novo vídeo ponte'}</DialogTitle>
             <DialogDescription>Conecte um conteúdo externo a um produto existente do catálogo.</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6 p-6">
             <section className="rounded-2xl border border-border/60 bg-card/50 p-5">
-              <div className="mb-4 flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary"><Layers3 className="h-4 w-4" /></div>
-                <div><h3 className="text-sm font-black">Catálogo e identidade</h3><p className="text-xs text-muted-foreground">Defina onde este vídeo será exibido.</p></div>
-              </div>
+              <div className="mb-4 flex items-center gap-2"><div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary"><Layers3 className="h-4 w-4" /></div><div><h3 className="text-sm font-black">Catálogo e identidade</h3><p className="text-xs text-muted-foreground">Defina onde este vídeo será exibido.</p></div></div>
               <div className="space-y-4">
                 <div>
                   <Label className="font-bold">Produto *</Label>
                   <Select value={form.product_id} onValueChange={(value) => setForm((current) => ({ ...current, product_id: value }))}>
-                    <SelectTrigger className="mt-2 h-11 rounded-xl"><SelectValue placeholder={productsLoading ? 'Carregando produtos...' : 'Selecione um produto'} /></SelectTrigger>
-                    <SelectContent>{products.map((product: any) => <SelectItem key={product.id} value={product.id}>{product.title}</SelectItem>)}</SelectContent>
+                    <SelectTrigger className="mt-2 h-11 rounded-xl"><SelectValue placeholder={productsLoading ? 'Carregando produtos...' : productsError ? 'Não foi possível carregar produtos' : 'Selecione um produto'} /></SelectTrigger>
+                    <SelectContent>{products.map((product: any) => <SelectItem key={product.id} value={product.id}>{product.title}{product.status !== 'active' ? ` · ${product.status}` : ''}</SelectItem>)}</SelectContent>
                   </Select>
                   {selectedProduct && <p className="mt-2 text-xs font-semibold text-muted-foreground">Vinculado a: <span className="text-foreground">{selectedProduct.title}</span></p>}
+                  {productsError && <p className="mt-2 text-xs font-semibold text-destructive">Não foi possível carregar os produtos disponíveis.</p>}
                 </div>
                 <div>
                   <Label className="font-bold">Título *</Label>
@@ -343,21 +296,13 @@ function AdminBridgeVideosPage() {
             </section>
 
             <section className="rounded-2xl border border-border/60 bg-card/50 p-5">
-              <div className="mb-4 flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary"><Link2 className="h-4 w-4" /></div>
-                <div><h3 className="text-sm font-black">Mídia e origem</h3><p className="text-xs text-muted-foreground">Use URLs públicas reais.</p></div>
-              </div>
+              <div className="mb-4 flex items-center gap-2"><div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary"><Link2 className="h-4 w-4" /></div><div><h3 className="text-sm font-black">Mídia e origem</h3><p className="text-xs text-muted-foreground">Use URLs públicas reais.</p></div></div>
               <div className="space-y-4">
                 <div>
                   <Label className="font-bold">Plataforma *</Label>
                   <Select value={form.platform} onValueChange={(value: Platform) => setForm((current) => ({ ...current, platform: value }))}>
                     <SelectTrigger className="mt-2 h-11 rounded-xl"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="tiktok">TikTok</SelectItem>
-                      <SelectItem value="shopee">Shopee</SelectItem>
-                      <SelectItem value="ml">Mercado Livre</SelectItem>
-                      <SelectItem value="youtube">YouTube</SelectItem>
-                    </SelectContent>
+                    <SelectContent><SelectItem value="tiktok">TikTok</SelectItem><SelectItem value="shopee">Shopee</SelectItem><SelectItem value="ml">Mercado Livre</SelectItem><SelectItem value="youtube">YouTube</SelectItem></SelectContent>
                   </Select>
                 </div>
                 <div>
@@ -369,28 +314,19 @@ function AdminBridgeVideosPage() {
                   <Label className="font-bold">Thumbnail</Label>
                   <Input type="url" value={form.thumbnail} onChange={(e) => setForm((current) => ({ ...current, thumbnail: e.target.value }))} placeholder="https://..." className="mt-2 h-11 rounded-xl" />
                 </div>
-                {hasThumbnail && (
-                  <div className="overflow-hidden rounded-2xl border border-border/60 bg-muted/30">
-                    <img src={form.thumbnail} alt="Prévia da thumbnail" className="aspect-video w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-                  </div>
-                )}
+                {hasThumbnail && <div className="overflow-hidden rounded-2xl border border-border/60 bg-muted/30"><img src={form.thumbnail} alt="Prévia da thumbnail" className="aspect-video w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} /></div>}
               </div>
             </section>
 
             <section className="flex items-center justify-between rounded-2xl border border-primary/15 bg-primary/[0.04] p-5">
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary"><CheckCircle2 className="h-4 w-4" /></div>
-                <div><p className="text-sm font-black">Publicação</p><p className="text-xs text-muted-foreground">Controla se o vídeo fica disponível no fluxo da loja.</p></div>
-              </div>
+              <div className="flex items-start gap-3"><div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary"><CheckCircle2 className="h-4 w-4" /></div><div><p className="text-sm font-black">Publicação</p><p className="text-xs text-muted-foreground">Controla se o vídeo fica disponível no fluxo da loja.</p></div></div>
               <Switch checked={form.is_active} onCheckedChange={(value) => setForm((current) => ({ ...current, is_active: value }))} />
             </section>
           </div>
 
           <DialogFooter className="border-t border-border/60 bg-card/50 px-6 py-4">
             <Button variant="ghost" onClick={() => setOpen(false)} disabled={saving} className="rounded-xl font-bold">Cancelar</Button>
-            <Button onClick={() => void submit()} disabled={saving || productsLoading} className="rounded-xl px-6 font-black shadow-lg shadow-primary/10">
-              {saving ? 'Salvando...' : form.id ? 'Salvar alterações' : 'Criar vídeo ponte'}
-            </Button>
+            <Button onClick={() => void submit()} disabled={saving || productsLoading || productsError} className="rounded-xl px-6 font-black shadow-lg shadow-primary/10">{saving ? 'Salvando...' : form.id ? 'Salvar alterações' : 'Criar vídeo ponte'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
