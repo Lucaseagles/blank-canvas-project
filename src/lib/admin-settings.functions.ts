@@ -60,6 +60,36 @@ export const updateAdminSetting = createServerFn({ method: "POST" }).middleware(
     patch[key] = value;
   }
   if (Object.keys(patch).length === 0) throw new Error("No editable fields supplied");
+
+  if (entry.key === "personalization_weights") {
+    const weight = patch["weight"];
+    if (typeof weight !== "number" || !Number.isFinite(weight) || weight < -1000 || weight > 1000) {
+      throw new Error("Invalid personalization weight");
+    }
+  }
+
+  if (entry.key === "feed_mix_config") {
+    const allowed = ["relevant_pct", "related_pct", "discovery_pct"] as const;
+    for (const key of allowed) {
+      if (key in patch) {
+        const value = patch[key];
+        if (typeof value !== "number" || !Number.isInteger(value) || value < 0 || value > 100) {
+          throw new Error("Feed mix values must be integers between 0 and 100");
+        }
+      }
+    }
+    const { data: currentMix, error: mixReadError } = await db.from(entry.table).select("relevant_pct,related_pct,discovery_pct").eq("id", data.id).single();
+    if (mixReadError) throw mixReadError;
+    const nextMix = {
+      relevant_pct: Number(patch["relevant_pct"] ?? currentMix.relevant_pct),
+      related_pct: Number(patch["related_pct"] ?? currentMix.related_pct),
+      discovery_pct: Number(patch["discovery_pct"] ?? currentMix.discovery_pct),
+    };
+    if (nextMix.relevant_pct + nextMix.related_pct + nextMix.discovery_pct !== 100) {
+      throw new Error("O mix do feed deve totalizar 100%");
+    }
+  }
+
   if (HAS_UPDATED_AT.has(entry.key)) patch["updated_at"] = new Date().toISOString();
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
