@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 export const Route = createFileRoute('/bridge-videos')({ component: BridgeVideosPage });
 
 function BridgeVideosPage() {
-  const { data: videos = [], isLoading } = useQuery({
+  const { data: videos = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['bridge-videos', 'active'],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
@@ -33,6 +33,8 @@ function BridgeVideosPage() {
       </header>
       {isLoading ? (
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">{[1, 2, 3].map((item) => <Skeleton key={item} className="aspect-[4/5] rounded-[1.75rem]" />)}</div>
+      ) : isError ? (
+        <section className="rounded-2xl border border-destructive/30 p-8 text-center"><p>Não foi possível carregar os vídeos ponte.</p><button type="button" className="mt-3 underline" onClick={() => void refetch()}>Tentar novamente</button></section>
       ) : videos.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">{videos.map((video: BridgeVideo) => <VideoBridge key={video.id} video={video} />)}</div>
       ) : (
