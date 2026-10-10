@@ -29,7 +29,7 @@ function AdminCategoriesPage(){
  const [search,setSearch]=useState("");
  const [filter,setFilter]=useState<"all"|"active"|"inactive">("all");
 
- const refresh=()=>qc.invalidateQueries({queryKey:["admin-categories"]});
+ const refresh=()=>{qc.invalidateQueries({queryKey:["admin-categories"]});qc.invalidateQueries({queryKey:["category-info"]});qc.invalidateQueries({queryKey:["category-subs"]});qc.invalidateQueries({queryKey:["category-breadcrumb"]});qc.invalidateQueries({queryKey:["product-categories"]});qc.invalidateQueries({queryKey:["categories"]});};
  const save=useMutation({mutationFn:(v:FormState)=>saveCat({data:v}),onSuccess:()=>{refresh();setEditing(null);toast.success("Categoria salva.");},onError:(e)=>toast.error(e instanceof Error?e.message:"Não foi possível salvar.")});
  const remove=useMutation({mutationFn:(id:string)=>deleteCat({data:{id}}),onSuccess:()=>{refresh();toast.success("Categoria excluída.");},onError:(e)=>toast.error(e instanceof Error?e.message:"Não foi possível excluir.")});
  const reorder=useMutation({mutationFn:(ids:string[])=>reorderCat({data:{ids}}),onSuccess:refresh,onError:(e)=>toast.error(e instanceof Error?e.message:"Não foi possível reordenar.")});
@@ -37,11 +37,11 @@ function AdminCategoriesPage(){
  const filtered=useMemo(()=>{const term=search.trim().toLowerCase();return ordered.filter(c=>{const status=filter==="all"||(filter==="active"&&c.is_active!==false)||(filter==="inactive"&&c.is_active===false);const text=!term||[c.name,c.slug,c.description].filter(Boolean).some(v=>String(v).toLowerCase().includes(term));return status&&text;});},[ordered,search,filter]);
  const stats={total:categories.length,active:categories.filter(c=>c.is_active!==false).length,inactive:categories.filter(c=>c.is_active===false).length,sub:categories.filter(c=>Boolean(c.parent_id)).length};
  const move=(id:string,target:string)=>{const ids=ordered.map(c=>c.id),from=ids.indexOf(id),to=ids.indexOf(target);if(from<0||to<0||from===to)return;ids.splice(from,1);ids.splice(to,0,id);reorder.mutate(ids)};
- const toggle=(cat:Category)=>save.mutate({...cat,is_active:!(cat.is_active??true)});
+ const toggle=(cat:Category)=>{if(cat.is_active!==false && categories.some(c=>c.parent_id===cat.id&&c.is_active!==false)){toast.error("Desative ou mova as subcategorias ativas antes de ocultar esta categoria.");return;}save.mutate({...cat,is_active:!(cat.is_active??true)});};
  const openCreate=()=>setEditing({...emptyForm,display_order:categories.length});
  const slugify=(value:string)=>value.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,120);
  const validate=()=>{if(!editing)return false; if(editing.name.trim().length<2){toast.error("O nome precisa ter pelo menos 2 caracteres.");return false;} const normalized=slugify(editing.slug); if(!normalized){toast.error("Informe um slug válido.");return false;} if(editing.image_url?.trim()){try{new URL(editing.image_url)}catch{toast.error("A URL da imagem não é válida.");return false;}} return true;};
- const submit=()=>{if(!validate()||!editing)return;save.mutate({...editing,name:editing.name.trim(),slug:slugify(editing.slug),description:editing.description?.trim()||null,image_url:editing.image_url?.trim()||null,icon:editing.icon?.trim()||null,color:editing.color?.trim()||null});};
+ const submit=()=>{if(!validate()||!editing)return;if(editing.parent_id&&categories.find(c=>c.id===editing.parent_id)?.is_active===false&&editing.is_active!==false){toast.error("Uma categoria ativa não pode ter pai inativo.");return;}save.mutate({...editing,name:editing.name.trim(),slug:slugify(editing.slug),description:editing.description?.trim()||null,image_url:editing.image_url?.trim()||null,icon:editing.icon?.trim()||null,color:editing.color?.trim()||null});};
  const moveBy=(id:string,direction:-1|1)=>{const index=ordered.findIndex(c=>c.id===id);const target=index+direction;if(index<0||target<0||target>=ordered.length)return;const targetCat=ordered[target];if(!targetCat)return;move(id,targetCat.id);};
  const parentName=(id?:string|null)=>id?categories.find(c=>c.id===id)?.name??"Subcategoria":"Raiz";
 
