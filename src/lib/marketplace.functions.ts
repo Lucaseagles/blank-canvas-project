@@ -10,6 +10,16 @@ const marketplaceSchema = z.object({
   affiliate_link_structure: z.string().trim().max(2000).optional().nullable(),
 });
 
+function validateAffiliateStructure(value: string | null | undefined) {
+  if (!value) return;
+  let url: URL;
+  try { url = new URL(value.replace(/\\{[^{}]+\\}/g, 'sample')); }
+  catch { throw new Error("Informe uma estrutura de afiliado com URL HTTPS válida."); }
+  if (url.protocol !== "https:" || !url.hostname || url.username || url.password) {
+    throw new Error("A estrutura de afiliado deve usar HTTPS e não pode conter credenciais.");
+  }
+}
+
 export const listAdminMarketplaces = createServerFn({ method: "GET" })
   .middleware([requireOwnerRole])
   .handler(async () => {
@@ -42,6 +52,7 @@ export const saveAdminMarketplace = createServerFn({ method: "POST" })
   .validator((data: unknown) => marketplaceSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    validateAffiliateStructure(data.affiliate_link_structure);
     const payload = {
       name: data.name,
       slug: data.slug,
