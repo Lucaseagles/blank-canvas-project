@@ -64,7 +64,7 @@ function AdminVideosPage() {
     mutationFn: async ({ id, status }: { id: string; status: "published" | "draft" | "archived" }) => {
       await setVideoStatusFn({ data: { id, status } });
       const eventType = status === 'published' ? 'ADMIN_VIDEO_PUBLISHED' : 'ADMIN_VIDEO_UNPUBLISHED';
-      await trackEvent(eventType, { video_id: id });
+      void trackEvent(eventType, { video_id: id }).catch(console.error);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-videos"] });
@@ -76,7 +76,7 @@ function AdminVideosPage() {
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       await deleteVideoFn({ data: { id } });
-      await trackEvent('ADMIN_VIDEO_DELETED', { video_id: id });
+      void trackEvent('ADMIN_VIDEO_DELETED', { video_id: id }).catch(console.error);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-videos"] });
@@ -111,7 +111,7 @@ function AdminVideosPage() {
       setSelectedProductIds([]);
       queryClient.invalidateQueries({ queryKey: ["admin-videos"] });
     } catch (error) {
-      toast.error("Failed to save video");
+      toast.error(error instanceof Error ? error.message : "Não foi possível salvar o vídeo.");
     }
   };
 
