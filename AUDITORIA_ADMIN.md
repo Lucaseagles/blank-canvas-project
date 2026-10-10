@@ -120,6 +120,13 @@ Só marcar como concluído quando rota, ações, persistência real, autorizaç�
 - Commits: `599a7849899b8a1e65369941e48536aaa6118ecc`, `4e909af4867dcd135327e348130dd3cafa6204ef`, `97449187e5113bc96cbbacecd2a433db65f7269a`.
 - **Pendente:** validar o RPC `get_categories_with_counts` e seus consumidores, testar ordenação/drag-and-drop, executar TypeScript/ESLint/build e testes E2E de ativação/desativação.
 
+### Offers — auditoria da vitrine pública
+
+- Confirmada no banco a presença de `offer_groups.is_featured_on_hub`, `featured_priority`, `featured_starts_at` e `featured_ends_at`.
+- Corrigida a rota pública `/offers`: se não há grupo destacado válido, a vitrine fica vazia em vez de exibir produtos de todos os grupos; respeita o período de destaque e os status públicos `active`/`published`.
+- Commits: `412cfddbd32b3b8d7bedd58f567498bd79002eb9`, `6ebf9b10c5a8cb43f0f97672ef33372380ffbb1b`.
+- **Pendente:** revisar `OfferFeaturedControl` e permissões de edição de destaque, verificar RLS e ordenação efetiva por prioridade, testar integração com produtos, TypeScript/ESLint/build e E2E. Não declarar Offers concluído.
+
 ### Pendências que continuam abertas
 
 - Executar TypeScript, ESLint e build no ambiente do projeto. A tentativa de clonar o repositório neste ambiente não pôde concluir porque a rede para github.com não está disponível; não declarar build aprovado.
