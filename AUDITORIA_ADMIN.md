@@ -74,6 +74,35 @@ As tabelas `integration_platforms`, `integration_credentials` e `integration_cre
 
 Só marcar como concluído quando rota, ações, persistência real, autorização/RLS, loading, erro, vazio, responsividade, sincronização com storefront e build estiverem validados.
 
+## Retomada da auditoria estrutural — 2026-10-10
+
+### Correções adicionais feitas após a Parte 1
+
+- A gestão administrativa de vídeos agora usa consultas server-side protegidas por `requireOwnerRole` para listar vídeos e carregar produtos/categorias/campanhas.
+- A lista de campanhas do formulário de vídeo agora é obtida da tabela `campaigns`; foi removida a campanha fixa de demonstração.
+- A consulta pública de vídeos força `status = published` e não aceita consulta de rascunhos/agendamentos por parâmetros públicos.
+- Associações de produtos inativos são removidas da resposta do feed público.
+- Publicar/despublicar usa uma mutação de status dedicada para não apagar campos do vídeo quando a interface envia apenas ID e status.
+- O Admin de vídeos apresenta estados de erro e vazio em desktop e mobile; o feed público distingue falha de carregamento de catálogo realmente vazio.
+
+### Commits desta retomada
+
+- `cd4a3d0ad6b9540ab6c1dcc24832315c3aa92567` — separar consultas públicas/admin e obter opções reais.
+- `6b5c48875608919298cfa5b543239caf1ac09a68` — filtrar produtos inativos no feed.
+- `7be1cc9b430e48ae0c44f9beca22634bedcb772d` — remover campanha fixa e carregar opções reais no Admin.
+- `9f3cce5dbde66f28c3c3009bf011f9dc7a7ee53f` — estados de erro/vazio no Admin.
+- `4b196cf9489a2cf9fdfd2182e1d95a13ff54f99e` — mutação segura de status.
+- `7fb15a5a1bf32567c12d79df79a3c80f5ad12a92` — usar mutação de status sem sobrescrever campos.
+- `77ff0a493d096d08100b2791ced6dfb1bc78c08d` — erro explícito no feed público.
+
+### Pendências que continuam abertas
+
+- Executar TypeScript, ESLint e build no ambiente do projeto. A tentativa de clonar o repositório neste ambiente não pôde concluir porque a rede para github.com não está disponível; não declarar build aprovado.
+- Testar o fluxo real de vídeo com usuário proprietário e visitante: criar/editar, associar produto ativo, publicar, conferir em `/videos`, despublicar e confirmar que o item deixa de aparecer sem perder seus metadados.
+- Continuar a matriz de catálogo público: Products → Categories → Offers → Coupons → Videos → Video Bridge → Marketplaces → Collections → Banners.
+- Confirmar por código e teste quais módulos estratégicos realmente alimentam seus consumidores, sem confundir métricas administrativas com execução de motor.
+- Não declarar a integração de marketplace operacional enquanto o conector específico não existir.
+
 ## Próxima parte
 
-**Próximo passo:** seguir para o módulo **#21 Integrações**, mantendo a regra AUDITAR → IDENTIFICAR → CORRIGIR → CONECTAR → TESTAR → VALIDAR e sem criar sistemas duplicados.
+Continuar a matriz de catálogo público a partir de **Products → Categories → Offers → Coupons → Videos → Video Bridge → Marketplaces → Collections → Banners**, corrigindo cada lacuna e validando o reflexo público antes de marcar o módulo como concluído. Depois, retomar **Engagement Intelligence → Trust & Quality → validação global**.
