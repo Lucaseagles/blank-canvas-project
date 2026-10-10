@@ -14,7 +14,7 @@ function BridgeVideosPage() {
         .from('bridge_videos')
         .select('id,title,subtitle,thumbnail,platform,link,created_at,products!inner(id,slug,title,current_price,images,status)')
         .eq('is_active', true)
-        .eq('products.status', 'active')
+        .in('products.status', ['active', 'published'])
         .order('created_at', { ascending: false });
       if (error) throw error;
       return (data ?? []).map((row: any): BridgeVideo => ({
