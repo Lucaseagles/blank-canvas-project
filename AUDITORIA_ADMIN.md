@@ -97,6 +97,13 @@ Só marcar como concluído quando rota, ações, persistência real, autorizaç�
 - `be0c60dca436d54db45eebe83b26acb13b73287e` — tipagem da mutação de status sem campos desnecessários.
 - `d0c4412c140cff80d72865d7f9ff7bc3f9b087e5` — homepage usa vídeo publicado real em vez de campanha e métricas fixas.
 
+### Products — publicação administrativa (retomada)
+
+- `src/routes/admin/products.tsx`: o botão publicar/despublicar passou a usar `setSellerProductStatus`, função server-side com `requireOwnerRole` e auditoria, em vez de atualização direta no navegador.
+- `src/lib/video.functions.ts`: a associação pública com vídeos agora reconhece produtos `active` **ou** `published`, conforme a política de leitura pública de `products` confirmada no banco.
+- Commits: `ca1af8fbb4cb0b2ad1aab189a86a76feb7aa56a2`, `279ae0b5cc6c08cb6988b4f3035652a3ebc63438`, `103cba6555c605795148549c652a479ed280564f`.
+- **Não validado integralmente:** edição inline, operações em lote, duplicação, importação, exportação, consistência de status nos demais consumidores e testes automatizados.
+
 ### Pendências que continuam abertas
 
 - Executar TypeScript, ESLint e build no ambiente do projeto. A tentativa de clonar o repositório neste ambiente não pôde concluir porque a rede para github.com não está disponível; não declarar build aprovado.
