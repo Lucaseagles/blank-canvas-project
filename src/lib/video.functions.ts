@@ -9,7 +9,7 @@ const videoInput = z.object({
   caption: z.string().trim().max(500).optional().nullable(), subtitle_url: z.string().url().max(2000).optional().nullable(), subtitle_text: z.string().trim().max(10000).optional().nullable()
 });
 
-const videoSelect = `*, categories(name, slug), video_products(product_id, position, products(id, title, current_price, slug, images, affiliate_url, category_id))`;
+const videoSelect = `*, categories(name, slug), video_products(product_id, position, products(id, title, current_price, slug, images, affiliate_url, category_id, status))`;
 
 export const getVideos = createServerFn({ method: "GET" })
   .validator((data: unknown) => z.object({ status: z.enum(["published", "draft", "archived"]).optional(), categoryId: z.string().uuid().optional(), campaignId: z.string().uuid().optional(), limit: z.number().int().min(1).max(100).optional().default(20), includeScheduled: z.boolean().optional().default(false) }).parse(data))
@@ -23,7 +23,7 @@ export const getVideos = createServerFn({ method: "GET" })
     query = query.or(`scheduled_for.is.null,scheduled_for.lte.${new Date().toISOString()}`);
     const { data, error } = await query.order("created_at", { ascending: false }).limit(limit);
     if (error) throw error;
-    return data ?? [];
+    return (data ?? []).map((video: any) => ({ ...video, video_products: (video.video_products ?? []).filter((entry: any) => entry.products?.status === "active") }));
   });
 
 export const getAdminVideos = createServerFn({ method: "GET" })
