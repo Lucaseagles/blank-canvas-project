@@ -127,6 +127,14 @@ Só marcar como concluído quando rota, ações, persistência real, autorizaç�
 - Commits: `412cfddbd32b3b8d7bedd58f567498bd79002eb9`, `6ebf9b10c5a8cb43f0f97672ef33372380ffbb1b`.
 - **Pendente:** revisar `OfferFeaturedControl` e permissões de edição de destaque, verificar RLS e ordenação efetiva por prioridade, testar integração com produtos, TypeScript/ESLint/build e E2E. Não declarar Offers concluído.
 
+### Coupons — auditoria da gestão e carteira pública
+
+- `src/routes/my-coupons.tsx`: a carteira filtra cupons com `max_uses` esgotado e diferencia erro de carregamento de lista vazia.
+- `src/components/admin/coupons/CouponAdmin.tsx`: inclusão de produtos `active`/`published`, validação de limite inteiro positivo, desconto finito, datas válidas e estado de erro de carregamento.
+- Confirmados no banco os campos `max_uses`, `used_count`, `valid_from`, `valid_until`, `is_real` e `is_active` em `customer_coupons`.
+- Commits: `13a8550f5df637cd2eb76dac231d59d49c464638`, `473fc5146ecd6623ca98026f0524b1f2d69b39dd`.
+- **Pendente:** validação de elegibilidade do cupom por produto/categoria/marketplace, verificação da origem oficial e do fluxo real de resgate, auditoria de alterações administrativas, TypeScript/ESLint/build e E2E. Não declarar Coupons concluído.
+
 ### Pendências que continuam abertas
 
 - Executar TypeScript, ESLint e build no ambiente do projeto. A tentativa de clonar o repositório neste ambiente não pôde concluir porque a rede para github.com não está disponível; não declarar build aprovado.
