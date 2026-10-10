@@ -135,6 +135,13 @@ Só marcar como concluído quando rota, ações, persistência real, autorizaç�
 - Commits: `13a8550f5df637cd2eb76dac231d59d49c464638`, `473fc5146ecd6623ca98026f0524b1f2d69b39dd`.
 - **Pendente:** validação de elegibilidade do cupom por produto/categoria/marketplace, verificação da origem oficial e do fluxo real de resgate, auditoria de alterações administrativas, TypeScript/ESLint/build e E2E. Não declarar Coupons concluído.
 
+### Videos — integração real com a home e mutações administrativas
+
+- `src/routes/index.tsx`: removida seção de estreia fictícia e métricas inventadas; a seção só é renderizada com um vídeo real retornado por `getVideos`, que restringe status publicado e agendamento.
+- `src/routes/admin/videos.tsx`: falha de telemetria deixa de reportar publicação/exclusão já concluída como erro de operação; erro real de salvamento é mostrado.
+- Commits: `4ad3d506b977994e1b22cf5af40bd30f38c90aa9`, `edc07ce899f030a5b15bff9c2d53c8def656d502`.
+- **Pendente:** conferir status e agendamento na alteração rápida, associação de produtos e campanhas, armazenamento e reprodução de vídeos, TypeScript/ESLint/build e E2E.
+
 ### Pendências que continuam abertas
 
 - Executar TypeScript, ESLint e build no ambiente do projeto. A tentativa de clonar o repositório neste ambiente não pôde concluir porque a rede para github.com não está disponível; não declarar build aprovado.
