@@ -112,6 +112,14 @@ Só marcar como concluído quando rota, ações, persistência real, autorizaç�
 - Commits: `17ad0235c4a482feff8ac982f894e120121d9ec9`, `4c525bf0722ec8fdb697bd1886f27e8ebcaba318`, `5bbf1f678d4a3201f84f98258a839dd388b05323`, `53c0e0565daec437c7d5c65423251d73f60a3fca`.
 - **Ainda pendente:** testes TypeScript/ESLint/build, verificação E2E, revisão de importação/duplicação/exportação, validação completa de integridade de publicação e consistência de visibilidade pública.
 
+### Categories — auditoria de visibilidade e hierarquia
+
+- `src/lib/supabase/categories.ts`: consulta por slug exige categoria ativa, breadcrumb interrompe ao encontrar categoria inativa e contagem de subcategorias considera produtos `active` ou `published`.
+- `src/lib/admin_intel.functions.ts`: escrita protegida impede categoria ativa com pai inativo e impede desativar pai que ainda possui filhos ativos.
+- `src/routes/admin/categories.tsx`: bloqueio preventivo na interface e invalidação de consultas de categorias relacionadas.
+- Commits: `599a7849899b8a1e65369941e48536aaa6118ecc`, `4e909af4867dcd135327e348130dd3cafa6204ef`, `97449187e5113bc96cbbacecd2a433db65f7269a`.
+- **Pendente:** validar o RPC `get_categories_with_counts` e seus consumidores, testar ordenação/drag-and-drop, executar TypeScript/ESLint/build e testes E2E de ativação/desativação.
+
 ### Pendências que continuam abertas
 
 - Executar TypeScript, ESLint e build no ambiente do projeto. A tentativa de clonar o repositório neste ambiente não pôde concluir porque a rede para github.com não está disponível; não declarar build aprovado.
