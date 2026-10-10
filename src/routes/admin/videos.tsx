@@ -43,7 +43,7 @@ function AdminVideosPage() {
     }
   }, [editingVideo]);
 
-  const { data: videos, isLoading } = useQuery({
+  const { data: videos, isLoading, isError: isVideosError, error: videosError } = useQuery({
     queryKey: ["admin-videos"],
     queryFn: () => fetchVideosFn({ data: { limit: 100, includeScheduled: true } }),
   });
@@ -272,6 +272,7 @@ function AdminVideosPage() {
         </div>
       </div>
 
+      {isVideosError && <div role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">Não foi possível carregar os vídeos: {videosError instanceof Error ? videosError.message : "erro desconhecido"}. Tente atualizar a página.</div>}
       {isOptionsError && <div role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">Não foi possível carregar produtos, categorias e campanhas. Atualize a página antes de editar vídeos.</div>}
       {isOptionsLoading && <div className="rounded-xl border p-4 text-sm text-muted-foreground">Carregando produtos, categorias e campanhas reais…</div>}
       <div className="bg-glass-fallback border border-glass-border rounded-[2.5rem] backdrop-blur-xl overflow-hidden shadow-2xl elevation-1 reveal-on-scroll">
@@ -297,7 +298,7 @@ function AdminVideosPage() {
                     <TableCell className="text-right pr-8"><div className="h-8 w-24 ml-auto bg-muted animate-pulse rounded" /></TableCell>
                   </TableRow>
                 ))
-              ) : filteredVideos?.map((video: any) => (
+              ) : filteredVideos?.length ? filteredVideos.map((video: any) => (
                 <TableRow key={video.id} className="hover:bg-white/5 border-glass-border transition-colors group">
                   <TableCell className="font-bold py-6 pl-8">
                     <div className="flex items-center gap-4">
@@ -365,7 +366,9 @@ function AdminVideosPage() {
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+              )) : (
+                <TableRow><TableCell colSpan={5} className="py-12 text-center text-sm text-muted-foreground">{searchTerm ? "Nenhum vídeo corresponde à busca." : "Nenhum vídeo cadastrado ainda."}</TableCell></TableRow>
+              )}
             </TableBody>
           </Table>
         </div>
@@ -380,7 +383,7 @@ function AdminVideosPage() {
                 </div>
               </div>
             ))
-          ) : filteredVideos?.map((video: any) => (
+          ) : filteredVideos?.length ? filteredVideos.map((video: any) => (
             <div key={video.id} className="p-6 space-y-4 hover:bg-white/5 transition-colors">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-4">
@@ -431,7 +434,7 @@ function AdminVideosPage() {
                 </div>
               </div>
             </div>
-          ))}
+          )) : <div className="p-8 text-center text-sm text-muted-foreground">{searchTerm ? "Nenhum vídeo corresponde à busca." : "Nenhum vídeo cadastrado ainda."}</div>}
         </div>
       </div>
     </div>
