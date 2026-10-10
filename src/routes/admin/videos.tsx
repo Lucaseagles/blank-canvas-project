@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { trackEvent } from "@/lib/analytics";
 import { toast } from "sonner";
-import { getAdminVideos, getAdminVideoFormOptions, saveVideo, deleteVideo } from "@/lib/video.functions";
+import { getAdminVideos, getAdminVideoFormOptions, saveVideo, deleteVideo, setVideoStatus } from "@/lib/video.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -34,6 +34,7 @@ function AdminVideosPage() {
   const fetchOptionsFn = useServerFn(getAdminVideoFormOptions);
   const saveVideoFn = useServerFn(saveVideo);
   const deleteVideoFn = useServerFn(deleteVideo);
+  const setVideoStatusFn = useServerFn(setVideoStatus);
 
   useEffect(() => {
     if (editingVideo) {
@@ -61,7 +62,7 @@ function AdminVideosPage() {
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status, title }: { id: string; status: any; title: string }) => {
-      await saveVideoFn({ data: { id, status, title } });
+      await setVideoStatusFn({ data: { id, status } });
       const eventType = status === 'published' ? 'ADMIN_VIDEO_PUBLISHED' : 'ADMIN_VIDEO_UNPUBLISHED';
       await trackEvent(eventType, { video_id: id });
     },
@@ -69,6 +70,7 @@ function AdminVideosPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-videos"] });
       toast.success("Video status updated");
     },
+    onError: (error) => toast.error(error instanceof Error ? error.message : "Não foi possível alterar o status do vídeo."),
   });
 
   const deleteMutation = useMutation({
@@ -80,6 +82,7 @@ function AdminVideosPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-videos"] });
       toast.success("Video deleted");
     },
+    onError: (error) => toast.error(error instanceof Error ? error.message : "Não foi possível excluir o vídeo."),
   });
 
   const filteredVideos = videos?.filter((v: any) => 
