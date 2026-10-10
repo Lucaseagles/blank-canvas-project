@@ -28,7 +28,7 @@ function OffersPage() {
     const now = Date.now();
     const groupIds = ((groups as OfferGroup[]) ?? []).filter((g) => (!g.featured_starts_at || Date.parse(g.featured_starts_at) <= now) && (!g.featured_ends_at || Date.parse(g.featured_ends_at) >= now)).map((g) => g.id);
     if (!groupIds.length) { setProducts([]); setLoading(false); return; }
-    let query = client.from("products").select("id, slug, title, current_price, previous_price, discount_percentage, image_url, marketplace_id, category_id, rating, review_count, offer_score").in("status", ["active", "published"]).in("offer_group_id", groupIds).limit(100);
+    const query = client.from("products").select("id, slug, title, current_price, previous_price, discount_percentage, image_url, marketplace_id, category_id, rating, review_count, offer_score").in("status", ["active", "published"]).in("offer_group_id", groupIds).limit(100);
 
     const { data, error: productsError } = await query;
     if (productsError) { setError(productsError.message); setLoading(false); return; }
