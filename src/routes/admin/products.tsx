@@ -1,6 +1,5 @@
 import { createFileRoute, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table,TableBody,TableCell,TableHead,TableHeader,TableRow } from "@/components/ui/table";
@@ -21,15 +20,17 @@ import { getOfferGroups,saveOfferGroup,updateProductOfferGroup } from "@/lib/adm
 import { useServerFn } from "@tanstack/react-start";
 import { Label } from "@/components/ui/label";
 import { useProductSync } from "@/hooks/useProductSync";
+import { setSellerProductStatus } from "@/lib/seller-center.functions";
 
 export const Route=createFileRoute("/admin/products")({component:AdminProductsPage});
 function AdminProductsPage(){
  const location=useLocation(); if(location.pathname==="/admin/products/new") return <Outlet />;
  useProductSync(); const navigate=useNavigate(); const qc=useQueryClient();
  const[search,setSearch]=useState("");const[status,setStatus]=useState("all");const[category,setCategory]=useState("all");const[selected,setSelected]=useState<string[]>([]);const[media,setMedia]=useState<any>(null);const[relProduct,setRelProduct]=useState<any>(null);const[groupProduct,setGroupProduct]=useState<any>(null);const[relId,setRelId]=useState("");const[relType,setRelType]=useState<'CROSS_SELL'|'UPSELL'|'DOWNSELL'>('CROSS_SELL');const[newGroup,setNewGroup]=useState("");
+ const changeProductStatus=useServerFn(setSellerProductStatus);
  const addRel=useServerFn(addRelationship);const getRel=useServerFn(getRelatedProducts);const getGroups=useServerFn(getOfferGroups);const saveGroup=useServerFn(saveOfferGroup);const updateGroup=useServerFn(updateProductOfferGroup);
  const{data:products,isLoading}=useQuery({queryKey:['admin-products',search,status,category],queryFn:()=>listProducts({limit:100,search,status,category_id:category})}); const{data:categories}=useQuery({queryKey:['product-categories'],queryFn:getCategories}); const{data:groups}=useQuery({queryKey:['offer-groups'],queryFn:()=>getGroups({data:{} as any})}); const{data:rels}=useQuery({queryKey:['product-rels',relProduct?.id],queryFn:()=>getRel({data:{productId:relProduct.id}}),enabled:!!relProduct});
- const updateStatus=useMutation({mutationFn:async({id,published}:{id:string;published:boolean})=>{const{error}=await supabase.from('products').update({status:published?'published':'draft',updated_at:new Date().toISOString()}).eq('id',id);if(error)throw error;await trackEvent(published?'ADMIN_PRODUCT_PUBLISHED':'ADMIN_PRODUCT_UNPUBLISHED',{product_id:id});},onSuccess:()=>{qc.invalidateQueries({queryKey:['admin-products']});toast.success('Status atualizado')},onError:e=>toast.error(e.message)});
+ const updateStatus=useMutation({mutationFn:async({id,published}:{id:string;published:boolean})=>{await changeProductStatus({data:{id,status:published?'published':'draft'}});await trackEvent(published?'ADMIN_PRODUCT_PUBLISHED':'ADMIN_PRODUCT_UNPUBLISHED',{product_id:id});},onSuccess:()=>{qc.invalidateQueries({queryKey:['admin-products']});toast.success('Status atualizado')},onError:e=>toast.error(e.message)});
  const toggle=(id:string)=>setSelected(s=>s.includes(id)?s.filter(x=>x!==id):[...s,id]);const visible=products?.data??[];const all=visible.length>0&&visible.every(p=>selected.includes(p.id));
  const exportCSV=async()=>{try{const csv=await exportProductsToCSV({status,category_id:category});const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`produtos_${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(a.href);toast.success('CSV exportado')}catch(e:any){toast.error(e.message??'Erro ao exportar')}};
  return <div className="container mx-auto py-12 px-4 max-w-7xl space-y-7 pb-safe admin-page">
