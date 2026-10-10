@@ -31,6 +31,7 @@ function VideoFeedPage() {
   const trackVideoInterest = useServerFn(updateInterestScore);
   const [videos, setVideos] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -44,7 +45,10 @@ function VideoFeedPage() {
         setVideos(data || []);
       } catch (error) {
         console.error("Video feed load error:", error);
-        if (mounted) setVideos([]);
+        if (mounted) {
+          setVideos([]);
+          setLoadError(error instanceof Error ? error.message : "Não foi possível carregar os vídeos.");
+        }
       } finally {
         if (mounted) setIsLoading(false);
       }
@@ -76,7 +80,7 @@ function VideoFeedPage() {
 
   return <div className="h-[100dvh] w-full bg-black overflow-y-scroll snap-y snap-mandatory scrollbar-hide">
     <Link to="/" aria-label="Voltar para o início" className="fixed top-[max(1rem,env(safe-area-inset-top))] left-4 z-50 min-h-touch min-w-touch rounded-full bg-black/30 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white hover:bg-black/50 transition-all"><ArrowLeft className="w-6 h-6" /></Link>
-    {videos.length > 0 ? videos.map((video, index) => <div key={video.id} id={video.id} className="h-[100dvh] w-full snap-start relative flex items-center justify-center overflow-hidden">
+    {loadError ? <div className="h-[100dvh] w-full flex flex-col items-center justify-center gap-4 p-6 text-center text-white"><h2 className="text-2xl font-black">Não foi possível carregar o feed</h2><p className="max-w-md text-sm text-white/60">{loadError}</p><Button variant="outline" className="text-white border-white/20 min-h-touch" onClick={() => window.location.reload()}>Tentar novamente</Button></div> : videos.length > 0 ? videos.map((video, index) => <div key={video.id} id={video.id} className="h-[100dvh] w-full snap-start relative flex items-center justify-center overflow-hidden">
       <VideoPlayer src={video.external_url || video.storage_path || ""} poster={video.poster_url} className="h-full w-full object-cover rounded-none border-none shadow-none" autoPlay loop onStart={() => handleVideoEvent(video.id, video.category_id, 'video_start')} onComplete={() => handleVideoEvent(video.id, video.category_id, 'video_complete')} />
       {index > 0 && index % 5 === 0 && <div className="absolute top-[max(5rem,env(safe-area-inset-top)+4rem)] left-0 right-0 z-40 pointer-events-none"><div className="pointer-events-auto"><VideoSocialMilestone /></div></div>}
       <div className="absolute right-4 bottom-[calc(8rem+env(safe-area-inset-bottom))] z-40 flex flex-col gap-4 items-center">
