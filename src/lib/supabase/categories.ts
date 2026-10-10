@@ -27,6 +27,7 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
     .from("categories")
     .select("id,name,slug,icon,image_url,color,parent_id,display_order,is_active,created_at")
     .eq("slug", slug)
+    .eq("is_active", true)
     .maybeSingle();
   if (error) throw error;
   return (data ?? null) as unknown as Category | null;
@@ -50,7 +51,7 @@ export async function getSubcategories(parentId: string): Promise<Category[]> {
     .from("products")
     .select("category_id")
     .in("category_id", ids)
-    .eq("status", "active");
+    .in("status", ["active", "published"]);
   if (productsError) throw productsError;
 
   const counts = new Map<string, number>();
@@ -73,7 +74,7 @@ export async function getCategoryBreadcrumb(categoryId: string): Promise<Categor
       .select("id,name,slug,icon,image_url,color,parent_id,display_order,is_active,created_at")
       .eq("id", currentId)
       .maybeSingle();
-    if (error || !categoryData) break;
+    if (error || !categoryData || categoryData.is_active === false) break;
     const row = categoryData as unknown as CategoryRow;
     breadcrumb.unshift(row);
     currentId = row.parent_id ?? null;
