@@ -61,7 +61,7 @@ function AdminVideosPage() {
   );
 
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ id, status, title }: { id: string; status: any; title: string }) => {
+    mutationFn: async ({ id, status }: { id: string; status: "published" | "draft" | "archived" }) => {
       await setVideoStatusFn({ data: { id, status } });
       const eventType = status === 'published' ? 'ADMIN_VIDEO_PUBLISHED' : 'ADMIN_VIDEO_UNPUBLISHED';
       await trackEvent(eventType, { video_id: id });
@@ -338,7 +338,6 @@ function AdminVideosPage() {
                         onClick={() => updateStatusMutation.mutate({ 
                           id: video.id, 
                           status: video.status === 'published' ? 'draft' : 'published',
-                          title: video.title
                         })}
                       >
                         {video.status === 'published' ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -423,7 +422,7 @@ function AdminVideosPage() {
               
               <div className="flex items-center justify-between gap-2 pt-2">
                 <div className="flex items-center gap-2">
-                  <Button size="icon" variant="ghost" className="h-9 w-9 bg-white/5 border border-white/5" onClick={() => updateStatusMutation.mutate({ id: video.id, status: video.status === 'published' ? 'draft' : 'published', title: video.title })}>
+                  <Button size="icon" variant="ghost" className="h-9 w-9 bg-white/5 border border-white/5" onClick={() => updateStatusMutation.mutate({ id: video.id, status: video.status === 'published' ? 'draft' : 'published' })}>
                     {video.status === 'published' ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </Button>
                 </div>
