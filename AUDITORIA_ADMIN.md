@@ -94,6 +94,8 @@ Só marcar como concluído quando rota, ações, persistência real, autorizaç�
 - `4b196cf9489a2cf9fdfd2182e1d95a13ff54f99e` — mutação segura de status.
 - `7fb15a5a1bf32567c12d79df79a3c80f5ad12a92` — usar mutação de status sem sobrescrever campos.
 - `77ff0a493d096d08100b2791ced6dfb1bc78c08d` — erro explícito no feed público.
+- `be0c60dca436d54db45eebe83b26acb13b73287e` — tipagem da mutação de status sem campos desnecessários.
+- `d0c4412c140cff80d72865d7f9ff7bc3f9b087e5` — homepage usa vídeo publicado real em vez de campanha e métricas fixas.
 
 ### Pendências que continuam abertas
 
