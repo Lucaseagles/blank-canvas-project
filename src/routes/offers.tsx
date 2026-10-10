@@ -25,9 +25,11 @@ function OffersPage() {
     const client = supabase as any;
     const { data: groups, error: groupsError } = await client.from("offer_groups").select("id, is_featured_on_hub, featured_priority, featured_starts_at, featured_ends_at").eq("is_featured_on_hub", true).order("featured_priority", { ascending: true });
     if (groupsError) { setError(groupsError.message); setLoading(false); return; }
-    const groupIds = (groups as OfferGroup[] ?? []).map((g) => g.id);
-    let query = client.from("products").select("id, slug, title, current_price, previous_price, discount_percentage, image_url, marketplace_id, category_id, rating, review_count, offer_score").eq("status", "published").limit(100);
-    if (groupIds.length) query = query.in("offer_group_id", groupIds);
+    const now = Date.now();
+    const groupIds = ((groups as OfferGroup[]) ?? []).filter((g) => (!g.featured_starts_at || Date.parse(g.featured_starts_at) <= now) && (!g.featured_ends_at || Date.parse(g.featured_ends_at) >= now)).map((g) => g.id);
+    if (!groupIds.length) { setProducts([]); setLoading(false); return; }
+    let query = client.from("products").select("id, slug, title, current_price, previous_price, discount_percentage, image_url, marketplace_id, category_id, rating, review_count, offer_score").in("status", ["active", "published"]).in("offer_group_id", groupIds).limit(100);
+
     const { data, error: productsError } = await query;
     if (productsError) { setError(productsError.message); setLoading(false); return; }
     setProducts((data as ProductRow[] ?? []).map((p) => mapProduct(p)));
