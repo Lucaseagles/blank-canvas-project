@@ -142,6 +142,14 @@ Só marcar como concluído quando rota, ações, persistência real, autorizaç�
 - Commits: `4ad3d506b977994e1b22cf5af40bd30f38c90aa9`, `edc07ce899f030a5b15bff9c2d53c8def656d502`.
 - **Pendente:** conferir status e agendamento na alteração rápida, associação de produtos e campanhas, armazenamento e reprodução de vídeos, TypeScript/ESLint/build e E2E.
 
+### Video Bridge — correções de visibilidade, erro e link externo
+
+- `src/routes/bridge-videos.tsx` e `src/routes/product/$slug.tsx`: vídeos ponte públicos associados a produtos `active` ou `published`, em consonância com o catálogo.
+- `src/routes/bridge-videos.tsx`: estado de erro com opção de nova tentativa, separado do estado vazio.
+- `src/lib/bridge-video.functions.ts`: validação no servidor exige HTTPS e domínio da plataforma selecionada para links externos.
+- Commits: `090f84714a0b4bc206cdf2e716898ef2198b79ff`, `6a3fa09fe4386d4fe4b09a8c70a9de731fdd1d96`, `fb21146584b3712f039b2757dc99ce8ab295edda`, `06232d9af2728ac6d19dbb9e7a9de87f6d5d3fc7`.
+- **Pendente:** confirmar domínios adicionais legítimos por plataforma, políticas RLS, testes com URLs reais, TypeScript/ESLint/build e E2E. Não declarar concluído sem validação.
+
 ### Pendências que continuam abertas
 
 - Executar TypeScript, ESLint e build no ambiente do projeto. A tentativa de clonar o repositório neste ambiente não pôde concluir porque a rede para github.com não está disponível; não declarar build aprovado.
