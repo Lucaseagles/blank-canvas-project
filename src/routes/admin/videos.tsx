@@ -1,6 +1,5 @@
 import { createFileRoute, Outlet, useLocation } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { trackEvent } from "@/lib/analytics";
 import { toast } from "sonner";
-import { getVideos, saveVideo, deleteVideo } from "@/lib/video.functions";
+import { getAdminVideos, getAdminVideoFormOptions, saveVideo, deleteVideo } from "@/lib/video.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -31,7 +30,8 @@ function AdminVideosPage() {
   const [productSearchTerm, setProductSearchTerm] = useState("");
   
   const queryClient = useQueryClient();
-  const fetchVideosFn = useServerFn(getVideos);
+  const fetchVideosFn = useServerFn(getAdminVideos);
+  const fetchOptionsFn = useServerFn(getAdminVideoFormOptions);
   const saveVideoFn = useServerFn(saveVideo);
   const deleteVideoFn = useServerFn(deleteVideo);
 
@@ -45,34 +45,19 @@ function AdminVideosPage() {
 
   const { data: videos, isLoading } = useQuery({
     queryKey: ["admin-videos"],
-    queryFn: () => fetchVideosFn({ data: { limit: 50, includeScheduled: true } }),
+    queryFn: () => fetchVideosFn({ data: { limit: 100, includeScheduled: true } }),
   });
 
-  const { data: allProducts } = useQuery({
-    queryKey: ["admin-products-minimal"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("id, title")
-        .eq("status", "active")
-        .order("title");
-      if (error) throw error;
-      return data;
-    },
+  const { data: formOptions, isLoading: isOptionsLoading, isError: isOptionsError } = useQuery({
+    queryKey: ["admin-video-form-options"],
+    queryFn: () => fetchOptionsFn(),
   });
-
-  const filteredProducts = allProducts?.filter(p => 
-    p.title.toLowerCase().includes(productSearchTerm.toLowerCase())
+  const allProducts = formOptions?.products ?? [];
+  const categories = formOptions?.categories ?? [];
+  const campaigns = formOptions?.campaigns ?? [];
+  const filteredProducts = allProducts.filter((product) =>
+    product.title.toLowerCase().includes(productSearchTerm.toLowerCase())
   );
-
-  const { data: categories } = useQuery({
-    queryKey: ["categories"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("categories").select("*");
-      if (error) throw error;
-      return data;
-    },
-  });
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status, title }: { id: string; status: any; title: string }) => {
@@ -107,12 +92,12 @@ function AdminVideosPage() {
     const data = {
       id: editingVideo?.id,
       title: formData.get("title") as string,
-      external_url: formData.get("external_url") as string,
-      category_id: formData.get("category_id") as string,
+      external_url: (String(formData.get("external_url") ?? "").trim() || null),
+      category_id: String(formData.get("category_id") ?? "").trim() || null,
       status: (formData.get("status") as any) || 'draft',
       productIds: selectedProductIds,
-      scheduled_for: formData.get("scheduled_for") as string,
-      campaign_id: formData.get("campaign_id") as string,
+      scheduled_for: String(formData.get("scheduled_for") ?? "").trim() ? new Date(String(formData.get("scheduled_for"))).toISOString() : null,
+      campaign_id: String(formData.get("campaign_id") ?? "").trim() && formData.get("campaign_id") !== "none" ? String(formData.get("campaign_id")) : null,
     };
 
     try {
@@ -184,7 +169,7 @@ function AdminVideosPage() {
                         <SelectValue placeholder="Select" />
                       </SelectTrigger>
                       <SelectContent className="bg-glass-fallback border-glass-border backdrop-blur-xl">
-                        {categories?.map((cat) => (
+                        {categories.filter((cat) => cat.is_active).map((cat) => (
                           <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                         ))}
                       </SelectContent>
@@ -214,8 +199,7 @@ function AdminVideosPage() {
                       </SelectTrigger>
                       <SelectContent className="bg-glass-fallback border-glass-border backdrop-blur-xl">
                         <SelectItem value="none">No Campaign</SelectItem>
-                        {/* We'd normally fetch campaigns here, using a placeholder for now */}
-                        <SelectItem value="d290f1ee-6c54-4b01-90e6-d701748f0851">Summer Launch 2026</SelectItem>
+                        {campaigns.map((campaign) => <SelectItem key={campaign.id} value={campaign.id}>{campaign.name} · {campaign.status}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -288,6 +272,8 @@ function AdminVideosPage() {
         </div>
       </div>
 
+      {isOptionsError && <div role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">Não foi possível carregar produtos, categorias e campanhas. Atualize a página antes de editar vídeos.</div>}
+      {isOptionsLoading && <div className="rounded-xl border p-4 text-sm text-muted-foreground">Carregando produtos, categorias e campanhas reais…</div>}
       <div className="bg-glass-fallback border border-glass-border rounded-[2.5rem] backdrop-blur-xl overflow-hidden shadow-2xl elevation-1 reveal-on-scroll">
         <div className="hidden lg:block">
           <Table>
