@@ -13,6 +13,21 @@ const bridgeVideoInput = z.object({
   is_active: z.boolean().default(true),
 });
 
+const platformHosts: Record<string, string[]> = {
+  tiktok: ['tiktok.com'],
+  shopee: ['shopee.com.br', 'shopee.com', 'shope.ee'],
+  ml: ['mercadolivre.com.br', 'mercadolibre.com', 'mercadolivre.com', 'meli.la'],
+  youtube: ['youtube.com', 'youtu.be'],
+};
+
+function assertPlatformLink(platform: string, link: string) {
+  const url = new URL(link);
+  const hostname = url.hostname.toLowerCase();
+  if (url.protocol !== 'https:' || !platformHosts[platform]?.some((host) => hostname === host || hostname.endsWith('.' + host))) {
+    throw new Error('O link deve ser HTTPS e pertencer à plataforma selecionada.');
+  }
+}
+
 const productIdInput = z.object({ product_id: z.string().uuid() });
 
 export const getAdminBridgeVideos = createServerFn({ method: 'GET' })
@@ -44,6 +59,7 @@ export const saveBridgeVideo = createServerFn({ method: 'POST' })
   .middleware([requireOwnerRole])
   .validator((data: unknown) => bridgeVideoInput.parse(data))
   .handler(async ({ data }) => {
+    assertPlatformLink(data.platform, data.link);
     const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
 
     const { data: product, error: productError } = await supabaseAdmin
