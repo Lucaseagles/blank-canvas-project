@@ -9,20 +9,48 @@ const videoInput = z.object({
   caption: z.string().trim().max(500).optional().nullable(), subtitle_url: z.string().url().max(2000).optional().nullable(), subtitle_text: z.string().trim().max(10000).optional().nullable()
 });
 
+const videoSelect = `*, categories(name, slug), video_products(product_id, position, products(id, title, current_price, slug, images, affiliate_url, category_id))`;
+
 export const getVideos = createServerFn({ method: "GET" })
   .validator((data: unknown) => z.object({ status: z.enum(["published", "draft", "archived"]).optional(), categoryId: z.string().uuid().optional(), campaignId: z.string().uuid().optional(), limit: z.number().int().min(1).max(100).optional().default(20), includeScheduled: z.boolean().optional().default(false) }).parse(data))
   .handler(async ({ data: { status, categoryId, campaignId, limit, includeScheduled } }) => {
-    try {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      let query = supabaseAdmin.from("videos").select(`*, categories(name, slug), video_products(product_id, position, products(id, title, current_price, slug, images, affiliate_url, category_id))`);
-      query = query.eq("status", status || "published");
-      if (categoryId) query = query.eq("category_id", categoryId);
-      if (campaignId) query = query.eq("campaign_id", campaignId);
-      if (!includeScheduled) query = query.or(`scheduled_for.is.null,scheduled_for.lte.${new Date().toISOString()}`);
-      const { data, error } = await query.order("created_at", { ascending: false }).limit(limit);
-      if (error) throw error;
-      return data || [];
-    } catch (error) { console.error("Error fetching videos:", error); return []; }
+    if (status && status !== "published") throw new Error("Only published videos are available publicly");
+    if (includeScheduled) throw new Error("Scheduled videos are not available through the public feed");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let query = supabaseAdmin.from("videos").select(videoSelect).eq("status", "published");
+    if (categoryId) query = query.eq("category_id", categoryId);
+    if (campaignId) query = query.eq("campaign_id", campaignId);
+    query = query.or(`scheduled_for.is.null,scheduled_for.lte.${new Date().toISOString()}`);
+    const { data, error } = await query.order("created_at", { ascending: false }).limit(limit);
+    if (error) throw error;
+    return data ?? [];
+  });
+
+export const getAdminVideos = createServerFn({ method: "GET" })
+  .middleware([requireOwnerRole])
+  .validator((data: unknown) => z.object({ status: z.enum(["published", "draft", "archived"]).optional(), limit: z.number().int().min(1).max(100).optional().default(50), includeScheduled: z.boolean().optional().default(true) }).parse(data))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let query = supabaseAdmin.from("videos").select(videoSelect);
+    if (data.status) query = query.eq("status", data.status);
+    if (!data.includeScheduled) query = query.or(`scheduled_for.is.null,scheduled_for.lte.${new Date().toISOString()}`);
+    const { data: rows, error } = await query.order("created_at", { ascending: false }).limit(data.limit);
+    if (error) throw error;
+    return rows ?? [];
+  });
+
+export const getAdminVideoFormOptions = createServerFn({ method: "GET" })
+  .middleware([requireOwnerRole])
+  .handler(async () => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const [productsResult, categoriesResult, campaignsResult] = await Promise.all([
+      supabaseAdmin.from("products").select("id,title,status").order("title"),
+      supabaseAdmin.from("categories").select("id,name,is_active").order("name"),
+      supabaseAdmin.from("campaigns").select("id,name,status,starts_at,ends_at").order("created_at", { ascending: false }),
+    ]);
+    const errors = [productsResult.error, categoriesResult.error, campaignsResult.error].filter(Boolean);
+    if (errors.length) throw new Error(errors.map((error: any) => error.message).join(" | "));
+    return { products: productsResult.data ?? [], categories: categoriesResult.data ?? [], campaigns: campaignsResult.data ?? [] };
   });
 
 export const saveVideo = createServerFn({ method: "POST" })
