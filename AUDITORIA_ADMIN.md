@@ -150,6 +150,14 @@ Só marcar como concluído quando rota, ações, persistência real, autorizaç�
 - Commits: `090f84714a0b4bc206cdf2e716898ef2198b79ff`, `6a3fa09fe4386d4fe4b09a8c70a9de731fdd1d96`, `fb21146584b3712f039b2757dc99ce8ab295edda`, `06232d9af2728ac6d19dbb9e7a9de87f6d5d3fc7`.
 - **Pendente:** confirmar domínios adicionais legítimos por plataforma, políticas RLS, testes com URLs reais, TypeScript/ESLint/build e E2E. Não declarar concluído sem validação.
 
+### Marketplaces — revisão de cadastro e links
+
+- `src/admin/marketplaces/MarketplaceForm.tsx`: falhas de carregamento da edição agora impedem exibição de formulário vazio e oferecem retorno à listagem.
+- `src/lib/marketplace.functions.ts`: validação server-side exige template de link afiliado com URL HTTPS válida e sem credenciais embutidas.
+- Cadastro, edição e exclusão existentes já passam por `requireOwnerRole`; exclusão é bloqueada quando há produtos vinculados.
+- Commits: `c82175d395e64f5d313486bdb1a5ef59f7b8f327`, `b9ae7adbaa47b6db8ebb79a8fff45de5cadf5b7c`.
+- **Pendente:** validar dados/RLS do Supabase, propagação de status de marketplace à vitrine, estrutura de links por marketplace, sincronização externa real (não implementada), TypeScript/ESLint/build e E2E.
+
 ### Pendências que continuam abertas
 
 - Executar TypeScript, ESLint e build no ambiente do projeto. A tentativa de clonar o repositório neste ambiente não pôde concluir porque a rede para github.com não está disponível; não declarar build aprovado.
