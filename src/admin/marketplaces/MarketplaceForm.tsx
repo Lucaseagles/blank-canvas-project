@@ -18,10 +18,12 @@ export function MarketplaceForm({ marketplaceId }: { marketplaceId?: string }) {
   const [status, setStatus] = useState("active");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(Boolean(marketplaceId));
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!marketplaceId) return;
     let mounted = true;
+    setLoadError(null);
     getFn({ data: { id: marketplaceId } }).then((data) => {
       if (!mounted) return;
       setName(data.name ?? "");
@@ -31,7 +33,7 @@ export function MarketplaceForm({ marketplaceId }: { marketplaceId?: string }) {
       setLoading(false);
     }).catch((error) => {
       if (mounted) {
-        toast.error(error instanceof Error ? error.message : "Não foi possível carregar o marketplace.");
+        setLoadError(error instanceof Error ? error.message : "Não foi possível carregar o marketplace.");
         setLoading(false);
       }
     });
@@ -65,6 +67,7 @@ export function MarketplaceForm({ marketplaceId }: { marketplaceId?: string }) {
     }
   };
 
+  if (loadError) return <main className="container mx-auto max-w-3xl px-4 py-16 text-center"><p className="text-destructive">Não foi possível carregar o marketplace: {loadError}</p><Button className="mt-4" variant="outline" onClick={() => navigate({ to: "/admin/marketplaces" })}>Voltar à lista</Button></main>;
   if (loading) return <main className="container mx-auto max-w-3xl px-4 py-16 text-center text-muted-foreground">Carregando marketplace...</main>;
   return <main className="container mx-auto max-w-3xl px-4 py-10"><Card className="rounded-[2rem] border-glass-border bg-glass backdrop-blur-xl"><CardHeader><CardTitle className="text-3xl font-black uppercase italic">{marketplaceId ? "Editar marketplace" : "Novo marketplace"}</CardTitle></CardHeader><CardContent><form onSubmit={save} className="space-y-5"><div className="space-y-2"><Label>Nome *</Label><Input value={name} onChange={e => setName(e.target.value)} placeholder="Amazon, Shopee, Mercado Livre..." required /></div><div className="space-y-2"><Label>Slug *</Label><Input value={slug} onChange={e => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "-"))} placeholder="amazon" required /></div><div className="space-y-2"><Label>Status</Label><select value={status} onChange={e => setStatus(e.target.value)} className="h-11 w-full rounded-xl border border-glass-border bg-background px-3"><option value="active">Ativo</option><option value="pending">Pendente</option><option value="disabled">Desativado</option></select></div><div className="space-y-2"><Label>Estrutura do link de afiliado</Label><Input value={affiliateStructure} onChange={e => setAffiliateStructure(e.target.value)} placeholder="https://.../{id}?tag=..." /></div><div className="flex justify-end gap-3"><Button type="button" variant="outline" onClick={() => navigate({ to: "/admin/marketplaces" })}>Cancelar</Button><Button type="submit" disabled={saving}>{saving ? "Salvando..." : "Salvar marketplace"}</Button></div></form></CardContent></Card></main>;
 }
