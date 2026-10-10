@@ -68,6 +68,22 @@ export const saveVideo = createServerFn({ method: "POST" })
     return { success: true, id: videoId };
   });
 
+export const setVideoStatus = createServerFn({ method: "POST" })
+  .middleware([requireOwnerRole])
+  .validator((data: unknown) => z.object({ id: z.string().uuid(), status: z.enum(["published", "draft", "archived"]) }).parse(data))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: existing, error: readError } = await supabaseAdmin.from("videos").select("id,scheduled_for").eq("id", data.id).maybeSingle();
+    if (readError) throw readError;
+    if (!existing) throw new Error("Vídeo não encontrado.");
+    if (data.status === "published" && existing.scheduled_for && new Date(existing.scheduled_for).getTime() > Date.now()) {
+      throw new Error("Este vídeo está agendado para o futuro e não pode ser publicado agora.");
+    }
+    const { error } = await supabaseAdmin.from("videos").update({ status: data.status }).eq("id", data.id);
+    if (error) throw error;
+    return { success: true, id: data.id, status: data.status };
+  });
+
 export const deleteVideo = createServerFn({ method: "POST" })
   .middleware([requireOwnerRole])
   .validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
