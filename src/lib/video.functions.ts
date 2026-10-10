@@ -23,7 +23,7 @@ export const getVideos = createServerFn({ method: "GET" })
     query = query.or(`scheduled_for.is.null,scheduled_for.lte.${new Date().toISOString()}`);
     const { data, error } = await query.order("created_at", { ascending: false }).limit(limit);
     if (error) throw error;
-    return (data ?? []).map((video: any) => ({ ...video, video_products: (video.video_products ?? []).filter((entry: any) => entry.products?.status === "active") }));
+    return (data ?? []).map((video: any) => ({ ...video, video_products: (video.video_products ?? []).filter((entry: any) => ["active", "published"].includes(entry.products?.status)) }));
   });
 
 export const getAdminVideos = createServerFn({ method: "GET" })
