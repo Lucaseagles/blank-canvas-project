@@ -39,7 +39,7 @@ function ProductDetailPage() {
   const { data: bridgeVideos = [] } = useQuery({
     queryKey: ['product-bridge-videos', product?.id],
     queryFn: async () => {
-      const { data, error } = await (supabase as any).from('bridge_videos').select('id,title,subtitle,thumbnail,platform,link,created_at,products!inner(id,slug,title,current_price,images,status)').eq('product_id', product!.id).eq('is_active', true).eq('products.status', 'active').order('created_at', { ascending: false }).limit(6);
+      const { data, error } = await (supabase as any).from('bridge_videos').select('id,title,subtitle,thumbnail,platform,link,created_at,products!inner(id,slug,title,current_price,images,status)').eq('product_id', product!.id).eq('is_active', true).in('products.status', ['active', 'published']).order('created_at', { ascending: false }).limit(6);
       if (error) throw error;
       return (data ?? []).map((row: any): BridgeVideo => ({ id: row.id, title: row.title, subtitle: row.subtitle, thumbnail: row.thumbnail, platform: row.platform as BridgeVideoPlatform, link: row.link, product: row.products }));
     },
