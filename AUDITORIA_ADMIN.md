@@ -104,6 +104,14 @@ Só marcar como concluído quando rota, ações, persistência real, autorizaç�
 - Commits: `ca1af8fbb4cb0b2ad1aab189a86a76feb7aa56a2`, `279ae0b5cc6c08cb6988b4f3035652a3ebc63438`, `103cba6555c605795148549c652a479ed280564f`.
 - **Não validado integralmente:** edição inline, operações em lote, duplicação, importação, exportação, consistência de status nos demais consumidores e testes automatizados.
 
+### Products — edição rápida e ações em lote
+
+- `src/lib/admin-product-operations.functions.ts`: funções novas com `requireOwnerRole`, validação Zod, alteração de preço/categoria e status em lote.
+- `src/admin/products/ProductInlineEdit.tsx`: usa função protegida para preço e categoria, em vez de mutação direta.
+- `src/admin/products/ProductBulkActions.tsx`: publicar, despublicar e arquivar usam função protegida, com confirmação e checagem de quantidade atualizada. Exclusão permanente em lote retirada da interface por segurança.
+- Commits: `17ad0235c4a482feff8ac982f894e120121d9ec9`, `4c525bf0722ec8fdb697bd1886f27e8ebcaba318`, `5bbf1f678d4a3201f84f98258a839dd388b05323`, `53c0e0565daec437c7d5c65423251d73f60a3fca`.
+- **Ainda pendente:** testes TypeScript/ESLint/build, verificação E2E, revisão de importação/duplicação/exportação, validação completa de integridade de publicação e consistência de visibilidade pública.
+
 ### Pendências que continuam abertas
 
 - Executar TypeScript, ESLint e build no ambiente do projeto. A tentativa de clonar o repositório neste ambiente não pôde concluir porque a rede para github.com não está disponível; não declarar build aprovado.
