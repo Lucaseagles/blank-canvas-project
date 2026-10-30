@@ -192,3 +192,10 @@ Continuar a matriz de catálogo público a partir de **Products → Categories �
 - Atualização solicitada na branch principal `main` para sinalizar as correções recentes de Collections e Banners.
 - Este commit é um marcador de sincronização no repositório; não confirma que o editor Lovable importou as mudanças ou que o site publicado foi atualizado.
 - Conferir no Lovable se o projeto está vinculado a `Lucaseagles/blank-canvas-project` e se o histórico inclui este commit antes de publicar.
+
+### Social Channels — revisão do cadastro e métricas
+
+- `src/routes/admin/social-channels.tsx`: falhas de listagem e analytics agora exibem erro e opção de nova tentativa, em vez de estado vazio enganoso.
+- `src/lib/social-cross-promo.functions.ts`: cadastro/edição exige URL pública HTTPS sem credenciais embutidas; CRUD administrativo protegido por `requireOwnerRole`, leitura pública limitada a canais ativos.
+- Commits: `a9f5b3596a877b24d7c9ed67e6de187973988071`, `6b8cf0eaa481b1415463915adee716cc9efe7ff2`.
+- **Pendente:** verificar políticas RLS, exposição dos canais nas superfícies públicas, eventos de intenção com usuário real, TypeScript/ESLint/build/E2E. Analytics mede intenção, não seguidores efetivamente conquistados.
