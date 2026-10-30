@@ -1,0 +1,35 @@
+import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { z } from "zod";
+import { requireOwnerRole } from "./auth-guards.server";
+
+export const getRetailHubCatalog = createServerFn({method:"GET"}).handler(async()=>{
+ const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
+ const {data,error}=await (supabaseAdmin as any).from("hub_products").select("id,title,description,image_url,category,retail_price,supplier_id").eq("active",true).order("created_at",{ascending:false}).limit(60);
+ if(error) throw error;
+ return data??[];
+});
+export const getMerchantHubCatalog = createServerFn({method:"GET"}).middleware([requireSupabaseAuth]).handler(async({context})=>{
+ const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
+ const {data:profile,error:profileError}=await (supabaseAdmin as any).from("commercial_profiles").select("id").eq("user_id",context.userId).eq("audience","merchant").eq("status","approved").maybeSingle();
+ if(profileError) throw profileError;
+ if(!profile) throw new Error("Acesso exclusivo para lojistas aprovados.");
+ const {data,error}=await (supabaseAdmin as any).from("hub_products").select("id,title,description,image_url,category,b2b_base_price,min_b2b_quantity,hub_b2b_tiers(min_quantity,unit_price)").eq("active",true).not("b2b_base_price","is",null).order("created_at",{ascending:false}).limit(60);
+ if(error) throw error;
+ return data??[];
+});
+export const getHubCatalogAdmin = createServerFn({method:"GET"}).middleware([requireOwnerRole]).handler(async()=>{
+ const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
+ const [products,suppliers]=await Promise.all([(supabaseAdmin as any).from("hub_products").select("*").order("created_at",{ascending:false}).limit(200),(supabaseAdmin as any).from("hub_suppliers").select("*").order("name")]);
+ if(products.error) throw products.error;if(suppliers.error) throw suppliers.error;
+ return {products:products.data??[],suppliers:suppliers.data??[]};
+});
+export const saveHubProductAdmin=createServerFn({method:"POST"}).middleware([requireOwnerRole]).validator((input:unknown)=>z.object({
+ id:z.string().uuid().optional(),supplier_id:z.string().uuid(),title:z.string().trim().min(3).max(180),description:z.string().max(2000).optional(),image_url:z.union([z.string().url(),z.literal("")]).optional(),category:z.string().max(80).optional(),sku:z.string().max(80).optional(),
+ retail_price:z.number().nonnegative(),supplier_cost:z.number().nonnegative(),b2b_base_price:z.number().nonnegative().nullable(),min_b2b_quantity:z.number().int().positive(),active:z.boolean()
+}).parse(input)).handler(async({data})=>{
+ const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
+ const {id,...payload}=data;
+ const {error}=await (supabaseAdmin as any).from("hub_products").upsert(id?{id,...payload}:{...payload});
+ if(error) throw error;return {success:true};
+});
