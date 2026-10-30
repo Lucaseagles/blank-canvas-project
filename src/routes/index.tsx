@@ -8,7 +8,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ProductCard } from "@/components/product/ProductCard";
-import { TrendingUp, Zap, ArrowRight, ShieldCheck, Globe, Sparkles } from "lucide-react";
+import { TrendingUp, Zap, ArrowRight, ShieldCheck, Globe, Sparkles, ShoppingBag, Store, Megaphone, Crown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { CategoryStrip } from "@/components/product/CategoryStrip";
 import { BannerCarousel } from "@/components/product/BannerCarousel";
@@ -37,6 +37,31 @@ function Index() {
   const sectionStyle = (key: string) => ({ order: order(key) });
 
   return <div className="flex min-h-screen w-full flex-col gap-0">
+    <section aria-labelledby="hub-experiences-title" className="relative isolate overflow-hidden border-b border-white/10 bg-background px-4 pb-20 pt-32 md:pb-28 md:pt-40">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0"><div className="absolute -left-32 top-0 h-96 w-96 rounded-full bg-primary/20 blur-[120px]"/><div className="absolute -right-32 bottom-0 h-96 w-96 rounded-full bg-blue-500/15 blur-[120px]"/></div>
+      <div className="relative mx-auto max-w-7xl">
+        <div className="mx-auto mb-14 max-w-4xl space-y-6 text-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-5 py-2 text-xs font-black uppercase tracking-[.2em] text-primary"><Crown className="h-4 w-4"/> {brand?.displayName ?? "Hub Eagles"} · Ecossistema Premium</div>
+          <h1 id="hub-experiences-title" className="text-5xl font-black leading-[1.04] tracking-[-.06em] sm:text-6xl lg:text-8xl">Uma conta. <span className="bg-gradient-to-r from-primary via-violet-400 to-blue-400 bg-clip-text text-transparent">Três experiências.</span></h1>
+          <p className="mx-auto max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">Descubra oportunidades para comprar melhor, abastecer seu negócio ou divulgar produtos e ganhar comissões. Escolha a experiência ideal para você.</p>
+        </div>
+        <div className="grid gap-5 lg:grid-cols-3">
+          {[
+            {id:"consumer", icon:ShoppingBag, eyebrow:"01 · PARA VOCÊ", title:"Comprar", subtitle:"Sou consumidor", description:"Produtos, vídeos, cupons e achadinhos de diversos marketplaces, além da seleção especial Hub Eagles.", features:["Ofertas e cupons personalizados","Vídeos, descobertas e favoritos","Preços de varejo e promoções"], accent:"from-violet-500/20 to-fuchsia-500/5", action:"Explorar como consumidor"},
+            {id:"merchant", icon:Store, eyebrow:"02 · PARA SEU NEGÓCIO", title:"Revender", subtitle:"Sou lojista ou comerciante", description:"Um espaço exclusivo para solicitar acesso a fornecedores, produtos para revenda e condições por volume.", features:["Catálogo B2B sujeito a aprovação","Produtos de fornecedores parceiros","Condições comerciais por quantidade"], accent:"from-blue-500/20 to-cyan-500/5", action:"Quero comprar para revender"},
+            {id:"partner", icon:Megaphone, eyebrow:"03 · PARA CRIADORES", title:"Divulgar", subtitle:"Sou parceiro", description:"Microinfluenciadores, influenciadores, afiliados e experts encontram um caminho próprio para campanhas elegíveis.", features:["Perfil especializado de divulgador","Solicitação de parceria comercial","Campanhas e comissões após aprovação"], accent:"from-amber-500/20 to-orange-500/5", action:"Quero ser parceiro"}
+          ].map(item=><article key={item.id} className={`group flex flex-col rounded-[2rem] border border-white/10 bg-gradient-to-br ${item.accent} p-7 shadow-2xl shadow-black/10 backdrop-blur-xl transition-all duration-300 hover:-translate-y-2 hover:border-primary/40 md:p-9`}>
+            <div className="mb-8 flex items-center justify-between"><div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-background/70 shadow-lg"><item.icon className="h-8 w-8 text-primary"/></div><span className="text-[10px] font-black tracking-[.2em] text-muted-foreground">{item.eyebrow}</span></div>
+            <p className="text-sm font-semibold text-primary">{item.subtitle}</p><h2 className="mt-2 text-4xl font-black tracking-tight">{item.title}</h2>
+            <p className="mt-5 min-h-24 text-sm leading-relaxed text-muted-foreground">{item.description}</p>
+            <ul className="mb-9 mt-6 flex-1 space-y-3">{item.features.map(feature=><li key={feature} className="flex items-start gap-3 text-sm"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary"/>{feature}</li>)}</ul>
+            <Button asChild size="lg" className="h-14 w-full rounded-2xl font-bold shadow-lg shadow-primary/10"><Link to="/onboarding">{item.action}<ArrowRight className="ml-2 h-4 w-4"/></Link></Button>
+          </article>)}
+        </div>
+        <p className="mt-8 text-center text-sm text-muted-foreground">Uma identidade Hub Eagles. Experiências adaptadas ao seu objetivo. Acesso a preços de fornecedor e campanhas mediante aprovação.</p>
+      </div>
+    </section>
+
     {show("hero") && <section style={sectionStyle("hero")} className="relative flex min-h-[95vh] items-center justify-center overflow-hidden bg-background pt-20"><div className="pointer-events-none absolute inset-0 overflow-hidden"><div className="absolute left-[-10%] top-[-10%] aspect-square w-[60%] rounded-full bg-primary/10 blur-[150px] animate-pulse" /><div className="absolute bottom-[-10%] right-[-10%] aspect-square w-[50%] rounded-full bg-blue-600/10 blur-[130px]" /></div><div className="z-10 mx-auto max-w-7xl space-y-10 px-4 text-center"><Badge variant="outline" className="glass-surface rounded-full border-primary/30 bg-primary/5 px-5 py-2 text-primary"><Sparkles className="mr-2 h-3.5 w-3.5" />{brand?.displayName ?? "Hub Eagles"} · OFERTAS INTELIGENTES</Badge><h1 className="text-6xl font-black uppercase italic leading-[0.85] tracking-[-0.06em] md:text-[8rem]">O FUTURO <br />DAS <span className="text-primary mix-blend-plus-lighter">OFERTAS</span> <br />HOJE.</h1><p className="mx-auto max-w-2xl text-xl font-medium leading-relaxed tracking-tight text-muted-foreground md:text-2xl">Comércio de próxima geração impulsionado por algoritmos de descoberta ponderada. Rastreamento em tempo real. Inteligência máxima.</p><div className="flex flex-wrap justify-center gap-6 pt-6"><Button size="lg" className="group h-16 rounded-2xl px-10 text-xl font-black shadow-2xl shadow-primary/30 transition-all hover:scale-105" asChild><Link to="/feed">ENTRAR NO SISTEMA<ArrowRight className="ml-3 h-6 w-6 transition-transform group-hover:translate-x-1" /></Link></Button><Button size="lg" variant="outline" className="glass-surface h-16 rounded-2xl px-10 text-xl font-bold transition-all hover:bg-primary/5" onClick={async () => { const { data: { user } } = await supabase.auth.getUser(); if (user) navigate({ to: "/profile" }); else navigate({ to: "/auth" }); }}>SINCRONIZAR PERFIL</Button></div></div></section>}
     {show("categories") && <div style={sectionStyle("categories")}><CategoryStrip /></div>}
     {show("banners") && <div style={sectionStyle("banners")}><BannerCarousel /></div>}
