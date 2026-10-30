@@ -158,6 +158,15 @@ Só marcar como concluído quando rota, ações, persistência real, autorizaç�
 - Commits: `c82175d395e64f5d313486bdb1a5ef59f7b8f327`, `b9ae7adbaa47b6db8ebb79a8fff45de5cadf5b7c`.
 - **Pendente:** validar dados/RLS do Supabase, propagação de status de marketplace à vitrine, estrutura de links por marketplace, sincronização externa real (não implementada), TypeScript/ESLint/build e E2E.
 
+### Collections — validação de aprovação e tratamento de erros
+
+- `src/routes/admin/collections.tsx`: falha no carregamento agora tem estado de erro explícito e botão de nova tentativa, em vez de editor vazio.
+- `src/routes/collections/$slug.tsx`: erro público oferece nova tentativa.
+- Supabase: funções `approve_collection_candidate` e `reject_collection_candidate` exigem `owner`, verificam status `pending` e registram auditoria; aprovação insere em `collection_items`.
+- Supabase: `collection_items` e `collection_candidates` possuem FKs com `ON DELETE CASCADE` para coleções e restrições únicas por coleção/produto.
+- Commits: `c2fb62a41ad77e11ad6d4e5e1f146c4223297442`, `6101a521f05b1c83eb12a35fc00f1f0e14fb33d9`.
+- **Pendente:** verificar outros caminhos de inserção em `collection_items`, permissões RLS diretas, testes de aprovação/exclusão com usuário autenticado e TypeScript/ESLint/build/E2E.
+
 ### Pendências que continuam abertas
 
 - Executar TypeScript, ESLint e build no ambiente do projeto. A tentativa de clonar o repositório neste ambiente não pôde concluir porque a rede para github.com não está disponível; não declarar build aprovado.
