@@ -186,3 +186,9 @@ Só marcar como concluído quando rota, ações, persistência real, autorizaç�
 ## Próxima parte
 
 Continuar a matriz de catálogo público a partir de **Products → Categories → Offers → Coupons → Videos → Video Bridge → Marketplaces → Collections → Banners**, corrigindo cada lacuna e validando o reflexo público antes de marcar o módulo como concluído. Depois, retomar **Engagement Intelligence → Trust & Quality → validação global**.
+
+## Sincronização GitHub → Lovable (30/10/2026)
+
+- Atualização solicitada na branch principal `main` para sinalizar as correções recentes de Collections e Banners.
+- Este commit é um marcador de sincronização no repositório; não confirma que o editor Lovable importou as mudanças ou que o site publicado foi atualizado.
+- Conferir no Lovable se o projeto está vinculado a `Lucaseagles/blank-canvas-project` e se o histórico inclui este commit antes de publicar.
