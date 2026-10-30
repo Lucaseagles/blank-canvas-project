@@ -1,7 +1,10 @@
+import { useQuery } from "@tanstack/react-query";
+import { getPublicBrandIdentity } from "@/lib/brand-identity.functions";
 import { Link } from "@tanstack/react-router";
 import { ShoppingBag, Github, Twitter, Instagram, Mail } from "lucide-react";
 
 export function Footer() {
+  const { data: brand } = useQuery({ queryKey: ["brand-identity"], queryFn: () => getPublicBrandIdentity(), staleTime: 60_000 });
   return (
     <footer className="bg-muted/30 border-t py-12 px-4 mt-20 reveal-on-scroll">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
@@ -11,7 +14,7 @@ export function Footer() {
               <ShoppingBag size={18} />
             </div>
             <span className="text-lg font-bold tracking-tight">
-              AFFILIATE<span className="text-primary">PRO</span>
+              {brand?.displayName ?? "Hub Eagles"}
             </span>
           </div>
           <p className="text-sm text-muted-foreground leading-relaxed">
@@ -67,7 +70,7 @@ export function Footer() {
       </div>
       
       <div className="max-w-7xl mx-auto mt-12 pt-8 border-t flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted-foreground">
-        <p>© 2026 Plataforma Hub Eagles. Todos os direitos reservados.</p>
+        <p>© 2026 Plataforma {brand?.displayName ?? "Hub Eagles"}. Todos os direitos reservados.</p>
         <div className="flex gap-6">
           <a href="#" className="hover:text-primary transition-colors inline-flex items-center min-h-[44px] py-2">Política de Privacidade</a>
           <a href="#" className="hover:text-primary transition-colors inline-flex items-center min-h-[44px] py-2">Termos de Serviço</a>
