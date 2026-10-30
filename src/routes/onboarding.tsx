@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { ShoppingBag, Store, Megaphone, ArrowRight, ShieldCheck } from "lucide-react";
 
-export const Route = createFileRoute("/onboarding")({ component: CommercialOnboarding });
+export const Route = createFileRoute("/onboarding")({ validateSearch: (search: Record<string, unknown>) => ({ audience: search.audience === "merchant" || search.audience === "partner" || search.audience === "consumer" ? search.audience : undefined }), component: CommercialOnboarding });
 
 type Audience = "consumer" | "merchant" | "partner";
 type PartnerType = "micro_influencer" | "influencer" | "affiliate" | "expert";
@@ -22,7 +22,8 @@ const partnerTypes: { id: PartnerType; title: string }[] = [
 
 function CommercialOnboarding() {
   const navigate = useNavigate();
-  const [audience, setAudience] = useState<Audience>("consumer");
+  const search = useSearch({ from: "/onboarding" });
+  const [audience, setAudience] = useState<Audience>(search.audience ?? "consumer");
   const [partnerType, setPartnerType] = useState<PartnerType>("micro_influencer");
   const [displayName, setDisplayName] = useState("");
   const [businessName, setBusinessName] = useState("");
