@@ -22,7 +22,7 @@ export const updateProductInline = createServerFn({ method: "POST" })
     if (readError) throw readError;
     if (!product) throw new Error("Produto não encontrado.");
     const { data: updated, error } = await supabaseAdmin.from("products")
-      .update({ [data.field]: data.value, updated_at: new Date().toISOString() })
+      .update({ [data.field]: data.value, updated_at: new Date().toISOString() } as never)
       .eq("id", data.id).select("id,current_price,category_id").single();
     if (error) throw error;
     return updated;
@@ -45,7 +45,7 @@ export const bulkSetProductStatus = createServerFn({ method: "POST" })
     if ((existing?.length ?? 0) !== data.ids.length) throw new Error("Alguns produtos não foram encontrados. Nenhuma alteração foi feita.");
     if (data.status === "published") {
       const incomplete = (existing ?? []).filter((p) =>
-        !p.title?.trim() || !Number.isFinite(p.current_price) || p.current_price <= 0 ||
+        !p.title?.trim() || p.current_price == null || !Number.isFinite(p.current_price) || p.current_price <= 0 ||
         !p.category_id || !p.marketplace_id || !p.description?.trim() ||
         !Array.isArray(p.images) || p.images.length === 0
       );
