@@ -378,6 +378,24 @@ export type Database = {
         }
         Relationships: []
       }
+      brand_identity: {
+        Row: {
+          display_name: string
+          id: boolean
+          updated_at: string
+        }
+        Insert: {
+          display_name?: string
+          id?: boolean
+          updated_at?: string
+        }
+        Update: {
+          display_name?: string
+          id?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bridge_videos: {
         Row: {
           created_at: string
