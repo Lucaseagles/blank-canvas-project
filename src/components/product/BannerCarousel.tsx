@@ -15,7 +15,7 @@ function currentDevice() {
 export function BannerCarousel() {
   const [device, setDevice] = useState(currentDevice);
   useEffect(() => { const onResize = () => setDevice(currentDevice()); window.addEventListener("resize", onResize); return () => window.removeEventListener("resize", onResize); }, []);
-  const { data: banners } = useQuery({
+  const { data: banners, isError, refetch } = useQuery({
     queryKey: ["banners", device],
     refetchInterval: 60_000,
     queryFn: async () => {
@@ -34,6 +34,7 @@ export function BannerCarousel() {
     },
   });
 
+  if (isError) return <div className="mx-auto max-w-7xl px-4 py-8 text-center text-sm text-muted-foreground">Não foi possível carregar os banners. <Button variant="outline" size="sm" onClick={() => void refetch()}>Tentar novamente</Button></div>;
   if (!banners || banners.length === 0) return null;
 
   return (
