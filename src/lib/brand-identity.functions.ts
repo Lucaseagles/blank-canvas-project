@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireOwnerRole } from "./auth-guards.server";
 
-export const DEFAULT_BRAND_NAME = "Rubi e Ragles";
+export const DEFAULT_BRAND_NAME = "Hub Eagles";
 
 export const getPublicBrandIdentity = createServerFn({ method: "GET" }).handler(async () => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
