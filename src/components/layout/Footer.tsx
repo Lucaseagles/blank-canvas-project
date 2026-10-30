@@ -67,7 +67,7 @@ export function Footer() {
       </div>
       
       <div className="max-w-7xl mx-auto mt-12 pt-8 border-t flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted-foreground">
-        <p>© 2026 Plataforma AffiliatePro. Todos os direitos reservados.</p>
+        <p>© 2026 Plataforma Hub Eagles. Todos os direitos reservados.</p>
         <div className="flex gap-6">
           <a href="#" className="hover:text-primary transition-colors inline-flex items-center min-h-[44px] py-2">Política de Privacidade</a>
           <a href="#" className="hover:text-primary transition-colors inline-flex items-center min-h-[44px] py-2">Termos de Serviço</a>
