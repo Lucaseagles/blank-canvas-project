@@ -101,7 +101,7 @@ export function SupportFloatingBubble() {
 
   const handleWhatsApp = async () => {
     if (!whatsappNumber) return;
-    const message = "Olá! Preciso de ajuda com o AffiliatePro.";
+    const message = "Olá! Preciso de ajuda com o Hub Eagles.";
     const whatsappUrl = `https://wa.me/${whatsappNumber || "5581995734813"}?text=${encodeURIComponent(message)}`;
     window.location.href = whatsappUrl;
     await persistConversation(messages, true);
