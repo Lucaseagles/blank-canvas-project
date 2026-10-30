@@ -4,7 +4,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { Button } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 
 function currentDevice() {
   if (typeof window === "undefined") return "all";
@@ -13,9 +13,11 @@ function currentDevice() {
 }
 
 export function BannerCarousel() {
-  const device = useMemo(() => currentDevice(), []);
+  const [device, setDevice] = useState(currentDevice);
+  useEffect(() => { const onResize = () => setDevice(currentDevice()); window.addEventListener("resize", onResize); return () => window.removeEventListener("resize", onResize); }, []);
   const { data: banners } = useQuery({
     queryKey: ["banners", device],
+    refetchInterval: 60_000,
     queryFn: async () => {
       const now = new Date().toISOString();
       const { data, error } = await supabase.from("banners")
