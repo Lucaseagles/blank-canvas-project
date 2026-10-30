@@ -3,7 +3,7 @@ export function renderErrorPage(): string {
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Systems Maintenance | AffiliatePro</title>
+    <title>Systems Maintenance | Hub Eagles</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
       body { 
