@@ -21,7 +21,7 @@ export const getAdminSocialChannels = createServerFn({ method: "GET" }).middlewa
   return (data ?? []) as SocialChannel[];
 });
 
-export const saveSocialChannel = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ id: z.string().uuid().optional(), platform: Platform, channel_name: z.string().min(2).max(120), channel_url: z.string().url().refine((v) => /^https?:\/\//i.test(v)), icon: z.string().max(40).optional(), is_active: z.boolean().default(true) }).parse(data)).handler(async ({ data }) => {
+export const saveSocialChannel = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ id: z.string().uuid().optional(), platform: Platform, channel_name: z.string().min(2).max(120), channel_url: z.string().url().refine((v) => { try { const url = new URL(v); return url.protocol === "https:" && !url.username && !url.password; } catch { return false; } }, "Informe uma URL HTTPS pública sem credenciais"), icon: z.string().max(40).optional(), is_active: z.boolean().default(true) }).parse(data)).handler(async ({ data }) => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const payload = { platform: data.platform, channel_name: data.channel_name, channel_url: data.channel_url, icon: data.icon ?? data.platform, is_active: data.is_active, updated_at: new Date().toISOString() };
   const query = data.id ? (supabaseAdmin as any).from("social_channels").update(payload).eq("id", data.id) : (supabaseAdmin as any).from("social_channels").insert(payload);
