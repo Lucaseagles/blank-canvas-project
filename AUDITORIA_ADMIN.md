@@ -167,6 +167,14 @@ Só marcar como concluído quando rota, ações, persistência real, autorizaç�
 - Commits: `c2fb62a41ad77e11ad6d4e5e1f146c4223297442`, `6101a521f05b1c83eb12a35fc00f1f0e14fb33d9`.
 - **Pendente:** verificar outros caminhos de inserção em `collection_items`, permissões RLS diretas, testes de aprovação/exclusão com usuário autenticado e TypeScript/ESLint/build/E2E.
 
+### Banners — responsividade, agendamento e links
+
+- `src/components/product/BannerCarousel.tsx`: detecção de dispositivo atualizada ao redimensionar a janela, atualização periódica a cada 60 segundos para refletir janelas de publicação e estado de erro com tentativa novamente.
+- Links de banners passam a usar âncoras para destinos internos ou HTTPS, em vez de tratar URLs externas como rotas TanStack.
+- `src/routes/admin/banner-preview.tsx`: confirmado editor existente de criação/edição/duplicação/ativação/exclusão via funções administrativas, sem novo sistema paralelo.
+- Commits: `2f8403ac2068664ed2130885e48641ee4bc4adaf`, `f5f9660737e26af66bf82be1ef99626bf99e38a8`, `009f3fb64fa0dd6c76e7c453eaf62d43adcf7beb`.
+- **Pendente:** confirmar políticas RLS, segmentação por audiência/categoria/produto, validação server-side de datas/URLs, TypeScript/ESLint/build e E2E.
+
 ### Pendências que continuam abertas
 
 - Executar TypeScript, ESLint e build no ambiente do projeto. A tentativa de clonar o repositório neste ambiente não pôde concluir porque a rede para github.com não está disponível; não declarar build aprovado.
