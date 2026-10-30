@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { Button } from "@/components/ui/button";
-import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -47,7 +46,7 @@ export function BannerCarousel() {
               <div className="absolute inset-0 bg-black/40 flex items-center p-8 md:p-16">
                 <div className="space-y-4 max-w-xl">
                   <h2 className="text-4xl md:text-6xl font-black text-white uppercase italic tracking-tighter leading-none">{banner.title}</h2>
-                  {banner.link_url && <Button asChild size="lg" className="rounded-xl px-8 font-black uppercase italic tracking-tighter shadow-2xl"><Link to={banner.link_url} search={(prev: any) => ({ ...prev, utm_source: "feed_banner" })}>Ver seleção<ArrowRight className="ml-2 w-5 h-5" /></Link></Button>}
+                  {banner.link_url && (banner.link_url.startsWith("/") || /^https:\/\//i.test(banner.link_url)) && <Button asChild size="lg" className="rounded-xl px-8 font-black uppercase italic tracking-tighter shadow-2xl"><a href={banner.link_url} rel="noopener noreferrer">Ver seleção<ArrowRight className="ml-2 w-5 h-5" /></a></Button>}
                 </div>
               </div>
             </div>
