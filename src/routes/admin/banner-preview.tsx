@@ -37,7 +37,7 @@ function BannerPreviewPage() {
   const banners = (source?.rows ?? []) as Banner[];
   const now = Date.now();
   const stateOf = (banner: Banner): Exclude<Status, "all"> => {
-    if (!Boolean(banner["is_active"])) return "inactive";
+    if (!banner["is_active"]) return "inactive";
     const start = dateValue(banner["starts_at"]);
     const end = dateValue(banner["ends_at"]);
     if (start && end && end < start) return "inactive";
