@@ -23,6 +23,9 @@ export const Route = createFileRoute("/admin/videos")({
 function AdminVideosPage() {
  const location=useLocation();
  if(location.pathname==="/admin/videos/new") return <Outlet />;
+ return <AdminVideosContent />;
+}
+function AdminVideosContent() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingVideo, setEditingVideo] = useState<any>(null);
