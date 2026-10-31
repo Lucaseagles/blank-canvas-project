@@ -68,7 +68,7 @@ function LoginPage() {
       }
 
       toast.success("Login realizado com sucesso. Acessando sistema...");
-      navigate({ to: "/onboarding", search: {} });
+      navigate({ to: "/onboarding", search: { audience: undefined } });
     } catch (error: any) {
       toast.error(error.message || "Falha na autenticação. Verifique suas credenciais.");
     } finally {
