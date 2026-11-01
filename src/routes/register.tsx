@@ -13,6 +13,7 @@ const registerSearchSchema = z.object({
   ref: z.string().optional(),
   campaign_id: z.string().optional(),
   returnTo: z.string().optional(),
+  audience: z.enum(["consumer", "merchant", "partner"]).optional(),
 });
 
 export const Route = createFileRoute("/register")({
@@ -60,7 +61,7 @@ function RegisterPage() {
         // Forward ref to login if present
         navigate({ 
           to: "/auth",
-          search: { ref: search.ref, campaign_id: search.campaign_id, returnTo: search.returnTo }
+          search: { ref: search.ref, campaign_id: search.campaign_id, returnTo: search.returnTo, audience: search.audience }
         });
 
       }
