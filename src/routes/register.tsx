@@ -12,6 +12,7 @@ import { z } from "zod";
 const registerSearchSchema = z.object({
   ref: z.string().optional(),
   campaign_id: z.string().optional(),
+  returnTo: z.string().optional(),
 });
 
 export const Route = createFileRoute("/register")({
@@ -59,7 +60,7 @@ function RegisterPage() {
         // Forward ref to login if present
         navigate({ 
           to: "/auth",
-          search: (prev: any) => ({ ...prev, ref: search.ref, campaign_id: search.campaign_id })
+          search: { ref: search.ref, campaign_id: search.campaign_id, returnTo: search.returnTo }
         });
 
       }
@@ -155,7 +156,7 @@ function RegisterPage() {
           <div className="mt-8 pt-8 border-t border-glass-border text-center space-y-4">
             <p className="text-sm text-muted-foreground font-medium">
               Já registrado?{" "}
-              <Link to="/auth" className="text-primary font-black uppercase tracking-tighter italic hover:underline">
+              <Link to="/auth" search={{ ref: search.ref, campaign_id: search.campaign_id, returnTo: search.returnTo }} className="text-primary font-black uppercase tracking-tighter italic hover:underline">
                 Engajar Login
               </Link>
             </p>
