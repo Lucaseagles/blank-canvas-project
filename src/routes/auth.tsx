@@ -15,6 +15,7 @@ const authSearchSchema = z.object({
   ref: z.string().optional(),
   campaign_id: z.string().optional(),
   returnTo: z.string().optional(),
+  audience: z.enum(["consumer", "merchant", "partner"]).optional(),
 });
 
 export const Route = createFileRoute("/auth")({
@@ -70,7 +71,9 @@ function LoginPage() {
 
       toast.success("Login realizado com sucesso. Acessando sistema...");
       const safeReturn = search.returnTo && /^\/(?!\/)[a-zA-Z0-9/_-]*$/.test(search.returnTo) && !["/auth", "/register"].includes(search.returnTo) ? search.returnTo : null;
-      if (safeReturn) {
+      if (search.audience) {
+        await navigate({ to: "/onboarding", search: { audience: search.audience, returnTo: safeReturn ?? undefined }, replace: true });
+      } else if (safeReturn) {
         await navigate({ to: safeReturn, replace: true });
       } else {
         await navigate({ to: "/onboarding", search: { audience: undefined }, replace: true });
@@ -159,7 +162,7 @@ function LoginPage() {
           <div className="mt-4 pt-8 border-t border-glass-border text-center space-y-4">
             <p className="text-sm text-muted-foreground font-medium">
               Novo operador?{" "}
-              <Link to="/register" search={{ ref: search.ref, campaign_id: search.campaign_id, returnTo: search.returnTo }} className="text-primary font-black uppercase tracking-tighter italic hover:underline">
+              <Link to="/register" search={{ ref: search.ref, campaign_id: search.campaign_id, returnTo: search.returnTo, audience: search.audience }} className="text-primary font-black uppercase tracking-tighter italic hover:underline">
                 Criar Identidade
               </Link>
             </p>
