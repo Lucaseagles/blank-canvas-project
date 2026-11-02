@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { ShoppingBag, Store, Megaphone, ArrowRight, ShieldCheck } from "lucide-react";
 
-export const Route = createFileRoute("/onboarding")({ validateSearch: (search: Record<string, unknown>) => ({ audience: search['audience'] === "merchant" || search['audience'] === "partner" || search['audience'] === "consumer" ? search['audience'] : undefined }), component: CommercialOnboarding });
+export const Route = createFileRoute("/onboarding")({ validateSearch: (search: Record<string, unknown>) => ({ audience: search['audience'] === "merchant" || search['audience'] === "partner" || search['audience'] === "consumer" ? search['audience'] : undefined, returnTo: typeof search['returnTo'] === "string" ? search['returnTo'] : undefined }), component: CommercialOnboarding });
 
 type Audience = "consumer" | "merchant" | "partner";
 type PartnerType = "micro_influencer" | "influencer" | "affiliate" | "expert";
@@ -31,7 +31,7 @@ function CommercialOnboarding() {
   const [document, setDocument] = useState("");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
-  useEffect(() => { void supabase.auth.getUser().then(({ data }) => { if (!data.user) navigate({ to: "/auth" }); }); }, [navigate]);
+  useEffect(() => { void supabase.auth.getUser().then(({ data }) => { if (!data.user) navigate({ to: "/auth", search: { returnTo: search.returnTo, audience: (search.audience ?? audience) as Audience, ref: undefined, campaign_id: undefined } }); }); }, [navigate, search.returnTo, search.audience, audience]);
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     setBusy(true);
@@ -47,7 +47,9 @@ function CommercialOnboarding() {
       });
       if (error) throw error;
       toast.success(audience === "consumer" ? "Perfil registrado!" : "Solicitação recebida! Aguardando aprovação.");
-      navigate({ to: "/profile" });
+      const safeReturn = search.returnTo && /^\/(?!\/)[a-zA-Z0-9/_-]*$/.test(search.returnTo) && !["/auth", "/register", "/onboarding"].includes(search.returnTo) ? search.returnTo : null;
+      // Commercial profiles remain pending until approved; never imply catalog access.
+      navigate({ to: audience === "consumer" ? (safeReturn ?? "/profile") : "/profile" });
     } catch (error) { toast.error(error instanceof Error ? error.message : "Não foi possível concluir o cadastro."); }
     finally { setBusy(false); }
   };
