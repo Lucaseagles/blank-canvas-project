@@ -31,7 +31,7 @@ function CommercialOnboarding() {
   const [document, setDocument] = useState("");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
-  useEffect(() => { void supabase.auth.getUser().then(({ data }) => { if (!data.user) navigate({ to: "/auth", search: { returnTo: search.returnTo, audience, ref: undefined, campaign_id: undefined } }); }); }, [navigate]);
+  useEffect(() => { void supabase.auth.getUser().then(({ data }) => { if (!data.user) navigate({ to: "/auth", search: { returnTo: search.returnTo, audience: search.audience, ref: undefined, campaign_id: undefined } }); }); }, [navigate, search.returnTo, search.audience]);
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     setBusy(true);
@@ -48,7 +48,8 @@ function CommercialOnboarding() {
       if (error) throw error;
       toast.success(audience === "consumer" ? "Perfil registrado!" : "Solicitação recebida! Aguardando aprovação.");
       const safeReturn = search.returnTo && /^\/(?!\/)[a-zA-Z0-9/_-]*$/.test(search.returnTo) && !["/auth", "/register", "/onboarding"].includes(search.returnTo) ? search.returnTo : null;
-      navigate({ to: safeReturn ?? "/profile" });
+      // Commercial profiles remain pending until approved; never imply catalog access.
+      navigate({ to: audience === "consumer" ? (safeReturn ?? "/profile") : "/profile" });
     } catch (error) { toast.error(error instanceof Error ? error.message : "Não foi possível concluir o cadastro."); }
     finally { setBusy(false); }
   };
