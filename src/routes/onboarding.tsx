@@ -31,7 +31,7 @@ function CommercialOnboarding() {
   const [document, setDocument] = useState("");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
-  useEffect(() => { void supabase.auth.getUser().then(({ data }) => { if (!data.user) navigate({ to: "/auth", search: { returnTo: search.returnTo, audience: search.audience ?? audience, ref: undefined, campaign_id: undefined } }); }); }, [navigate, search.returnTo, search.audience, audience]);
+  useEffect(() => { void supabase.auth.getUser().then(({ data }) => { if (!data.user) navigate({ to: "/auth", search: { returnTo: search.returnTo, audience: (search.audience ?? audience) as Audience, ref: undefined, campaign_id: undefined } }); }); }, [navigate, search.returnTo, search.audience, audience]);
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     setBusy(true);
