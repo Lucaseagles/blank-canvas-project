@@ -76,7 +76,7 @@ function LoginPage() {
       } else if (safeReturn) {
         await navigate({ to: safeReturn, replace: true });
       } else {
-        await navigate({ to: "/onboarding", search: { audience: undefined }, replace: true });
+        await navigate({ to: "/onboarding", search: { audience: undefined, returnTo: undefined }, replace: true });
       }
     } catch (error: any) {
       toast.error(error.message || "Falha na autenticação. Verifique suas credenciais.");
