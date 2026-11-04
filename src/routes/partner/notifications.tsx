@@ -22,7 +22,7 @@ function PartnerNotifications() {
       if (!session?.access_token) throw new Error("Entre na sua conta.");
       return markRead({ data: { accessToken: session.access_token, notificationId } });
     },
-    onSuccess: () => void cache.invalidateQueries({ queryKey: ["my-partner-financial-notifications"] }),
+    onSuccess: () => { void cache.invalidateQueries({ queryKey: ["my-partner-financial-notifications"] }); void cache.invalidateQueries({ queryKey: ["my-partner-unread-financial-notifications"] }); },
   });
   const notifications = (query.data ?? []) as Notification[];
   return <main className="mx-auto max-w-4xl space-y-6 px-4 py-28">
