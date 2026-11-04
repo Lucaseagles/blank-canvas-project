@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { getMyPartnerVisitStats } from "@/lib/partner-visit-stats.functions";
 import { getMyPartnerSalesSummary } from "@/lib/partner-sales-summary.functions";
 import { getMyPartnerCommissionStatus } from "@/lib/partner-commission-status.functions";
+import { getMyPartnerUnreadFinancialNotificationCount } from "@/lib/partner-financial-notifications.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyPartnerPortal } from "@/lib/partner-portal.functions";
@@ -15,6 +16,12 @@ export const Route = createFileRoute("/partner/portal")({ component: PartnerPort
 type Product = { id: string; title: string; description: string | null; image_url: string | null; category: string | null; retail_price: number };
 function PartnerPortal() {
   const load = useServerFn(getMyPartnerPortal);
+  const loadUnread = useServerFn(getMyPartnerUnreadFinancialNotificationCount);
+  const unreadQuery = useQuery({ queryKey: ["my-partner-unread-financial-notifications"], queryFn: async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) throw new Error("Entre na sua conta.");
+    return loadUnread({ data: { accessToken: session.access_token } });
+  }, retry: false });
   const loadCommissions = useServerFn(getMyPartnerCommissionStatus);
   const commissionsQuery = useQuery({ queryKey: ["my-partner-commission-status"], queryFn: async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -103,7 +110,7 @@ function PartnerPortal() {
         </div>}
         <p className="text-xs text-muted-foreground">Somente pedidos confirmados por fonte confiável. Comissões registradas não significam pagamento realizado.</p>
       </section>
-      <div className="flex flex-wrap gap-3"><Button asChild variant="outline"><Link to="/partner/statement">Ver meu extrato de comissões</Link></Button><Button asChild variant="outline"><Link to="/partner/notifications">Notificações financeiras</Link></Button></div>
+      <div className="flex flex-wrap gap-3"><Button asChild variant="outline"><Link to="/partner/statement">Ver meu extrato de comissões</Link></Button><Button asChild variant="outline"><Link to="/partner/notifications">Notificações financeiras{unreadQuery.data && unreadQuery.data.unread > 0 ? ` (${unreadQuery.data.unread})` : ""}</Link></Button></div>
       <section aria-label="Situação das comissões" className="space-y-3">
         <h2 className="text-2xl font-bold">Situação das suas comissões</h2>
         {commissionsQuery.isLoading && <p role="status">Carregando comissões...</p>}
