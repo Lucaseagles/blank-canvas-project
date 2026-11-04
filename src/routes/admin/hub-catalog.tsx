@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getHubCatalogAdmin, saveHubProductAdmin, saveHubSupplierAdmin } from "@/lib/hub-catalog.functions";
+import { getHubCatalogAdmin, saveHubProductAdmin, saveHubSupplierAdmin, saveHubB2BTierAdmin } from "@/lib/hub-catalog.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -33,6 +33,10 @@ function HubCatalogAdmin() {
   const load = useServerFn(getHubCatalogAdmin);
   const save = useServerFn(saveHubProductAdmin);
   const saveSupplier = useServerFn(saveHubSupplierAdmin);
+  const saveTier = useServerFn(saveHubB2BTierAdmin);
+  const [tierProductId, setTierProductId] = useState("");
+  const [tierQuantity, setTierQuantity] = useState("");
+  const [tierPrice, setTierPrice] = useState("");
   const [supplierName, setSupplierName] = useState("");
   const [supplierMode, setSupplierMode] = useState<"supplier" | "hub">("supplier");
   const query = useQuery({ queryKey: ["admin-hub-catalog"], queryFn: () => load() });
@@ -40,6 +44,7 @@ function HubCatalogAdmin() {
 
   const suppliers = (query.data?.suppliers ?? []) as Supplier[];
   const products = (query.data?.products ?? []) as Product[];
+  const tiers = (query.data?.tiers ?? []) as Array<{ id: string; product_id: string; min_quantity: number; unit_price: number }>;
 
   const mutation = useMutation({
     mutationFn: () => {
@@ -78,6 +83,24 @@ function HubCatalogAdmin() {
     onSuccess: () => {
       toast.success("Fornecedor cadastrado");
       setSupplierName("");
+      void queryClient.invalidateQueries({ queryKey: ["admin-hub-catalog"] });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const tierMutation = useMutation({
+    mutationFn: () => {
+      const min_quantity = Number(tierQuantity);
+      const unit_price = Number(tierPrice);
+      if (!tierProductId || !Number.isSafeInteger(min_quantity) || min_quantity < 1 || !Number.isFinite(unit_price) || unit_price <= 0) {
+        throw new Error("Selecione um produto e informe quantidade e preço válidos.");
+      }
+      return saveTier({ data: { product_id: tierProductId, min_quantity, unit_price } });
+    },
+    onSuccess: () => {
+      toast.success("Faixa de preço salva");
+      setTierQuantity("");
+      setTierPrice("");
       void queryClient.invalidateQueries({ queryKey: ["admin-hub-catalog"] });
     },
     onError: (error: Error) => toast.error(error.message),
@@ -172,6 +195,37 @@ function HubCatalogAdmin() {
               {form.id && <Button type="button" variant="outline" disabled={mutation.isPending} onClick={() => setForm(emptyForm())}>Cancelar edição</Button>}
             </div>
           </form>
+          <section className="space-y-4 rounded-3xl border border-white/10 bg-card/80 p-6">
+            <h2 className="text-xl font-bold">Preços progressivos para lojistas</h2>
+            <p className="text-sm text-muted-foreground">Cadastre uma faixa por quantidade mínima. A mesma quantidade atualiza o preço existente. As condições devem ser confirmadas pelo fornecedor.</p>
+            <form className="grid gap-4 md:grid-cols-3" onSubmit={event => { event.preventDefault(); tierMutation.mutate(); }}>
+              <label className="space-y-2 text-sm font-medium">
+                <span className="block">Produto com preço B2B</span>
+                <select required className="flex h-10 w-full rounded-md border bg-background px-3" value={tierProductId} onChange={event => setTierProductId(event.target.value)}>
+                  <option value="">Selecione</option>
+                  {products.filter(product => product.b2b_base_price !== null).map(product => <option key={product.id} value={product.id}>{product.title}</option>)}
+                </select>
+              </label>
+              <label className="space-y-2 text-sm font-medium">
+                <span className="block">Quantidade a partir de</span>
+                <Input type="number" required min={1} step={1} value={tierQuantity} onChange={event => setTierQuantity(event.target.value)} />
+              </label>
+              <label className="space-y-2 text-sm font-medium">
+                <span className="block">Preço unitário (R$)</span>
+                <Input type="number" required min="0.01" step="0.01" value={tierPrice} onChange={event => setTierPrice(event.target.value)} />
+              </label>
+              <Button type="submit" disabled={tierMutation.isPending || !tierProductId}>
+                {tierMutation.isPending ? "Salvando..." : "Salvar faixa de preço"}
+              </Button>
+            </form>
+            {tiers.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma faixa de preço cadastrada.</p>}
+            <ul className="space-y-2 text-sm">
+              {tiers.map(tier => <li key={tier.id} className="flex flex-wrap justify-between gap-2 rounded-xl border border-white/10 p-3">
+                <span>{products.find(product => product.id === tier.product_id)?.title ?? "Produto não encontrado"} · a partir de {tier.min_quantity} un.</span>
+                <strong>{brl(Number(tier.unit_price))}/un.</strong>
+              </li>)}
+            </ul>
+          </section>
           <section className="space-y-3">
             <h2 className="text-2xl font-bold">Produtos cadastrados ({products.length})</h2>
             {products.length === 0 && <p className="text-sm text-muted-foreground">Nenhum produto cadastrado ainda.</p>}
