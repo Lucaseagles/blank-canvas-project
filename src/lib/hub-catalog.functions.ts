@@ -33,3 +33,21 @@ export const saveHubProductAdmin=createServerFn({method:"POST"}).middleware([req
  const {error}=await (supabaseAdmin as any).from("hub_products").upsert(id?{id,...payload}:{...payload});
  if(error) throw error;return {success:true};
 });
+
+export const saveHubSupplierAdmin = createServerFn({ method: "POST" })
+  .middleware([requireOwnerRole])
+  .validator((input: unknown) => z.object({
+    id: z.string().uuid().optional(),
+    name: z.string().trim().min(2).max(160),
+    fulfillment_mode: z.enum(["supplier", "hub"]),
+    active: z.boolean(),
+  }).parse(input))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { id, ...payload } = data;
+    const { error } = await (supabaseAdmin as any)
+      .from("hub_suppliers")
+      .upsert(id ? { id, ...payload } : payload);
+    if (error) throw error;
+    return { success: true };
+  });
