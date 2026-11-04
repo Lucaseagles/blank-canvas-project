@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createMyPartnerReferralLink, getMyPartnerReferralLinks } from "@/lib/partner-referrals.functions";
 import { toast } from "sonner";
 import { getMyPartnerVisitStats } from "@/lib/partner-visit-stats.functions";
+import { getMyPartnerSalesSummary } from "@/lib/partner-sales-summary.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyPartnerPortal } from "@/lib/partner-portal.functions";
@@ -13,6 +14,12 @@ export const Route = createFileRoute("/partner/portal")({ component: PartnerPort
 type Product = { id: string; title: string; description: string | null; image_url: string | null; category: string | null; retail_price: number };
 function PartnerPortal() {
   const load = useServerFn(getMyPartnerPortal);
+  const loadSales = useServerFn(getMyPartnerSalesSummary);
+  const salesQuery = useQuery({ queryKey: ["my-partner-confirmed-sales"], queryFn: async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) throw new Error("Entre na sua conta.");
+    return loadSales({ data: { accessToken: session.access_token } });
+  }, retry: false });
   const loadStats = useServerFn(getMyPartnerVisitStats);
   const statsQuery = useQuery({ queryKey: ["my-partner-visit-stats"], queryFn: async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -76,6 +83,18 @@ function PartnerPortal() {
           <div className="rounded-2xl border bg-card p-5"><p className="text-sm text-muted-foreground">Visitas registradas</p><p className="text-3xl font-black">{statsQuery.data.visits}</p></div>
         </div>}
         <p className="text-xs text-muted-foreground">Visitas não representam compradores únicos, pedidos pagos ou comissões.</p>
+      </section>
+      <section aria-label="Vendas confirmadas" className="space-y-3">
+        <h2 className="text-2xl font-bold">Vendas e comissões confirmadas</h2>
+        {salesQuery.isLoading && <p role="status">Carregando vendas confirmadas...</p>}
+        {salesQuery.isError && <div role="alert"><p>Não foi possível consultar as vendas.</p><Button variant="outline" onClick={() => void salesQuery.refetch()}>Tentar novamente</Button></div>}
+        {salesQuery.data && <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-2xl border bg-card p-5"><p className="text-sm text-muted-foreground">Vendas confirmadas</p><p className="text-3xl font-black">{salesQuery.data.sales}</p></div>
+          <div className="rounded-2xl border bg-card p-5"><p className="text-sm text-muted-foreground">Valor das vendas</p><p className="text-2xl font-black">{Number(salesQuery.data.grossAmount).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p></div>
+          <div className="rounded-2xl border bg-card p-5"><p className="text-sm text-muted-foreground">Comissões registradas</p><p className="text-2xl font-black">{Number(salesQuery.data.commissionAmount).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p></div>
+          <div className="rounded-2xl border bg-card p-5"><p className="text-sm text-muted-foreground">Acordo ativo</p><p className="text-2xl font-black">{salesQuery.data.agreementPercent === null ? "Não definido" : `${salesQuery.data.agreementPercent}%`}</p></div>
+        </div>}
+        <p className="text-xs text-muted-foreground">Somente pedidos confirmados por fonte confiável. Comissões registradas não significam pagamento realizado.</p>
       </section>
       {products.length === 0 && <p className="rounded-2xl border p-6">Nenhum produto liberado para seu perfil no momento.</p>}
       <section aria-label="Produtos autorizados" className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
