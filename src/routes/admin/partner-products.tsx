@@ -1,0 +1,68 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { getPartnerProductGrantsAdmin, setPartnerProductGrantAdmin } from "@/lib/partner-product-grants.functions";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+
+export const Route = createFileRoute("/admin/partner-products")({ component: PartnerProductsAdmin });
+
+type Partner = { id: string; display_name: string; partner_type: string | null; status: string };
+type Product = { id: string; title: string; active: boolean };
+type Grant = { id: string; commercial_profile_id: string; product_id: string; active: boolean };
+
+function PartnerProductsAdmin() {
+  const load = useServerFn(getPartnerProductGrantsAdmin);
+  const save = useServerFn(setPartnerProductGrantAdmin);
+  const client = useQueryClient();
+  const [partnerId, setPartnerId] = useState("");
+  const [productId, setProductId] = useState("");
+  const query = useQuery({ queryKey: ["admin-partner-product-grants"], queryFn: () => load() });
+  const partners = (query.data?.profiles ?? []) as Partner[];
+  const products = (query.data?.products ?? []) as Product[];
+  const grants = (query.data?.grants ?? []) as Grant[];
+  const approved = partners.filter(partner => partner.status === "approved");
+  const selected = grants.find(grant => grant.commercial_profile_id === partnerId && grant.product_id === productId);
+  const mutation = useMutation({
+    mutationFn: (active: boolean) => save({ data: { commercial_profile_id: partnerId, product_id: productId, active } }),
+    onSuccess: () => {
+      toast.success("Autorização atualizada");
+      void client.invalidateQueries({ queryKey: ["admin-partner-product-grants"] });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+  return <main className="mx-auto max-w-5xl space-y-7 px-4 py-28">
+    <header>
+      <p className="text-xs font-black uppercase tracking-widest text-primary">Hub Eagles · Admin Master</p>
+      <h1 className="mt-3 text-4xl font-black">Produtos autorizados por parceiro</h1>
+      <p className="mt-3 text-muted-foreground">Aprovação comercial e autorização de produtos são decisões separadas. Autorizar não cria comissão, link de rastreamento ou checkout.</p>
+    </header>
+    {query.isLoading && <p role="status">Carregando autorizações...</p>}
+    {query.isError && <div role="alert"><p>Não foi possível consultar as autorizações. Verifique se a migration foi aplicada e se você tem acesso de Admin Master.</p><Button className="mt-3" variant="outline" onClick={() => void query.refetch()}>Tentar novamente</Button></div>}
+    {!query.isLoading && !query.isError && <section className="space-y-5 rounded-3xl border border-white/10 bg-card/80 p-6">
+      <label className="block space-y-2 text-sm font-medium">
+        <span>Parceiro aprovado</span>
+        <select className="flex h-10 w-full rounded-md border bg-background px-3" value={partnerId} onChange={event => { setPartnerId(event.target.value); setProductId(""); }}>
+          <option value="">Selecione</option>
+          {approved.map(partner => <option key={partner.id} value={partner.id}>{partner.display_name} ({partner.partner_type ?? "parceiro"})</option>)}
+        </select>
+      </label>
+      <label className="block space-y-2 text-sm font-medium">
+        <span>Produto</span>
+        <select className="flex h-10 w-full rounded-md border bg-background px-3" value={productId} onChange={event => setProductId(event.target.value)}>
+          <option value="">Selecione</option>
+          {products.map(product => <option key={product.id} value={product.id}>{product.title}{product.active ? "" : " (rascunho)"}</option>)}
+        </select>
+      </label>
+      {partnerId && productId && <div className="space-y-3">
+        <p className="text-sm">Situação atual: <strong>{selected?.active ? "Autorizado" : "Não autorizado"}</strong></p>
+        <div className="flex flex-wrap gap-3">
+          <Button disabled={mutation.isPending || !products.find(product => product.id === productId)?.active} onClick={() => mutation.mutate(true)}>Autorizar produto</Button>
+          <Button variant="outline" disabled={mutation.isPending || !selected?.active} onClick={() => mutation.mutate(false)}>Revogar autorização</Button>
+        </div>
+      </div>}
+      {approved.length === 0 && <p className="text-sm text-muted-foreground">Nenhum parceiro aprovado ainda.</p>}
+    </section>}
+  </main>;
+}
