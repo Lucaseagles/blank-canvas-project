@@ -4,6 +4,7 @@ import { createMyPartnerReferralLink, getMyPartnerReferralLinks } from "@/lib/pa
 import { toast } from "sonner";
 import { getMyPartnerVisitStats } from "@/lib/partner-visit-stats.functions";
 import { getMyPartnerSalesSummary } from "@/lib/partner-sales-summary.functions";
+import { getMyPartnerCommissionStatus } from "@/lib/partner-commission-status.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyPartnerPortal } from "@/lib/partner-portal.functions";
@@ -14,6 +15,12 @@ export const Route = createFileRoute("/partner/portal")({ component: PartnerPort
 type Product = { id: string; title: string; description: string | null; image_url: string | null; category: string | null; retail_price: number };
 function PartnerPortal() {
   const load = useServerFn(getMyPartnerPortal);
+  const loadCommissions = useServerFn(getMyPartnerCommissionStatus);
+  const commissionsQuery = useQuery({ queryKey: ["my-partner-commission-status"], queryFn: async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) throw new Error("Entre na sua conta.");
+    return loadCommissions({ data: { accessToken: session.access_token } });
+  }, retry: false });
   const loadSales = useServerFn(getMyPartnerSalesSummary);
   const salesQuery = useQuery({ queryKey: ["my-partner-confirmed-sales"], queryFn: async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -95,6 +102,17 @@ function PartnerPortal() {
           <div className="rounded-2xl border bg-card p-5"><p className="text-sm text-muted-foreground">Acordo ativo</p><p className="text-2xl font-black">{salesQuery.data.agreementPercent === null ? "Não definido" : `${salesQuery.data.agreementPercent}%`}</p></div>
         </div>}
         <p className="text-xs text-muted-foreground">Somente pedidos confirmados por fonte confiável. Comissões registradas não significam pagamento realizado.</p>
+      </section>
+      <section aria-label="Situação das comissões" className="space-y-3">
+        <h2 className="text-2xl font-bold">Situação das suas comissões</h2>
+        {commissionsQuery.isLoading && <p role="status">Carregando comissões...</p>}
+        {commissionsQuery.isError && <div role="alert"><p>Não foi possível consultar suas comissões.</p><Button variant="outline" onClick={() => void commissionsQuery.refetch()}>Tentar novamente</Button></div>}
+        {commissionsQuery.data && <div className="grid gap-4 sm:grid-cols-3">
+          <div className="rounded-2xl border bg-card p-5"><p className="text-sm text-muted-foreground">Comissões calculadas</p><p className="text-2xl font-black">{Number(commissionsQuery.data.calculated).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p></div>
+          <div className="rounded-2xl border bg-card p-5"><p className="text-sm text-muted-foreground">Comissões pagas</p><p className="text-2xl font-black">{Number(commissionsQuery.data.paid).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p></div>
+          <div className="rounded-2xl border bg-card p-5"><p className="text-sm text-muted-foreground">Comissões pendentes</p><p className="text-2xl font-black">{Number(commissionsQuery.data.pending).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p></div>
+        </div>}
+        <p className="text-xs text-muted-foreground">Comissões pagas são as que possuem baixa registrada pelo financeiro. Visitas não geram comissão automaticamente.</p>
       </section>
       {products.length === 0 && <p className="rounded-2xl border p-6">Nenhum produto liberado para seu perfil no momento.</p>}
       <section aria-label="Produtos autorizados" className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
