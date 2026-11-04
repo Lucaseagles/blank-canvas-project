@@ -22,7 +22,7 @@ function PartnerProductsAdmin() {
   const partners = (query.data?.profiles ?? []) as Partner[];
   const products = (query.data?.products ?? []) as Product[];
   const grants = (query.data?.grants ?? []) as Grant[];
-  const approved = partners.filter(partner => partner.status === "approved");
+  const selectablePartners = partners.filter(partner => partner.status === "approved" || grants.some(grant => grant.commercial_profile_id === partner.id && grant.active));
   const selected = grants.find(grant => grant.commercial_profile_id === partnerId && grant.product_id === productId);
   const mutation = useMutation({
     mutationFn: (active: boolean) => save({ data: { commercial_profile_id: partnerId, product_id: productId, active } }),
@@ -42,10 +42,10 @@ function PartnerProductsAdmin() {
     {query.isError && <div role="alert"><p>Não foi possível consultar as autorizações. Verifique se a migration foi aplicada e se você tem acesso de Admin Master.</p><Button className="mt-3" variant="outline" onClick={() => void query.refetch()}>Tentar novamente</Button></div>}
     {!query.isLoading && !query.isError && <section className="space-y-5 rounded-3xl border border-white/10 bg-card/80 p-6">
       <label className="block space-y-2 text-sm font-medium">
-        <span>Parceiro aprovado</span>
+        <span>Parceiro aprovado ou com autorização ativa</span>
         <select className="flex h-10 w-full rounded-md border bg-background px-3" value={partnerId} onChange={event => { setPartnerId(event.target.value); setProductId(""); }}>
           <option value="">Selecione</option>
-          {approved.map(partner => <option key={partner.id} value={partner.id}>{partner.display_name} ({partner.partner_type ?? "parceiro"})</option>)}
+          {selectablePartners.map(partner => <option key={partner.id} value={partner.id}>{partner.display_name} ({partner.partner_type ?? "parceiro"}){partner.status !== "approved" ? " · não aprovado" : ""}</option>)}
         </select>
       </label>
       <label className="block space-y-2 text-sm font-medium">
@@ -58,11 +58,11 @@ function PartnerProductsAdmin() {
       {partnerId && productId && <div className="space-y-3">
         <p className="text-sm">Situação atual: <strong>{selected?.active ? "Autorizado" : "Não autorizado"}</strong></p>
         <div className="flex flex-wrap gap-3">
-          <Button disabled={mutation.isPending || !products.find(product => product.id === productId)?.active} onClick={() => mutation.mutate(true)}>Autorizar produto</Button>
+          <Button disabled={mutation.isPending || partners.find(partner => partner.id === partnerId)?.status !== "approved" || !products.find(product => product.id === productId)?.active} onClick={() => mutation.mutate(true)}>Autorizar produto</Button>
           <Button variant="outline" disabled={mutation.isPending || !selected?.active} onClick={() => mutation.mutate(false)}>Revogar autorização</Button>
         </div>
       </div>}
-      {approved.length === 0 && <p className="text-sm text-muted-foreground">Nenhum parceiro aprovado ainda.</p>}
+      {selectablePartners.length === 0 && <p className="text-sm text-muted-foreground">Nenhum parceiro aprovado ou com autorização ativa.</p>}
     </section>}
   </main>;
 }
