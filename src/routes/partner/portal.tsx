@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { createMyPartnerReferralLink, getMyPartnerReferralLinks } from "@/lib/partner-referrals.functions";
+import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyPartnerPortal } from "@/lib/partner-portal.functions";
@@ -10,6 +12,19 @@ export const Route = createFileRoute("/partner/portal")({ component: PartnerPort
 type Product = { id: string; title: string; description: string | null; image_url: string | null; category: string | null; retail_price: number };
 function PartnerPortal() {
   const load = useServerFn(getMyPartnerPortal);
+  const loadLinks = useServerFn(getMyPartnerReferralLinks);
+  const createLink = useServerFn(createMyPartnerReferralLink);
+  const queryClient = useQueryClient();
+  const linksQuery = useQuery({ queryKey: ["my-partner-links"], queryFn: async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) return [];
+    return loadLinks({ data: { accessToken: session.access_token } });
+  }, retry: false });
+  const generate = useMutation({ mutationFn: async (productId: string) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) throw new Error("Entre na sua conta.");
+    return createLink({ data: { accessToken: session.access_token, productId } });
+  }, onSuccess: () => { toast.success("Link individual gerado."); void queryClient.invalidateQueries({ queryKey: ["my-partner-links"] }); }, onError: (error: Error) => toast.error(error.message) });
   const query = useQuery({
     queryKey: ["my-partner-portal"],
     queryFn: async () => {
@@ -54,7 +69,8 @@ function PartnerPortal() {
             <h2 className="text-xl font-bold">{product.title}</h2>
             {product.description && <p className="text-sm text-muted-foreground">{product.description}</p>}
             <p className="text-lg font-semibold">{Number(product.retail_price).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p>
-            <p className="text-xs text-muted-foreground">Links individuais, comissões e confirmação de vendas serão habilitados após integração de rastreamento e checkout.</p>
+            {(() => { const link = (linksQuery.data ?? []).find((item: { product_id: string; code: string }) => item.product_id === product.id); return link ? <div className="space-y-2"><p className="text-xs text-muted-foreground">Seu link individual de divulgação:</p><code className="block break-all text-xs">{typeof window !== "undefined" ? `${window.location.origin}/r/${link.code}` : `/r/${link.code}`}</code><Button variant="outline" size="sm" onClick={() => void navigator.clipboard.writeText(`${window.location.origin}/r/${link.code}`).then(() => toast.success("Link copiado."))}>Copiar link</Button></div> : <Button size="sm" disabled={generate.isPending || linksQuery.isLoading} onClick={() => generate.mutate(product.id)}>Gerar meu link</Button>; })()}
+            <p className="text-xs text-muted-foreground">O link identifica a origem da visita. Vendas e comissões dependem de confirmação do checkout.</p>
           </div>
         </article>)}
       </section>
