@@ -22,7 +22,9 @@ export const getHubCatalogAdmin = createServerFn({method:"GET"}).middleware([req
  const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
  const [products,suppliers]=await Promise.all([(supabaseAdmin as any).from("hub_products").select("*").order("created_at",{ascending:false}).limit(200),(supabaseAdmin as any).from("hub_suppliers").select("*").order("name")]);
  if(products.error) throw products.error;if(suppliers.error) throw suppliers.error;
- return {products:products.data??[],suppliers:suppliers.data??[]};
+ const tiers = await (supabaseAdmin as any).from("hub_b2b_tiers").select("id,product_id,min_quantity,unit_price").order("min_quantity");
+ if(tiers.error) throw tiers.error;
+ return {products:products.data??[],suppliers:suppliers.data??[],tiers:tiers.data??[]};
 });
 export const saveHubProductAdmin=createServerFn({method:"POST"}).middleware([requireOwnerRole]).validator((input:unknown)=>z.object({
  id:z.string().uuid().optional(),supplier_id:z.string().uuid(),title:z.string().trim().min(3).max(180),description:z.string().max(2000).optional(),image_url:z.union([z.string().url(),z.literal("")]).optional(),category:z.string().max(80).optional(),sku:z.string().max(80).optional(),
@@ -33,3 +35,57 @@ export const saveHubProductAdmin=createServerFn({method:"POST"}).middleware([req
  const {error}=await (supabaseAdmin as any).from("hub_products").upsert(id?{id,...payload}:{...payload});
  if(error) throw error;return {success:true};
 });
+
+export const saveHubSupplierAdmin = createServerFn({ method: "POST" })
+  .middleware([requireOwnerRole])
+  .validator((input: unknown) => z.object({
+    id: z.string().uuid().optional(),
+    name: z.string().trim().min(2).max(160),
+    fulfillment_mode: z.enum(["supplier", "hub"]),
+    active: z.boolean(),
+  }).parse(input))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { id, ...payload } = data;
+    const { error } = await (supabaseAdmin as any)
+      .from("hub_suppliers")
+      .upsert(id ? { id, ...payload } : payload);
+    if (error) throw error;
+    return { success: true };
+  });
+
+export const saveHubB2BTierAdmin = createServerFn({ method: "POST" })
+  .middleware([requireOwnerRole])
+  .validator((input: unknown) => z.object({
+    product_id: z.string().uuid(),
+    min_quantity: z.number().int().positive(),
+    unit_price: z.number().finite().positive(),
+  }).parse(input))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: product, error: productError } = await (supabaseAdmin as any)
+      .from("hub_products")
+      .select("id,min_b2b_quantity,b2b_base_price")
+      .eq("id", data.product_id)
+      .maybeSingle();
+    if (productError) throw productError;
+    if (!product) throw new Error("Produto não encontrado.");
+    if (product.b2b_base_price === null) throw new Error("Configure o preço B2B base antes das faixas.");
+    if (data.min_quantity < product.min_b2b_quantity) {
+      throw new Error("A faixa não pode ser inferior ao pedido mínimo do produto.");
+    }
+    const { data: existing, error: lookupError } = await (supabaseAdmin as any)
+      .from("hub_b2b_tiers")
+      .select("id")
+      .eq("product_id", data.product_id)
+      .eq("min_quantity", data.min_quantity)
+      .limit(2);
+    if (lookupError) throw lookupError;
+    if ((existing ?? []).length > 1) throw new Error("Existem faixas duplicadas; revise os dados antes de editar.");
+    const query = (existing ?? []).length === 1
+      ? (supabaseAdmin as any).from("hub_b2b_tiers").update({ unit_price: data.unit_price }).eq("id", existing[0].id).eq("product_id", data.product_id)
+      : (supabaseAdmin as any).from("hub_b2b_tiers").insert(data);
+    const { error } = await query;
+    if (error) throw error;
+    return { success: true };
+  });

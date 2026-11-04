@@ -25,8 +25,10 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Generate TanStack routes
-        run: npx tsr generate
+      # TanStack Start's Vite plugin generates the route tree during build.
+      # `npx tsr` resolves an unrelated npm package and fails before QA.
+      - name: Generate TanStack routes and verify initial build
+        run: npm run build
 
       - name: TypeScript
         run: npx tsc --noEmit
