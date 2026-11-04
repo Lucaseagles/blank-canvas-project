@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { getMerchantHubCatalog } from "@/lib/hub-catalog.functions";
 import { Button } from "@/components/ui/button";
@@ -26,7 +27,11 @@ function Catalog() {
   const load = useServerFn(getMerchantHubCatalog);
   const { data = [], isLoading, error, refetch } = useQuery({
     queryKey: ["hub-catalog", "b2b"],
-    queryFn: () => load(),
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Entre na sua conta para consultar preços de atacado.");
+      return load({ data: { accessToken: session.access_token } });
+    },
   });
   const products = data as HubProduct[];
 
@@ -49,7 +54,7 @@ function Catalog() {
 
         {error && (
           <div role="alert" className="rounded-2xl border border-primary/20 p-6">
-            <p>{error instanceof Error ? error.message : "Não foi possível carregar o catálogo."}</p>
+            <p>{error instanceof Error && !error.message.startsWith("Unauthorized:") ? error.message : "Entre na sua conta e solicite aprovação como lojista para consultar os preços de atacado."}</p>
             <div className="mt-4 flex flex-wrap gap-3">
               <Button onClick={() => void refetch()}>Tentar novamente</Button>
               <Button variant="outline" asChild>
