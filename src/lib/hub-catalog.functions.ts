@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { requireOwnerRole } from "./auth-guards.server";
 
@@ -9,9 +8,15 @@ export const getRetailHubCatalog = createServerFn({method:"GET"}).handler(async(
  if(error) throw error;
  return data??[];
 });
-export const getMerchantHubCatalog = createServerFn({method:"GET"}).middleware([requireSupabaseAuth]).handler(async({context})=>{
+export const getMerchantHubCatalog = createServerFn({method:"POST"})
+.validator((input:unknown)=>z.object({accessToken:z.string().min(1)}).parse(input))
+.handler(async({data})=>{
+ const {supabase}=await import("@/integrations/supabase/client");
+ const {data:claimsResult,error:authError}=await supabase.auth.getClaims(data.accessToken);
+ const userId=claimsResult?.claims?.sub;
+ if(authError || !userId) throw new Error("Sessão inválida. Entre novamente para consultar o atacado.");
  const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
- const {data:profile,error:profileError}=await (supabaseAdmin as any).from("commercial_profiles").select("id").eq("user_id",context.userId).eq("audience","merchant").eq("status","approved").maybeSingle();
+ const {data:profile,error:profileError}=await (supabaseAdmin as any).from("commercial_profiles").select("id").eq("user_id",userId).eq("audience","merchant").eq("status","approved").maybeSingle();
  if(profileError) throw profileError;
  if(!profile) throw new Error("Acesso exclusivo para lojistas aprovados.");
  const {data,error}=await (supabaseAdmin as any).from("hub_products").select("id,title,description,image_url,category,b2b_base_price,min_b2b_quantity,hub_b2b_tiers(min_quantity,unit_price)").eq("active",true).not("b2b_base_price","is",null).order("created_at",{ascending:false}).limit(60);
