@@ -31,6 +31,8 @@ export const saveHubProductAdmin=createServerFn({method:"POST"}).middleware([req
  retail_price:z.number().nonnegative(),supplier_cost:z.number().nonnegative(),b2b_base_price:z.number().nonnegative().nullable(),min_b2b_quantity:z.number().int().positive(),active:z.boolean()
 }).parse(input)).handler(async({data})=>{
  const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
+ if (data.active && data.retail_price <= 0) throw new Error("Informe um preço de varejo maior que zero antes de publicar.");
+ if (data.b2b_base_price !== null && data.b2b_base_price <= 0) throw new Error("O preço base B2B deve ser maior que zero.");
  const {id,...payload}=data;
  const {error}=await (supabaseAdmin as any).from("hub_products").upsert(id?{id,...payload}:{...payload});
  if(error) throw error;return {success:true};
