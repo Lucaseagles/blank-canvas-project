@@ -103,6 +103,7 @@ function PartnerPortal() {
         </div>}
         <p className="text-xs text-muted-foreground">Somente pedidos confirmados por fonte confiável. Comissões registradas não significam pagamento realizado.</p>
       </section>
+      <Button asChild variant="outline"><Link to="/partner/statement">Ver meu extrato de comissões</Link></Button>
       <section aria-label="Situação das comissões" className="space-y-3">
         <h2 className="text-2xl font-bold">Situação das suas comissões</h2>
         {commissionsQuery.isLoading && <p role="status">Carregando comissões...</p>}
