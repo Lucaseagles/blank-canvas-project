@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getHubCatalogAdmin, saveHubProductAdmin } from "@/lib/hub-catalog.functions";
+import { getHubCatalogAdmin, saveHubProductAdmin, saveHubSupplierAdmin } from "@/lib/hub-catalog.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -32,6 +32,9 @@ function HubCatalogAdmin() {
   const queryClient = useQueryClient();
   const load = useServerFn(getHubCatalogAdmin);
   const save = useServerFn(saveHubProductAdmin);
+  const saveSupplier = useServerFn(saveHubSupplierAdmin);
+  const [supplierName, setSupplierName] = useState("");
+  const [supplierMode, setSupplierMode] = useState<"supplier" | "hub">("supplier");
   const query = useQuery({ queryKey: ["admin-hub-catalog"], queryFn: () => load() });
   const [form, setForm] = useState<ProductForm>(emptyForm);
 
@@ -66,6 +69,16 @@ function HubCatalogAdmin() {
       toast.success(form.id ? "Produto atualizado" : "Produto cadastrado");
       void queryClient.invalidateQueries({ queryKey: ["admin-hub-catalog"] });
       setForm(emptyForm());
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const supplierMutation = useMutation({
+    mutationFn: () => saveSupplier({ data: { name: supplierName.trim(), fulfillment_mode: supplierMode, active: true } }),
+    onSuccess: () => {
+      toast.success("Fornecedor cadastrado");
+      setSupplierName("");
+      void queryClient.invalidateQueries({ queryKey: ["admin-hub-catalog"] });
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -107,6 +120,29 @@ function HubCatalogAdmin() {
       {query.isError && <div role="alert" className="space-y-3"><p>Não foi possível carregar o catálogo.</p><Button variant="outline" onClick={() => void query.refetch()}>Tentar novamente</Button></div>}
       {!query.isError && (
         <>
+          <section className="space-y-4 rounded-3xl border border-white/10 bg-card/80 p-6">
+            <h2 className="text-xl font-bold">Fornecedores ({suppliers.length})</h2>
+            <form className="grid gap-4 md:grid-cols-2" onSubmit={event => { event.preventDefault(); supplierMutation.mutate(); }}>
+              <label className="space-y-2 text-sm font-medium">
+                <span className="block">Nome do fornecedor</span>
+                <Input required minLength={2} maxLength={160} value={supplierName} onChange={event => setSupplierName(event.target.value)} />
+              </label>
+              <label className="space-y-2 text-sm font-medium">
+                <span className="block">Responsável pelo envio</span>
+                <select className="flex h-10 w-full rounded-md border bg-background px-3" value={supplierMode} onChange={event => setSupplierMode(event.target.value as "supplier" | "hub")}>
+                  <option value="supplier">Fornecedor</option>
+                  <option value="hub">Hub</option>
+                </select>
+              </label>
+              <Button type="submit" disabled={supplierMutation.isPending || supplierName.trim().length < 2}>
+                {supplierMutation.isPending ? "Salvando..." : "Cadastrar fornecedor"}
+              </Button>
+            </form>
+            {suppliers.length === 0 && <p className="text-sm text-muted-foreground">Nenhum fornecedor cadastrado.</p>}
+            <ul className="space-y-2 text-sm">
+              {suppliers.map(supplier => <li key={supplier.id} className="rounded-xl border border-white/10 p-3">{supplier.name}</li>)}
+            </ul>
+          </section>
           <form onSubmit={event => { event.preventDefault(); mutation.mutate(); }} className="grid gap-5 rounded-3xl border border-white/10 bg-card/80 p-6 md:grid-cols-2">
             <h2 className="md:col-span-2 text-xl font-bold">{form.id ? "Editar produto" : "Cadastrar produto"}</h2>
             <label className="space-y-2 text-sm font-medium">
