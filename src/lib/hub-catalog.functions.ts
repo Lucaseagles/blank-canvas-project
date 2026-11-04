@@ -19,9 +19,9 @@ export const getMerchantHubCatalog = createServerFn({method:"POST"})
  const {data:profile,error:profileError}=await (supabaseAdmin as any).from("commercial_profiles").select("id").eq("user_id",userId).eq("audience","merchant").eq("status","approved").maybeSingle();
  if(profileError) throw profileError;
  if(!profile) throw new Error("Acesso exclusivo para lojistas aprovados.");
- const {data,error}=await (supabaseAdmin as any).from("hub_products").select("id,title,description,image_url,category,b2b_base_price,min_b2b_quantity,hub_b2b_tiers(min_quantity,unit_price)").eq("active",true).not("b2b_base_price","is",null).order("created_at",{ascending:false}).limit(60);
+ const {data:products,error}=await (supabaseAdmin as any).from("hub_products").select("id,title,description,image_url,category,b2b_base_price,min_b2b_quantity,hub_b2b_tiers(min_quantity,unit_price)").eq("active",true).not("b2b_base_price","is",null).order("created_at",{ascending:false}).limit(60);
  if(error) throw error;
- return data??[];
+ return products??[];
 });
 export const getHubCatalogAdmin = createServerFn({method:"GET"}).middleware([requireOwnerRole]).handler(async()=>{
  const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
