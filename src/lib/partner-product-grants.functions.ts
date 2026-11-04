@@ -32,7 +32,8 @@ export const setPartnerProductGrantAdmin = createServerFn({ method: "POST" })
     ]);
     if (profileResult.error) throw profileResult.error;
     if (productResult.error) throw productResult.error;
-    if (!profileResult.data || profileResult.data.status !== "approved") throw new Error("Apenas parceiros aprovados podem receber produtos.");
+    if (!profileResult.data) throw new Error("Parceiro não encontrado.");
+    if (data.active && profileResult.data.status !== "approved") throw new Error("Apenas parceiros aprovados podem receber produtos.");
     if (!productResult.data) throw new Error("Produto não encontrado.");
     if (data.active && !productResult.data.active) throw new Error("Não é possível autorizar produto não publicado.");
     const { error } = await (supabaseAdmin as any).from("hub_partner_product_grants")
