@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createMyPartnerReferralLink, getMyPartnerReferralLinks } from "@/lib/partner-referrals.functions";
 import { toast } from "sonner";
+import { getMyPartnerVisitStats } from "@/lib/partner-visit-stats.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyPartnerPortal } from "@/lib/partner-portal.functions";
@@ -12,6 +13,12 @@ export const Route = createFileRoute("/partner/portal")({ component: PartnerPort
 type Product = { id: string; title: string; description: string | null; image_url: string | null; category: string | null; retail_price: number };
 function PartnerPortal() {
   const load = useServerFn(getMyPartnerPortal);
+  const loadStats = useServerFn(getMyPartnerVisitStats);
+  const statsQuery = useQuery({ queryKey: ["my-partner-visit-stats"], queryFn: async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) throw new Error("Entre na sua conta.");
+    return loadStats({ data: { accessToken: session.access_token } });
+  }, retry: false });
   const loadLinks = useServerFn(getMyPartnerReferralLinks);
   const createLink = useServerFn(createMyPartnerReferralLink);
   const queryClient = useQueryClient();
@@ -60,6 +67,16 @@ function PartnerPortal() {
     </div>}
     {profile?.status === "approved" && <>
       <p className="text-sm text-muted-foreground">Bem-vindo, {profile.display_name}. {products.length} produtos autorizados.</p>
+      <section aria-label="Resumo das visitas" className="space-y-3">
+        <h2 className="text-2xl font-bold">Seu desempenho</h2>
+        {statsQuery.isLoading && <p role="status">Carregando indicadores...</p>}
+        {statsQuery.isError && <div role="alert"><p>Não foi possível consultar as visitas.</p><Button variant="outline" onClick={() => void statsQuery.refetch()}>Tentar novamente</Button></div>}
+        {statsQuery.data && <div className="grid gap-4 sm:grid-cols-2">
+          <div className="rounded-2xl border bg-card p-5"><p className="text-sm text-muted-foreground">Links ativos</p><p className="text-3xl font-black">{statsQuery.data.links}</p></div>
+          <div className="rounded-2xl border bg-card p-5"><p className="text-sm text-muted-foreground">Visitas registradas</p><p className="text-3xl font-black">{statsQuery.data.visits}</p></div>
+        </div>}
+        <p className="text-xs text-muted-foreground">Visitas não representam compradores únicos, pedidos pagos ou comissões.</p>
+      </section>
       {products.length === 0 && <p className="rounded-2xl border p-6">Nenhum produto liberado para seu perfil no momento.</p>}
       <section aria-label="Produtos autorizados" className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {products.map(product => <article key={product.id} className="overflow-hidden rounded-2xl border bg-card">
@@ -70,6 +87,7 @@ function PartnerPortal() {
             {product.description && <p className="text-sm text-muted-foreground">{product.description}</p>}
             <p className="text-lg font-semibold">{Number(product.retail_price).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p>
             {(() => { const link = (linksQuery.data ?? []).find((item: { product_id: string; code: string }) => item.product_id === product.id); return link ? <div className="space-y-2"><p className="text-xs text-muted-foreground">Seu link individual de divulgação:</p><code className="block break-all text-xs">{typeof window !== "undefined" ? `${window.location.origin}/r/${link.code}` : `/r/${link.code}`}</code><Button variant="outline" size="sm" onClick={() => void navigator.clipboard.writeText(`${window.location.origin}/r/${link.code}`).then(() => toast.success("Link copiado."))}>Copiar link</Button></div> : <Button size="sm" disabled={generate.isPending || linksQuery.isLoading} onClick={() => generate.mutate(product.id)}>Gerar meu link</Button>; })()}
+            {statsQuery.data && <p className="text-sm font-semibold">Visitas registradas: {statsQuery.data.byProduct.find((item: { productId: string; visits: number }) => item.productId === product.id)?.visits ?? 0}</p>}
             <p className="text-xs text-muted-foreground">O link identifica a origem da visita. Vendas e comissões dependem de confirmação do checkout.</p>
           </div>
         </article>)}
