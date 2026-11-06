@@ -46,7 +46,7 @@ function HubCatalogAdmin() {
   const products = (query.data?.products ?? []) as Product[];
   const tiers = (query.data?.tiers ?? []) as Array<{ id: string; product_id: string; min_quantity: number; unit_price: number }>;
   const publishedCount = products.filter(product => product.active).length;
-  const wholesaleCount = products.filter(product => product.active && product.b2b_base_price !== null).length;
+  const wholesaleCount = products.filter(product => product.active && Number(product.b2b_base_price) > 0).length;
 
   const mutation = useMutation({
     mutationFn: () => {
@@ -137,7 +137,7 @@ function HubCatalogAdmin() {
   return (
     <main className="mx-auto max-w-6xl space-y-8 px-4 py-28">
       <header>
-        <p className="text-xs font-black uppercase tracking-widest text-primary">Hub Eagles · Administração</p>
+        <p className="text-xs font-black uppercase tracking-widest text-primary">RUBI · Shadow Master</p>
         <h1 className="mt-3 text-4xl font-black">Catálogo & fornecedores</h1>
         <p className="mt-3 text-muted-foreground">Cadastre uma vez, defina varejo e atacado, e publique para o público correto. Preços de custo são privados; use apenas dados confirmados pelo fornecedor.</p>
         <div className="mt-6 grid gap-3 sm:grid-cols-3" aria-label="Resumo do catálogo">
@@ -210,7 +210,7 @@ function HubCatalogAdmin() {
                 <span className="block">Produto com preço B2B</span>
                 <select required className="flex h-10 w-full rounded-md border bg-background px-3" value={tierProductId} onChange={event => setTierProductId(event.target.value)}>
                   <option value="">Selecione</option>
-                  {products.filter(product => product.b2b_base_price !== null).map(product => <option key={product.id} value={product.id}>{product.title}</option>)}
+                  {products.filter(product => Number(product.b2b_base_price) > 0).map(product => <option key={product.id} value={product.id}>{product.title}</option>)}
                 </select>
               </label>
               <label className="space-y-2 text-sm font-medium">
