@@ -20,7 +20,7 @@ export const createMyPartnerReferralLink = createServerFn({ method: "POST" })
     if (grantError) throw grantError;
     if (!grant) throw new Error("Produto não autorizado para este parceiro.");
     const { data: product, error: productError } = await (supabaseAdmin as any)
-      .from("hub_products").select("id").eq("id", input.productId).eq("active", true).gt("retail_price", 0).maybeSingle();
+      .from("hub_products").select("id,hub_suppliers!inner(active)").eq("id", input.productId).eq("hub_suppliers.active", true).eq("active", true).gt("retail_price", 0).maybeSingle();
     if (productError) throw productError;
     if (!product) throw new Error("Produto indisponível.");
     const { data: link, error: linkError } = await (supabaseAdmin as any)
@@ -62,8 +62,8 @@ export const getMyPartnerReferralLinks = createServerFn({ method: "POST" })
     if (grantsError) throw grantsError;
     const allowedIds = new Set((grants ?? []).map((grant: { product_id: string }) => grant.product_id));
     const { data: products, error: productsError } = await (supabaseAdmin as any)
-      .from("hub_products").select("id").in("id", [...allowedIds])
-      .eq("active", true).gt("retail_price", 0);
+      .from("hub_products").select("id,hub_suppliers!inner(active)").in("id", [...allowedIds])
+      .eq("hub_suppliers.active", true).eq("active", true).gt("retail_price", 0);
     if (productsError) throw productsError;
     const publishedIds = new Set((products ?? []).map((product: { id: string }) => product.id));
     return links.filter((link: { product_id: string }) => publishedIds.has(link.product_id));
