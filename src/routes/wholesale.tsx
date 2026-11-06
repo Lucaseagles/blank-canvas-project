@@ -37,6 +37,7 @@ function Catalog() {
   const products = data as HubProduct[];
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [search, setSearch] = useState("");
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [category, setCategory] = useState("");
   const categories = [...new Set(products.map(product => product.category).filter((value): value is string => !!value))].sort((a,b) => a.localeCompare(b,"pt-BR"));
   const visibleProducts = products.filter(product => (!category || product.category === category) && (!search.trim() || [product.title, product.description ?? "", product.category ?? ""].some(value => value.toLocaleLowerCase("pt-BR").includes(search.trim().toLocaleLowerCase("pt-BR")))));
@@ -44,6 +45,15 @@ function Catalog() {
     const tiers = (product.hub_b2b_tiers ?? []).filter(tier => Number.isFinite(tier.min_quantity) && Number.isFinite(tier.unit_price) && tier.min_quantity <= quantity && tier.min_quantity >= product.min_b2b_quantity).sort((a,b) => b.min_quantity - a.min_quantity);
     return Number(tiers[0]?.unit_price ?? product.b2b_base_price);
   };
+
+  const quoteLines = products.filter(product => selectedProductIds.includes(product.id)).map(product => {
+    const quantity = quantities[product.id] ?? product.min_b2b_quantity;
+    const valid = Number.isSafeInteger(quantity) && quantity >= product.min_b2b_quantity;
+    const unitPrice = valid ? calculateUnitPrice(product, quantity) : 0;
+    return { id: product.id, title: product.title, quantity, unitPrice, total: unitPrice * quantity, valid };
+  });
+  const quoteValid = quoteLines.length > 0 && quoteLines.every(line => line.valid && Number.isFinite(line.total) && line.total > 0);
+  const quoteTotal = quoteValid ? quoteLines.reduce((sum, line) => sum + line.total, 0) : 0;
 
   return (
     <main className="min-h-screen px-4 pb-24 pt-32">
@@ -89,6 +99,15 @@ function Catalog() {
 
         {!isLoading && !error && products.length > 0 && (
           <section aria-label="Produtos para lojistas">
+            <aside aria-label="Resumo da pré-cotação" className="mb-6 space-y-3 rounded-2xl border border-primary/30 bg-primary/5 p-5">
+              <h2 className="text-xl font-bold">Minha pré-cotação</h2>
+              {quoteLines.length === 0 ? <p className="text-sm text-muted-foreground">Selecione produtos abaixo para reunir uma simulação de compra por atacado.</p> :
+                <ul className="space-y-2 text-sm">{quoteLines.map(line => <li key={line.id} className="flex flex-wrap justify-between gap-2 border-b pb-2"><span>{line.title} · {line.quantity} un.</span><strong>{line.valid ? brl(line.total) : "Quantidade inválida"}</strong></li>)}</ul>}
+              <p className="text-lg font-black">Total estimado: {quoteValid ? brl(quoteTotal) : "—"}</p>
+              {quoteLines.length > 0 && !quoteValid && <p role="alert" className="text-sm text-destructive">Corrija as quantidades selecionadas para calcular o total.</p>}
+              {quoteLines.length > 0 && <Button variant="outline" size="sm" onClick={() => setSelectedProductIds([])}>Limpar pré-cotação</Button>}
+              <p className="text-xs text-muted-foreground">Pré-cotação local e informativa. Não cria pedido, não reserva estoque, não fixa preços nem envia dados ao fornecedor.</p>
+            </aside>
             <div className="mb-6 grid gap-4 rounded-2xl border bg-card p-5 sm:grid-cols-2">
               <label className="space-y-2 text-sm font-semibold"><span>Buscar no atacado</span><input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Produto ou categoria" className="block w-full rounded-lg border bg-background p-2.5" /></label>
               <label className="space-y-2 text-sm font-semibold"><span>Categoria</span><select value={category} onChange={event => setCategory(event.target.value)} className="block w-full rounded-lg border bg-background p-2.5"><option value="">Todas</option>{categories.map(value => <option key={value} value={value}>{value}</option>)}</select></label>
@@ -140,6 +159,7 @@ function Catalog() {
                           </ul>
                         </div>
                       )}
+                      <label className="flex items-center gap-2 rounded-lg border p-3 text-sm font-semibold"><input type="checkbox" checked={selectedProductIds.includes(product.id)} onChange={event => setSelectedProductIds(current => event.target.checked ? [...current, product.id] : current.filter(id => id !== product.id))} /> Incluir na pré-cotação</label>
                       <div className="space-y-3 rounded-xl border p-4">
                         <h3 className="text-sm font-semibold">Simular valor por quantidade</h3>
                         <label className="block space-y-1 text-sm"><span>Quantidade de unidades</span><input type="number" min={product.min_b2b_quantity} step={1} value={quantity} onChange={event => setQuantities(current => ({ ...current, [product.id]: event.target.value === "" ? 0 : Number(event.target.value) }))} className="block w-full rounded-lg border bg-background p-2" /></label>
