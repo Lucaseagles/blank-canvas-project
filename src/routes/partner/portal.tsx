@@ -120,7 +120,7 @@ function PartnerPortal() {
           <div className="rounded-2xl border bg-card p-5"><p className="text-sm text-muted-foreground">Comissões pagas</p><p className="text-2xl font-black">{Number(commissionsQuery.data.paid).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p></div>
           <div className="rounded-2xl border bg-card p-5"><p className="text-sm text-muted-foreground">Comissões pendentes</p><p className="text-2xl font-black">{Number(commissionsQuery.data.pending).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p></div>
         </div>}
-        <p className="text-xs text-muted-foreground">Comissões pagas são as que possuem baixa registrada pelo financeiro. Visitas não geram comissão automaticamente.</p>
+        <p className="text-xs text-muted-foreground">Comissões pagas são valores com baixa registrada pelo financeiro. Pagamentos parciais continuam pendentes até a quitação integral da comissão; visitas não geram comissão automaticamente.</p>
       </section>
       {products.length === 0 && <p className="rounded-2xl border p-6">Nenhum produto liberado para seu perfil no momento.</p>}
       <section aria-label="Produtos autorizados" className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
