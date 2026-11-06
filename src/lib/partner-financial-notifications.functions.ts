@@ -40,3 +40,18 @@ export const markMyPartnerFinancialNotificationRead = createServerFn({ method: "
     if (error) throw error;
     return { success: true };
   });
+
+export const getMyPartnerUnreadFinancialNotificationCount = createServerFn({ method: "POST" })
+  .validator((input: unknown) => z.object({ accessToken: z.string().min(1) }).parse(input))
+  .handler(async ({ data }) => {
+    const profileId = await getPartnerId(data.accessToken);
+    if (!profileId) return { unread: 0 };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { count, error } = await (supabaseAdmin as any)
+      .from("hub_partner_financial_notifications")
+      .select("id", { count: "exact", head: true })
+      .eq("commercial_profile_id", profileId)
+      .is("read_at", null);
+    if (error) throw error;
+    return { unread: count ?? 0 };
+  });
