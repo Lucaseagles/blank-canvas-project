@@ -26,6 +26,7 @@ function PartnerProductsAdmin() {
   const selected = grants.find(grant => grant.commercial_profile_id === partnerId && grant.product_id === productId);
   const selectedPartner = partners.find(partner => partner.id === partnerId);
   const activeGrantCount = grants.filter(grant => grant.active).length;
+  const selectedProductGrant = grants.find(grant => grant.commercial_profile_id === partnerId && grant.product_id === productId);
   const approvedPartnerCount = partners.filter(partner => partner.status === "approved").length;
   const mutation = useMutation({
     mutationFn: (active: boolean) => save({ data: { commercial_profile_id: partnerId, product_id: productId, active } }),
@@ -60,6 +61,7 @@ function PartnerProductsAdmin() {
         </select>
       </label>
       {selectedPartner && <p className="rounded-xl border p-3 text-sm">Perfil: <strong>{selectedPartner.partner_type ?? "parceiro"}</strong>. Condição padrão de divulgação: <strong>varejo</strong>. Acordos comerciais especiais e acesso ao atacado exigem autorização específica; esta tela controla somente quais produtos podem ser divulgados.</p>}
+      {partnerId && productId && <p className="rounded-xl border p-3 text-sm" role="status">Produto para este parceiro: <strong>{selectedProductGrant?.active ? "autorizado para divulgação no varejo" : "não autorizado"}</strong>. A liberação de produto não concede preço B2B ou altera comissão. Para divulgar uma oferta de atacado, é necessário um acordo comercial específico validado pelo Shadow Master.</p>}
       {partnerId && productId && <div className="space-y-3">
         <p className="text-sm">Situação atual: <strong>{selected?.active ? "Autorizado" : "Não autorizado"}</strong></p>
         <div className="flex flex-wrap gap-3">
