@@ -36,7 +36,7 @@ declare
  v_total numeric(14,2):=0;
  v_count integer;
 begin
- if current_user <> 'service_role' then raise exception 'service_role required'; end if;
+ -- EXECUTE is explicitly restricted to service_role; SECURITY DEFINER changes current_user.
  if not exists(select 1 from public.commercial_profiles where id=p_profile_id and audience='merchant' and status='approved') then raise exception 'Approved merchant required'; end if;
  if jsonb_typeof(p_lines) <> 'array' or jsonb_array_length(p_lines) < 1 or jsonb_array_length(p_lines) > 30 then raise exception 'Invalid quote lines'; end if;
  if (select count(distinct item->>'product_id') from jsonb_array_elements(p_lines) item) <> jsonb_array_length(p_lines) then raise exception 'Duplicate products'; end if;
