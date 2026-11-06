@@ -26,9 +26,16 @@ export const getMyPartnerCommissionStatus = createServerFn({ method: "POST" })
   const { data: items, error: itemsError } = await (supabaseAdmin as any).from("hub_partner_commission_payout_items")
     .select("sale_id,commission_amount").in("sale_id", sales.map((sale: { id: string }) => sale.id)).limit(10000);
   if (itemsError) throw itemsError;
-  const paidIds = new Set((items ?? []).map((item: { sale_id: string }) => item.sale_id));
+  const paidBySale = new Map<string, number>();
+  for (const item of items ?? []) {
+    const saleId = String(item.sale_id);
+    paidBySale.set(saleId, (paidBySale.get(saleId) ?? 0) + Number(item.commission_amount));
+  }
+  const fullyPaidSales = sales.filter((sale: { id: string; commission_amount: number }) =>
+    (paidBySale.get(sale.id) ?? 0) >= Number(sale.commission_amount) - 0.005
+  ).length;
   const calculated = sales.reduce((sum: number, sale: { commission_amount: number }) => sum + Number(sale.commission_amount), 0);
   const paid = (items ?? []).reduce((sum: number, item: { commission_amount: number }) => sum + Number(item.commission_amount), 0);
-  return { calculated, paid, pending: Math.max(0, calculated - paid), paidSales: paidIds.size,
-    unpaidSales: sales.filter((sale: { id: string }) => !paidIds.has(sale.id)).length };
+  return { calculated, paid, pending: Math.max(0, calculated - paid), paidSales: fullyPaidSales,
+    unpaidSales: sales.length - fullyPaidSales };
 });
