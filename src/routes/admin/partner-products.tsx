@@ -24,6 +24,9 @@ function PartnerProductsAdmin() {
   const grants = (query.data?.grants ?? []) as Grant[];
   const selectablePartners = partners.filter(partner => partner.status === "approved" || grants.some(grant => grant.commercial_profile_id === partner.id && grant.active));
   const selected = grants.find(grant => grant.commercial_profile_id === partnerId && grant.product_id === productId);
+  const selectedPartner = partners.find(partner => partner.id === partnerId);
+  const activeGrantCount = grants.filter(grant => grant.active).length;
+  const approvedPartnerCount = partners.filter(partner => partner.status === "approved").length;
   const mutation = useMutation({
     mutationFn: (active: boolean) => save({ data: { commercial_profile_id: partnerId, product_id: productId, active } }),
     onSuccess: () => {
@@ -34,9 +37,10 @@ function PartnerProductsAdmin() {
   });
   return <main className="mx-auto max-w-5xl space-y-7 px-4 py-28">
     <header>
-      <p className="text-xs font-black uppercase tracking-widest text-primary">Hub Eagles · Admin Master</p>
+      <p className="text-xs font-black uppercase tracking-widest text-primary">RUBI · Shadow Master</p>
       <h1 className="mt-3 text-4xl font-black">Produtos autorizados por parceiro</h1>
-      <p className="mt-3 text-muted-foreground">Aprovação comercial e autorização de produtos são decisões separadas. Autorizar não cria comissão, link de rastreamento ou checkout.</p>
+      <p className="mt-3 text-muted-foreground">Cada parceiro recebe apenas produtos autorizados. A autorização não concede acesso automático ao atacado, nem altera comissão ou checkout.</p>
+      <div className="mt-5 grid gap-3 sm:grid-cols-2"><div className="rounded-2xl border bg-card/70 p-4"><p className="text-sm text-muted-foreground">Parceiros aprovados</p><p className="text-3xl font-black">{approvedPartnerCount}</p></div><div className="rounded-2xl border bg-card/70 p-4"><p className="text-sm text-muted-foreground">Autorizações ativas</p><p className="text-3xl font-black">{activeGrantCount}</p></div></div>
     </header>
     {query.isLoading && <p role="status">Carregando autorizações...</p>}
     {query.isError && <div role="alert"><p>Não foi possível consultar as autorizações. Verifique se a migration foi aplicada e se você tem acesso de Admin Master.</p><Button className="mt-3" variant="outline" onClick={() => void query.refetch()}>Tentar novamente</Button></div>}
@@ -55,6 +59,7 @@ function PartnerProductsAdmin() {
           {products.map(product => <option key={product.id} value={product.id}>{product.title}{product.active ? "" : " (rascunho)"}</option>)}
         </select>
       </label>
+      {selectedPartner && <p className="rounded-xl border p-3 text-sm">Perfil: <strong>{selectedPartner.partner_type ?? "parceiro"}</strong>. Condição padrão de divulgação: <strong>varejo</strong>. Acordos comerciais especiais e acesso ao atacado exigem autorização específica; esta tela controla somente quais produtos podem ser divulgados.</p>}
       {partnerId && productId && <div className="space-y-3">
         <p className="text-sm">Situação atual: <strong>{selected?.active ? "Autorizado" : "Não autorizado"}</strong></p>
         <div className="flex flex-wrap gap-3">
