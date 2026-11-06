@@ -45,6 +45,8 @@ function HubCatalogAdmin() {
   const suppliers = (query.data?.suppliers ?? []) as Supplier[];
   const products = (query.data?.products ?? []) as Product[];
   const tiers = (query.data?.tiers ?? []) as Array<{ id: string; product_id: string; min_quantity: number; unit_price: number }>;
+  const publishedCount = products.filter(product => product.active).length;
+  const wholesaleCount = products.filter(product => product.active && product.b2b_base_price !== null).length;
 
   const mutation = useMutation({
     mutationFn: () => {
@@ -137,7 +139,12 @@ function HubCatalogAdmin() {
       <header>
         <p className="text-xs font-black uppercase tracking-widest text-primary">Hub Eagles · Administração</p>
         <h1 className="mt-3 text-4xl font-black">Catálogo & fornecedores</h1>
-        <p className="mt-3 text-muted-foreground">Preços de custo são privados. Cadastre somente dados reais confirmados pelo fornecedor.</p>
+        <p className="mt-3 text-muted-foreground">Cadastre uma vez, defina varejo e atacado, e publique para o público correto. Preços de custo são privados; use apenas dados confirmados pelo fornecedor.</p>
+        <div className="mt-6 grid gap-3 sm:grid-cols-3" aria-label="Resumo do catálogo">
+          <div className="rounded-2xl border bg-card/70 p-4"><p className="text-sm text-muted-foreground">Produtos cadastrados</p><p className="text-3xl font-black">{products.length}</p></div>
+          <div className="rounded-2xl border bg-card/70 p-4"><p className="text-sm text-muted-foreground">Publicados no varejo</p><p className="text-3xl font-black">{publishedCount}</p></div>
+          <div className="rounded-2xl border bg-card/70 p-4"><p className="text-sm text-muted-foreground">Disponíveis no atacado</p><p className="text-3xl font-black">{wholesaleCount}</p></div>
+        </div>
       </header>
       {query.isLoading && <p role="status">Carregando catálogo...</p>}
       {query.isError && <div role="alert" className="space-y-3"><p>Não foi possível carregar o catálogo.</p><Button variant="outline" onClick={() => void query.refetch()}>Tentar novamente</Button></div>}
@@ -197,7 +204,7 @@ function HubCatalogAdmin() {
           </form>
           <section className="space-y-4 rounded-3xl border border-white/10 bg-card/80 p-6">
             <h2 className="text-xl font-bold">Preços progressivos para lojistas</h2>
-            <p className="text-sm text-muted-foreground">Cadastre uma faixa por quantidade mínima. A mesma quantidade atualiza o preço existente. As condições devem ser confirmadas pelo fornecedor.</p>
+            <p className="text-sm text-muted-foreground">Um único produto pode ter várias faixas para lojistas aprovados (ex.: 10, 20 ou 50 unidades). A mesma quantidade atualiza a faixa existente. Os preços de atacado não aparecem no catálogo de consumidores. Confirme as condições com o fornecedor.</p>
             <form className="grid gap-4 md:grid-cols-3" onSubmit={event => { event.preventDefault(); tierMutation.mutate(); }}>
               <label className="space-y-2 text-sm font-medium">
                 <span className="block">Produto com preço B2B</span>
@@ -233,7 +240,9 @@ function HubCatalogAdmin() {
               <div key={product.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 p-4">
                 <div>
                   <p className="font-medium">{product.title}</p>
-                  <p className="text-sm text-muted-foreground">{brl(Number(product.retail_price))} · {product.active ? "Publicado" : "Rascunho"}</p>
+                  <p className="text-sm text-muted-foreground">Varejo: {brl(Number(product.retail_price))} · {product.active ? "Publicado" : "Rascunho"}</p>
+                  <p className="text-sm text-muted-foreground">Atacado: {product.b2b_base_price === null ? "Não habilitado" : `${brl(Number(product.b2b_base_price))}/un. · mínimo ${product.min_b2b_quantity} un.`}</p>
+                  {tiers.filter(tier => tier.product_id === product.id).length > 0 && <p className="text-xs text-muted-foreground">Faixas B2B: {tiers.filter(tier => tier.product_id === product.id).sort((a,b) => a.min_quantity - b.min_quantity).map(tier => `${tier.min_quantity}+ un.: ${brl(Number(tier.unit_price))}`).join(" · ")}</p>}
                 </div>
                 <Button type="button" variant="outline" disabled={mutation.isPending} onClick={() => edit(product)}>Editar</Button>
               </div>
