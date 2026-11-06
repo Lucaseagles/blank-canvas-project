@@ -4,15 +4,10 @@ import { z } from "zod";
 export const getMyPartnerSalesSummary = createServerFn({ method: "POST" })
   .validator((input: unknown) => z.object({ accessToken: z.string().min(1) }).parse(input))
   .handler(async ({ data: input }) => {
-    const { createClient } = await import("@supabase/supabase-js");
-    const url = process.env["SUPABASE_URL"];
-    const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
-    if (!url || !key) throw new Error("Serviço de autenticação indisponível.");
-    const auth = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
-    const { data: verified, error: authError } = await auth.auth.getClaims(input.accessToken);
-    const userId = verified?.claims?.sub;
-    if (authError || !userId) throw new Error("Sessão inválida.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: verified, error: authError } = await supabaseAdmin.auth.getUser(input.accessToken);
+    const userId = verified.user?.id;
+    if (authError || !userId) throw new Error("Sessão inválida.");
     const { data: profile, error: profileError } = await (supabaseAdmin as any)
       .from("commercial_profiles").select("id").eq("user_id", userId)
       .eq("audience", "partner").eq("status", "approved").maybeSingle();

@@ -42,13 +42,13 @@ function Catalog() {
   const categories = [...new Set(products.map(product => product.category).filter((value): value is string => !!value))].sort((a,b) => a.localeCompare(b,"pt-BR"));
   const visibleProducts = products.filter(product => (!category || product.category === category) && (!search.trim() || [product.title, product.description ?? "", product.category ?? ""].some(value => value.toLocaleLowerCase("pt-BR").includes(search.trim().toLocaleLowerCase("pt-BR")))));
   const calculateUnitPrice = (product: HubProduct, quantity: number) => {
-    const tiers = (product.hub_b2b_tiers ?? []).filter(tier => Number.isFinite(tier.min_quantity) && Number.isFinite(tier.unit_price) && tier.min_quantity <= quantity && tier.min_quantity >= product.min_b2b_quantity).sort((a,b) => b.min_quantity - a.min_quantity);
+    const tiers = (product.hub_b2b_tiers ?? []).filter(tier => Number.isSafeInteger(tier.min_quantity) && Number.isFinite(tier.unit_price) && tier.unit_price > 0 && tier.min_quantity <= quantity && tier.min_quantity >= product.min_b2b_quantity).sort((a,b) => b.min_quantity - a.min_quantity);
     return Number(tiers[0]?.unit_price ?? product.b2b_base_price);
   };
 
   const quoteLines = products.filter(product => selectedProductIds.includes(product.id)).map(product => {
     const quantity = quantities[product.id] ?? product.min_b2b_quantity;
-    const valid = Number.isSafeInteger(quantity) && quantity >= product.min_b2b_quantity;
+    const valid = Number.isSafeInteger(quantity) && quantity >= product.min_b2b_quantity && quantity <= 10000000;
     const unitPrice = valid ? calculateUnitPrice(product, quantity) : 0;
     return { id: product.id, title: product.title, quantity, unitPrice, total: unitPrice * quantity, valid };
   });
@@ -61,7 +61,7 @@ function Catalog() {
         <header className="rounded-[2rem] border border-primary/20 bg-gradient-to-br from-primary/15 via-background to-blue-500/10 p-8 md:p-12">
           <div className="mb-5 flex items-center gap-3 text-primary">
             <Store className="h-8 w-8" />
-            <span className="text-xs font-black uppercase tracking-widest">Hub Eagles · Negócios</span>
+            <span className="text-xs font-black uppercase tracking-widest">RUBI · Negócios</span>
           </div>
           <h1 className="text-4xl font-black tracking-tight md:text-6xl">Abasteça seu negócio.</h1>
           <p className="mt-5 max-w-2xl text-muted-foreground">
@@ -100,13 +100,13 @@ function Catalog() {
         {!isLoading && !error && products.length > 0 && (
           <section aria-label="Produtos para lojistas">
             <aside aria-label="Resumo da pré-cotação" className="mb-6 space-y-3 rounded-2xl border border-primary/30 bg-primary/5 p-5">
-              <h2 className="text-xl font-bold">Minha pré-cotação</h2>
+              <h2 className="text-xl font-bold">Simulador de atacado</h2>
               {quoteLines.length === 0 ? <p className="text-sm text-muted-foreground">Selecione produtos abaixo para reunir uma simulação de compra por atacado.</p> :
                 <ul className="space-y-2 text-sm">{quoteLines.map(line => <li key={line.id} className="flex flex-wrap justify-between gap-2 border-b pb-2"><span>{line.title} · {line.quantity} un.</span><strong>{line.valid ? brl(line.total) : "Quantidade inválida"}</strong></li>)}</ul>}
               <p className="text-lg font-black">Total estimado: {quoteValid ? brl(quoteTotal) : "—"}</p>
               {quoteLines.length > 0 && !quoteValid && <p role="alert" className="text-sm text-destructive">Corrija as quantidades selecionadas para calcular o total.</p>}
               {quoteLines.length > 0 && <Button variant="outline" size="sm" onClick={() => setSelectedProductIds([])}>Limpar pré-cotação</Button>}
-              <p className="text-xs text-muted-foreground">Pré-cotação local e informativa. Não cria pedido, não reserva estoque, não fixa preços nem envia dados ao fornecedor.</p>
+              <p className="text-xs text-muted-foreground">Simulação informativa calculada pelas faixas de atacado cadastradas no Shadow Master. Não registra pedido, não reserva estoque, não fixa preços nem envia dados ao fornecedor.</p>
             </aside>
             <div className="mb-6 grid gap-4 rounded-2xl border bg-card p-5 sm:grid-cols-2">
               <label className="space-y-2 text-sm font-semibold"><span>Buscar no atacado</span><input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Produto ou categoria" className="block w-full rounded-lg border bg-background p-2.5" /></label>

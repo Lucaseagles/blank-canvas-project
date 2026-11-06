@@ -4,15 +4,11 @@ import { z } from "zod";
 export const getMyPartnerPortal = createServerFn({ method: "POST" })
   .validator((input: unknown) => z.object({ accessToken: z.string().min(1) }).parse(input))
   .handler(async ({ data: input }) => {
-    const { createClient } = await import("@supabase/supabase-js");
-    const url = process.env["SUPABASE_URL"];
-    const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
-    if (!url || !key) throw new Error("Serviço de autenticação indisponível.");
-    const auth = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
-    const { data: verified, error: authError } = await auth.auth.getClaims(input.accessToken);
-    const userId = verified?.claims?.sub;
-    if (authError || !userId) throw new Error("Sessão expirada. Entre novamente.");
+    // Verify the session with Supabase Auth on the server before loading grants.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: verified, error: authError } = await supabaseAdmin.auth.getUser(input.accessToken);
+    const userId = verified.user?.id;
+    if (authError || !userId) throw new Error("Sessão expirada. Entre novamente.");
     const { data: profile, error: profileError } = await (supabaseAdmin as any)
       .from("commercial_profiles").select("id,display_name,partner_type,status")
       .eq("user_id", userId).eq("audience", "partner").maybeSingle();
@@ -27,7 +23,7 @@ export const getMyPartnerPortal = createServerFn({ method: "POST" })
     if (!ids.length) return { profile, products: [] };
     const { data: products, error: productsError } = await (supabaseAdmin as any)
       .from("hub_products").select("id,title,description,image_url,category,retail_price")
-      .in("id", ids).eq("active", true).order("title");
+      .in("id", ids).eq("active", true).gt("retail_price", 0).order("title");
     if (productsError) throw productsError;
     return { profile, products: products ?? [] };
   });
