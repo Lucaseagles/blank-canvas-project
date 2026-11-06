@@ -135,7 +135,7 @@ function PartnerPortal() {
         {wholesaleOffersQuery.isLoading && <p role="status">Consultando ofertas especiais...</p>}
         {wholesaleOffersQuery.isError && <p role="alert">Não foi possível consultar ofertas especiais. A configuração pode ainda estar pendente.</p>}
         {wholesaleOffersQuery.isSuccess && wholesaleOffersQuery.data.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma condição especial autorizada.</p>}
-        {wholesaleOffersQuery.data?.map(offer => <article key={offer.id} className="rounded-2xl border p-4">
+        {wholesaleOffersQuery.data?.map((offer: { id: string; title: string; b2b_base_price: number; min_b2b_quantity: number }) => <article key={offer.id} className="rounded-2xl border p-4">
           <h3 className="font-bold">{offer.title}</h3>
           <p className="text-sm">Preço base B2B: {Number(offer.b2b_base_price).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} · mínimo {offer.min_b2b_quantity} unidades</p>
           <p className="text-xs text-muted-foreground">Condição autorizada para consulta. Não representa pedido ou checkout.</p>
