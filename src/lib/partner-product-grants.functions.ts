@@ -8,7 +8,7 @@ export const getPartnerProductGrantsAdmin = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const [profiles, products, grants] = await Promise.all([
       (supabaseAdmin as any).from("commercial_profiles").select("id,display_name,partner_type,status").eq("audience", "partner").order("created_at", { ascending: false }).limit(200),
-      (supabaseAdmin as any).from("hub_products").select("id,title,active").order("title").limit(200),
+      (supabaseAdmin as any).from("hub_products").select("id,title,active,retail_price,hub_suppliers(active)").order("title").limit(200),
       (supabaseAdmin as any).from("hub_partner_product_grants").select("id,commercial_profile_id,product_id,active").limit(1000),
     ]);
     if (profiles.error) throw profiles.error;
