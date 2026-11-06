@@ -4,7 +4,7 @@ import { requireOwnerRole } from "./auth-guards.server";
 
 export const getRetailHubCatalog = createServerFn({method:"GET"}).handler(async()=>{
  const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
- const {data,error}=await (supabaseAdmin as any).from("hub_products").select("id,title,description,image_url,category,retail_price,supplier_id").eq("active",true).gt("retail_price",0).order("created_at",{ascending:false}).limit(60);
+ const {data,error}=await (supabaseAdmin as any).from("hub_products").select("id,title,description,image_url,category,retail_price").eq("active",true).gt("retail_price",0).order("created_at",{ascending:false}).limit(60);
  if(error) throw error;
  return data??[];
 });
@@ -76,7 +76,7 @@ export const saveHubB2BTierAdmin = createServerFn({ method: "POST" })
       .maybeSingle();
     if (productError) throw productError;
     if (!product) throw new Error("Produto não encontrado.");
-    if (product.b2b_base_price === null) throw new Error("Configure o preço B2B base antes das faixas.");
+    if (!(Number(product.b2b_base_price) > 0)) throw new Error("Configure o preço B2B base antes das faixas.");
     if (data.min_quantity < product.min_b2b_quantity) {
       throw new Error("A faixa não pode ser inferior ao pedido mínimo do produto.");
     }
