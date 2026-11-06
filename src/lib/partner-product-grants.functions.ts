@@ -28,7 +28,7 @@ export const setPartnerProductGrantAdmin = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const [profileResult, productResult] = await Promise.all([
       (supabaseAdmin as any).from("commercial_profiles").select("id,status").eq("id", data.commercial_profile_id).eq("audience", "partner").maybeSingle(),
-      (supabaseAdmin as any).from("hub_products").select("id,active").eq("id", data.product_id).maybeSingle(),
+      (supabaseAdmin as any).from("hub_products").select("id,active,retail_price,hub_suppliers!inner(active)").eq("id", data.product_id).maybeSingle(),
     ]);
     if (profileResult.error) throw profileResult.error;
     if (productResult.error) throw productResult.error;
@@ -36,6 +36,8 @@ export const setPartnerProductGrantAdmin = createServerFn({ method: "POST" })
     if (data.active && profileResult.data.status !== "approved") throw new Error("Apenas parceiros aprovados podem receber produtos.");
     if (!productResult.data) throw new Error("Produto não encontrado.");
     if (data.active && !productResult.data.active) throw new Error("Não é possível autorizar produto não publicado.");
+    if (data.active && !(Number(productResult.data.retail_price) > 0)) throw new Error("Configure preço de varejo válido antes de autorizar o produto.");
+    if (data.active && !productResult.data.hub_suppliers?.active) throw new Error("Fornecedor inativo. Ative-o antes de autorizar o produto.");
     const { error } = await (supabaseAdmin as any).from("hub_partner_product_grants")
       .upsert(data, { onConflict: "commercial_profile_id,product_id" });
     if (error) throw error;
