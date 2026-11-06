@@ -121,7 +121,7 @@ function Catalog() {
                   .filter((tier) => Number.isFinite(tier.min_quantity) && Number.isFinite(tier.unit_price))
                   .sort((a, b) => a.min_quantity - b.min_quantity);
                 const quantity = quantities[product.id] ?? product.min_b2b_quantity;
-                const validQuantity = Number.isSafeInteger(quantity) && quantity >= product.min_b2b_quantity;
+                const validQuantity = Number.isSafeInteger(quantity) && quantity >= product.min_b2b_quantity && quantity <= 10000000;
                 const unitPrice = validQuantity ? calculateUnitPrice(product, quantity) : 0;
                 return (
                   <article key={product.id} className="overflow-hidden rounded-3xl border border-white/10 bg-card/70">
@@ -134,7 +134,7 @@ function Catalog() {
                     </div>
                     <div className="space-y-3 p-6">
                       <p className="text-xs font-bold uppercase tracking-widest text-primary">
-                        {product.category || "Seleção Hub Eagles"}
+                        {product.category || "Seleção RUBI"}
                       </p>
                       <h2 className="text-xl font-bold">{product.title}</h2>
                       {product.description && <p className="line-clamp-2 text-sm text-muted-foreground">{product.description}</p>}
