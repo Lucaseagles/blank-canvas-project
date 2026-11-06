@@ -11,7 +11,7 @@ function ReferralLanding() {
   const query = useQuery({ queryKey: ["partner-referral", code], queryFn: () => resolve({ data: { code } }), retry: false });
   const product = query.data;
   return <main className="mx-auto max-w-3xl space-y-6 px-4 py-28">
-    <h1 className="text-3xl font-black">Hub Eagles · Produto indicado</h1>
+    <h1 className="text-3xl font-black">RUBI · Produto indicado</h1>
     {query.isLoading && <p>Carregando indicação...</p>}
     {query.isError && <div role="alert" className="space-y-3"><p>Este link não está disponível no momento.</p><Button asChild variant="outline"><a href="/hub-shop">Ver catálogo</a></Button></div>}
     {product && <article className="space-y-4 rounded-3xl border p-6">
