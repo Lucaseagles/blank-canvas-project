@@ -66,7 +66,7 @@ function PartnerPortal() {
   const products = (query.data?.products ?? []) as Product[];
   return <main className="mx-auto max-w-6xl space-y-8 px-4 py-28">
     <header className="space-y-3">
-      <p className="text-xs font-black uppercase tracking-widest text-primary">Hub Eagles · Parceiros</p>
+      <p className="text-xs font-black uppercase tracking-widest text-primary">RUBI · Parceiros</p>
       <h1 className="text-4xl font-black">Seu portal de parceiros</h1>
       <p className="text-muted-foreground">Produtos autorizados individualmente pelo Admin Master. Acesso exclusivo à sua conta.</p>
     </header>
@@ -127,7 +127,7 @@ function PartnerPortal() {
         {products.map(product => <article key={product.id} className="overflow-hidden rounded-2xl border bg-card">
           {product.image_url && <img src={product.image_url} alt={product.title} loading="lazy" className="aspect-video w-full object-cover" />}
           <div className="space-y-3 p-5">
-            <p className="text-xs uppercase text-primary">{product.category ?? "Hub Eagles"}</p>
+            <p className="text-xs uppercase text-primary">{product.category ?? "RUBI"}</p>
             <h2 className="text-xl font-bold">{product.title}</h2>
             {product.description && <p className="text-sm text-muted-foreground">{product.description}</p>}
             <p className="text-lg font-semibold">{Number(product.retail_price).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p>
