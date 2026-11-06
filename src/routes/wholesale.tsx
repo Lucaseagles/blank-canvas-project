@@ -42,13 +42,13 @@ function Catalog() {
   const categories = [...new Set(products.map(product => product.category).filter((value): value is string => !!value))].sort((a,b) => a.localeCompare(b,"pt-BR"));
   const visibleProducts = products.filter(product => (!category || product.category === category) && (!search.trim() || [product.title, product.description ?? "", product.category ?? ""].some(value => value.toLocaleLowerCase("pt-BR").includes(search.trim().toLocaleLowerCase("pt-BR")))));
   const calculateUnitPrice = (product: HubProduct, quantity: number) => {
-    const tiers = (product.hub_b2b_tiers ?? []).filter(tier => Number.isFinite(tier.min_quantity) && Number.isFinite(tier.unit_price) && tier.min_quantity <= quantity && tier.min_quantity >= product.min_b2b_quantity).sort((a,b) => b.min_quantity - a.min_quantity);
+    const tiers = (product.hub_b2b_tiers ?? []).filter(tier => Number.isSafeInteger(tier.min_quantity) && Number.isFinite(tier.unit_price) && tier.unit_price > 0 && tier.min_quantity <= quantity && tier.min_quantity >= product.min_b2b_quantity).sort((a,b) => b.min_quantity - a.min_quantity);
     return Number(tiers[0]?.unit_price ?? product.b2b_base_price);
   };
 
   const quoteLines = products.filter(product => selectedProductIds.includes(product.id)).map(product => {
     const quantity = quantities[product.id] ?? product.min_b2b_quantity;
-    const valid = Number.isSafeInteger(quantity) && quantity >= product.min_b2b_quantity;
+    const valid = Number.isSafeInteger(quantity) && quantity >= product.min_b2b_quantity && quantity <= 10000000;
     const unitPrice = valid ? calculateUnitPrice(product, quantity) : 0;
     return { id: product.id, title: product.title, quantity, unitPrice, total: unitPrice * quantity, valid };
   });
@@ -61,7 +61,7 @@ function Catalog() {
         <header className="rounded-[2rem] border border-primary/20 bg-gradient-to-br from-primary/15 via-background to-blue-500/10 p-8 md:p-12">
           <div className="mb-5 flex items-center gap-3 text-primary">
             <Store className="h-8 w-8" />
-            <span className="text-xs font-black uppercase tracking-widest">Hub Eagles · Negócios</span>
+            <span className="text-xs font-black uppercase tracking-widest">RUBI · Negócios</span>
           </div>
           <h1 className="text-4xl font-black tracking-tight md:text-6xl">Abasteça seu negócio.</h1>
           <p className="mt-5 max-w-2xl text-muted-foreground">
