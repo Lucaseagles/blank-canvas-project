@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { submitMerchantQuoteRequest } from "@/lib/merchant-quote-requests.functions";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
@@ -27,13 +26,6 @@ const brl = (value: number) =>
 
 function Catalog() {
   const load = useServerFn(getMerchantHubCatalog);
-  const submitQuote = useServerFn(submitMerchantQuoteRequest);
-  const [submittedQuoteId, setSubmittedQuoteId] = useState("");
-  const quoteMutation = useMutation({ mutationFn: async (lines: Array<{product_id:string;quantity:number}>) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) throw new Error("Faça login para solicitar orçamento.");
-    return submitQuote({ data: { accessToken: session.access_token, lines } });
-  }, onSuccess: result => { setSubmittedQuoteId(result.id); setSelectedProductIds([]); } });
   const { data = [], isLoading, error, refetch } = useQuery({
     queryKey: ["hub-catalog", "b2b"],
     queryFn: async () => {
@@ -108,17 +100,13 @@ function Catalog() {
         {!isLoading && !error && products.length > 0 && (
           <section aria-label="Produtos para lojistas">
             <aside aria-label="Resumo da pré-cotação" className="mb-6 space-y-3 rounded-2xl border border-primary/30 bg-primary/5 p-5">
-              <h2 className="text-xl font-bold">Minha pré-cotação</h2>
+              <h2 className="text-xl font-bold">Simulador de atacado</h2>
               {quoteLines.length === 0 ? <p className="text-sm text-muted-foreground">Selecione produtos abaixo para reunir uma simulação de compra por atacado.</p> :
                 <ul className="space-y-2 text-sm">{quoteLines.map(line => <li key={line.id} className="flex flex-wrap justify-between gap-2 border-b pb-2"><span>{line.title} · {line.quantity} un.</span><strong>{line.valid ? brl(line.total) : "Quantidade inválida"}</strong></li>)}</ul>}
               <p className="text-lg font-black">Total estimado: {quoteValid ? brl(quoteTotal) : "—"}</p>
               {quoteLines.length > 0 && !quoteValid && <p role="alert" className="text-sm text-destructive">Corrija as quantidades selecionadas para calcular o total.</p>}
-              {quoteValid && <Button disabled={quoteMutation.isPending || quoteLines.length > 30} onClick={() => { setSubmittedQuoteId(""); quoteMutation.mutate(quoteLines.map(line => ({ product_id: line.id, quantity: line.quantity }))); }}>{quoteMutation.isPending ? "Registrando..." : "Solicitar orçamento"}</Button>}
-              {quoteLines.length > 30 && <p role="alert" className="text-sm text-destructive">Selecione no máximo 30 produtos por solicitação.</p>}
-              {quoteMutation.isError && <p role="alert" className="text-sm text-destructive">{quoteMutation.error instanceof Error ? quoteMutation.error.message : "Não foi possível registrar a solicitação."}</p>}
-              {submittedQuoteId && <p role="status" className="text-sm font-semibold">Solicitação registrada! Protocolo: {submittedQuoteId}. Este registro não é um pedido nem uma cobrança.</p>}
               {quoteLines.length > 0 && <Button variant="outline" size="sm" onClick={() => setSelectedProductIds([])}>Limpar pré-cotação</Button>}
-              <p className="text-xs text-muted-foreground">A simulação não reserva estoque nem fixa preços. Ao solicitar orçamento, a RUBI registra os itens e os preços estimados no momento da solicitação; não é pedido, pagamento ou envio ao fornecedor.</p>
+              <p className="text-xs text-muted-foreground">Simulação informativa calculada pelas faixas de atacado cadastradas no Shadow Master. Não registra pedido, não reserva estoque, não fixa preços nem envia dados ao fornecedor.</p>
             </aside>
             <div className="mb-6 grid gap-4 rounded-2xl border bg-card p-5 sm:grid-cols-2">
               <label className="space-y-2 text-sm font-semibold"><span>Buscar no atacado</span><input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Produto ou categoria" className="block w-full rounded-lg border bg-background p-2.5" /></label>
