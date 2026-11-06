@@ -25,7 +25,7 @@ revoke all on public.hub_merchant_quote_items from anon, authenticated;
 
 -- Only the service role can call this atomic SECURITY DEFINER function.
 create or replace function public.hub_create_merchant_quote(p_profile_id uuid, p_lines jsonb)
-returns uuid language plpgsql security definer set search_path = public as $$
+returns uuid language plpgsql security definer set search_path = '' as $
 declare
  v_quote_id uuid;
  v_line jsonb;
