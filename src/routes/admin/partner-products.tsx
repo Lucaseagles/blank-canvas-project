@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getPartnerProductGrantsAdmin, setPartnerProductGrantAdmin } from "@/lib/partner-product-grants.functions";
+import { getPartnerWholesalePermissionsAdmin, setPartnerWholesalePermissionAdmin } from "@/lib/partner-wholesale-permissions.functions";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -15,16 +16,26 @@ type Grant = { id: string; commercial_profile_id: string; product_id: string; ac
 function PartnerProductsAdmin() {
   const load = useServerFn(getPartnerProductGrantsAdmin);
   const save = useServerFn(setPartnerProductGrantAdmin);
+  const loadWholesale = useServerFn(getPartnerWholesalePermissionsAdmin);
+  const saveWholesale = useServerFn(setPartnerWholesalePermissionAdmin);
   const client = useQueryClient();
   const [partnerId, setPartnerId] = useState("");
   const [productId, setProductId] = useState("");
   const query = useQuery({ queryKey: ["admin-partner-product-grants"], queryFn: () => load() });
+  const wholesaleQuery = useQuery({ queryKey: ["admin-partner-wholesale-permissions"], queryFn: () => loadWholesale(), retry: false });
   const partners = (query.data?.profiles ?? []) as Partner[];
   const products = (query.data?.products ?? []) as Product[];
   const grants = (query.data?.grants ?? []) as Grant[];
   const selectablePartners = partners.filter(partner => partner.status === "approved" || grants.some(grant => grant.commercial_profile_id === partner.id && grant.active));
   const selected = grants.find(grant => grant.commercial_profile_id === partnerId && grant.product_id === productId);
   const selectedPartner = partners.find(partner => partner.id === partnerId);
+  const wholesalePermissions = (wholesaleQuery.data ?? []) as { commercial_profile_id: string; product_id: string; active: boolean }[];
+  const wholesalePermission = wholesalePermissions.find(item => item.commercial_profile_id === partnerId && item.product_id === productId);
+  const wholesaleMutation = useMutation({
+    mutationFn: (active: boolean) => saveWholesale({ data: { commercial_profile_id: partnerId, product_id: productId, active } }),
+    onSuccess: () => { toast.success("Permissão de atacado atualizada."); void client.invalidateQueries({ queryKey: ["admin-partner-wholesale-permissions"] }); },
+    onError: (error: Error) => toast.error(error.message),
+  });
   const activeGrantCount = grants.filter(grant => grant.active).length;
   const approvedPartnerCount = partners.filter(partner => partner.status === "approved").length;
   const mutation = useMutation({
@@ -66,6 +77,17 @@ function PartnerProductsAdmin() {
           <Button disabled={mutation.isPending || partners.find(partner => partner.id === partnerId)?.status !== "approved" || !products.find(product => product.id === productId)?.active} onClick={() => mutation.mutate(true)}>Autorizar produto</Button>
           <Button variant="outline" disabled={mutation.isPending || !selected?.active} onClick={() => mutation.mutate(false)}>Revogar autorização</Button>
         </div>
+      </div>}
+      {partnerId && productId && <div className="space-y-3 rounded-2xl border p-4">
+        <h2 className="font-bold">Condição comercial: atacado</h2>
+        <p className="text-sm text-muted-foreground">Permissão individual, independente do tipo de parceiro e da comissão. Exige parceiro aprovado, produto autorizado e preço B2B válido.</p>
+        {wholesaleQuery.isLoading && <p role="status">Carregando condições...</p>}
+        {wholesaleQuery.isError && <p role="alert">Não foi possível consultar permissões de atacado. Confirme a migration antes de utilizar esta função.</p>}
+        {wholesaleQuery.isSuccess && <><p className="text-sm">Situação: <strong>{wholesalePermission?.active ? "Autorizado" : "Não autorizado"}</strong></p>
+          <div className="flex flex-wrap gap-3">
+            <Button disabled={wholesaleMutation.isPending || !selected?.active || selectedPartner?.status !== "approved"} onClick={() => wholesaleMutation.mutate(true)}>Liberar atacado</Button>
+            <Button variant="outline" disabled={wholesaleMutation.isPending || !wholesalePermission?.active} onClick={() => wholesaleMutation.mutate(false)}>Revogar atacado</Button>
+          </div></>}
       </div>}
       {selectablePartners.length === 0 && <p className="text-sm text-muted-foreground">Nenhum parceiro aprovado ou com autorização ativa.</p>}
     </section>}
