@@ -32,11 +32,15 @@ export const getHubCatalogAdmin = createServerFn({method:"GET"}).middleware([req
 });
 export const saveHubProductAdmin=createServerFn({method:"POST"}).middleware([requireOwnerRole]).validator((input:unknown)=>z.object({
  id:z.string().uuid().optional(),supplier_id:z.string().uuid(),title:z.string().trim().min(3).max(180),description:z.string().max(2000).optional(),image_url:z.union([z.string().url(),z.literal("")]).optional(),category:z.string().max(80).optional(),sku:z.string().max(80).optional(),
- retail_price:z.number().nonnegative(),supplier_cost:z.number().nonnegative(),b2b_base_price:z.number().nonnegative().nullable(),min_b2b_quantity:z.number().int().positive(),active:z.boolean()
+ retail_price:z.number().finite().nonnegative(),supplier_cost:z.number().finite().nonnegative(),b2b_base_price:z.number().finite().positive().nullable(),min_b2b_quantity:z.number().int().positive().max(10000000),active:z.boolean()
 }).parse(input)).handler(async({data})=>{
  const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
  if (data.active && data.retail_price <= 0) throw new Error("Informe um preço de varejo maior que zero antes de publicar.");
  if (data.b2b_base_price !== null && data.b2b_base_price <= 0) throw new Error("O preço base B2B deve ser maior que zero.");
+ const {data:supplier,error:supplierError}=await (supabaseAdmin as any).from("hub_suppliers").select("id,active").eq("id",data.supplier_id).maybeSingle();
+ if(supplierError) throw supplierError;
+ if(!supplier) throw new Error("Fornecedor não encontrado.");
+ if(data.active && !supplier.active) throw new Error("Ative o fornecedor antes de publicar o produto.");
  const {id,...payload}=data;
  const {error}=await (supabaseAdmin as any).from("hub_products").upsert(id?{id,...payload}:{...payload});
  if(error) throw error;return {success:true};
@@ -77,6 +81,7 @@ export const saveHubB2BTierAdmin = createServerFn({ method: "POST" })
     if (productError) throw productError;
     if (!product) throw new Error("Produto não encontrado.");
     if (!(Number(product.b2b_base_price) > 0)) throw new Error("Configure o preço B2B base antes das faixas.");
+    if (data.min_quantity > 10000000) throw new Error("Quantidade acima do limite do simulador.");
     if (data.min_quantity < product.min_b2b_quantity) {
       throw new Error("A faixa não pode ser inferior ao pedido mínimo do produto.");
     }
