@@ -4,15 +4,10 @@ import { z } from "zod";
 export const createMyPartnerReferralLink = createServerFn({ method: "POST" })
   .validator((input: unknown) => z.object({ accessToken: z.string().min(1), productId: z.string().uuid() }).parse(input))
   .handler(async ({ data: input }) => {
-    const { createClient } = await import("@supabase/supabase-js");
-    const url = process.env["SUPABASE_URL"];
-    const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
-    if (!url || !key) throw new Error("Serviço de autenticação indisponível.");
-    const auth = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
-    const { data: verified, error: authError } = await auth.auth.getClaims(input.accessToken);
-    const userId = verified?.claims?.sub;
-    if (authError || !userId) throw new Error("Sessão inválida.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: verified, error: authError } = await supabaseAdmin.auth.getUser(input.accessToken);
+    const userId = verified.user?.id;
+    if (authError || !userId) throw new Error("Sessão inválida.");
     const { data: profile, error: profileError } = await (supabaseAdmin as any)
       .from("commercial_profiles").select("id").eq("user_id", userId)
       .eq("audience", "partner").eq("status", "approved").maybeSingle();
@@ -25,7 +20,7 @@ export const createMyPartnerReferralLink = createServerFn({ method: "POST" })
     if (grantError) throw grantError;
     if (!grant) throw new Error("Produto não autorizado para este parceiro.");
     const { data: product, error: productError } = await (supabaseAdmin as any)
-      .from("hub_products").select("id").eq("id", input.productId).eq("active", true).maybeSingle();
+      .from("hub_products").select("id").eq("id", input.productId).eq("active", true).gt("retail_price", 0).maybeSingle();
     if (productError) throw productError;
     if (!product) throw new Error("Produto indisponível.");
     const { data: link, error: linkError } = await (supabaseAdmin as any)
@@ -46,15 +41,10 @@ export const createMyPartnerReferralLink = createServerFn({ method: "POST" })
 export const getMyPartnerReferralLinks = createServerFn({ method: "POST" })
   .validator((input: unknown) => z.object({ accessToken: z.string().min(1) }).parse(input))
   .handler(async ({ data: input }) => {
-    const { createClient } = await import("@supabase/supabase-js");
-    const url = process.env["SUPABASE_URL"];
-    const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
-    if (!url || !key) throw new Error("Serviço de autenticação indisponível.");
-    const auth = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
-    const { data: verified, error: authError } = await auth.auth.getClaims(input.accessToken);
-    const userId = verified?.claims?.sub;
-    if (authError || !userId) throw new Error("Sessão inválida.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: verified, error: authError } = await supabaseAdmin.auth.getUser(input.accessToken);
+    const userId = verified.user?.id;
+    if (authError || !userId) throw new Error("Sessão inválida.");
     const { data: profile, error: profileError } = await (supabaseAdmin as any)
       .from("commercial_profiles").select("id").eq("user_id", userId)
       .eq("audience", "partner").eq("status", "approved").maybeSingle();
@@ -64,5 +54,17 @@ export const getMyPartnerReferralLinks = createServerFn({ method: "POST" })
       .from("hub_partner_referral_links").select("product_id,code,active")
       .eq("commercial_profile_id", profile.id).eq("active", true).limit(200);
     if (linksError) throw linksError;
-    return links ?? [];
+    if (!links?.length) return [];
+    // Revoking a product grant must also remove its referral link from the portal.
+    const { data: grants, error: grantsError } = await (supabaseAdmin as any)
+      .from("hub_partner_product_grants").select("product_id")
+      .eq("commercial_profile_id", profile.id).eq("active", true).limit(200);
+    if (grantsError) throw grantsError;
+    const allowedIds = new Set((grants ?? []).map((grant: { product_id: string }) => grant.product_id));
+    const { data: products, error: productsError } = await (supabaseAdmin as any)
+      .from("hub_products").select("id").in("id", [...allowedIds])
+      .eq("active", true).gt("retail_price", 0);
+    if (productsError) throw productsError;
+    const publishedIds = new Set((products ?? []).map((product: { id: string }) => product.id));
+    return links.filter((link: { product_id: string }) => publishedIds.has(link.product_id));
   });
