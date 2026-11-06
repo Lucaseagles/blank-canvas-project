@@ -93,10 +93,10 @@ function PartnerPortal() {
         {statsQuery.isLoading && <p role="status">Carregando indicadores...</p>}
         {statsQuery.isError && <div role="alert"><p>Não foi possível consultar as visitas.</p><Button variant="outline" onClick={() => void statsQuery.refetch()}>Tentar novamente</Button></div>}
         {statsQuery.data && <div className="grid gap-4 sm:grid-cols-2">
-          <div className="rounded-2xl border bg-card p-5"><p className="text-sm text-muted-foreground">Links ativos</p><p className="text-3xl font-black">{statsQuery.data.links}</p></div>
-          <div className="rounded-2xl border bg-card p-5"><p className="text-sm text-muted-foreground">Visitas registradas</p><p className="text-3xl font-black">{statsQuery.data.visits}</p></div>
+          <div className="rounded-2xl border bg-card p-5"><p className="text-sm text-muted-foreground">Links de produtos disponíveis</p><p className="text-3xl font-black">{statsQuery.data.links}</p></div>
+          <div className="rounded-2xl border bg-card p-5"><p className="text-sm text-muted-foreground">Visitas dos links disponíveis</p><p className="text-3xl font-black">{statsQuery.data.visits}</p></div>
         </div>}
-        <p className="text-xs text-muted-foreground">Visitas não representam compradores únicos, pedidos pagos ou comissões.</p>
+        <p className="text-xs text-muted-foreground">Os indicadores de links e visitas incluem apenas ofertas atualmente disponíveis e autorizadas. Visitas históricas de ofertas revogadas permanecem registradas, mas não entram nesses indicadores. Visitas não representam compradores únicos, pedidos pagos ou comissões.</p>
       </section>
       <section aria-label="Vendas confirmadas" className="space-y-3">
         <h2 className="text-2xl font-bold">Vendas e comissões confirmadas</h2>
@@ -132,7 +132,7 @@ function PartnerPortal() {
             {product.description && <p className="text-sm text-muted-foreground">{product.description}</p>}
             <p className="text-lg font-semibold">{Number(product.retail_price).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p>
             {(() => { const link = (linksQuery.data ?? []).find((item: { product_id: string; code: string }) => item.product_id === product.id); return link ? <div className="space-y-2"><p className="text-xs text-muted-foreground">Seu link individual de divulgação:</p><code className="block break-all text-xs">{typeof window !== "undefined" ? `${window.location.origin}/r/${link.code}` : `/r/${link.code}`}</code><Button variant="outline" size="sm" onClick={() => void navigator.clipboard.writeText(`${window.location.origin}/r/${link.code}`).then(() => toast.success("Link copiado."))}>Copiar link</Button></div> : <Button size="sm" disabled={generate.isPending || linksQuery.isLoading} onClick={() => generate.mutate(product.id)}>Gerar meu link</Button>; })()}
-            {statsQuery.data && <p className="text-sm font-semibold">Visitas registradas: {statsQuery.data.byProduct.find((item: { productId: string; visits: number }) => item.productId === product.id)?.visits ?? 0}</p>}
+            {statsQuery.data && <p className="text-sm font-semibold">Visitas do link disponível: {statsQuery.data.byProduct.find((item: { productId: string; visits: number }) => item.productId === product.id)?.visits ?? 0}</p>}
             <p className="text-xs text-muted-foreground">O link identifica a origem da visita. Vendas e comissões dependem de confirmação do checkout.</p>
           </div>
         </article>)}

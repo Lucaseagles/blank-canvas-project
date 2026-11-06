@@ -23,12 +23,24 @@ export const getMyPartnerVisitStats = createServerFn({ method: "POST" })
       .eq("commercial_profile_id", profile.id).eq("active", true).limit(200);
     if (linksError) throw linksError;
     if (!links?.length) return { links: 0, visits: 0, byProduct: [] };
-    const byProduct = await Promise.all(links.map(async (link: { id: string; product_id: string }) => {
+    const { data: grants, error: grantsError } = await (supabaseAdmin as any)
+      .from("hub_partner_product_grants").select("product_id")
+      .eq("commercial_profile_id", profile.id).eq("active", true).limit(200);
+    if (grantsError) throw grantsError;
+    const allowedIds = (grants ?? []).map((grant: { product_id: string }) => grant.product_id);
+    if (!allowedIds.length) return { links: 0, visits: 0, byProduct: [] };
+    const { data: products, error: productsError } = await (supabaseAdmin as any)
+      .from("hub_products").select("id,hub_suppliers!inner(active)")
+      .in("id", allowedIds).eq("hub_suppliers.active", true).eq("active", true).gt("retail_price", 0);
+    if (productsError) throw productsError;
+    const publishedIds = new Set((products ?? []).map((product: { id: string }) => product.id));
+    const eligibleLinks = links.filter((link: { product_id: string }) => publishedIds.has(link.product_id));
+    const byProduct = await Promise.all(eligibleLinks.map(async (link: { id: string; product_id: string }) => {
       const { count, error } = await (supabaseAdmin as any)
         .from("hub_partner_referral_visits").select("id", { count: "exact", head: true })
         .eq("referral_link_id", link.id);
       if (error) throw error;
       return { productId: link.product_id, visits: count ?? 0 };
     }));
-    return { links: links.length, visits: byProduct.reduce((sum, item) => sum + item.visits, 0), byProduct };
+    return { links: eligibleLinks.length, visits: byProduct.reduce((sum, item) => sum + item.visits, 0), byProduct };
   });
