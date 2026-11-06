@@ -52,7 +52,7 @@ function Catalog() {
     const unitPrice = valid ? calculateUnitPrice(product, quantity) : 0;
     return { id: product.id, title: product.title, quantity, unitPrice, total: unitPrice * quantity, valid };
   });
-  const quoteValid = quoteLines.length > 0 && quoteLines.every(line => line.valid && Number.isFinite(line.total) && line.total > 0);
+  const quoteValid = quoteLines.length > 0 && quoteLines.every(line => line.valid && Number.isFinite(line.total) && line.total > 0) && Number.isFinite(quoteLines.reduce((sum, line) => sum + line.total, 0));
   const quoteTotal = quoteValid ? quoteLines.reduce((sum, line) => sum + line.total, 0) : 0;
 
   return (
@@ -118,7 +118,7 @@ function Catalog() {
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {visibleProducts.map((product) => {
                 const tiers = [...(product.hub_b2b_tiers ?? [])]
-                  .filter((tier) => Number.isFinite(tier.min_quantity) && Number.isFinite(tier.unit_price))
+                  .filter((tier) => Number.isSafeInteger(tier.min_quantity) && tier.min_quantity >= product.min_b2b_quantity && tier.min_quantity <= 10000000 && Number.isFinite(tier.unit_price) && tier.unit_price > 0)
                   .sort((a, b) => a.min_quantity - b.min_quantity);
                 const quantity = quantities[product.id] ?? product.min_b2b_quantity;
                 const validQuantity = Number.isSafeInteger(quantity) && quantity >= product.min_b2b_quantity && quantity <= 10000000;
@@ -162,7 +162,7 @@ function Catalog() {
                       <label className="flex items-center gap-2 rounded-lg border p-3 text-sm font-semibold"><input type="checkbox" checked={selectedProductIds.includes(product.id)} onChange={event => setSelectedProductIds(current => event.target.checked ? [...current, product.id] : current.filter(id => id !== product.id))} /> Incluir na pré-cotação</label>
                       <div className="space-y-3 rounded-xl border p-4">
                         <h3 className="text-sm font-semibold">Simular valor por quantidade</h3>
-                        <label className="block space-y-1 text-sm"><span>Quantidade de unidades</span><input type="number" min={product.min_b2b_quantity} step={1} value={quantity} onChange={event => setQuantities(current => ({ ...current, [product.id]: event.target.value === "" ? 0 : Number(event.target.value) }))} className="block w-full rounded-lg border bg-background p-2" /></label>
+                        <label className="block space-y-1 text-sm"><span>Quantidade de unidades</span><input type="number" min={product.min_b2b_quantity} max={10000000} step={1} value={quantity} onChange={event => setQuantities(current => ({ ...current, [product.id]: event.target.value === "" ? 0 : Number(event.target.value) }))} className="block w-full rounded-lg border bg-background p-2" /></label>
                         {!validQuantity ? <p role="alert" className="text-sm text-destructive">Informe no mínimo {product.min_b2b_quantity} unidades inteiras.</p> : <div className="space-y-1 text-sm"><p>Preço unitário aplicável: <strong>{brl(unitPrice)}</strong></p><p>Total estimado: <strong>{brl(unitPrice * quantity)}</strong></p></div>}
                         <p className="text-xs text-muted-foreground">Simulação informativa; não reserva estoque, cria pedido nem garante condições de pagamento.</p>
                       </div>

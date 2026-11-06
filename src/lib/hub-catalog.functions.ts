@@ -20,7 +20,8 @@ export const getMerchantHubCatalog = createServerFn({method:"POST"})
  if(!profile) throw new Error("Acesso exclusivo para lojistas aprovados.");
  const {data:products,error}=await (supabaseAdmin as any).from("hub_products").select("id,title,description,image_url,category,b2b_base_price,min_b2b_quantity,hub_b2b_tiers(min_quantity,unit_price)").eq("active",true).gt("b2b_base_price",0).order("created_at",{ascending:false}).limit(60);
  if(error) throw error;
- return products??[];
+ const safeProducts=(products??[]).filter((product:any)=>Number.isSafeInteger(product.min_b2b_quantity) && product.min_b2b_quantity > 0 && product.min_b2b_quantity <= 10000000 && Number.isFinite(Number(product.b2b_base_price)) && Number(product.b2b_base_price)>0);
+ return safeProducts.map((product:any)=>({...product,hub_b2b_tiers:(product.hub_b2b_tiers??[]).filter((tier:any)=>Number.isSafeInteger(tier.min_quantity) && tier.min_quantity >= product.min_b2b_quantity && tier.min_quantity <= 10000000 && Number.isFinite(Number(tier.unit_price)) && Number(tier.unit_price)>0)}));
 });
 export const getHubCatalogAdmin = createServerFn({method:"GET"}).middleware([requireOwnerRole]).handler(async()=>{
  const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
