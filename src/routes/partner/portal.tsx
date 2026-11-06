@@ -9,7 +9,6 @@ import { getMyPartnerUnreadFinancialNotificationCount } from "@/lib/partner-fina
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyPartnerPortal } from "@/lib/partner-portal.functions";
-import { getMyPartnerWholesaleOffers } from "@/lib/partner-wholesale-permissions.functions";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/partner/portal")({ component: PartnerPortal });
@@ -17,12 +16,6 @@ export const Route = createFileRoute("/partner/portal")({ component: PartnerPort
 type Product = { id: string; title: string; description: string | null; image_url: string | null; category: string | null; retail_price: number };
 function PartnerPortal() {
   const load = useServerFn(getMyPartnerPortal);
-  const loadWholesaleOffers = useServerFn(getMyPartnerWholesaleOffers);
-  const wholesaleOffersQuery = useQuery({ queryKey: ["my-partner-wholesale-offers"], queryFn: async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) throw new Error("Entre na sua conta.");
-    return loadWholesaleOffers({ data: { accessToken: session.access_token } });
-  }, retry: false });
   const loadUnread = useServerFn(getMyPartnerUnreadFinancialNotificationCount);
   const unreadQuery = useQuery({ queryKey: ["my-partner-unread-financial-notifications"], queryFn: async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -128,18 +121,6 @@ function PartnerPortal() {
           <div className="rounded-2xl border bg-card p-5"><p className="text-sm text-muted-foreground">Comissões pendentes</p><p className="text-2xl font-black">{Number(commissionsQuery.data.pending).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p></div>
         </div>}
         <p className="text-xs text-muted-foreground">Comissões pagas são as que possuem baixa registrada pelo financeiro. Visitas não geram comissão automaticamente.</p>
-      </section>
-      <section aria-label="Ofertas de atacado autorizadas" className="space-y-3">
-        <h2 className="text-2xl font-bold">Condições especiais de atacado</h2>
-        <p className="text-sm text-muted-foreground">Disponíveis somente mediante liberação individual do Shadow Master. A comissão é definida separadamente.</p>
-        {wholesaleOffersQuery.isLoading && <p role="status">Consultando ofertas especiais...</p>}
-        {wholesaleOffersQuery.isError && <p role="alert">Não foi possível consultar ofertas especiais. A configuração pode ainda estar pendente.</p>}
-        {wholesaleOffersQuery.isSuccess && wholesaleOffersQuery.data.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma condição especial autorizada.</p>}
-        {wholesaleOffersQuery.data?.map((offer: { id: string; title: string; b2b_base_price: number; min_b2b_quantity: number }) => <article key={offer.id} className="rounded-2xl border p-4">
-          <h3 className="font-bold">{offer.title}</h3>
-          <p className="text-sm">Preço base B2B: {Number(offer.b2b_base_price).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} · mínimo {offer.min_b2b_quantity} unidades</p>
-          <p className="text-xs text-muted-foreground">Condição autorizada para consulta. Não representa pedido ou checkout.</p>
-        </article>)}
       </section>
       {products.length === 0 && <p className="rounded-2xl border p-6">Nenhum produto liberado para seu perfil no momento.</p>}
       <section aria-label="Produtos autorizados" className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
