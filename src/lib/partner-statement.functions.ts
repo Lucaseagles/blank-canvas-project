@@ -33,26 +33,41 @@ export const getMyPartnerStatement = createServerFn({ method: "POST" })
     if (salesError) throw salesError;
     if (!sales?.length) return { total: count ?? 0, sales: [] };
     const { data: items, error: itemsError } = await (supabaseAdmin as any)
-      .from("hub_partner_commission_payout_items").select("sale_id,payout_id")
+      .from("hub_partner_commission_payout_items").select("sale_id,payout_id,commission_amount")
       .in("sale_id", sales.map((sale: { id: string }) => sale.id));
     if (itemsError) throw itemsError;
-    const paidBySale = new Map<string, string>((items ?? []).map((item: { sale_id: string; payout_id: string }) => [item.sale_id, item.payout_id]));
-    const payoutIds = [...new Set(paidBySale.values())];
+    const payoutIds = [...new Set((items ?? []).map((item: { payout_id: string }) => item.payout_id))];
     let paidDates = new Map<string, string>();
     if (payoutIds.length) {
       const { data: payouts, error: payoutError } = await (supabaseAdmin as any)
         .from("hub_partner_commission_payouts").select("id,paid_at").eq("commercial_profile_id", profile.id).in("id", payoutIds);
       if (payoutError) throw payoutError;
-      paidDates = new Map<string, string>((payouts ?? []).map((payout: { id: string; paid_at: string }) => [payout.id, payout.paid_at]));
+      paidDates = new Map<string, string>((payouts ?? [])
+        .filter((payout: { id: string; paid_at: string | null }) => Boolean(payout.paid_at))
+        .map((payout: { id: string; paid_at: string }) => [payout.id, payout.paid_at]));
+    }
+    const paidBySale = new Map<string, { amount: number; paidAt: string | null }>();
+    for (const item of items ?? []) {
+      const paidAt = paidDates.get(item.payout_id);
+      if (!paidAt) continue;
+      const previous = paidBySale.get(item.sale_id);
+      paidBySale.set(item.sale_id, {
+        amount: (previous?.amount ?? 0) + Number(item.commission_amount),
+        paidAt: !previous?.paidAt || paidAt > previous.paidAt ? paidAt : previous.paidAt,
+      });
     }
     const productByLink = new Map<string, string>((links ?? []).map((link: { id: string; product_id: string }) => [link.id, link.product_id]));
     return {
       total: count ?? 0,
       sales: sales.map((sale: { id: string; referral_link_id: string; [key: string]: unknown }) => {
-        const payoutId = paidBySale.get(sale.id);
+        const payment = paidBySale.get(sale.id);
+        const paidAmount = payment?.amount ?? 0;
+        const commissionAmount = Number(sale["commission_amount"]);
         return { ...sale, product_id: productByLink.get(sale.referral_link_id) ?? null,
-          status: payoutId && paidDates.has(payoutId) ? "paid" : "pending",
-          paid_at: payoutId ? paidDates.get(payoutId) ?? null : null };
+          paid_amount: paidAmount,
+          pending_amount: Math.max(0, commissionAmount - paidAmount),
+          status: paidAmount >= commissionAmount - 0.005 ? "paid" : paidAmount > 0 ? "partial" : "pending",
+          paid_at: payment?.paidAt ?? null };
       }),
     };
   });
