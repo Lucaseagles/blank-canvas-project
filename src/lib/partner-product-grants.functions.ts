@@ -28,7 +28,7 @@ export const setPartnerProductGrantAdmin = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const [profileResult, productResult] = await Promise.all([
       (supabaseAdmin as any).from("commercial_profiles").select("id,status").eq("id", data.commercial_profile_id).eq("audience", "partner").maybeSingle(),
-      (supabaseAdmin as any).from("hub_products").select("id,active,retail_price,hub_suppliers!inner(active)").eq("id", data.product_id).maybeSingle(),
+      (supabaseAdmin as any).from("hub_products").select("id,active,retail_price,hub_suppliers(active)").eq("id", data.product_id).maybeSingle(),
     ]);
     if (profileResult.error) throw profileResult.error;
     if (productResult.error) throw productResult.error;
