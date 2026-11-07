@@ -62,7 +62,7 @@ export const getMyPartnerStatement = createServerFn({ method: "POST" })
       sales: sales.map((sale: { id: string; referral_link_id: string; [key: string]: unknown }) => {
         const payment = paidBySale.get(sale.id);
         const paidAmount = payment?.amount ?? 0;
-        const commissionAmount = Number(sale.commission_amount);
+        const commissionAmount = Number(sale["commission_amount"]);
         return { ...sale, product_id: productByLink.get(sale.referral_link_id) ?? null,
           paid_amount: paidAmount,
           pending_amount: Math.max(0, commissionAmount - paidAmount),
