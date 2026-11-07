@@ -19,12 +19,12 @@ export const getMyPartnerSalesSummary = createServerFn({ method: "POST" })
     if (agreementError) throw agreementError;
     const { data: links, error: linksError } = await (supabaseAdmin as any)
       .from("hub_partner_referral_links").select("id")
-      .eq("commercial_profile_id", profile.id).limit(200);
+      .eq("commercial_profile_id", profile.id).limit(500);
     if (linksError) throw linksError;
     if (!links?.length) return { sales: 0, grossAmount: 0, commissionAmount: 0, agreementPercent: agreement?.active ? Number(agreement.commission_percent) : null };
     const { data: sales, error: salesError } = await (supabaseAdmin as any)
       .from("hub_partner_confirmed_sales").select("gross_amount,commission_amount")
-      .in("referral_link_id", links.map((link: { id: string }) => link.id)).limit(1000);
+      .in("referral_link_id", links.map((link: { id: string }) => link.id)).limit(10000);
     if (salesError) throw salesError;
     return {
       sales: sales?.length ?? 0,
