@@ -1,20 +1,25 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireOwnerRole } from "./auth-guards.server";
+import { fetchAllFinancialRows } from "./financial-pagination.server";
 
 export const getPartnerSalesReconciliationAdmin = createServerFn({ method: "GET" })
   .middleware([requireOwnerRole])
   .handler(async () => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const [profiles, links, sales] = await Promise.all([
-      (supabaseAdmin as any).from("commercial_profiles").select("id,display_name,status").eq("audience", "partner").limit(200),
-      (supabaseAdmin as any).from("hub_partner_referral_links").select("id,commercial_profile_id,product_id,active").limit(500),
-      (supabaseAdmin as any).from("hub_partner_confirmed_sales").select("id,referral_link_id,external_order_id,source,gross_amount,commission_amount,confirmed_at").order("confirmed_at", { ascending: false }).limit(200),
+      fetchAllFinancialRows(() => (supabaseAdmin as any)
+        .from("commercial_profiles").select("id,display_name,status")
+        .eq("audience", "partner").order("id", { ascending: true })),
+      fetchAllFinancialRows(() => (supabaseAdmin as any)
+        .from("hub_partner_referral_links").select("id,commercial_profile_id,product_id,active")
+        .order("id", { ascending: true })),
+      fetchAllFinancialRows(() => (supabaseAdmin as any)
+        .from("hub_partner_confirmed_sales")
+        .select("id,referral_link_id,external_order_id,source,gross_amount,commission_amount,confirmed_at")
+        .order("id", { ascending: true })),
     ]);
-    if (profiles.error) throw profiles.error;
-    if (links.error) throw links.error;
-    if (sales.error) throw sales.error;
-    return { profiles: profiles.data ?? [], links: links.data ?? [], sales: sales.data ?? [] };
+    return { profiles, links, sales };
   });
 
 export const reconcilePartnerSaleAdmin = createServerFn({ method: "POST" })
