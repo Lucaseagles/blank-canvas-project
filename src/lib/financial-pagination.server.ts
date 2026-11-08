@@ -13,6 +13,7 @@ export async function fetchAllFinancialRows(makeQuery: () => any, pageSize = 500
 }
 export async function fetchFinancialRowsByIds(ids: string[], makeQuery: (ids: string[]) => any): Promise<any[]> {
   const rows: any[] = [];
+  if (new Set(ids).size !== ids.length) throw new Error("Identificadores financeiros duplicados.");
   for (let i = 0; i < ids.length; i += 100) {
     rows.push(...await fetchAllFinancialRows(() => makeQuery(ids.slice(i, i + 100))));
   }
