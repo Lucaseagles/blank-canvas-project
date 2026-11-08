@@ -1,3 +1,4 @@
+import { fetchAllFinancialRows, fetchFinancialRowsByIds } from "./financial-pagination.server";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
@@ -50,21 +51,18 @@ export const getMyPartnerReferralLinks = createServerFn({ method: "POST" })
       .eq("audience", "partner").eq("status", "approved").maybeSingle();
     if (profileError) throw profileError;
     if (!profile) return [];
-    const { data: links, error: linksError } = await (supabaseAdmin as any)
+    const links = await fetchAllFinancialRows(() => (supabaseAdmin as any)
       .from("hub_partner_referral_links").select("product_id,code,active")
-      .eq("commercial_profile_id", profile.id).eq("active", true).limit(200);
-    if (linksError) throw linksError;
+      .eq("commercial_profile_id", profile.id).eq("active", true).order("code", { ascending: true }));
     if (!links?.length) return [];
     // Revoking a product grant must also remove its referral link from the portal.
-    const { data: grants, error: grantsError } = await (supabaseAdmin as any)
+    const grants = await fetchAllFinancialRows(() => (supabaseAdmin as any)
       .from("hub_partner_product_grants").select("product_id")
-      .eq("commercial_profile_id", profile.id).eq("active", true).limit(200);
-    if (grantsError) throw grantsError;
+      .eq("commercial_profile_id", profile.id).eq("active", true).order("product_id", { ascending: true }));
     const allowedIds = new Set((grants ?? []).map((grant: { product_id: string }) => grant.product_id));
-    const { data: products, error: productsError } = await (supabaseAdmin as any)
+    const products = allowedIds.size ? await fetchFinancialRowsByIds([...allowedIds], (batchIds) => (supabaseAdmin as any)
       .from("hub_products").select("id,hub_suppliers!inner(active)").in("id", [...allowedIds])
-      .eq("hub_suppliers.active", true).eq("active", true).gt("retail_price", 0);
-    if (productsError) throw productsError;
+      .eq("hub_suppliers.active", true).eq("active", true).gt("retail_price", 0).order("id", { ascending: true })) : [];
     const publishedIds = new Set((products ?? []).map((product: { id: string }) => product.id));
     return links.filter((link: { product_id: string }) => publishedIds.has(link.product_id));
   });
