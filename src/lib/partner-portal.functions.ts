@@ -23,6 +23,6 @@ export const getMyPartnerPortal = createServerFn({ method: "POST" })
     if (!ids.length) return { profile, products: [] };
     const products = await fetchFinancialRowsByIds(ids, (batchIds) => (supabaseAdmin as any)
       .from("hub_products").select("id,title,description,image_url,category,retail_price,hub_suppliers!inner(active)")
-      .in("id", ids).eq("hub_suppliers.active", true).eq("active", true).gt("retail_price", 0).order("id", { ascending: true }));
+      .in("id", batchIds).eq("hub_suppliers.active", true).eq("active", true).gt("retail_price", 0).order("id", { ascending: true }));
     return { profile, products: (products ?? []).map(({ hub_suppliers: _supplier, ...product }: any) => product) };
   });
