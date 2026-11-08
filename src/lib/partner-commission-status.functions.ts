@@ -1,3 +1,4 @@
+import { fetchAllFinancialRows, fetchFinancialRowsByIds } from "./financial-pagination.server";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 export const getMyPartnerCommissionStatus = createServerFn({ method: "POST" })
@@ -15,17 +16,14 @@ export const getMyPartnerCommissionStatus = createServerFn({ method: "POST" })
   if (profileError) throw profileError;
   const empty = { calculated: 0, paid: 0, pending: 0, paidSales: 0, unpaidSales: 0 };
   if (!profile) return empty;
-  const { data: links, error: linksError } = await (supabaseAdmin as any).from("hub_partner_referral_links")
-    .select("id").eq("commercial_profile_id", profile.id).limit(500);
-  if (linksError) throw linksError;
+  const links = await fetchAllFinancialRows(() => (supabaseAdmin as any).from("hub_partner_referral_links")
+    .select("id").eq("commercial_profile_id", profile.id).order("id", { ascending: true }));
   if (!links?.length) return empty;
-  const { data: sales, error: salesError } = await (supabaseAdmin as any).from("hub_partner_confirmed_sales")
-    .select("id,commission_amount").in("referral_link_id", links.map((link: { id: string }) => link.id)).limit(10000);
-  if (salesError) throw salesError;
+  const sales = await fetchFinancialRowsByIds(links.map((link: { id: string }) => link.id), (ids) => (supabaseAdmin as any).from("hub_partner_confirmed_sales")
+    .select("id,commission_amount").in("referral_link_id", ids).order("id", { ascending: true }));
   if (!sales?.length) return empty;
-  const { data: items, error: itemsError } = await (supabaseAdmin as any).from("hub_partner_commission_payout_items")
-    .select("sale_id,commission_amount").in("sale_id", sales.map((sale: { id: string }) => sale.id)).limit(10000);
-  if (itemsError) throw itemsError;
+  const items = await fetchFinancialRowsByIds(sales.map((sale: { id: string }) => sale.id), (ids) => (supabaseAdmin as any).from("hub_partner_commission_payout_items")
+    .select("id,sale_id,commission_amount").in("sale_id", ids).order("id", { ascending: true }));
   const paidBySale = new Map<string, number>();
   for (const item of items ?? []) {
     const saleId = String(item.sale_id);
