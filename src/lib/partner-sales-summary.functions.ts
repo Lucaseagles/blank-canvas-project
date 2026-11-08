@@ -23,7 +23,7 @@ export const getMyPartnerSalesSummary = createServerFn({ method: "POST" })
       .eq("commercial_profile_id", profile.id).order("id", { ascending: true }));
     if (!links?.length) return { sales: 0, grossAmount: 0, commissionAmount: 0, agreementPercent: agreement?.active ? Number(agreement.commission_percent) : null };
     const sales = await fetchFinancialRowsByIds(links.map((link: { id: string }) => link.id), (ids) => (supabaseAdmin as any)
-      .from("hub_partner_confirmed_sales").select("gross_amount,commission_amount")
+      .from("hub_partner_confirmed_sales").select("id,gross_amount,commission_amount")
       .in("referral_link_id", ids).order("id", { ascending: true }));
     return {
       sales: sales?.length ?? 0,
