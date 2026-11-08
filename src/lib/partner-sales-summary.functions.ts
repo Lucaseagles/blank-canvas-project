@@ -1,3 +1,4 @@
+import { fetchAllFinancialRows, fetchFinancialRowsByIds } from "./financial-pagination.server";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
@@ -17,15 +18,13 @@ export const getMyPartnerSalesSummary = createServerFn({ method: "POST" })
       .from("hub_partner_agreements").select("commission_percent,active")
       .eq("commercial_profile_id", profile.id).maybeSingle();
     if (agreementError) throw agreementError;
-    const { data: links, error: linksError } = await (supabaseAdmin as any)
+    const links = await fetchAllFinancialRows(() => (supabaseAdmin as any)
       .from("hub_partner_referral_links").select("id")
-      .eq("commercial_profile_id", profile.id).limit(500);
-    if (linksError) throw linksError;
+      .eq("commercial_profile_id", profile.id).order("id", { ascending: true }));
     if (!links?.length) return { sales: 0, grossAmount: 0, commissionAmount: 0, agreementPercent: agreement?.active ? Number(agreement.commission_percent) : null };
-    const { data: sales, error: salesError } = await (supabaseAdmin as any)
+    const sales = await fetchFinancialRowsByIds(links.map((link: { id: string }) => link.id), (ids) => (supabaseAdmin as any)
       .from("hub_partner_confirmed_sales").select("gross_amount,commission_amount")
-      .in("referral_link_id", links.map((link: { id: string }) => link.id)).limit(10000);
-    if (salesError) throw salesError;
+      .in("referral_link_id", links.map((link: { id: string }) => link.id)).order("id", { ascending: true }));
     return {
       sales: sales?.length ?? 0,
       grossAmount: (sales ?? []).reduce((sum: number, sale: { gross_amount: number }) => sum + Number(sale.gross_amount), 0),
