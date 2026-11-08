@@ -23,7 +23,7 @@ export const getMyPartnerCommissionStatus = createServerFn({ method: "POST" })
     .select("id,commission_amount").in("referral_link_id", ids).order("id", { ascending: true }));
   if (!sales?.length) return empty;
   const items = await fetchFinancialRowsByIds(sales.map((sale: { id: string }) => sale.id), (ids) => (supabaseAdmin as any).from("hub_partner_commission_payout_items")
-    .select("sale_id,commission_amount").in("sale_id", ids).order("id", { ascending: true }));
+    .select("id,sale_id,commission_amount").in("sale_id", ids).order("id", { ascending: true }));
   const paidBySale = new Map<string, number>();
   for (const item of items ?? []) {
     const saleId = String(item.sale_id);
