@@ -30,14 +30,14 @@ export const getPartnerFinanceHistoryAdmin = createServerFn({ method: "POST" })
     );
     allSales.sort((a: { id: string; confirmed_at: string }, b: { id: string; confirmed_at: string }) =>
       b.confirmed_at.localeCompare(a.confirmed_at) || b.id.localeCompare(a.id));
-    const sales = allSales.slice(data.offset, data.offset + data.limit);
+    const sales = allSales.slice(data.offset, data.offset + data.limit) as Array<{ id: string; referral_link_id: string; external_order_id: string; source: string; gross_amount: number; commission_percent: number; commission_amount: number; confirmed_at: string }>;
     const linkById = new Map<string, { commercial_profile_id: string; product_id: string }>(
       eligibleLinks.map((link: { id: string; commercial_profile_id: string; product_id: string }) => [link.id, link]));
     const nameById = new Map<string, string>(profiles.map((p: { id: string; display_name: string }) => [p.id, p.display_name]));
     return {
       total: allSales.length,
       profiles,
-      sales: sales.map((sale: { referral_link_id: string; [key: string]: unknown }) => {
+      sales: sales.map((sale) => {
         const link = linkById.get(sale.referral_link_id);
         return { ...sale, partner_name: link ? nameById.get(link.commercial_profile_id) ?? "Parceiro" : "Parceiro", product_id: link?.product_id ?? null };
       }),
