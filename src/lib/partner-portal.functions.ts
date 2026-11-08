@@ -1,3 +1,4 @@
+import { fetchAllFinancialRows, fetchFinancialRowsByIds } from "./financial-pagination.server";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
@@ -15,15 +16,13 @@ export const getMyPartnerPortal = createServerFn({ method: "POST" })
     if (profileError) throw profileError;
     if (!profile) return { profile: null, products: [] };
     if (profile.status !== "approved") return { profile, products: [] };
-    const { data: grants, error: grantsError } = await (supabaseAdmin as any)
+    const grants = await fetchAllFinancialRows(() => (supabaseAdmin as any)
       .from("hub_partner_product_grants").select("product_id")
-      .eq("commercial_profile_id", profile.id).eq("active", true).limit(200);
-    if (grantsError) throw grantsError;
+      .eq("commercial_profile_id", profile.id).eq("active", true).order("product_id", { ascending: true }));
     const ids = (grants ?? []).map((grant: { product_id: string }) => grant.product_id);
     if (!ids.length) return { profile, products: [] };
-    const { data: products, error: productsError } = await (supabaseAdmin as any)
+    const products = await fetchFinancialRowsByIds(ids, (batchIds) => (supabaseAdmin as any)
       .from("hub_products").select("id,title,description,image_url,category,retail_price,hub_suppliers!inner(active)")
-      .in("id", ids).eq("hub_suppliers.active", true).eq("active", true).gt("retail_price", 0).order("title");
-    if (productsError) throw productsError;
+      .in("id", batchIds).eq("hub_suppliers.active", true).eq("active", true).gt("retail_price", 0).order("id", { ascending: true }));
     return { profile, products: (products ?? []).map(({ hub_suppliers: _supplier, ...product }: any) => product) };
   });
