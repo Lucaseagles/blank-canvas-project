@@ -1,20 +1,28 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireOwnerRole } from "./auth-guards.server";
+import { fetchAllFinancialRows } from "./financial-pagination.server";
 
 export const getPartnerProductGrantsAdmin = createServerFn({ method: "GET" })
   .middleware([requireOwnerRole])
   .handler(async () => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const [profiles, products, grants] = await Promise.all([
-      (supabaseAdmin as any).from("commercial_profiles").select("id,display_name,partner_type,status").eq("audience", "partner").order("created_at", { ascending: false }).limit(200),
-      (supabaseAdmin as any).from("hub_products").select("id,title,active,retail_price,hub_suppliers(active)").order("title").limit(200),
-      (supabaseAdmin as any).from("hub_partner_product_grants").select("id,commercial_profile_id,product_id,active").limit(1000),
+      fetchAllFinancialRows(() => (supabaseAdmin as any)
+        .from("commercial_profiles")
+        .select("id,display_name,partner_type,status")
+        .eq("audience", "partner")
+        .order("id", { ascending: true })),
+      fetchAllFinancialRows(() => (supabaseAdmin as any)
+        .from("hub_products")
+        .select("id,title,active,retail_price,hub_suppliers(active)")
+        .order("id", { ascending: true })),
+      fetchAllFinancialRows(() => (supabaseAdmin as any)
+        .from("hub_partner_product_grants")
+        .select("id,commercial_profile_id,product_id,active")
+        .order("id", { ascending: true })),
     ]);
-    if (profiles.error) throw profiles.error;
-    if (products.error) throw products.error;
-    if (grants.error) throw grants.error;
-    return { profiles: profiles.data ?? [], products: products.data ?? [], grants: grants.data ?? [] };
+    return { profiles, products, grants };
   });
 
 export const setPartnerProductGrantAdmin = createServerFn({ method: "POST" })
