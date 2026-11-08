@@ -61,7 +61,7 @@ export const getMyPartnerReferralLinks = createServerFn({ method: "POST" })
       .eq("commercial_profile_id", profile.id).eq("active", true).order("product_id", { ascending: true }));
     const allowedIds = new Set((grants ?? []).map((grant: { product_id: string }) => grant.product_id));
     const products = allowedIds.size ? await fetchFinancialRowsByIds([...allowedIds], (batchIds) => (supabaseAdmin as any)
-      .from("hub_products").select("id,hub_suppliers!inner(active)").in("id", [...allowedIds])
+      .from("hub_products").select("id,hub_suppliers!inner(active)").in("id", batchIds)
       .eq("hub_suppliers.active", true).eq("active", true).gt("retail_price", 0).order("id", { ascending: true })) : [];
     const publishedIds = new Set((products ?? []).map((product: { id: string }) => product.id));
     return links.filter((link: { product_id: string }) => publishedIds.has(link.product_id));
