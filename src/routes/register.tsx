@@ -57,6 +57,19 @@ function RegisterPage() {
       if (error) throw error;
       
       if (data.user) {
+        // Show the optional post-signup activation only when this same user
+        // authenticates and returns to a RUBI product or partner offer.
+        const safeOfferReturn = search.returnTo
+          && /^\/(?:hub-product\/[0-9a-fA-F-]{36}|r\/[0-9a-fA-F-]{36})$/.test(search.returnTo)
+          ? search.returnTo : null;
+        if (safeOfferReturn) {
+          try {
+            sessionStorage.setItem("rubi_new_account_activation", JSON.stringify({
+              userId: data.user.id,
+              returnTo: safeOfferReturn,
+            }));
+          } catch { /* Storage may be restricted; signup must still work. */ }
+        }
         toast.success("Identidade criada! Verifique seu e-mail para confirmação.");
         // Forward ref to login if present
         navigate({ 

@@ -16,14 +16,23 @@ export function useWebPush() {
 
   useEffect(() => {
     const checkSupport = async () => {
-      const supported = 'serviceWorker' in navigator && 'PushManager' in window;
+      const supported = typeof window !== "undefined"
+        && window.isSecureContext
+        && "serviceWorker" in navigator && "PushManager" in window
+        && "Notification" in window;
       setIsSupported(supported);
 
       if (supported) {
-        setPermission(Notification.permission);
-        const registration = await navigator.serviceWorker.ready;
-        const sub = await registration.pushManager.getSubscription();
-        setSubscription(sub);
+        try {
+          setPermission(Notification.permission);
+          // Explicit registration ensures navigator.serviceWorker.ready resolves.
+          const registration = await navigator.serviceWorker.register("/sw.js");
+          const sub = await registration.pushManager.getSubscription();
+          setSubscription(sub);
+        } catch (error) {
+          console.error("Push service worker unavailable:", error);
+          setIsSupported(false);
+        }
       }
     };
 
@@ -34,18 +43,18 @@ export function useWebPush() {
     mutationFn: async () => {
       if (!isSupported) throw new Error("Push not supported");
 
-      const publicKey = await fetchPublicKey();
-      if (!publicKey) throw new Error("VAPID public key not found");
-
-      const registration = await navigator.serviceWorker.ready;
-      
-      // Request permission if not granted
+      // Permission requests must be triggered directly by the user interaction.
+      // Do not await a server call before asking for browser permission.
       if (Notification.permission !== "granted") {
         const result = await Notification.requestPermission();
         setPermission(result);
-        if (result !== "granted") throw new Error("Permission denied");
+        if (result !== "granted") throw new Error("Permissão de notificações não concedida.");
       }
 
+      const publicKey = await fetchPublicKey();
+      if (!publicKey) throw new Error("Chave pública de notificações indisponível.");
+
+      const registration = await navigator.serviceWorker.ready;
       const sub = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: publicKey
@@ -68,11 +77,11 @@ export function useWebPush() {
       return sub;
     },
     onSuccess: () => {
-      toast.success("Notifications enabled!");
+      toast.success("Notificações ativadas neste dispositivo.");
     },
     onError: (err: any) => {
       console.error("Push subscription error:", err);
-      toast.error(err.message || "Failed to enable notifications");
+      toast.error(err.message || "Não foi possível ativar notificações.");
     }
   });
 
@@ -88,7 +97,7 @@ export function useWebPush() {
       setSubscription(null);
     },
     onSuccess: () => {
-      toast.success("Notifications disabled");
+      toast.success("Notificações desativadas neste dispositivo.");
     },
     onError: (err: any) => {
       toast.error("Failed to disable notifications");

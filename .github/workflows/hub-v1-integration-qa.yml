@@ -17,6 +17,10 @@ on:
       - 'supabase/migrations/**'
       - 'package.json'
       - 'package-lock.json'
+      - 'src/components/store/**'
+      - 'src/hooks/useWebPush.ts'
+      - 'src/routes/hub-product.$productId.tsx'
+      - 'src/routes/r/**'
       - '.github/workflows/hub-v1-integration-qa.yml'
   workflow_dispatch:
 
@@ -42,6 +46,8 @@ jobs:
         run: npm ci
       - name: Generate routes and build
         run: npm run build
+      - name: RUBI checkout validation security tests
+        run: npm run test:rubi-checkout
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint
