@@ -174,6 +174,7 @@ export const updateHubBusinessQuoteAdmin = createServerFn({ method: "POST" })
       .from("hub_b2b_quote_requests").select("id,status,owner_note,responded_at").eq("id", data.quoteId).maybeSingle();
     if (lookupError) throw lookupError;
     if (!existing) throw new Error("Cotação não encontrada.");
+    if (data.status === "responded" && !data.ownerNote.trim()) throw new Error("Registre uma resposta comercial antes de marcar como respondida.");
     if (existing.status === "closed" && data.status !== "closed")
       throw new Error("Solicitação encerrada. Não é possível reabri-la.");
     const { error } = await (supabaseAdmin as any)
@@ -184,8 +185,7 @@ export const updateHubBusinessQuoteAdmin = createServerFn({ method: "POST" })
         updated_at: new Date().toISOString(),
         // First response is a server-side timestamp, never the time of a mere
         // status change. Preserve it after follow-ups or closure.
-        responded_at: existing.responded_at || (data.ownerNote.trim() && !String(existing.owner_note ?? "").trim()
-          ? new Date().toISOString() : null),
+        responded_at: existing.responded_at || (data.ownerNote.trim() ? new Date().toISOString() : null),
       })
       .eq("id", data.quoteId);
     if (error) throw error;
