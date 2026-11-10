@@ -30,3 +30,18 @@ Transformar as jornadas já implementadas em indicadores comerciais consistentes
 - Sem exposição de preços privados ou URLs internas nas consultas públicas.
 - Jornada de compra nunca bloqueada por cadastro/instalação opcionais.
 - CI verde e escopo documentado antes do merge seguinte.
+
+## Implementação do primeiro incremento da Sprint 62
+
+- `src/lib/rubi-commercial-pulse.functions.ts`: função somente para Admin Master, com 16 contagens `exact` diretamente no banco para os públicos consumidor, lojista e parceiro; links, visitas, pedidos de parceiro confirmados, catálogo Store e produtos B2B configurados.
+- `src/routes/admin/hub-catalog.tsx`: painel de quatro agrupamentos (consumidor, Business, Partners, Store), botão de atualização, indicadores de carga/erro e data de consulta; separado das metas e dos eventos de marketing.
+- A janela de 30 dias é aplicada a novos perfis, visitas e pedidos; o restante representa o acumulado atual. A métrica de produtos com checkout verificado é **marcação administrativa**, não compra testada.
+- Os pedidos de parceiro são registrados como confirmados na tabela dedicada, sem implicar repasse financeiro; links ativos não significam parceiros vendedores e perfis comerciais não representam usuários únicos.
+- Consulta usa `requireOwnerRole` e `supabaseAdmin` apenas dentro de uma função de servidor; a resposta ao navegador contém apenas agregados, sem dados pessoais.
+- Falhas de consulta não são convertidas silenciosamente em zero; não foram criadas migrações ou alterados dados de produção.
+
+### Aceitação
+- Confirmar build, TypeScript e ESLint do PR #62.
+- Verificar visual no Admin Master, incluindo zero real, erro, atualização e responsividade.
+- Validar no navegador que usuários sem privilégio owner não podem chamar o endpoint.
+- Manter testes Kairos, Push/PWA em dispositivos reais e conciliação de repasses como etapa separada.
