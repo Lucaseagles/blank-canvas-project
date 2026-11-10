@@ -7,6 +7,7 @@ import { trackEvent } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { RubiPreCheckout } from "@/components/store/RubiPreCheckout";
+import { currentRubiOrganicAttribution } from "@/lib/rubi-organic-campaigns";
 
 export const Route = createFileRoute("/hub-product/$productId")({
   component: HubProductDetail,
@@ -27,15 +28,18 @@ function HubProductDetail() {
 
   useEffect(() => {
     if (!product?.id) return;
-    const params = new URLSearchParams(window.location.search);
-    const source = (params.get("utm_source") || "rubi_store").slice(0, 80);
-    const campaign = (params.get("utm_campaign") || "").slice(0, 100);
+    // Only validated editorial UTMs are eligible for campaign reporting.
+    // They are not affiliate attribution or evidence of a paid purchase.
+    const attribution = currentRubiOrganicAttribution(product.id);
+    const source = attribution?.source ?? "rubi_store";
+    const campaign = attribution?.campaign ?? null;
     void trackEvent("RUBI_STORE_PRODUCT_VIEW", {
       product_id: product.id,
       source,
-      utm_campaign: campaign || null,
+      utm_medium: attribution ? "organic_social" : null,
+      utm_campaign: campaign,
       sales_status: "view_only",
-    }, { productId: product.id, source });
+    }, { productId: product.id, source, campaignId: undefined });
   }, [product?.id]);
 
   return (
