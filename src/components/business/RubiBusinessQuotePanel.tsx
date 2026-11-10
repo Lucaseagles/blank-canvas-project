@@ -16,6 +16,8 @@ type QuoteRow = {
   merchant_note: string;
   owner_note: string;
   created_at: string;
+  replenishment_of_quote_id: string | null;
+  responded_at: string | null;
 };
 const money = (value: number) => Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const labels: Record<string,string> = {
@@ -33,12 +35,13 @@ export function RubiBusinessQuotePanel({
 }: {
   lines: NewQuoteLine[];
   valid: boolean;
-  onRepeat: (lines: PriorQuoteLine[]) => void;
+  onRepeat: (lines: PriorQuoteLine[], sourceQuoteId: string) => void;
 }) {
   const load = useServerFn(getMyHubBusinessQuotes);
   const create = useServerFn(createHubBusinessQuote);
   const client = useQueryClient();
   const [note, setNote] = useState("");
+  const [replenishmentOfQuoteId, setReplenishmentOfQuoteId] = useState<string | null>(null);
   const quotes = useQuery({
     queryKey: ["hub-business-my-quotes"],
     queryFn: async () => {
@@ -57,12 +60,14 @@ export function RubiBusinessQuotePanel({
       return create({ data: {
         accessToken: session.access_token,
         merchantNote: note.trim(),
+        ...(replenishmentOfQuoteId ? { replenishmentOfQuoteId } : {}),
         lines: lines.map(line => ({ productId: line.id, quantity: line.quantity })),
       } });
     },
     onSuccess: () => {
       toast.success("Solicitação de cotação registrada. Ainda não é um pedido.");
       setNote("");
+      setReplenishmentOfQuoteId(null);
       void client.invalidateQueries({ queryKey: ["hub-business-my-quotes"] });
       void client.invalidateQueries({ queryKey: ["admin-hub-business-quotes"] });
     },
@@ -82,6 +87,11 @@ export function RubiBusinessQuotePanel({
         placeholder="Ex.: interesse em reposição mensal, prazo desejado, dúvidas sobre volume"
         value={note} onChange={event => setNote(event.target.value)}/>
     </label>
+    {replenishmentOfQuoteId && <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
+      <p className="text-sm font-semibold">Solicitação de reposição vinculada à cotação {replenishmentOfQuoteId.slice(0, 8)}</p>
+      <Button type="button" size="sm" variant="outline" onClick={() => setReplenishmentOfQuoteId(null)}>Desvincular reposição</Button>
+      <p className="w-full text-xs text-muted-foreground">O servidor exigirá pelo menos um produto da cotação original. Os preços atuais serão recalculados. Isto não é uma compra.</p>
+    </div>}
     {lines.length > 12 && <p role="alert" className="text-sm text-destructive">Selecione até 12 produtos por solicitação.</p>}
     <Button type="button" disabled={!valid || lines.length === 0 || lines.length > 12 || mutation.isPending}
       onClick={() => mutation.mutate()}>
@@ -105,10 +115,17 @@ export function RubiBusinessQuotePanel({
           <p className="text-xs text-muted-foreground">Enviada em {new Date(quote.created_at).toLocaleString("pt-BR")} · {quote.requested_lines.length} produto(s)</p>
           <p className="text-xs text-muted-foreground">{quote.requested_lines.map(item => `${item.title} (${item.quantity} un.)`).join(" · ")}</p>
           {quote.owner_note && <p className="rounded-lg border bg-muted/40 p-3 text-sm"><strong>Resposta comercial:</strong> {quote.owner_note}</p>}
-          <Button type="button" size="sm" variant="outline" onClick={() => onRepeat(quote.requested_lines)}>
-            Usar quantidades em nova simulação
-          </Button>
-          <p className="text-xs text-muted-foreground">Repetir não cria pedido nem mantém preços antigos. A nova simulação usa o catálogo atual.</p>
+          {quote.responded_at && <p className="text-xs text-muted-foreground">Primeira resposta: {new Date(quote.responded_at).toLocaleString("pt-BR")}</p>}
+          {quote.replenishment_of_quote_id && <p className="text-xs font-semibold text-primary">Reposição solicitada com base na cotação {quote.replenishment_of_quote_id.slice(0, 8)}</p>}
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" size="sm" variant="outline" onClick={() => { setReplenishmentOfQuoteId(null); onRepeat(quote.requested_lines, quote.id); }}>
+              Usar quantidades em nova simulação
+            </Button>
+            <Button type="button" size="sm" onClick={() => { setReplenishmentOfQuoteId(quote.id); onRepeat(quote.requested_lines, quote.id); }}>
+              Solicitar reposição destes produtos
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">Repetir prepara uma nova simulação; solicitar reposição registra um vínculo apenas quando uma nova cotação for enviada. Nenhuma opção cria pedido pago.</p>
         </article>)}
       </div>}
     </div>

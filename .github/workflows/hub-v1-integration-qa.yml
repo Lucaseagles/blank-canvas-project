@@ -53,6 +53,8 @@ jobs:
         run: npm run test:rubi-organic
       - name: RUBI Business quote calculation tests
         run: npm run test:rubi-business
+      - name: RUBI Business retention tests
+        run: npm run test:rubi-retention
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint

@@ -111,7 +111,7 @@ function Catalog() {
             </aside>
             <div className="mb-6">
               <RubiBusinessQuotePanel lines={quoteLines} valid={quoteValid}
-                onRepeat={previousLines => {
+                onRepeat={(previousLines, _sourceQuoteId) => {
                   const available = previousLines.filter(line => products.some(product => product.id === line.productId));
                   if (available.length === 0) return;
                   setSelectedProductIds(available.map(line => line.productId));
