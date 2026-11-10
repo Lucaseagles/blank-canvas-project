@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { GROWTH_PILLARS, GROWTH_STRATEGIES, GROWTH_11X_TARGETS, type GrowthPillar } from "@/lib/rubi-growth-11x";
 import { RubiAdminOfferPreview } from "@/components/store/RubiAdminOfferPreview";
+import { getRubiGrowthFunnelAdmin } from "@/lib/rubi-growth-funnel.functions";
 
 export const Route = createFileRoute("/admin/hub-catalog")({ component: HubCatalogAdmin });
 
@@ -44,6 +45,9 @@ function HubCatalogAdmin() {
   const [supplierCheckoutHost, setSupplierCheckoutHost] = useState("");
   const [supplierMode, setSupplierMode] = useState<"supplier" | "hub">("supplier");
   const query = useQuery({ queryKey: ["admin-hub-catalog"], queryFn: () => load() });
+  const loadGrowthFunnel = useServerFn(getRubiGrowthFunnelAdmin);
+  const funnel = useQuery({ queryKey: ["admin-rubi-growth-11x-funnel-30d"], queryFn: () => loadGrowthFunnel(), staleTime: 60_000 });
+
   const [form, setForm] = useState<ProductForm>(emptyForm);
   const [strategyPillar, setStrategyPillar] = useState<GrowthPillar | "all">("all");
   const filteredStrategies = GROWTH_STRATEGIES.filter(item => strategyPillar === "all" || item.pillar === strategyPillar);
@@ -201,6 +205,28 @@ function HubCatalogAdmin() {
           </article>)}
         </div>
         <p className="text-xs text-muted-foreground">O painel não ativa automaticamente redes sociais, parceiros, algoritmos, pagamentos ou integrações. Valide cada etapa com tráfego, pedidos pagos e margens confirmadas antes de contabilizar resultados.</p>
+      </section>
+      <section aria-label="RUBI 11× · Funil de cadastro e instalação" className="space-y-4 rounded-3xl border border-primary/25 bg-card/80 p-6">
+        <h2 className="text-2xl font-black">RUBI 11× · Sinais de ativação (últimos 30 dias)</h2>
+        <p className="text-sm text-muted-foreground">Contagem de eventos observados, não de pessoas únicas, cadastros concluídos, notificações entregues, instalações verificadas ou pedidos pagos. O painel não inclui vendas como conversão.</p>
+        {funnel.isLoading && <p role="status">Carregando métricas de ativação...</p>}
+        {funnel.isError && <div role="alert" className="space-y-2"><p>Não foi possível carregar as métricas.</p><Button size="sm" type="button" variant="outline" onClick={() => void funnel.refetch()}>Tentar novamente</Button></div>}
+        {funnel.data && <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            { label: "Produtos visualizados", value: funnel.data.events.RUBI_STORE_PRODUCT_VIEW },
+            { label: "Convites exibidos", value: funnel.data.events.RUBI_SIGNUP_INVITE_SHOWN },
+            { label: "Cliques em entrar/criar conta", value: funnel.data.signupActions.continue_to_auth },
+            { label: "Guias pós-cadastro exibidos", value: funnel.data.activationActions.guide_shown },
+            { label: "Cliques no sininho", value: funnel.data.activationActions.push_cta_clicked },
+            { label: "Cliques para instalar", value: funnel.data.activationActions.install_cta_clicked },
+            { label: "Instalações sinalizadas pelo navegador", value: funnel.data.activationActions.appinstalled_browser_event },
+            { label: "Saídas para checkout externo", value: funnel.data.events.RUBI_PRECHECKOUT_CONTINUE },
+          ].map(item => <div key={item.label} className="rounded-xl border p-3">
+            <p className="text-xs text-muted-foreground">{item.label}</p>
+            <p className="mt-1 text-2xl font-black tabular-nums">{item.value.toLocaleString("pt-BR")}</p>
+          </div>)}
+        </div>}
+        <p className="text-xs text-muted-foreground">As informações começam a aparecer quando as páginas atualizadas estiverem publicadas e recebendo tráfego real. Antes disso, zero não significa ausência de interesse. Para medir conversão real, ainda será necessária a conciliação do cadastro e dos pedidos confirmados.</p>
       </section>
       {query.isLoading && <p role="status">Carregando catálogo...</p>}
       {query.isError && <div role="alert" className="space-y-3"><p>Não foi possível carregar o catálogo.</p><Button variant="outline" onClick={() => void query.refetch()}>Tentar novamente</Button></div>}
