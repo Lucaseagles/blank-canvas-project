@@ -18,6 +18,7 @@ on:
       - 'package.json'
       - 'package-lock.json'
       - 'src/components/store/**'
+      - 'src/routes/hub-product.$productId.tsx'
       - 'src/hooks/useWebPush.ts'
       - 'src/routes/hub-product.$productId.tsx'
       - 'src/routes/r/**'
@@ -48,6 +49,8 @@ jobs:
         run: npm run build
       - name: RUBI checkout validation security tests
         run: npm run test:rubi-checkout
+      - name: RUBI organic campaign UTM tests
+        run: npm run test:rubi-organic
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint
