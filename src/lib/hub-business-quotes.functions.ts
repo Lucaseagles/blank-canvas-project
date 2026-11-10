@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireOwnerRole } from "./auth-guards.server";
 import { calculateRubiBusinessLine } from "./rubi-business-quote-pricing";
+import { hasRubiReplenishmentOverlap } from "./rubi-business-retention";
 
 const MAX_LINES = 12;
 const MAX_QUANTITY = 100000;
@@ -71,12 +72,10 @@ export const createHubBusinessQuote = createServerFn({ method: "POST" })
         .maybeSingle();
       if (previousError) throw previousError;
       if (!previous) throw new Error("Solicitação original de reposição não encontrada para este lojista.");
-      const originalIds = new Set(
-        ((previous.requested_lines ?? []) as Array<{ productId?: string }>)
-          .map(row => row.productId).filter((id): id is string => typeof id === "string"),
-      );
-      if (!data.lines.some(line => originalIds.has(line.productId)))
-        throw new Error("Para solicitar reposição, mantenha ao menos um produto da cotação anterior.");
+      if (!hasRubiReplenishmentOverlap(
+        (previous.requested_lines ?? []) as Array<{ productId?: string }>,
+        data.lines.map(line => line.productId),
+      )) throw new Error("Para solicitar reposição, mantenha ao menos um produto da cotação anterior.");
     }
     const ids = data.lines.map(line => line.productId);
     if (new Set(ids).size !== ids.length) throw new Error("Não repita o mesmo produto na solicitação.");
