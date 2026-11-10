@@ -144,3 +144,33 @@ As 35 estratégias e os cinco pilares permanecem integralmente no registro tipad
 
 ### Próximo bloqueador comercial
 A página individual facilita a distribuição orgânica da Store, mas não constitui checkout. A validação com Kairos/outros fornecedores deve definir contrato, URLs, integridade da atribuição, reconciliação de pedidos, cancelamentos, repasses e devoluções antes de declarar conversão paga.
+
+
+## RUBI 11× — Pré-checkout de capa antes da Kairos (2026-11-10)
+
+### Arquitetura
+- A **RUBI Pré-compra** é uma etapa comercial **sem cobrança** antes do checkout externo do fornecedor. Ela mostra produto principal, imagem, preço cadastrado, descrição e até quatro outras ofertas **publicadas e de fornecedor ativo** da mesma categoria.
+- A experiência é compartilhada entre a vitrine direta \`/hub-product/$productId\` e a indicação \`/r/$code\`. A jornada do parceiro precisa permanecer associada ao código e a um grant aprovado; recomendações de outros produtos levam a **jornadas próprias** e **não** herdam comissão automaticamente.
+- Convite opcional de cadastro em modal, somente após verificar que não há usuário autenticado, com atraso de 3,5s; uma exibição automática por sessão quando o armazenamento estiver disponível. Botões de aceitar ou recusar; o visitante pode continuar sem cadastro.
+- O login retorna à mesma página de produto ou indicação. Não capturamos endereço, cartão ou pagamento nesse pré-checkout.
+- Evento \`RUBI_PRECHECKOUT_CONTINUE\` representa **intenção de sair ao checkout**, não pedido pago.
+- \`src/lib/rubi-precheckout.functions.ts\` retorna o link de checkout **apenas** quando configurado e com hostname explicitamente permitido por uma lista de aprovação no ambiente do servidor. Não usa URLs de query params, rejeita HTTP, credenciais embutidas e porta fora do padrão.
+- Para links de parceiros, precisa haver URL oficial **vinculada ao código individual**. Sem isso, o botão fica desabilitado mesmo que exista checkout direto do mesmo SKU; não fazemos downgrade que perderia atribuição.
+- Não se adicionaram migrações, domínios presumidos, URLs inventadas, webhooks ou pagamentos.
+
+### Configuração exigida pelo responsável técnico
+Configuração **privada no servidor**, exemplo exclusivamente estrutural (substituir por **URLs reais aprovadas pelo fornecedor**, sem copiar como credenciais):
+- \`RUBI_APPROVED_CHECKOUT_HOSTS\`: lista separada por vírgulas com os domínios HTTPS **efetivamente aprovados** para checkout.
+- \`RUBI_APPROVED_CHECKOUT_URLS_JSON\`: objeto JSON mapeando \`productId UUID\` para checkout direto oficial daquele produto.
+- \`RUBI_APPROVED_PARTNER_CHECKOUT_URLS_JSON\`: objeto JSON mapeando \`referralCode UUID\` para **checkout oficial com atribuição validada** do parceiro.
+
+**Atenção:** esta configuração é apenas uma camada de segurança e habilitação técnica. Não prova que a Kairos confirmou validade, recebimento, repasse, atribuição, frete, entrega, cancelamento nem webhook. Não considerar o checkout pronto até realizar um pedido real de teste autorizado e conciliar o resultado na origem financeira oficial.
+
+### Aceitação E2E obrigatória
+1. Produto ativo: produto correto, preço, recomendações de mesma categoria e convite opcional. Produto, fornecedor ou grant desativado: impedir checkout e/ou impedir acesso à indicação.
+2. Usuário não logado: modal opcional funciona; recusar não bloqueia produto; logado não recebe convite; cadastro/login retorna ao produto original.
+3. Sem mapas de URLs e domínios confiáveis: botão não habilita; hostname malicioso, protocolo \`http:\`, porta personalizada ou URL com credenciais são rejeitados.
+4. Checkout direto: URL configurada corresponde ao SKU e abre o checkout **principal oficial**, nunca um processador próprio da RUBI; não declarar pedido ao clicar.
+5. Checkout de parceiro: URL de atribuição **específica do código**, status approved+grant ativo, sem usar URL genérica do SKU. O pedido pago de teste precisa ser conciliado ao parceiro certo e não pode gerar comissão de outro parceiro.
+6. Recomendações: links de produtos complementares não herdam o parceiro original nem simulam pacote/carrinho, já que a API de carrinho do fornecedor ainda não foi confirmada.
+7. Verificar desktop, mobile, TypeScript, lint, build e testes negativos de RLS/acesso, além da validação contratual do fornecedor.
