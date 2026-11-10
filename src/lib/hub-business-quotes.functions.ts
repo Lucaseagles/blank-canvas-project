@@ -233,7 +233,7 @@ export const getHubBusinessFollowupsAdmin = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await (supabaseAdmin as any)
       .from("hub_b2b_quote_requests")
-      .select("id,commercial_profile_id,created_at,followup_due_at,followup_completed_at,followup_interval_days,requested_lines,status")
+      .select("id,commercial_profile_id,created_at,followup_opt_in,followup_due_at,followup_completed_at,followup_interval_days,requested_lines,status")
       .eq("followup_opt_in", true).is("followup_completed_at", null)
       .order("followup_due_at", { ascending: true }).limit(100);
     if (error) throw error;
