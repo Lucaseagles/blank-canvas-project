@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireOwnerRole } from "./auth-guards.server";
+import { calculateRubiBusinessLine } from "./rubi-business-quote-pricing";
 
 const MAX_LINES = 12;
 const MAX_QUANTITY = 100000;
@@ -48,14 +49,6 @@ async function approvedMerchantProfile(accessToken: string) {
   return { supabaseAdmin, userId, profileId: String(profile.id) };
 }
 
-function toCents(value: unknown): number {
-  const n = Number(value);
-  if (!Number.isFinite(n) || n <= 0 || n > 100_000) throw new Error("Preço de atacado inválido.");
-  const cents = Math.round(n * 100);
-  if (Math.abs(n * 100 - cents) > 0.001) throw new Error("Preço de atacado com precisão inválida.");
-  return cents;
-}
-
 /**
  * A quote request is never a paid order. Server independently checks each
  * active supplier/product and recalculates all tier prices from trusted rows.
@@ -87,21 +80,16 @@ export const createHubBusinessQuote = createServerFn({ method: "POST" })
     const calculated: QuoteLine[] = data.lines.map(line => {
       const product = byId.get(line.productId);
       if (!product) throw new Error("Produto não disponível.");
-      const minQty = Number(product.min_b2b_quantity);
-      if (!Number.isSafeInteger(minQty) || minQty < 1 || line.quantity < minQty)
-        throw new Error(`Quantidade inferior ao mínimo do produto: ${String(product.title)}.`);
-      let priceCents = toCents(product.b2b_base_price);
-      let bestThreshold = minQty - 1;
-      for (const tier of product.hub_b2b_tiers ?? []) {
-        const threshold = Number(tier.min_quantity);
-        if (!Number.isSafeInteger(threshold) || threshold < minQty || threshold > line.quantity) continue;
-        if (threshold > bestThreshold) {
-          bestThreshold = threshold;
-          priceCents = toCents(tier.unit_price);
-        }
-      }
-      const amountCents = priceCents * line.quantity;
-      if (!Number.isSafeInteger(amountCents) || amountCents <= 0) throw new Error("Valor da cotação inválido.");
+      const { unitCents: priceCents, totalCents: amountCents } = calculateRubiBusinessLine({
+        title: String(product.title),
+        quantity: line.quantity,
+        minQuantity: Number(product.min_b2b_quantity),
+        basePrice: Number(product.b2b_base_price),
+        tiers: (product.hub_b2b_tiers ?? []).map((tier: any) => ({
+          min_quantity: Number(tier.min_quantity),
+          unit_price: Number(tier.unit_price),
+        })),
+      });
       totalCents += amountCents;
       return {
         productId: line.productId,
