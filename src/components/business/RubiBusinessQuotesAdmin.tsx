@@ -14,6 +14,8 @@ type QuoteAdmin = {
   owner_note: string;
   requested_lines: { productId: string; title: string; quantity: number; unitPrice: number; total: number }[];
   created_at: string;
+  replenishment_of_quote_id: string | null;
+  responded_at: string | null;
 };
 
 const labels: Record<string, string> = {
@@ -44,6 +46,8 @@ function QuoteAdminItem({ quote, update }: {
       <span className="text-xs font-semibold">{labels[quote.status] ?? "Recebida"}</span>
     </div>
     <p className="text-xs text-muted-foreground">Perfil comercial: {quote.commercial_profile_id}</p>
+    {quote.replenishment_of_quote_id && <p className="text-xs font-semibold text-primary">Reposição solicitada com referência à cotação {quote.replenishment_of_quote_id.slice(0, 8)}</p>}
+    {quote.responded_at && <p className="text-xs text-muted-foreground">Primeira resposta registrada em {new Date(quote.responded_at).toLocaleString("pt-BR")}</p>}
     <ul className="space-y-1 text-sm">
       {quote.requested_lines.map(line => <li key={line.productId} className="flex flex-wrap justify-between gap-2">
         <span>{line.title} · {line.quantity} unidades</span><strong>{money(line.total)}</strong>
