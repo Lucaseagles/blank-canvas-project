@@ -254,3 +254,20 @@ Obter dados reais do fornecedor: SKU/título/descrição/imagem autorizada, pre�
 - A adição à tela inicial do Safari é manual; instalação nativa em outras plataformas depende do manifesto, navegador compatível, ícones válidos e requisitos de segurança. Foram adicionados ícones PNG 192×192 e 512×512, Apple touch icon e manifesto standalone, mas a instalação no dispositivo real ainda precisa de E2E.
 - Abrir o painel de ativação **não** significa que notificações estão ativas ou que o PWA está instalado; medir cliques, consentimento e eventos reais separadamente.
 - QA: cadastro novo + confirmação de e-mail + login + retorno à indicação; usuário antigo não vê onboarding; negar push; push sem VAPID; iOS manual; Android antes/depois de `beforeinstallprompt`; recusar convite preserva produto e CTA de compra; testar desktop/mobile.
+
+## RUBI 11× — Métricas da aquisição e ativação pós-cadastro (2026-11-10)
+
+### Entregue no código desta etapa
+- `RubiPreCheckout` mede a **exibição do convite** (`RUBI_SIGNUP_INVITE_SHOWN`) e interações (`RUBI_SIGNUP_INVITE_ACTION`) por produto e origem. Texto aprimorado para mostrar o problema resolvido pela descoberta de ofertas relacionadas.
+- `RubiPostSignupActivation` registra eventos `RUBI_POST_SIGNUP_ACTIVATION` separando a exibição do guia, clique do sininho, clique para instalar, aceite do prompt e evento `appinstalled` relatado pelo navegador. **Clique não equivale a consentimento, push entregue ou instalação confirmada.**
+- `getRubiGrowthFunnelAdmin` consulta exclusivamente no servidor com `requireOwnerRole` as contagens exatas da janela de 30 dias em `analytics_events`. O resumo só retorna contagens, não IDs pessoais, visitas individualizadas nem detalhes de conta.
+- `/admin/hub-catalog` inclui resumo dos sinais da jornada (visualizações, convites, cliques para cadastro, guia, sininho, instalação e saídas externas). **Não** considera esses eventos vendas, novos usuários únicos nem receita.
+- Correção de instrumentação: um mesmo clique em “Agora não” do modal não deve registrar a dispensa em duplicidade.
+
+### Testes adicionais a realizar
+1. Confirmar retorno do cadastro por e-mail e exibição do guia somente à mesma conta nova; não mostrar a usuários antigos, outros logins ou dispositivo não autenticado.
+2. Com notificações bloqueadas, VAPID ausente ou navegador sem `PushManager`, não mostrar confirmação falsa. Permission request somente no clique; envio real ainda requer teste do servidor.
+3. Instalação Android/Chrome: evento `beforeinstallprompt`, escolha do usuário e `appinstalled` devem ser métricas distintas; iOS manual sem afirmar instalação concluída.
+4. Verificar acesso negado ao resumo por qualquer usuário não Master, nenhuma informação identificável, contagem em janela de 30 dias e estado de falha do serviço.
+5. Verificar contagem sem duplicidade de abertura/dispensa do modal, com origens consumidor/parceiro preservadas, e sem somar clique ao valor de venda.
+6. Reexecutar CI (build/TypeScript/lint) e testes de navegador desktop/mobile após o commit; branch continua draft até aceitação.
