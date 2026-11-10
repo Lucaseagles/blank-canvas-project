@@ -124,3 +124,23 @@ Sem migrations, mudanças de checkout, disparos de marketing, pagamentos reais, 
 
 ### Continuidade estrutural do Plano 11×
 As 35 estratégias e os cinco pilares permanecem integralmente no registro tipado da branch. O plano orgânico de quatro identidades oficiais e três frentes especializadas, com conteúdo original, ofertas próprias prioritárias, redes sociais, comunidades consentidas, sazonalidade, segmentação e mensuração por origem, é **especificação operacional**, não contas sociais já criadas. O plano tem metas condicionais de Partners (800 vendedores × 110 pedidos/mês), Business (1200 lojistas × 100 unidades/mês) e Store direta (2000 pedidos/mês) no mês 12; nenhuma dessas metas é apresentada como resultado comprovado.
+
+
+## Incremento RUBI 11× — páginas de produto para o orgânico (2026-11-10)
+
+### Código implementado
+- Nova função `getRetailHubProduct` em `src/lib/hub-catalog.functions.ts`: busca pública de um SKU por UUID; responde somente com `id, title, description, image_url, category, retail_price` quando produto e fornecedor estão ativos e varejo possui preço positivo. Custos privados e preços B2B não são retornados.
+- Nova rota `/hub-product/$productId` com vitrine individual compartilhável, carregamento, erro, indisponibilidade, descrição, preço e cadastro **opcional** com retorno à oferta; sem botão fictício de compra ou pagamento.
+- `/hub-shop` passa a direcionar cada produto publicado para sua página individual.
+- Evento `RUBI_STORE_PRODUCT_VIEW` utiliza o rastreador existente, `product_id` e parâmetros limitados `utm_source` e `utm_campaign`. Evento indica **apenas visualização**, não pedido. Confirmação e atribuição de venda continuam pendentes de checkout oficial do fornecedor.
+
+### Requisitos de QA específicos
+1. Link de produto ativo → mostra preço verdadeiro; desativar produto/fornecedor → rota deve exibir oferta indisponível sem informação interna.
+2. Verificar acesso anônimo, sessão autenticada, mobile, link de compartilhamento e retorno `/auth?returnTo=/hub-product/<UUID>`.
+3. Testar evento de visualização sem registro de venda, com falhas de analytics não impedindo a visualização do produto.
+4. Confirmar que preços de custo, atacado e dados internos não aparecem no payload público.
+5. Executar TS, lint, build e QA de navegação do TanStack Router antes de integrar.
+6. URLs sociais e anúncios devem usar apenas SKUs ativos, campanhas reais e destino elegível; cadastro nunca obrigatório antes do checkout.
+
+### Próximo bloqueador comercial
+A página individual facilita a distribuição orgânica da Store, mas não constitui checkout. A validação com Kairos/outros fornecedores deve definir contrato, URLs, integridade da atribuição, reconciliação de pedidos, cancelamentos, repasses e devoluções antes de declarar conversão paga.
