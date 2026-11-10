@@ -8,6 +8,36 @@ export const getRetailHubCatalog = createServerFn({method:"GET"}).handler(async(
  if(error) throw error;
  return (data??[]).map(({hub_suppliers: _supplier,...product}:any)=>product);
 });
+/**
+ * Public product detail for a shareable RUBI Store offer.
+ * Only published products with an active supplier and a positive retail price
+ * are returned. Supplier costs and wholesale tiers are never exposed.
+ */
+export const getRetailHubProduct = createServerFn({ method: "POST" })
+  .validator((input: unknown) => z.object({ productId: z.string().uuid() }).parse(input))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: product, error } = await (supabaseAdmin as any)
+      .from("hub_products")
+      .select("id,title,description,image_url,category,retail_price,hub_suppliers!inner(active)")
+      .eq("id", data.productId)
+      .eq("hub_suppliers.active", true)
+      .eq("active", true)
+      .gt("retail_price", 0)
+      .maybeSingle();
+    if (error) throw error;
+    if (!product) return null;
+    const { hub_suppliers: _supplier, ...publicProduct } = product;
+    return publicProduct as {
+      id: string;
+      title: string;
+      description: string | null;
+      image_url: string | null;
+      category: string | null;
+      retail_price: number;
+    };
+  });
+
 export const getMerchantHubCatalog = createServerFn({method:"POST"})
 .validator((input:unknown)=>z.object({accessToken:z.string().min(1)}).parse(input))
 .handler(async({data})=>{
