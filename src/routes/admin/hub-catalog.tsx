@@ -10,7 +10,7 @@ import { GROWTH_PILLARS, GROWTH_STRATEGIES, GROWTH_11X_TARGETS, type GrowthPilla
 
 export const Route = createFileRoute("/admin/hub-catalog")({ component: HubCatalogAdmin });
 
-type Supplier = { id: string; name: string; checkout_host: string | null };
+type Supplier = { id: string; name: string; checkout_host: string | null; fulfillment_mode: "supplier" | "hub" };
 type Product = {
   id: string; title: string; description: string | null; image_url: string | null;
   category: string | null; sku: string | null; supplier_id: string;
@@ -50,7 +50,7 @@ function HubCatalogAdmin() {
   const suppliers = (query.data?.suppliers ?? []) as Supplier[];
   const products = (query.data?.products ?? []) as Product[];
   const tiers = (query.data?.tiers ?? []) as Array<{ id: string; product_id: string; min_quantity: number; unit_price: number }>;
-  const publishedCount = products.filter(product => product.active).length;
+  const publishedCount = products.filter(product => product.active && product.checkout_verified && !!product.checkout_url).length;
   const wholesaleCount = products.filter(product => product.active && Number(product.b2b_base_price) > 0).length;
 
   const mutation = useMutation({
@@ -89,10 +89,11 @@ function HubCatalogAdmin() {
   const supplierMutation = useMutation({
     mutationFn: () => saveSupplier({ data: { ...(supplierId ? { id: supplierId } : {}), name: supplierName.trim(), fulfillment_mode: supplierMode, active: true, checkout_host: supplierCheckoutHost.trim() || null } }),
     onSuccess: () => {
-      toast.success("Fornecedor cadastrado");
+      toast.success("Fornecedor salvo. Confira a aprovação dos links antes de publicar.");
       setSupplierName("");
       setSupplierId("");
       setSupplierCheckoutHost("");
+      setSupplierMode("supplier");
       void queryClient.invalidateQueries({ queryKey: ["admin-hub-catalog"] });
     },
     onError: (error: Error) => toast.error(error.message),
@@ -228,7 +229,7 @@ function HubCatalogAdmin() {
             </form>
             {suppliers.length === 0 && <p className="text-sm text-muted-foreground">Nenhum fornecedor cadastrado.</p>}
             <ul className="space-y-2 text-sm">
-              {suppliers.map(supplier => <li key={supplier.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 p-3"><span>{supplier.name} · <span className="text-xs text-muted-foreground">{supplier.checkout_host ?? "Sem domínio aprovado"}</span></span><Button size="sm" variant="outline" onClick={() => { setSupplierId(supplier.id); setSupplierName(supplier.name); setSupplierCheckoutHost(supplier.checkout_host ?? ""); }}>Configurar checkout</Button></li>)}
+              {suppliers.map(supplier => <li key={supplier.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 p-3"><span>{supplier.name} · <span className="text-xs text-muted-foreground">{supplier.checkout_host ?? "Sem domínio aprovado"}</span></span><Button size="sm" variant="outline" onClick={() => { setSupplierId(supplier.id); setSupplierName(supplier.name); setSupplierCheckoutHost(supplier.checkout_host ?? ""); setSupplierMode(supplier.fulfillment_mode); }}>Configurar checkout</Button></li>)}
             </ul>
           </section>
           <form onSubmit={event => { event.preventDefault(); mutation.mutate(); }} className="grid gap-5 rounded-3xl border border-white/10 bg-card/80 p-6 md:grid-cols-2">
@@ -277,6 +278,10 @@ function HubCatalogAdmin() {
               </>}
               <p className="text-xs text-muted-foreground">A divisão 50/50 é apenas um exemplo do Plano 11×. Comissões reais dependem do acordo ativo de cada parceiro. Impostos, tarifas, devoluções e despesas não incluídas no custo do fornecedor reduzem os valores.</p>
             </aside>
+            <p className="md:col-span-2 text-xs text-muted-foreground">
+              Status da oferta: {form.active && form.checkout_verified && !!form.checkout_url.trim() ? "Publicação solicitada — sujeita à validação no servidor" : "Rascunho / aguardando checkout confirmado"}. 
+              A oferta ativa levará clientes à página RUBI de pré-compra, que então encaminhará ao checkout principal aprovado.
+            </p>
             <label className="flex items-center gap-3 text-sm">
               <input type="checkbox" checked={form.active} onChange={event => setForm(previous => ({ ...previous, active: event.target.checked }))} />
               Publicar produto (exige checkout oficial validado)
