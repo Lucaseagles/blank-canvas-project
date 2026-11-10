@@ -142,7 +142,7 @@ function HubCatalogAdmin() {
   const previewWholesaleMargin = previewB2B === null ? null : previewB2B - previewCost;
   const previewPartnerMargin = previewRetailMargin / 2;
 
-  const field = (key: keyof Omit<ProductForm, "id" | "active">, label: string, type = "text") => (
+  const field = (key: keyof Omit<ProductForm, "id" | "active" | "checkout_verified">, label: string, type = "text") => (
     <label className="space-y-2 text-sm font-medium">
       <span className="block">{label}</span>
       <Input
