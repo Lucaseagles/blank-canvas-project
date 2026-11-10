@@ -23,6 +23,6 @@ export const resolvePartnerReferral = createServerFn({ method: "POST" })
     const { error: visitError } = await (supabaseAdmin as any)
       .from("hub_partner_referral_visits").insert({ referral_link_id: link.id });
     if (visitError) throw visitError;
-    const { hub_suppliers: _supplier, ...publicProduct } = product.data;
+    const { hub_suppliers: _supplier, checkout_url: _checkoutUrl, checkout_verified: _checkoutVerified, ...publicProduct } = product.data;
     return publicProduct as { id: string; title: string; description: string | null; image_url: string | null; category: string | null; retail_price: number };
   });
