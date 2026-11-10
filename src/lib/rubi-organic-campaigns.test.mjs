@@ -21,7 +21,7 @@ test("rejects unsafe IDs, unapproved media and spoofed campaigns", () => {
   assert.equal(readRubiOrganicAttribution("utm_source=https%3A%2F%2Fevil.test&utm_medium=organic_social&utm_campaign=lancamento"), null);
   assert.equal(readRubiOrganicAttribution("utm_source=instagram&utm_medium=paid&utm_campaign=lancamento"), null);
   assert.equal(readRubiOrganicAttribution("utm_source=instagram&utm_medium=organic_social&utm_campaign=../../evil"), null);
-  assert.equal(readRubiOrganicAttribution("utm_source=instagram&utm_medium=organic_social&utm_campaign=lancamento&ref=other"), null === undefined ? undefined : { source: "instagram", campaign: "lancamento" });
+  assert.equal(readRubiOrganicAttribution("utm_source=instagram&utm_medium=organic_social&utm_campaign=lancamento&ref=other"), { source: "instagram", campaign: "lancamento" });
 });
 
 test("does not convert UTM campaigns into partner codes or payment destinations", () => {
