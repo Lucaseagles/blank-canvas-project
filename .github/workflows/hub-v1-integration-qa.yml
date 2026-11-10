@@ -51,6 +51,8 @@ jobs:
         run: npm run test:rubi-checkout
       - name: RUBI organic campaign UTM tests
         run: npm run test:rubi-organic
+      - name: RUBI Business quote calculation tests
+        run: npm run test:rubi-business
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint
