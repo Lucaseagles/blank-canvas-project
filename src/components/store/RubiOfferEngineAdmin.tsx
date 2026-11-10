@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { getRubiOfferPlaybookAdmin, saveRubiOfferPlaybookAdmin } from "@/lib/rubi-offer-playbook.functions";
+import { getRubiOfferPlaybookAdmin, saveRubiOfferPlaybookAdmin, publishRubiOfferPlaybookAdmin, unpublishRubiOfferPlaybookAdmin } from "@/lib/rubi-offer-playbook.functions";
 import { emptyRubiOfferPlaybook, rubiOfferReadiness, RUBI_OFFER_CHANNELS, type RubiOfferPlaybook } from "@/lib/rubi-offer-playbook";
 
 type Product = {id:string; title:string; description:string|null; active:boolean; checkout_verified:boolean; checkout_url:string|null};
@@ -14,6 +14,9 @@ export function RubiOfferEngineAdmin({products}:{products:Product[]}) {
   const [dirty,setDirty] = useState(false);
   const get = useServerFn(getRubiOfferPlaybookAdmin);
   const save = useServerFn(saveRubiOfferPlaybookAdmin);
+  const publish = useServerFn(publishRubiOfferPlaybookAdmin);
+  const unpublish = useServerFn(unpublishRubiOfferPlaybookAdmin);
+  const [publishing,setPublishing] = useState(false);
   const client = useQueryClient();
   const selected = products.find(p=>p.id===productId);
   const data = useQuery({
@@ -31,6 +34,18 @@ export function RubiOfferEngineAdmin({products}:{products:Product[]}) {
     onSuccess:()=>{setDirty(false);void client.invalidateQueries({queryKey:["rubi-offer-playbook",productId]});toast.success("Plano editorial privado salvo.");},
     onError:(error:Error)=>toast.error(error.message),
   });
+  const changePublication = async (shouldPublish:boolean) => {
+    if(!draft || dirty || publishing) return;
+    if(shouldPublish && !window.confirm("Você confirma que conferiu todas as afirmações, evidências, condições e permissão de uso das mídias? A publicação ficará visível ao público.")) return;
+    setPublishing(true);
+    try{
+      if(shouldPublish) await publish({data:{productId:draft.product_id,confirmedEvidence:true}});
+      else await unpublish({data:{productId:draft.product_id}});
+      await client.invalidateQueries({queryKey:["rubi-offer-playbook",productId]});
+      toast.success(shouldPublish?"Texto da oferta publicado.":"Oferta editorial retirada do público.");
+    }catch(e){toast.error(e instanceof Error?e.message:"Falha na alteração da publicação.");}
+    finally{setPublishing(false);}
+  };
   const change = <K extends keyof RubiOfferPlaybook>(key:K,value:RubiOfferPlaybook[K])=>{
     setDraft(previous=>previous?{...previous,[key]:value}:previous);setDirty(true);
   };
@@ -52,7 +67,7 @@ export function RubiOfferEngineAdmin({products}:{products:Product[]}) {
   return <section aria-label="RUBI Offer Engine" className="space-y-5 rounded-3xl border border-primary/30 bg-card/80 p-6">
     <div><p className="text-xs font-black uppercase tracking-widest text-primary">RUBI 11× · Offer Engine</p>
       <h2 className="mt-1 text-2xl font-black">Central de oferta por produto</h2>
-      <p className="text-sm text-muted-foreground">Organize proposta, criativo, página e movimento numa ficha privada. Nada é publicado ou disparado automaticamente; preços e checkout Kairos permanecem intactos.</p>
+      <p className="text-sm text-muted-foreground">Organize proposta, criativo, página e movimento numa ficha privada. Publicações exigem revisão e aprovação manual; preços e checkout Kairos permanecem intactos.</p>
     </div>
     <label className="block space-y-2 text-sm font-semibold">Produto do catálogo
       <select className="w-full rounded-lg border bg-background p-3" value={productId}
@@ -92,7 +107,7 @@ export function RubiOfferEngineAdmin({products}:{products:Product[]}) {
         {field("page_headline","Título da página","Título claro e verificável",2)}
         {field("page_body","Corpo da oferta","Benefícios, demonstração e condições verdadeiras",5)}
         {field("objections","Objeções e perguntas","Dúvidas reais do cliente e respostas verificadas")}
-        <p className="text-xs text-muted-foreground">Por enquanto este conteúdo fica privado: a página pública existente continua inalterada.</p>
+        <p className="text-xs text-muted-foreground">O texto aparece na página pública do produto somente após sua aprovação manual e pode ser retirado a qualquer momento.</p>
       </div>
       <div className="space-y-3 rounded-xl border p-4"><h3 className="font-bold">4. Movimento — contato contínuo</h3>
         <div className="grid gap-2 sm:grid-cols-2">{RUBI_OFFER_CHANNELS.map(c=><label key={c.value} className="flex items-center gap-2 text-sm">
@@ -104,6 +119,14 @@ export function RubiOfferEngineAdmin({products}:{products:Product[]}) {
       <div className="rounded-xl border p-4"><p className="font-semibold">5. Checklist de preparação · {readiness?.score??0}%</p>
         <p className="text-xs text-muted-foreground">Nota editorial automática de preenchimento, não uma taxa de conversão ou garantia de venda.</p>
         {readiness?.missing.length?<p className="mt-2 text-sm">Ainda falta: {readiness.missing.join(", ")}</p>:<p className="mt-2 text-sm">Campos essenciais preenchidos; conteúdo e evidências ainda exigem revisão humana.</p>}
+      </div>
+      <div className="rounded-xl border p-4 space-y-2">
+        <p className="font-semibold">Publicação editorial: {draft.published_at?"Visível ao público":"Não publicada"}</p>
+        <p className="text-xs text-muted-foreground">Apenas oferta para consumidor marcada para revisão, com checklist completo, produto ativo e checkout do fornecedor validado pode ser publicada. Qualquer edição e salvamento retira a aprovação anterior.</p>
+        {draft.published_at?
+          <Button type="button" variant="outline" disabled={publishing||dirty} onClick={()=>void changePublication(false)}>Retirar texto da oferta</Button>:
+          <Button type="button" variant="outline" disabled={publishing||dirty||draft.audience!=="consumer"||draft.stage!=="ready_for_review"||readiness?.score!==100}
+            onClick={()=>void changePublication(true)}>Aprovar e publicar texto</Button>}
       </div>
       <div className="flex flex-wrap gap-2">
         <Button disabled={mutation.isPending||!dirty} onClick={()=>mutation.mutate()}>{mutation.isPending?"Salvando...":"Salvar ficha privada"}</Button>
