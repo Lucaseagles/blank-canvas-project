@@ -105,3 +105,22 @@ Sem migrations, mudanças de checkout, disparos de marketing, pagamentos reais, 
 3. Parceiro pendente/não aprovado e usuário de outro perfil: não recebem kit nem material da conta de outro usuário.
 4. Cliente sem permissões de clipboard ou navegação não HTTPS: apresentar erro sem travar interface.
 5. Executar CI (TypeScript, lint, build e QA); testar layout mobile e conteúdo publicitário, inclusive a distinção entre visita e pedido pago.
+
+## RUBI 11× — Medição de desempenho por produto (ciclo de 2026-11-10)
+
+### Entregue no código
+- `getMyPartnerSalesSummary` agrega **vendas realmente confirmadas** de cada produto do parceiro autenticado, usando `hub_partner_referral_links.product_id` e `hub_partner_confirmed_sales.referral_link_id`; a paginação financeira anterior permanece preservada.
+- `/partner/portal` apresenta, por produto **atualmente autorizado**, total de pedidos confirmados, valor dos pedidos e comissão registrada. A comissão não é descrita como paga. Visitas permanecem identificadas separadamente e podem compreender um intervalo diferente de vendas.
+- Valores de pedidos históricos de uma oferta revogada continuam nos totais gerais do parceiro, sem exibir produto revogado na vitrine autorizada.
+- Nenhuma migração, concessão de produtos, alteração de acordo, confirmação de pagamento ou webhook novo foi adicionada.
+
+### Critérios de aceite (não confundir com publicação)
+1. Parceiro A jamais recebe vendas ou produtos do parceiro B; usuário não autorizado recebe somente erro/estado limitado.
+2. Link sem vendas confirmadas deve mostrar zero; visita não pode aumentar pedidos ou comissão.
+3. Vendas confirmadas de dois produtos distintos devem agregar corretamente e somar com total geral, inclusive quando um link foi desativado.
+4. Revogação do grant retira o produto do portal e do kit, mas não apaga histórico financeiro no extrato geral.
+5. Rodar TypeScript, lint, build e QA, testar responsividade e casos negativos em sessão real.
+6. Confirmar com a Kairos e demais fornecedores como conciliar cancelamentos e reembolsos antes de declarar receita líquida, LTV ou pagamentos reais.
+
+### Continuidade estrutural do Plano 11×
+As 35 estratégias e os cinco pilares permanecem integralmente no registro tipado da branch. O plano orgânico de quatro identidades oficiais e três frentes especializadas, com conteúdo original, ofertas próprias prioritárias, redes sociais, comunidades consentidas, sazonalidade, segmentação e mensuração por origem, é **especificação operacional**, não contas sociais já criadas. O plano tem metas condicionais de Partners (800 vendedores × 110 pedidos/mês), Business (1200 lojistas × 100 unidades/mês) e Store direta (2000 pedidos/mês) no mês 12; nenhuma dessas metas é apresentada como resultado comprovado.
