@@ -11,6 +11,7 @@ import { RubiAdminOfferPreview } from "@/components/store/RubiAdminOfferPreview"
 import { getRubiGrowthFunnelAdmin } from "@/lib/rubi-growth-funnel.functions";
 import { getRubiCommercialPulseAdmin } from "@/lib/rubi-commercial-pulse.functions";
 import { RubiOrganicLinkBuilder } from "@/components/store/RubiOrganicLinkBuilder";
+import { getRubiOrganicCampaignPerformanceAdmin } from "@/lib/rubi-organic-performance.functions";
 
 export const Route = createFileRoute("/admin/hub-catalog")({ component: HubCatalogAdmin });
 
@@ -51,6 +52,8 @@ function HubCatalogAdmin() {
   const funnel = useQuery({ queryKey: ["admin-rubi-growth-11x-funnel-30d"], queryFn: () => loadGrowthFunnel(), staleTime: 60_000 });
   const loadCommercialPulse = useServerFn(getRubiCommercialPulseAdmin);
   const commercialPulse = useQuery({ queryKey: ["admin-rubi11x-commercial-pulse-30d"], queryFn: () => loadCommercialPulse(), staleTime: 60_000 });
+  const loadOrganicPerformance = useServerFn(getRubiOrganicCampaignPerformanceAdmin);
+  const organicPerformance = useQuery({ queryKey: ["admin-rubi11x-organic-campaign-performance"], queryFn: () => loadOrganicPerformance(), staleTime: 60_000 });
 
   const [form, setForm] = useState<ProductForm>(emptyForm);
   const [strategyPillar, setStrategyPillar] = useState<GrowthPillar | "all">("all");
@@ -178,6 +181,56 @@ function HubCatalogAdmin() {
         </div>
       </header>
       <RubiOrganicLinkBuilder products={products} />
+      <section aria-label="RUBI 11× · Desempenho de campanhas por produto" className="space-y-4 rounded-3xl border border-primary/25 bg-card/80 p-6">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-black uppercase tracking-widest text-primary">Orgânico · Resultados observados</p>
+            <h2 className="mt-1 text-2xl font-black">Campanhas e produtos · Últimos 30 dias</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Compara visualizações registradas, sessões com visualização e saídas ao checkout oficial por canal, campanha e produto.
+              Não são pedidos, receitas nem taxas de conversão de compradores. As contagens podem incluir eventos repetidos na mesma sessão.
+            </p>
+          </div>
+          <Button type="button" size="sm" variant="outline" disabled={organicPerformance.isFetching} onClick={() => void organicPerformance.refetch()}>
+            {organicPerformance.isFetching ? "Atualizando..." : "Atualizar campanhas"}
+          </Button>
+        </div>
+        {organicPerformance.isLoading && <p role="status" className="text-sm">Carregando desempenho das campanhas...</p>}
+        {organicPerformance.isError && <p role="alert" className="text-sm text-destructive">
+          Não foi possível consultar o relatório. Confirme se a migração de métricas foi aplicada; nenhum valor será estimado.
+        </p>}
+        {organicPerformance.data && (organicPerformance.data.rows.length === 0
+          ? <p className="rounded-xl border p-4 text-sm text-muted-foreground">Nenhum evento orgânico de produto encontrado neste período. Os dados surgirão após o aplicativo receber campanhas e visitas reais.</p>
+          : <div className="overflow-x-auto rounded-xl border">
+              <table className="w-full min-w-[720px] text-left text-sm">
+                <thead className="bg-muted/50">
+                  <tr>
+                    <th className="p-3">Produto</th>
+                    <th className="p-3">Canal</th>
+                    <th className="p-3">Campanha</th>
+                    <th className="p-3 text-right">Visualizações</th>
+                    <th className="p-3 text-right">Sessões com visita</th>
+                    <th className="p-3 text-right">Saídas ao checkout</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {organicPerformance.data.rows.map((row) => <tr key={row.productId + ":" + row.channel + ":" + row.campaign} className="border-t">
+                    <td className="max-w-[250px] break-words p-3 font-semibold">{row.productTitle}</td>
+                    <td className="p-3">{row.channel}</td>
+                    <td className="max-w-[200px] break-all p-3">{row.campaign}</td>
+                    <td className="p-3 text-right tabular-nums">{row.viewEvents.toLocaleString("pt-BR")}</td>
+                    <td className="p-3 text-right tabular-nums">{row.viewSessions.toLocaleString("pt-BR")}</td>
+                    <td className="p-3 text-right tabular-nums">{row.checkoutIntents.toLocaleString("pt-BR")}</td>
+                  </tr>)}
+                </tbody>
+              </table>
+            </div>
+        )}
+        {organicPerformance.data && <p className="text-xs text-muted-foreground">
+          Consultado em {new Date(organicPerformance.data.asOf).toLocaleString("pt-BR")}. Exibindo até {organicPerformance.data.cappedAt} combinações de campanha/produto ordenadas por visualizações. Não equivale a relatório de pagamentos Kairos, comissões ou visitantes únicos.
+        </p>}
+      </section>
+
       <section aria-label="RUBI 11× · Plano de crescimento integrado" className="space-y-5 rounded-3xl border border-primary/25 bg-card/80 p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
