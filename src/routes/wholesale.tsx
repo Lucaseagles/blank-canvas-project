@@ -6,6 +6,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getMerchantHubCatalog } from "@/lib/hub-catalog.functions";
 import { Button } from "@/components/ui/button";
 import { Store, ShieldCheck, Package } from "lucide-react";
+import { RubiBusinessQuotePanel } from "@/components/business/RubiBusinessQuotePanel";
 
 export const Route = createFileRoute("/wholesale")({ component: Catalog });
 
@@ -108,6 +109,19 @@ function Catalog() {
               {quoteLines.length > 0 && <Button variant="outline" size="sm" onClick={() => setSelectedProductIds([])}>Limpar pré-cotação</Button>}
               <p className="text-xs text-muted-foreground">Simulação informativa calculada pelas faixas de atacado cadastradas no Shadow Master. Não registra pedido, não reserva estoque, não fixa preços nem envia dados ao fornecedor.</p>
             </aside>
+            <div className="mb-6">
+              <RubiBusinessQuotePanel lines={quoteLines} valid={quoteValid}
+                onRepeat={previousLines => {
+                  const available = previousLines.filter(line => products.some(product => product.id === line.productId));
+                  if (available.length === 0) return;
+                  setSelectedProductIds(available.map(line => line.productId));
+                  setQuantities(current => ({
+                    ...current,
+                    ...Object.fromEntries(available.map(line => [line.productId, line.quantity])),
+                  }));
+                }}
+              />
+            </div>
             <div className="mb-6 grid gap-4 rounded-2xl border bg-card p-5 sm:grid-cols-2">
               <label className="space-y-2 text-sm font-semibold"><span>Buscar no atacado</span><input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Produto ou categoria" className="block w-full rounded-lg border bg-background p-2.5" /></label>
               <label className="space-y-2 text-sm font-semibold"><span>Categoria</span><select value={category} onChange={event => setCategory(event.target.value)} className="block w-full rounded-lg border bg-background p-2.5"><option value="">Todas</option>{categories.map(value => <option key={value} value={value}>{value}</option>)}</select></label>
