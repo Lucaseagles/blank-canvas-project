@@ -1,5 +1,5 @@
 /* eslint-disable no-restricted-globals */
-const sw = (self as unknown) as ServiceWorkerGlobalScope;
+const sw = self;
 
 sw.addEventListener('push', (event) => {
   if (!event.data) return;
