@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { GROWTH_PILLARS, GROWTH_STRATEGIES, GROWTH_11X_TARGETS, type GrowthPillar } from "@/lib/rubi-growth-11x";
 import { RubiAdminOfferPreview } from "@/components/store/RubiAdminOfferPreview";
 import { getRubiGrowthFunnelAdmin } from "@/lib/rubi-growth-funnel.functions";
+import { getRubiCommercialPulseAdmin } from "@/lib/rubi-commercial-pulse.functions";
 
 export const Route = createFileRoute("/admin/hub-catalog")({ component: HubCatalogAdmin });
 
@@ -47,6 +48,8 @@ function HubCatalogAdmin() {
   const query = useQuery({ queryKey: ["admin-hub-catalog"], queryFn: () => load() });
   const loadGrowthFunnel = useServerFn(getRubiGrowthFunnelAdmin);
   const funnel = useQuery({ queryKey: ["admin-rubi-growth-11x-funnel-30d"], queryFn: () => loadGrowthFunnel(), staleTime: 60_000 });
+  const loadCommercialPulse = useServerFn(getRubiCommercialPulseAdmin);
+  const commercialPulse = useQuery({ queryKey: ["admin-rubi11x-commercial-pulse-30d"], queryFn: () => loadCommercialPulse(), staleTime: 60_000 });
 
   const [form, setForm] = useState<ProductForm>(emptyForm);
   const [strategyPillar, setStrategyPillar] = useState<GrowthPillar | "all">("all");
@@ -205,6 +208,57 @@ function HubCatalogAdmin() {
           </article>)}
         </div>
         <p className="text-xs text-muted-foreground">O painel não ativa automaticamente redes sociais, parceiros, algoritmos, pagamentos ou integrações. Valide cada etapa com tráfego, pedidos pagos e margens confirmadas antes de contabilizar resultados.</p>
+      </section>
+      <section aria-label="RUBI 11× · Indicadores comerciais reais" className="space-y-4 rounded-3xl border border-primary/25 bg-card/80 p-6">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-black uppercase tracking-widest text-primary">Dados observados · Admin Master</p>
+            <h2 className="mt-1 text-2xl font-black">RUBI 11× · Operação nos três logins</h2>
+            <p className="mt-2 text-sm text-muted-foreground">Indicadores extraídos do banco, separados das metas 11×. Perfis não são necessariamente pessoas únicas, links não são parceiros vendedores e pedidos confirmados não significam repasses liquidados.</p>
+          </div>
+          <Button type="button" size="sm" variant="outline" disabled={commercialPulse.isFetching} onClick={() => void commercialPulse.refetch()}>Atualizar dados</Button>
+        </div>
+        {commercialPulse.isLoading && <p role="status">Buscando indicadores comerciais...</p>}
+        {commercialPulse.isError && <p role="alert" className="text-sm text-destructive">Falha ao consultar dados comerciais. Nenhum zero foi presumido; tente atualizar.</p>}
+        {commercialPulse.data && (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {[
+              { title: "Consumidor", items: [
+                ["Perfis cadastrados", commercialPulse.data.consumer.profiles],
+                ["Novos perfis (30 dias)", commercialPulse.data.consumer.newProfiles30d],
+              ] },
+              { title: "Business · Lojistas", items: [
+                ["Perfis registrados", commercialPulse.data.merchant.profiles],
+                ["Aguardando aprovação", commercialPulse.data.merchant.pending],
+                ["Aprovados", commercialPulse.data.merchant.approved],
+                ["Novos perfis (30 dias)", commercialPulse.data.merchant.newProfiles30d],
+                ["Produtos B2B configurados", commercialPulse.data.merchant.b2bCatalogConfigured],
+              ] },
+              { title: "Partners", items: [
+                ["Perfis registrados", commercialPulse.data.partner.profiles],
+                ["Aguardando aprovação", commercialPulse.data.partner.pending],
+                ["Aprovados", commercialPulse.data.partner.approved],
+                ["Novos perfis (30 dias)", commercialPulse.data.partner.newProfiles30d],
+                ["Links ativos", commercialPulse.data.partner.activeLinks],
+                ["Visitas de indicação (30 dias)", commercialPulse.data.partner.visits30d],
+                ["Pedidos de parceiro confirmados (30 dias)", commercialPulse.data.partner.confirmedSales30d],
+              ] },
+              { title: "RUBI Store", items: [
+                ["Produtos cadastrados", commercialPulse.data.store.catalogProducts],
+                ["Ofertas com checkout marcado como verificado", commercialPulse.data.store.retailCheckoutApproved],
+              ] },
+            ].map(group => <div key={group.title} className="space-y-3 rounded-2xl border p-4">
+              <h3 className="font-bold">{group.title}</h3>
+              {group.items.map(([label, value]) => <div key={String(label)} className="flex items-start justify-between gap-3 border-t pt-2 text-sm">
+                <span className="text-muted-foreground">{label}</span>
+                <strong className="tabular-nums">{Number(value).toLocaleString("pt-BR")}</strong>
+              </div>)}
+            </div>)}
+          </div>
+        )}
+        {commercialPulse.data && <p className="text-xs text-muted-foreground">
+          Consultado em {new Date(commercialPulse.data.asOf).toLocaleString("pt-BR")} · Fluxos de compra/recorrência ainda não podem ser inferidos de simulações de preço ou cliques. A confirmação de checkout externo da Kairos e o recebimento de repasses serão validados separadamente.
+        </p>}
       </section>
       <section aria-label="RUBI 11× · Funil de cadastro e instalação" className="space-y-4 rounded-3xl border border-primary/25 bg-card/80 p-6">
         <h2 className="text-2xl font-black">RUBI 11× · Sinais de ativação (últimos 30 dias)</h2>
