@@ -92,7 +92,17 @@ export function RubiPreCheckout({ product, returnTo, partnerCode, origin }: Prop
     if (!checkout?.ready || redirecting) return;
     setRedirecting(true);
     try {
-      const url = new URL(checkout.destination);
+      // Never trust the cached availability: an owner can disable a product,
+      // revoke a supplier or replace an approved URL while this page is open.
+      const latest = await getReadiness({
+        data: { productId: product.id, ...(partnerCode ? { partnerCode } : {}) },
+      });
+      if (!latest.ready) {
+        setRedirecting(false);
+        void readiness.refetch();
+        return;
+      }
+      const url = new URL(latest.destination);
       if (url.protocol !== "https:") throw new Error("Destino inseguro.");
       await trackEvent("RUBI_PRECHECKOUT_CONTINUE", {
         product_id: product.id, origin, has_partner_referral: !!partnerCode,
