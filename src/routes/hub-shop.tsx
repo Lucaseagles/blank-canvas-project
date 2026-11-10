@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
@@ -50,7 +50,7 @@ function Catalog() {
       <section aria-label="Produtos para consumidor" className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.map(product => <article key={product.id} className="overflow-hidden rounded-3xl border bg-card/70">
           <div className="aspect-[4/3] bg-muted/30">{product.image_url && <img src={product.image_url} alt={product.title} loading="lazy" className="h-full w-full object-cover" />}</div>
-          <div className="space-y-3 p-6"><p className="text-xs font-bold uppercase tracking-widest text-primary">{product.category ?? "Seleção Hub Eagles"}</p><h2 className="text-xl font-bold">{product.title}</h2>{product.description && <p className="line-clamp-2 text-sm text-muted-foreground">{product.description}</p>}<p className="text-2xl font-black">{money(product.retail_price)}</p><p className="text-xs text-muted-foreground">Preço de varejo cadastrado pela Hub Eagles.</p><p className="text-xs text-muted-foreground">Compra e logística serão disponibilizadas após integração do fornecedor.</p></div>
+          <div className="space-y-3 p-6"><p className="text-xs font-bold uppercase tracking-widest text-primary">{product.category ?? "Seleção Hub Eagles"}</p><h2 className="text-xl font-bold">{product.title}</h2>{product.description && <p className="line-clamp-2 text-sm text-muted-foreground">{product.description}</p>}<p className="text-2xl font-black">{money(product.retail_price)}</p><p className="text-xs text-muted-foreground">Preço de varejo cadastrado pela Hub Eagles.</p><Button asChild size="sm" className="w-full"><Link to="/hub-product/$productId" params={{ productId: product.id }}>Ver detalhes deste produto</Link></Button><p className="text-xs text-muted-foreground">Compra e logística serão disponibilizadas após integração do fornecedor.</p></div>
         </article>)}
       </section>
       <p className="text-xs text-muted-foreground">Busca e filtros abrangem os produtos carregados nesta página, não todo o estoque dos fornecedores.</p>
