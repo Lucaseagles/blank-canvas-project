@@ -1,5 +1,6 @@
 import { fetchAllFinancialRows, fetchFinancialRowsByIds } from "./financial-pagination.server";
 import { createServerFn } from "@tanstack/react-start";
+import { approvedRubiCheckout } from "./rubi-checkout-validation";
 import { z } from "zod";
 
 export const getMyPartnerPortal = createServerFn({ method: "POST" })
@@ -22,7 +23,7 @@ export const getMyPartnerPortal = createServerFn({ method: "POST" })
     const ids = (grants ?? []).map((grant: { product_id: string }) => grant.product_id);
     if (!ids.length) return { profile, products: [] };
     const products = await fetchFinancialRowsByIds(ids, (batchIds) => (supabaseAdmin as any)
-      .from("hub_products").select("id,title,description,image_url,category,retail_price,hub_suppliers!inner(active)")
+      .from("hub_products").select("id,title,description,image_url,category,retail_price,checkout_url,checkout_verified,hub_suppliers!inner(active,checkout_host)")
       .in("id", batchIds).eq("hub_suppliers.active", true).eq("active", true).gt("retail_price", 0).order("id", { ascending: true }));
-    return { profile, products: (products ?? []).map(({ hub_suppliers: _supplier, ...product }: any) => product) };
+    return { profile, products: (products ?? []).filter((product: any) => approvedRubiCheckout(product)).map(({ hub_suppliers: _supplier, checkout_url: _url, checkout_verified: _verified, ...product }: any) => product) };
   });
