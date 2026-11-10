@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { GROWTH_PILLARS, GROWTH_STRATEGIES, GROWTH_11X_TARGETS, type GrowthPillar } from "@/lib/rubi-growth-11x";
+import { RubiAdminOfferPreview } from "@/components/store/RubiAdminOfferPreview";
 
 export const Route = createFileRoute("/admin/hub-catalog")({ component: HubCatalogAdmin });
 
@@ -282,6 +283,29 @@ function HubCatalogAdmin() {
               Status da oferta: {form.active && form.checkout_verified && !!form.checkout_url.trim() ? "Publicação solicitada — sujeita à validação no servidor" : "Rascunho / aguardando checkout confirmado"}. 
               A oferta ativa levará clientes à página RUBI de pré-compra, que então encaminhará ao checkout principal aprovado.
             </p>
+            <div className="md:col-span-2 space-y-2 rounded-2xl border border-dashed border-primary/30 p-4">
+              <h3 className="font-semibold">Pré-visualização do produto antes da publicação</h3>
+              <p className="text-xs text-muted-foreground">Confira a capa RUBI, o convite de cadastro e recomendações sem precisar de checkout Kairos. A prévia é privada, não publica nem registra venda.</p>
+              <RubiAdminOfferPreview
+                offer={{
+                  title: form.title,
+                  description: form.description || null,
+                  image_url: form.image_url || null,
+                  category: form.category || null,
+                  retail_price: Number(form.retail_price),
+                }}
+                related={products
+                  .filter(product => product.id !== form.id && product.active && product.checkout_verified && !!product.checkout_url && product.category === form.category)
+                  .slice(0, 4)
+                  .map(product => ({
+                    title: product.title,
+                    description: product.description,
+                    image_url: product.image_url,
+                    category: product.category,
+                    retail_price: Number(product.retail_price),
+                  }))}
+              />
+            </div>
             <label className="flex items-center gap-3 text-sm">
               <input type="checkbox" checked={form.active} onChange={event => setForm(previous => ({ ...previous, active: event.target.checked }))} />
               Publicar produto (exige checkout oficial validado)
