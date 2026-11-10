@@ -91,3 +91,17 @@ Sem migrations, mudanças de checkout, disparos de marketing, pagamentos reais, 
 - Confirmar Kairos/checkout e fontes oficiais de atribuição antes de habilitar pagamentos ou declarar faturamento.
 
 **Importante:** manter o PR como draft até validação técnica; não contabilizar 11× como receita realizada.
+
+## RUBI 11× — Incremento de ativação comercial de Partners
+
+- Novo componente `src/components/partner/PartnerCreativeKit.tsx`, utilizado somente na lista de produtos concedidos ao parceiro aprovado, quando existe **link de indicação ativo**. O componente não acessa dados de outros parceiros.
+- Modelos de texto de **demonstração**, **story/comunidade** e **expert/nicho** com identificação publicitária; a cópia pelo navegador inclui a URL individual `/r/<code>`.
+- Os modelos não inventam descontos, escassez, ganhos ou alegações de desempenho e não entregam imagens de terceiros sem permissão. Cópia automática só por ação do usuário.
+- **Não** cria pedidos, alterações de comissão, mudança de permissões ou integração de checkout.
+
+### Testes necessários antes da entrega
+1. Parceiro aprovado + produto concedido + link ativo: aparecem kit, três formatos e URL individual na cópia.
+2. Produto sem link: somente botão de gerar link autorizado. Concessão revogada, produto ou fornecedor inativo: nenhum kit disponível.
+3. Parceiro pendente/não aprovado e usuário de outro perfil: não recebem kit nem material da conta de outro usuário.
+4. Cliente sem permissões de clipboard ou navegação não HTTPS: apresentar erro sem travar interface.
+5. Executar CI (TypeScript, lint, build e QA); testar layout mobile e conteúdo publicitário, inclusive a distinção entre visita e pedido pago.
