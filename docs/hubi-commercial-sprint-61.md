@@ -251,6 +251,6 @@ Obter dados reais do fornecedor: SKU/título/descrição/imagem autorizada, pre�
 
 ### Limitações e validação obrigatória
 - Push depende de `VAPID_PUBLIC_KEY`, servidor configurado, navegador compatível, HTTPS, usuário logado e consentimento. O navegador pode recusar permissão ou não oferecer instalação.
-- A adição à tela inicial do Safari é manual; instalação nativa em outras plataformas depende de manifest, ícones válidos e critérios do navegador. Recomenda-se criar ícones PNG 192/512 e Apple touch icon antes da publicação final, caso o navegador não aceite SVG/ICO para sua superfície.
+- A adição à tela inicial do Safari é manual; instalação nativa em outras plataformas depende do manifesto, navegador compatível, ícones válidos e requisitos de segurança. Foram adicionados ícones PNG 192×192 e 512×512, Apple touch icon e manifesto standalone, mas a instalação no dispositivo real ainda precisa de E2E.
 - Abrir o painel de ativação **não** significa que notificações estão ativas ou que o PWA está instalado; medir cliques, consentimento e eventos reais separadamente.
 - QA: cadastro novo + confirmação de e-mail + login + retorno à indicação; usuário antigo não vê onboarding; negar push; push sem VAPID; iOS manual; Android antes/depois de `beforeinstallprompt`; recusar convite preserva produto e CTA de compra; testar desktop/mobile.
