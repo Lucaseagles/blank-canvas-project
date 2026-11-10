@@ -64,14 +64,27 @@ export function RubiPreCheckout({ product, returnTo, partnerCode, origin }: Prop
         // Browser storage may be unavailable; the invitation must remain optional.
       }
       timer = setTimeout(() => {
-        if (!canceled) setInviteOpen(true);
+        if (!canceled) {
+          setInviteOpen(true);
+          void trackEvent("RUBI_SIGNUP_INVITE_SHOWN", {
+            product_id: product.id,
+            origin,
+            triggered_by: "anonymous_precheckout",
+          }, { productId: product.id, source: origin === "partner" ? "rubi_partner" : "rubi_store" });
+        }
       }, 3500);
     }).catch(() => undefined);
     return () => {
       canceled = true;
       if (timer) clearTimeout(timer);
     };
-  }, []);
+  }, [product.id, origin]);
+
+  const trackInviteAction = (action: string) => {
+    void trackEvent("RUBI_SIGNUP_INVITE_ACTION", {
+      product_id: product.id, origin, action,
+    }, { productId: product.id, source: origin === "partner" ? "rubi_partner" : "rubi_store" });
+  };
 
   const checkout = readiness.data;
   const ready = checkout?.ready === true;
@@ -149,7 +162,7 @@ export function RubiPreCheckout({ product, returnTo, partnerCode, origin }: Prop
             Ele é opcional e não é necessário para ver os produtos.
           </p>
           <div className="flex flex-wrap gap-2">
-            {inviteEligible && <Button type="button" variant="outline" size="sm" onClick={() => setInviteOpen(true)}>Conhecer vantagens da conta</Button>}
+            {inviteEligible && <Button type="button" variant="outline" size="sm" onClick={() => { trackInviteAction("open_from_store_block"); setInviteOpen(true); }}>Conhecer vantagens da conta</Button>}
             <Button asChild variant="outline" size="sm"><Link to="/hub-shop">Explorar RUBI Store</Link></Button>
           </div>
         </div>
@@ -189,29 +202,29 @@ export function RubiPreCheckout({ product, returnTo, partnerCode, origin }: Prop
         )}
       </section>
 
-      <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+      <Dialog open={inviteOpen} onOpenChange={(open) => { if (!open && inviteOpen) trackInviteAction("dismiss"); setInviteOpen(open); }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Heart aria-hidden="true" className="h-5 w-5 text-primary" /> Faça parte da RUBI
             </DialogTitle>
             <DialogDescription>
-              Descubra ofertas, acompanhe produtos e personalize sua experiência.
+              Encontre outras opções para o que você procura, acompanhe ofertas da RUBI e descubra produtos de acordo com seus interesses.
               Criar sua conta é gratuito e opcional: você pode continuar explorando sem cadastro.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2 rounded-xl border p-4 text-sm">
-            <p>Explore a Store e os achadinhos de acordo com seus interesses.</p>
-            <p>Tenha acesso aos recursos de perfil, favoritos e recomendações disponíveis.</p>
+            <p>Encontre alternativas e produtos relacionados ao que você veio buscar.</p>
+            <p>Salve seus interesses e consulte recursos disponíveis no seu perfil, como favoritos e recomendações.</p>
             <p>Volte à oferta atual após entrar ou se cadastrar.</p>
           </div>
           <DialogFooter className="flex-col gap-2 sm:flex-col">
             <Button asChild className="w-full">
-              <Link to="/auth" search={{ returnTo, audience: undefined, ref: undefined, campaign_id: undefined }}>
+              <Link to="/auth" onClick={() => trackInviteAction("continue_to_auth")} search={{ returnTo, audience: undefined, ref: undefined, campaign_id: undefined }}>
                 Entrar ou criar minha conta
               </Link>
             </Button>
-            <Button className="w-full" variant="outline" onClick={() => setInviteOpen(false)}>Agora não, continuar vendo o produto</Button>
+            <Button className="w-full" variant="outline" onClick={() => { trackInviteAction("dismiss"); setInviteOpen(false); }}>Agora não, continuar vendo o produto</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
