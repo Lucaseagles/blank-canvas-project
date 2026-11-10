@@ -58,6 +58,26 @@ function Index() {
             <Button asChild size="lg" className="h-14 w-full rounded-2xl font-bold shadow-lg shadow-primary/10"><Link to="/onboarding" search={{ audience: item.id, returnTo: undefined }}>{item.action}<ArrowRight className="ml-2 h-4 w-4"/></Link></Button>
           </article>)}
         </div>
+        <section aria-label="RUBI Store e oportunidades comerciais" className="mt-8 grid gap-4 md:grid-cols-3">
+          <article className="rounded-3xl border border-primary/30 bg-primary/10 p-6">
+            <p className="text-xs font-black uppercase tracking-widest text-primary">RUBI Store · Seleção oficial</p>
+            <h3 className="mt-3 text-2xl font-black">Produtos próprios em destaque</h3>
+            <p className="mt-3 text-sm text-muted-foreground">Conheça as ofertas da nossa seleção de fornecedores. Disponibilidade e compra dependem da integração do checkout correspondente.</p>
+            <Button asChild className="mt-5 w-full"><Link to="/hub-shop">Ver produtos da RUBI <ArrowRight className="ml-2 h-4 w-4" /></Link></Button>
+          </article>
+          <article className="rounded-3xl border bg-card/70 p-6">
+            <p className="text-xs font-black uppercase tracking-widest text-primary">RUBI Partners</p>
+            <h3 className="mt-3 text-2xl font-black">Divulgue produtos autorizados</h3>
+            <p className="mt-3 text-sm text-muted-foreground">Experts, criadores e afiliados podem solicitar parceria e conhecer campanhas após aprovação comercial.</p>
+            <Button asChild variant="outline" className="mt-5 w-full"><Link to="/onboarding" search={{ audience: "partner", returnTo: "/partner/portal" }}>Quero ser parceiro</Link></Button>
+          </article>
+          <article className="rounded-3xl border bg-card/70 p-6">
+            <p className="text-xs font-black uppercase tracking-widest text-primary">RUBI Business</p>
+            <h3 className="mt-3 text-2xl font-black">Abasteça seu comércio</h3>
+            <p className="mt-3 text-sm text-muted-foreground">Solicite acesso a produtos para revenda, mínimos de compra e condições de volume para lojistas aprovados.</p>
+            <Button asChild variant="outline" className="mt-5 w-full"><Link to="/onboarding" search={{ audience: "merchant", returnTo: "/wholesale" }}>Sou lojista</Link></Button>
+          </article>
+        </section>
         <div className="mt-10 grid gap-4 rounded-[2rem] border border-primary/20 bg-gradient-to-r from-primary/10 via-background to-blue-500/10 p-6 md:grid-cols-[1fr_auto] md:items-center md:p-9"><div><div className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-widest text-primary"><ShieldCheck className="h-4 w-4"/> Transparência e segurança</div><h3 className="text-2xl font-black">A experiência certa, sem confusão.</h3><p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">O consumidor descobre ofertas e cupons. O lojista solicita condições comerciais para revenda. O parceiro escolhe entre microinfluenciador, influenciador, afiliado ou expert. Os acessos exclusivos dependem de aprovação.</p></div><Button variant="outline" asChild className="h-12 rounded-xl border-primary/30"><Link to="/register">Criar minha conta <ArrowRight className="ml-2 h-4 w-4"/></Link></Button></div><p className="mt-8 text-center text-sm text-muted-foreground">Uma identidade Hub Eagles. Experiências adaptadas ao seu objetivo. Acesso a preços de fornecedor e campanhas mediante aprovação.</p>
       </div>
     </section>
