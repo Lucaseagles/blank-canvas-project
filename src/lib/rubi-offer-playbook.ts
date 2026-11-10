@@ -13,6 +13,7 @@ export type RubiOfferPlaybook = {
   movement_plan: string;
   channels: RubiOfferChannel[];
   stage: "draft" | "ready_for_review";
+  published_at?: string | null;
 };
 export const RUBI_OFFER_CHANNELS: { value: RubiOfferChannel; label: string }[] = [
   { value: "instagram", label: "Instagram" },
