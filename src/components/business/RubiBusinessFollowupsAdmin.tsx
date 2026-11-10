@@ -9,6 +9,7 @@ type QueueItem = {
   id: string;
   commercial_profile_id: string;
   created_at: string;
+  followup_opt_in: boolean;
   followup_due_at: string | null;
   followup_completed_at: string | null;
   followup_interval_days: number | null;
