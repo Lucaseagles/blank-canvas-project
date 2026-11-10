@@ -1,5 +1,6 @@
 import { fetchAllFinancialRows, fetchFinancialRowsByIds } from "./financial-pagination.server";
 import { createServerFn } from "@tanstack/react-start";
+import { approvedRubiCheckout } from "./rubi-checkout-validation";
 import { z } from "zod";
 
 export const createMyPartnerReferralLink = createServerFn({ method: "POST" })
@@ -21,9 +22,9 @@ export const createMyPartnerReferralLink = createServerFn({ method: "POST" })
     if (grantError) throw grantError;
     if (!grant) throw new Error("Produto não autorizado para este parceiro.");
     const { data: product, error: productError } = await (supabaseAdmin as any)
-      .from("hub_products").select("id,hub_suppliers!inner(active)").eq("id", input.productId).eq("hub_suppliers.active", true).eq("active", true).gt("retail_price", 0).maybeSingle();
+      .from("hub_products").select("id,checkout_url,checkout_verified,hub_suppliers!inner(active,checkout_host)").eq("id", input.productId).eq("hub_suppliers.active", true).eq("active", true).gt("retail_price", 0).maybeSingle();
     if (productError) throw productError;
-    if (!product) throw new Error("Produto indisponível.");
+    if (!product || !approvedRubiCheckout(product as any)) throw new Error("Produto sem checkout aprovado para divulgação.");
     const { data: link, error: linkError } = await (supabaseAdmin as any)
       .from("hub_partner_referral_links")
       .upsert({ commercial_profile_id: profile.id, product_id: input.productId, active: true },
@@ -61,8 +62,8 @@ export const getMyPartnerReferralLinks = createServerFn({ method: "POST" })
       .eq("commercial_profile_id", profile.id).eq("active", true).order("product_id", { ascending: true }));
     const allowedIds = new Set((grants ?? []).map((grant: { product_id: string }) => grant.product_id));
     const products = allowedIds.size ? await fetchFinancialRowsByIds([...allowedIds], (batchIds) => (supabaseAdmin as any)
-      .from("hub_products").select("id,hub_suppliers!inner(active)").in("id", batchIds)
+      .from("hub_products").select("id,checkout_url,checkout_verified,hub_suppliers!inner(active,checkout_host)").in("id", batchIds)
       .eq("hub_suppliers.active", true).eq("active", true).gt("retail_price", 0).order("id", { ascending: true })) : [];
-    const publishedIds = new Set((products ?? []).map((product: { id: string }) => product.id));
+    const publishedIds = new Set((products ?? []).filter((product: any) => approvedRubiCheckout(product)).map((product: { id: string }) => product.id));
     return links.filter((link: { product_id: string }) => publishedIds.has(link.product_id));
   });
