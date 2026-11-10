@@ -282,6 +282,15 @@ function HubCatalogAdmin() {
             <p className="mt-1 text-2xl font-black tabular-nums">{item.value.toLocaleString("pt-BR")}</p>
           </div>)}
         </div>}
+        {funnel.data && <div className="space-y-3 rounded-xl border p-4">
+          <h3 className="font-semibold">Visitas orgânicas por canal (últimos 30 dias)</h3>
+          <p className="text-xs text-muted-foreground">Contagem de visualizações dos produtos próprios com UTM orgânica válida. São eventos, não pessoas únicas, vendas ou receita.</p>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            {funnel.data.organicChannels.map(channel => <div key={channel.id} className="flex items-center justify-between gap-3 rounded-lg border p-3 text-sm">
+              <span>{channel.label}</span><strong className="tabular-nums">{channel.productViews.toLocaleString("pt-BR")}</strong>
+            </div>)}
+          </div>
+        </div>}
         <p className="text-xs text-muted-foreground">As informações começam a aparecer quando as páginas atualizadas estiverem publicadas e recebendo tráfego real. Antes disso, zero não significa ausência de interesse. Para medir conversão real, ainda será necessária a conciliação do cadastro e dos pedidos confirmados.</p>
       </section>
       {query.isLoading && <p role="status">Carregando catálogo...</p>}
