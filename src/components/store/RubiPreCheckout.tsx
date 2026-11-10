@@ -11,6 +11,7 @@ import { getRubiRelatedProducts, getRubiCheckoutReadiness } from "@/lib/rubi-pre
 import { supabase } from "@/integrations/supabase/client";
 import { trackEvent } from "@/lib/analytics";
 import { RubiPostSignupActivation } from "@/components/store/RubiPostSignupActivation";
+import { currentRubiOrganicAttribution } from "@/lib/rubi-organic-campaigns";
 
 type Product = {
   id: string;
@@ -104,10 +105,15 @@ export function RubiPreCheckout({ product, returnTo, partnerCode, origin }: Prop
       }
       const url = new URL(latest.destination);
       if (url.protocol !== "https:") throw new Error("Destino inseguro.");
+      // Editorial campaign context applies only to a direct Store visit.
+      // Partner referral attribution always stays with its verified code.
+      const organic = origin === "store" ? currentRubiOrganicAttribution(product.id) : null;
       await trackEvent("RUBI_PRECHECKOUT_CONTINUE", {
         product_id: product.id, origin, has_partner_referral: !!partnerCode,
         action: "external_checkout_intent",
-      }, { productId: product.id, source: origin === "partner" ? "rubi_partner" : "rubi_store" });
+        utm_medium: organic ? "organic_social" : null,
+        utm_campaign: organic?.campaign ?? null,
+      }, { productId: product.id, source: origin === "partner" ? "rubi_partner" : organic?.source ?? "rubi_store" });
       window.location.assign(url.toString());
     } catch {
       setRedirecting(false);
