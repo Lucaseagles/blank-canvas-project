@@ -237,3 +237,20 @@ Obter dados reais do fornecedor: SKU/título/descrição/imagem autorizada, pre�
 5. TypeScript, lint, build e testes de interação desktop/mobile precisam ser aprovados antes da revisão do PR.
 
 **Escopo deliberado:** continuar o desenvolvimento estrutural do RUBI 11× enquanto aguardamos os links oficiais Kairos. Teste real de pagamento, comissão e repasses fica bloqueado até o fornecedor fornecer dados oficiais.
+
+## RUBI 11× — Cadastro → sininho → instalação PWA (2026-11-10)
+
+### Auditoria e incremento
+- O pré-checkout `RubiPreCheckout` **já** mostrava convite de cadastro ao visitante anônimo, com atraso de 3,5 segundos, limitado por sessão, sempre opcional.
+- `src/routes/register.tsx`: quando há cadastro novo vindo de `/hub-product/<uuid>` ou `/r/<uuid>`, grava no `sessionStorage` o ID do novo usuário e a rota de retorno, sem enviar dados de conta a serviços externos. O marcador não substitui a confirmação de e-mail nem o login.
+- `RubiPostSignupActivation`: só oferece os dois passos depois que o **mesmo usuário** autenticado retorna à mesma oferta. O marcador é removido depois da primeira apresentação. Oferece: (1) sininho com permissão **somente mediante clique**, usando `useWebPush`, e (2) instalação na tela inicial via `beforeinstallprompt` quando disponível ou instruções manuais para iOS/Android.
+- O convite de instalação não força download, não captura número de telefone e pode ser dispensado; o checkout da Kairos continua opcional quanto a cadastro e instalação.
+- `public/sw.js`: remoção de sintaxe TypeScript inválida em JavaScript servido diretamente pelo navegador.
+- `useWebPush`: registra explicitamente `/sw.js` antes de consultar `PushManager`, com tratamento de indisponibilidade/HTTPS.
+- `public/manifest.webmanifest`, `public/rubi-icon.svg`, metadados PWA em `src/routes/__root.tsx`: base para apresentação no instalador nativo em navegadores compatíveis.
+
+### Limitações e validação obrigatória
+- Push depende de `VAPID_PUBLIC_KEY`, servidor configurado, navegador compatível, HTTPS, usuário logado e consentimento. O navegador pode recusar permissão ou não oferecer instalação.
+- A adição à tela inicial do Safari é manual; instalação nativa em outras plataformas depende de manifest, ícones válidos e critérios do navegador. Recomenda-se criar ícones PNG 192/512 e Apple touch icon antes da publicação final, caso o navegador não aceite SVG/ICO para sua superfície.
+- Abrir o painel de ativação **não** significa que notificações estão ativas ou que o PWA está instalado; medir cliques, consentimento e eventos reais separadamente.
+- QA: cadastro novo + confirmação de e-mail + login + retorno à indicação; usuário antigo não vê onboarding; negar push; push sem VAPID; iOS manual; Android antes/depois de `beforeinstallprompt`; recusar convite preserva produto e CTA de compra; testar desktop/mobile.
