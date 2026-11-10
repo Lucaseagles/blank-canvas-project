@@ -93,7 +93,7 @@ function RootComponent() {
           <link rel="manifest" href="/manifest.webmanifest" />
           <meta name="theme-color" content="#17112e" />
           <link rel="icon" type="image/svg+xml" href="/rubi-icon.svg" />
-          <link rel="apple-touch-icon" href="/favicon.ico" />
+          <link rel="apple-touch-icon" href="/rubi-icon-192.png" />
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
           <link
