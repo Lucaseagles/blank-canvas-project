@@ -220,3 +220,20 @@ A verificação sintática do link HTTPS e o aceite manual do Master **não** s�
 ### Próxima prova indispensável
 
 Obter dados reais do fornecedor: SKU/título/descrição/imagem autorizada, preço de venda, custo completo e link individual HTTPS; aprovar domínio exato e produto no Admin Master; testar redirecionamento e pedido real de teste no checkout oficial; verificar conciliação, repasse, estorno e autorização de atribuição de parceiro. Nunca ativar associação automática de comissão sem prova de rastreamento.
+
+## Pré-visualização privada de rascunhos (2026-11-10)
+
+- Foi adicionado o componente `src/components/store/RubiAdminOfferPreview.tsx`, acionado no formulário de produto de `/admin/hub-catalog`.
+- O Master pode revisar a capa comercial do produto com **dados do formulário ainda não salvos**, preço, imagem, descrição, exemplo de convite de cadastro e opções relacionadas de produtos existentes da mesma categoria.
+- Botões de cadastro, recomendações e checkout são **inertes na prévia**; ela não cria visitas, contas, pagamentos, pedidos, links de checkout ou publicações.
+- A prévia funciona **sem produtos Kairos cadastrados e sem URL de checkout**, permitindo verificar layout e copy agora sem falsear a integração.
+- Como o catálogo privado tem dados reais de outros produtos, o componente fica dentro do painel administrativo, cuja leitura é protegida por `requireOwnerRole` no servidor; verificar também proteção de rota/experiência de sessão no E2E.
+
+### Critérios de aceitação
+1. Rascunho novo, sem URL de checkout e sem SKU salvo: prévia abre se houver título e preço de varejo válido; não aparece no catálogo público.
+2. Testar alteração não salva de imagem/nome/preço; a prévia reflete os campos preenchidos sem salvar ou modificar banco.
+3. Usuário não autorizado não recebe dados administrativos de produtos/custos; testar requisições diretas ao endpoint owner-only.
+4. Nenhum botão da prévia abre checkout/cadastro real; produtos relacionados somente ilustram apresentação.
+5. TypeScript, lint, build e testes de interação desktop/mobile precisam ser aprovados antes da revisão do PR.
+
+**Escopo deliberado:** continuar o desenvolvimento estrutural do RUBI 11× enquanto aguardamos os links oficiais Kairos. Teste real de pagamento, comissão e repasses fica bloqueado até o fornecedor fornecer dados oficiais.
