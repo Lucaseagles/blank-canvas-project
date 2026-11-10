@@ -10,6 +10,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyPartnerPortal } from "@/lib/partner-portal.functions";
 import { Button } from "@/components/ui/button";
+import { PartnerCreativeKit } from "@/components/partner/PartnerCreativeKit";
 
 export const Route = createFileRoute("/partner/portal")({ component: PartnerPortal });
 
@@ -132,6 +133,7 @@ function PartnerPortal() {
             {product.description && <p className="text-sm text-muted-foreground">{product.description}</p>}
             <p className="text-lg font-semibold">{Number(product.retail_price).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p>
             {(() => { const link = (linksQuery.data ?? []).find((item: { product_id: string; code: string }) => item.product_id === product.id); return link ? <div className="space-y-2"><p className="text-xs text-muted-foreground">Seu link individual de divulgação:</p><code className="block break-all text-xs">{typeof window !== "undefined" ? `${window.location.origin}/r/${link.code}` : `/r/${link.code}`}</code><Button variant="outline" size="sm" onClick={() => void navigator.clipboard.writeText(`${window.location.origin}/r/${link.code}`).then(() => toast.success("Link copiado."))}>Copiar link</Button></div> : <Button size="sm" disabled={generate.isPending || linksQuery.isLoading} onClick={() => generate.mutate(product.id)}>Gerar meu link</Button>; })()}
+            {(() => { const activeLink = (linksQuery.data ?? []).find((item: { product_id: string; code: string }) => item.product_id === product.id); return activeLink ? <PartnerCreativeKit productTitle={product.title} category={product.category} referralCode={activeLink.code} /> : null; })()}
             {statsQuery.data && <p className="text-sm font-semibold">Visitas do link disponível: {statsQuery.data.byProduct.find((item: { productId: string; visits: number }) => item.productId === product.id)?.visits ?? 0}</p>}
             <p className="text-xs text-muted-foreground">O link identifica a origem da visita. Vendas e comissões dependem de confirmação do checkout.</p>
           </div>
