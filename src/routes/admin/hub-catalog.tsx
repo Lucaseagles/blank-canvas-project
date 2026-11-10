@@ -15,6 +15,7 @@ import { getRubiOrganicCampaignPerformanceAdmin } from "@/lib/rubi-organic-perfo
 import { RubiBusinessQuotesAdmin } from "@/components/business/RubiBusinessQuotesAdmin";
 import { RubiBusinessRetentionAdmin } from "@/components/business/RubiBusinessRetentionAdmin";
 import { RubiBusinessFollowupsAdmin } from "@/components/business/RubiBusinessFollowupsAdmin";
+import { RubiOfferEngineAdmin } from "@/components/store/RubiOfferEngineAdmin";
 
 export const Route = createFileRoute("/admin/hub-catalog")({ component: HubCatalogAdmin });
 
@@ -183,6 +184,7 @@ function HubCatalogAdmin() {
           <div className="rounded-2xl border bg-card/70 p-4"><p className="text-sm text-muted-foreground">Disponíveis no atacado</p><p className="text-3xl font-black">{wholesaleCount}</p></div>
         </div>
       </header>
+      <RubiOfferEngineAdmin products={products} />
       <RubiOrganicLinkBuilder products={products} />
       <section aria-label="RUBI 11× · Desempenho de campanhas por produto" className="space-y-4 rounded-3xl border border-primary/25 bg-card/80 p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
