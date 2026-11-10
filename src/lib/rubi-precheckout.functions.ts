@@ -86,12 +86,10 @@ export const getRubiCheckoutReadiness = createServerFn({ method: "POST" })
       // that would lose attribution and make commissions unreliable.
       // Partner URLs must be independently verified with Kairos and must
       // preserve exact attribution; never fall back to the direct SKU URL.
-      const destination: string | null = null;
-      if (!destination) return {
+      return {
         ready: false,
         reason: "Checkout do parceiro aguardando link oficial e atribuição confirmada pelo fornecedor.",
       };
-      return { ready: true, destination };
     }
 
     const destination = approvedRubiCheckout(product as any);
