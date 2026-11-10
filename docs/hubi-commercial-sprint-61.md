@@ -271,3 +271,11 @@ Obter dados reais do fornecedor: SKU/título/descrição/imagem autorizada, pre�
 4. Verificar acesso negado ao resumo por qualquer usuário não Master, nenhuma informação identificável, contagem em janela de 30 dias e estado de falha do serviço.
 5. Verificar contagem sem duplicidade de abertura/dispensa do modal, com origens consumidor/parceiro preservadas, e sem somar clique ao valor de venda.
 6. Reexecutar CI (build/TypeScript/lint) e testes de navegador desktop/mobile após o commit; branch continua draft até aceitação.
+
+## Segurança do checkout — Revalidação e testes (2026-11-10)
+
+- `RubiPreCheckout`: ao clicar para continuar à Kairos, o sistema consulta **novamente** `getRubiCheckoutReadiness`, evitando usar destinos carregados antes de uma revogação de fornecedor/produto. O evento de continuidade continua indicando somente intenção, nunca venda.
+- `saveHubProductAdmin`: alterações de fornecedor, título, SKU, preço, custo ou URL de checkout de uma oferta existente exigem salvar **como rascunho**, perdendo a verificação de checkout. O administrador precisa revisar novamente antes de publicar; uma alteração comercial não preserva a aprovação anterior.
+- `rubi-checkout-validation.test.mjs`: testes automatizados com Node para HTTPS, domínio exato, credenciais, fragmentos, portas, hostname enganoso, fornecedor desativado, URL ausente e link não verificado.
+- `npm run test:rubi-checkout` e gate novo em `.github/workflows/hub-v1-integration-qa.yml`; permanece a verificação de build, TypeScript e ESLint.
+- Nenhum checkout verdadeiro Kairos, transação, dados de cliente ou URL de pagamento foi criado. Testes unitários de validação não substituem E2E com fornecedor.
