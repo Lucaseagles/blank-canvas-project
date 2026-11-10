@@ -224,7 +224,7 @@ export function RubiPreCheckout({ product, returnTo, partnerCode, origin }: Prop
                 Entrar ou criar minha conta
               </Link>
             </Button>
-            <Button className="w-full" variant="outline" onClick={() => { trackInviteAction("dismiss"); setInviteOpen(false); }}>Agora não, continuar vendo o produto</Button>
+            <Button className="w-full" variant="outline" onClick={() => setInviteOpen(false)}>Agora não, continuar vendo o produto</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
