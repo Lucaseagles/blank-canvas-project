@@ -205,3 +205,18 @@ Antes, a pré-compra dependia de mapas JSON privados fora do catálogo: o Admin 
 - Testar o retorno pós-login ao pré-checkout da RUBI, sem obrigatoriedade de cadastro e sem disparo de venda fictícia.
 
 A verificação sintática do link HTTPS e o aceite manual do Master **não** são prova técnica de que a Kairos recebeu pagamento. A prova requer execução real consentida e evidência do fornecedor.
+
+
+## Supabase real — validação aplicada em 2026-11-10
+
+- Projeto confirmado por identificação exata: **heartful-helper-box** (\`akfvkjarpgocdsieuvvq\`), não staging nem os projetos antigos.
+- Migração \`rubi_supplier_checkouts\` aplicada com sucesso. O backend registrou a versão \`20261110053522\` e o arquivo do repositório foi alinhado a ela para impedir reaplicação.
+- Consulta SQL após migração: campos \`hub_products.checkout_url\`, \`hub_products.checkout_verified\` e \`hub_suppliers.checkout_host\` presentes. \`checkout_verified\` tem valor-padrão \`false\`; constraint de URL presente.
+- RLS habilitada nas duas tabelas; privilégios \`SELECT\` diretos de \`anon\` e \`authenticated\` revogados. Endpoints públicos devem continuar usando seleção restrita no servidor.
+- Base consultada contém **0 produtos** e **1 fornecedor**. Não existem checkouts Kairos fornecidos ou pedidos de teste associados ao novo fluxo.
+- Correção de isolamento: retorno público de \`resolvePartnerReferral\` remove \`checkout_url\` e \`checkout_verified\` antes de enviar dados da oferta ao navegador. URL de destino só é obtida do endpoint de continuidade, com revalidação no servidor.
+- Não houve pedido pago, execução de checkout na Kairos, atribuição real de parceiro ou E2E de navegador. Manter PR em rascunho até CI e QA concluírem.
+
+### Próxima prova indispensável
+
+Obter dados reais do fornecedor: SKU/título/descrição/imagem autorizada, preço de venda, custo completo e link individual HTTPS; aprovar domínio exato e produto no Admin Master; testar redirecionamento e pedido real de teste no checkout oficial; verificar conciliação, repasse, estorno e autorização de atribuição de parceiro. Nunca ativar associação automática de comissão sem prova de rastreamento.
