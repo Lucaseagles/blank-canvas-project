@@ -39,7 +39,7 @@ function HubProductDetail() {
       utm_medium: attribution ? "organic_social" : null,
       utm_campaign: campaign,
       sales_status: "view_only",
-    }, { productId: product.id, source, campaignId: undefined });
+    }, { productId: product.id, source });
   }, [product?.id]);
 
   return (
