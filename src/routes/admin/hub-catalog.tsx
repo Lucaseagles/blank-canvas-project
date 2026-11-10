@@ -120,6 +120,18 @@ function HubCatalogAdmin() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  // Simulação comercial a partir do custo informado pelo fornecedor; nunca equivale a lucro líquido.
+  const hasMarginInputs = form.retail_price.trim() !== "" && form.supplier_cost.trim() !== "";
+  const previewRetail = Number(form.retail_price);
+  const previewCost = Number(form.supplier_cost);
+  const previewB2B = form.b2b_base_price.trim() ? Number(form.b2b_base_price) : null;
+  const previewMinimum = Number(form.min_b2b_quantity);
+  const previewReady = hasMarginInputs && Number.isFinite(previewRetail) && previewRetail >= 0
+    && Number.isFinite(previewCost) && previewCost >= 0;
+  const previewRetailMargin = previewRetail - previewCost;
+  const previewWholesaleMargin = previewB2B === null ? null : previewB2B - previewCost;
+  const previewPartnerMargin = previewRetailMargin / 2;
+
   const field = (key: keyof Omit<ProductForm, "id" | "active">, label: string, type = "text") => (
     <label className="space-y-2 text-sm font-medium">
       <span className="block">{label}</span>
@@ -191,6 +203,21 @@ function HubCatalogAdmin() {
             {field("b2b_base_price", "Preço lojista (R$)", "number")}
             {field("min_b2b_quantity", "Quantidade mínima B2B", "number")}
             {field("description", "Descrição")}
+            <aside aria-label="Simulação de margens RUBI 11×" className="md:col-span-2 space-y-3 rounded-2xl border border-primary/30 bg-primary/5 p-5">
+              <h3 className="text-lg font-bold">RUBI 11× · Margem por canal</h3>
+              <p className="text-sm text-muted-foreground">Simulação baseada nos preços e no custo que você cadastrou. Não é previsão de vendas nem lucro líquido.</p>
+              {!previewReady ? <p className="text-sm">Preencha o preço de varejo e o custo do fornecedor para simular.</p> : <>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="rounded-xl border bg-card p-3"><p className="text-xs text-muted-foreground">Venda própria direta · diferença/unidade</p><p className="text-xl font-black">{brl(previewRetailMargin)}</p></div>
+                  <div className="rounded-xl border bg-card p-3"><p className="text-xs text-muted-foreground">Parceiro · RUBI retém 50% da diferença</p><p className="text-xl font-black">{brl(previewPartnerMargin)}</p></div>
+                  <div className="rounded-xl border bg-card p-3"><p className="text-xs text-muted-foreground">Parceiro recebe 50% da diferença</p><p className="text-xl font-black">{brl(previewPartnerMargin)}</p></div>
+                  <div className="rounded-xl border bg-card p-3"><p className="text-xs text-muted-foreground">Atacado · diferença/unidade</p><p className="text-xl font-black">{previewWholesaleMargin === null ? "Não configurado" : brl(previewWholesaleMargin)}</p></div>
+                </div>
+                {previewWholesaleMargin !== null && Number.isSafeInteger(previewMinimum) && previewMinimum > 0 && <p className="text-sm">Pedido mínimo de {previewMinimum.toLocaleString("pt-BR")} unidades: diferença bruta total de <strong>{brl(previewWholesaleMargin * previewMinimum)}</strong>.</p>}
+                {(previewRetailMargin <= 0 || (previewWholesaleMargin !== null && previewWholesaleMargin <= 0)) && <p role="alert" className="text-sm font-semibold text-destructive">Atenção: um dos preços cadastrados não supera o custo do fornecedor. Revise a precificação antes de divulgar.</p>}
+              </>}
+              <p className="text-xs text-muted-foreground">A divisão 50/50 é apenas um exemplo do Plano 11×. Comissões reais dependem do acordo ativo de cada parceiro. Impostos, tarifas, devoluções e despesas não incluídas no custo do fornecedor reduzem os valores.</p>
+            </aside>
             <label className="flex items-center gap-3 text-sm">
               <input type="checkbox" checked={form.active} onChange={event => setForm(previous => ({ ...previous, active: event.target.checked }))} />
               Publicar produto
