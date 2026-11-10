@@ -65,11 +65,11 @@ export function currentRubiOrganicAttribution(journeyKey: string): RubiOrganicAt
     const parsed: unknown = JSON.parse(stored);
     if (!parsed || typeof parsed !== "object") return null;
     const context = parsed as Record<string, unknown>;
-    if (typeof context.source !== "string" || typeof context.campaign !== "string") return null;
+    if (typeof context['source'] !== "string" || typeof context['campaign'] !== "string") return null;
     return readRubiOrganicAttribution(new URLSearchParams({
       utm_medium: "organic_social",
-      utm_source: context.source,
-      utm_campaign: context.campaign,
+      utm_source: context['source'],
+      utm_campaign: context['campaign'],
     }).toString());
   } catch {
     // Private mode can block session storage. Tracking remains optional.
