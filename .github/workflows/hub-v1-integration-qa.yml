@@ -55,6 +55,8 @@ jobs:
         run: npm run test:rubi-business
       - name: RUBI Business retention tests
         run: npm run test:rubi-retention
+      - name: RUBI Business follow-up tests
+        run: npm run test:rubi-followup
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint

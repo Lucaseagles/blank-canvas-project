@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireOwnerRole } from "./auth-guards.server";
 import { calculateRubiBusinessLine } from "./rubi-business-quote-pricing";
 import { hasRubiReplenishmentOverlap } from "./rubi-business-retention";
+import { rubiFollowupDueDate } from "./rubi-business-followup";
 
 const MAX_LINES = 12;
 const MAX_QUANTITY = 100000;
@@ -16,6 +17,7 @@ const createQuoteSchema = z.object({
   lines: z.array(quoteLine).min(1).max(MAX_LINES),
   merchantNote: z.string().trim().max(500).default(""),
   replenishmentOfQuoteId: z.string().uuid().optional(),
+  followupIntervalDays: z.union([z.literal(14), z.literal(30), z.literal(60)]).nullable().optional(),
 });
 
 type QuoteLine = {
@@ -37,6 +39,10 @@ type QuoteRow = {
   updated_at: string;
   replenishment_of_quote_id: string | null;
   responded_at: string | null;
+  followup_opt_in: boolean;
+  followup_interval_days: number | null;
+  followup_due_at: string | null;
+  followup_completed_at: string | null;
 };
 
 async function approvedMerchantProfile(accessToken: string) {
@@ -130,6 +136,9 @@ export const createHubBusinessQuote = createServerFn({ method: "POST" })
         total_estimate: totalCents / 100,
         merchant_note: data.merchantNote,
         replenishment_of_quote_id: data.replenishmentOfQuoteId ?? null,
+        followup_opt_in: data.followupIntervalDays != null,
+        followup_interval_days: data.followupIntervalDays ?? null,
+        followup_due_at: data.followupIntervalDays ? rubiFollowupDueDate(new Date(), data.followupIntervalDays) : null,
       }).select("id,status,created_at").single();
     if (error) throw error;
     return { id: String(inserted.id), status: String(inserted.status), createdAt: String(inserted.created_at) };
@@ -141,7 +150,7 @@ export const getMyHubBusinessQuotes = createServerFn({ method: "POST" })
     const { supabaseAdmin, profileId } = await approvedMerchantProfile(data.accessToken);
     const { data: rows, error } = await (supabaseAdmin as any)
       .from("hub_b2b_quote_requests")
-      .select("id,status,total_estimate,requested_lines,merchant_note,owner_note,created_at,updated_at,replenishment_of_quote_id,responded_at")
+      .select("id,status,total_estimate,requested_lines,merchant_note,owner_note,created_at,updated_at,replenishment_of_quote_id,responded_at,followup_opt_in,followup_interval_days,followup_due_at,followup_completed_at")
       .eq("commercial_profile_id", profileId)
       .order("created_at", { ascending: false }).limit(30);
     if (error) throw error;
@@ -154,7 +163,7 @@ export const getHubBusinessQuotesAdmin = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await (supabaseAdmin as any)
       .from("hub_b2b_quote_requests")
-      .select("id,commercial_profile_id,status,total_estimate,requested_lines,merchant_note,owner_note,created_at,updated_at,replenishment_of_quote_id,responded_at")
+      .select("id,commercial_profile_id,status,total_estimate,requested_lines,merchant_note,owner_note,created_at,updated_at,replenishment_of_quote_id,responded_at,followup_opt_in,followup_interval_days,followup_due_at,followup_completed_at")
       .order("created_at", { ascending: false }).limit(100);
     if (error) throw error;
     return data ?? [];
@@ -188,5 +197,61 @@ export const updateHubBusinessQuoteAdmin = createServerFn({ method: "POST" })
       })
       .eq("id", data.quoteId);
     if (error) throw error;
+    return { success: true };
+  });
+
+/** Merchant may revoke optional follow-up at any time for their own quote. */
+export const revokeHubBusinessFollowup = createServerFn({ method: "POST" })
+  .validator((input: unknown) => z.object({
+    accessToken: z.string().min(1),
+    quoteId: z.string().uuid(),
+  }).parse(input))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin, profileId } = await approvedMerchantProfile(data.accessToken);
+    const { data: quote, error: findError } = await (supabaseAdmin as any)
+      .from("hub_b2b_quote_requests").select("id")
+      .eq("id", data.quoteId).eq("commercial_profile_id", profileId).maybeSingle();
+    if (findError) throw findError;
+    if (!quote) throw new Error("Solicitação não encontrada neste perfil.");
+    const { error } = await (supabaseAdmin as any)
+      .from("hub_b2b_quote_requests")
+      .update({
+        followup_opt_in: false,
+        followup_interval_days: null,
+        followup_due_at: null,
+        followup_completed_at: null,
+        updated_at: new Date().toISOString(),
+      }).eq("id", data.quoteId).eq("commercial_profile_id", profileId);
+    if (error) throw error;
+    return { success: true };
+  });
+
+/** Owner-only due queue; this never sends an email, push or WhatsApp message. */
+export const getHubBusinessFollowupsAdmin = createServerFn({ method: "GET" })
+  .middleware([requireOwnerRole])
+  .handler(async () => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await (supabaseAdmin as any)
+      .from("hub_b2b_quote_requests")
+      .select("id,commercial_profile_id,created_at,followup_opt_in,followup_due_at,followup_completed_at,followup_interval_days,requested_lines,status")
+      .eq("followup_opt_in", true).is("followup_completed_at", null)
+      .order("followup_due_at", { ascending: true }).limit(100);
+    if (error) throw error;
+    return data ?? [];
+  });
+
+/** Owner marks internal follow-up as handled; does NOT claim contact was sent. */
+export const completeHubBusinessFollowupAdmin = createServerFn({ method: "POST" })
+  .middleware([requireOwnerRole])
+  .validator((input: unknown) => z.object({ quoteId: z.string().uuid() }).parse(input))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: updated, error } = await (supabaseAdmin as any)
+      .from("hub_b2b_quote_requests")
+      .update({ followup_completed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+      .eq("id", data.quoteId).eq("followup_opt_in", true)
+      .is("followup_completed_at", null).select("id").maybeSingle();
+    if (error) throw error;
+    if (!updated) throw new Error("Acompanhamento indisponível ou já encerrado.");
     return { success: true };
   });
