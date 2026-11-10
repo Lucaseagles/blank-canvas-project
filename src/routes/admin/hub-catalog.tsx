@@ -10,6 +10,7 @@ import { GROWTH_PILLARS, GROWTH_STRATEGIES, GROWTH_11X_TARGETS, type GrowthPilla
 import { RubiAdminOfferPreview } from "@/components/store/RubiAdminOfferPreview";
 import { getRubiGrowthFunnelAdmin } from "@/lib/rubi-growth-funnel.functions";
 import { getRubiCommercialPulseAdmin } from "@/lib/rubi-commercial-pulse.functions";
+import { RubiOrganicLinkBuilder } from "@/components/store/RubiOrganicLinkBuilder";
 
 export const Route = createFileRoute("/admin/hub-catalog")({ component: HubCatalogAdmin });
 
@@ -176,6 +177,7 @@ function HubCatalogAdmin() {
           <div className="rounded-2xl border bg-card/70 p-4"><p className="text-sm text-muted-foreground">Disponíveis no atacado</p><p className="text-3xl font-black">{wholesaleCount}</p></div>
         </div>
       </header>
+      <RubiOrganicLinkBuilder products={products} />
       <section aria-label="RUBI 11× · Plano de crescimento integrado" className="space-y-5 rounded-3xl border border-primary/25 bg-card/80 p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
