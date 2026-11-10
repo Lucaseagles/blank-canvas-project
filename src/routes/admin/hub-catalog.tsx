@@ -6,6 +6,7 @@ import { getHubCatalogAdmin, saveHubProductAdmin, saveHubSupplierAdmin, saveHubB
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { GROWTH_PILLARS, GROWTH_STRATEGIES, GROWTH_11X_TARGETS, type GrowthPillar } from "@/lib/rubi-growth-11x";
 
 export const Route = createFileRoute("/admin/hub-catalog")({ component: HubCatalogAdmin });
 
@@ -41,6 +42,8 @@ function HubCatalogAdmin() {
   const [supplierMode, setSupplierMode] = useState<"supplier" | "hub">("supplier");
   const query = useQuery({ queryKey: ["admin-hub-catalog"], queryFn: () => load() });
   const [form, setForm] = useState<ProductForm>(emptyForm);
+  const [strategyPillar, setStrategyPillar] = useState<GrowthPillar | "all">("all");
+  const filteredStrategies = GROWTH_STRATEGIES.filter(item => strategyPillar === "all" || item.pillar === strategyPillar);
 
   const suppliers = (query.data?.suppliers ?? []) as Supplier[];
   const products = (query.data?.products ?? []) as Product[];
@@ -158,6 +161,39 @@ function HubCatalogAdmin() {
           <div className="rounded-2xl border bg-card/70 p-4"><p className="text-sm text-muted-foreground">Disponíveis no atacado</p><p className="text-3xl font-black">{wholesaleCount}</p></div>
         </div>
       </header>
+      <section aria-label="RUBI 11× · Plano de crescimento integrado" className="space-y-5 rounded-3xl border border-primary/25 bg-card/80 p-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-black uppercase tracking-widest text-primary">RUBI 11× · Planejamento operacional</p>
+            <h2 className="mt-2 text-2xl font-black">35 estratégias conectadas aos cinco pilares</h2>
+            <p className="mt-2 max-w-3xl text-sm text-muted-foreground">Matriz auditável de iniciativas, destinos e métricas. Presença de código não significa funcionamento testado nem resultado comercial. Metas 11× são alvos, não dados reais.</p>
+          </div>
+          <span className="rounded-full border border-primary/30 px-3 py-2 text-xs font-semibold">{GROWTH_STRATEGIES.length} iniciativas mapeadas</span>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="Metas condicionais do mês 12">
+          <div className="rounded-xl border p-3"><p className="text-xs text-muted-foreground">Parceiros que vendem</p><p className="text-2xl font-black">{GROWTH_11X_TARGETS.partnersSelling.toLocaleString("pt-BR")}</p><p className="text-xs text-muted-foreground">{GROWTH_11X_TARGETS.monthlyOrdersPerSeller} vendas/mês cada</p></div>
+          <div className="rounded-xl border p-3"><p className="text-xs text-muted-foreground">Lojistas compradores</p><p className="text-2xl font-black">{GROWTH_11X_TARGETS.buyingMerchants.toLocaleString("pt-BR")}</p><p className="text-xs text-muted-foreground">{GROWTH_11X_TARGETS.unitsPerMerchant} unidades/mês cada</p></div>
+          <div className="rounded-xl border p-3"><p className="text-xs text-muted-foreground">Pedidos diretos Store</p><p className="text-2xl font-black">{GROWTH_11X_TARGETS.directStoreOrders.toLocaleString("pt-BR")}</p><p className="text-xs text-muted-foreground">Meta, não pedidos confirmados</p></div>
+          <div className="rounded-xl border p-3"><p className="text-xs text-muted-foreground">Conversões marketplaces</p><p className="text-2xl font-black">{GROWTH_11X_TARGETS.marketplaceConversions.toLocaleString("pt-BR")}</p><p className="text-xs text-muted-foreground">Depende de atribuição externa</p></div>
+        </div>
+        <div className="grid gap-3 md:grid-cols-5">
+          {GROWTH_PILLARS.map(pillar => <div key={pillar.id} className="rounded-xl border p-3"><p className="font-semibold">{pillar.label}</p><p className="mt-2 text-xs text-muted-foreground">{pillar.objective}</p></div>)}
+        </div>
+        <label className="flex flex-wrap items-center gap-3 text-sm font-semibold">Filtrar pilar
+          <select aria-label="Filtrar estratégias por pilar" value={strategyPillar} onChange={event => setStrategyPillar(event.target.value as GrowthPillar | "all")} className="rounded-lg border bg-background px-3 py-2">
+            <option value="all">Todos os pilares</option>
+            {GROWTH_PILLARS.map(pillar => <option key={pillar.id} value={pillar.id}>{pillar.label}</option>)}
+          </select>
+        </label>
+        <div className="max-h-[450px] space-y-2 overflow-y-auto pr-1" aria-live="polite">
+          {filteredStrategies.map(item => <article key={item.id} className="grid gap-2 rounded-xl border p-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1fr)]">
+            <div><p className="text-xs text-muted-foreground">Estratégia {String(item.id).padStart(2,"0")}</p><p className="font-semibold">{item.title}</p><p className="text-xs text-muted-foreground">Público: {item.audience}</p></div>
+            <div><p className="text-sm">{item.objective}</p><p className="mt-1 text-xs text-muted-foreground">Medir: {item.metric}</p></div>
+            <div><p className="text-xs font-semibold">{item.evidence === "code-observed" ? "Código identificado · não testado" : item.evidence === "external-blocker" ? "Depende de integração externa" : "Planejado · execução não comprovada"}</p><p className="mt-2 break-all text-xs text-muted-foreground">Jornada: {item.route}</p></div>
+          </article>)}
+        </div>
+        <p className="text-xs text-muted-foreground">O painel não ativa automaticamente redes sociais, parceiros, algoritmos, pagamentos ou integrações. Valide cada etapa com tráfego, pedidos pagos e margens confirmadas antes de contabilizar resultados.</p>
+      </section>
       {query.isLoading && <p role="status">Carregando catálogo...</p>}
       {query.isError && <div role="alert" className="space-y-3"><p>Não foi possível carregar o catálogo.</p><Button variant="outline" onClick={() => void query.refetch()}>Tentar novamente</Button></div>}
       {!query.isError && (
