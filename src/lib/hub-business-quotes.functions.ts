@@ -91,11 +91,12 @@ export const createHubBusinessQuote = createServerFn({ method: "POST" })
       if (!Number.isSafeInteger(minQty) || minQty < 1 || line.quantity < minQty)
         throw new Error(`Quantidade inferior ao mínimo do produto: ${String(product.title)}.`);
       let priceCents = toCents(product.b2b_base_price);
+      let bestThreshold = minQty - 1;
       for (const tier of product.hub_b2b_tiers ?? []) {
         const threshold = Number(tier.min_quantity);
         if (!Number.isSafeInteger(threshold) || threshold < minQty || threshold > line.quantity) continue;
-        if (!Number.isSafeInteger((product as any)._bestThreshold) || threshold > (product as any)._bestThreshold) {
-          (product as any)._bestThreshold = threshold;
+        if (threshold > bestThreshold) {
+          bestThreshold = threshold;
           priceCents = toCents(tier.unit_price);
         }
       }
