@@ -174,3 +174,34 @@ Configuração **privada no servidor**, exemplo exclusivamente estrutural (subst
 5. Checkout de parceiro: URL de atribuição **específica do código**, status approved+grant ativo, sem usar URL genérica do SKU. O pedido pago de teste precisa ser conciliado ao parceiro certo e não pode gerar comissão de outro parceiro.
 6. Recomendações: links de produtos complementares não herdam o parceiro original nem simulam pacote/carrinho, já que a API de carrinho do fornecedor ainda não foi confirmada.
 7. Verificar desktop, mobile, TypeScript, lint, build e testes negativos de RLS/acesso, além da validação contratual do fornecedor.
+
+
+## RUBI 11× — Ativação de produtos e checkouts oficiais da Kairos (2026-11-10)
+
+### Correção de lacuna estrutural
+Antes, a pré-compra dependia de mapas JSON privados fora do catálogo: o Admin Master **não tinha** campos para cada checkout. Agora a branch contém:
+- Migração \`supabase/migrations/20261110030000_rubi_supplier_checkouts.sql\` adicionando \`hub_suppliers.checkout_host\`, \`hub_products.checkout_url\` e \`hub_products.checkout_verified\` (todos privados, RLS preservada).
+- \`/admin/hub-catalog\` permite cadastrar/editar o domínio exato de checkout do fornecedor e colar a URL HTTPS oficial de cada produto, com uma confirmação de revisão pelo Shadow Master.
+- \`saveHubProductAdmin\` rejeita publicação de produto sem fornecedor ativo, domínio autorizado, URL válida correspondente e confirmação do Master.
+- \`getRetailHubCatalog\`, \`getRetailHubProduct\`, \`getRubiRelatedProducts\` e as consultas de divulgação Partners não mostram ofertas sem checkout aprovado, mesmo se um registro legado estiver marcado como ativo.
+- \`getRubiCheckoutReadiness\` entrega o link da oferta **somente ao solicitar a continuação da jornada**, validando novamente domínio, HTTPS, produto e fornecedor; nada na vitrine pública expõe link de checkout privado, custo do fornecedor ou preço atacadista.
+- Produto → pré-compra RUBI (produto, sugestões, convite opcional ao cadastro) → pagamento principal Kairos. A RUBI não coleta cartão nem registra pagamento pela simples abertura do link.
+- **Parceiros:** links de checkout genéricos não são substitutos de rastreamento individual. Os destinos externos por parceiro permanecem bloqueados até a Kairos fornecer e comprovar um mecanismo de atribuição, de preferência com integração reconciliável de pedidos, cancelamentos e comissões.
+
+### Instrução operacional quando chegar o catálogo oficial da Kairos
+1. Conferir, no painel oficial do fornecedor, domínio exato e URLs oficiais HTTPS.
+2. Em Fornecedores: editar Kairos e registrar o domínio aprovado; isso não deve ser inferido de links de terceiros.
+3. Em Produtos: cadastrar título, descrição, mídia autorizada, categoria, preço de venda, custo total confirmado e URL do checkout **daquele SKU e oferta**.
+4. Marcar a confirmação manual de checkout; selecionar Publicar e salvar. O servidor valida novamente o vínculo.
+5. Testar a página pública individual, sua capa RUBI, produtos relacionados e CTA para o checkout Kairos.
+6. Fazer pedido real autorizado de teste com valor, frete, comissão, reembolso e atribuição conferidos antes de proclamar "checkout validado de ponta a ponta".
+
+### QA pendente antes de integrar e publicar
+- **Pré-requisito obrigatório:** aplicar a migração ao ambiente certo. Caso contrário a nova versão das consultas falhará; manter a PR como rascunho até validar banco e código juntos.
+- SQL deve manter todos os produtos antigos \`checkout_verified=false\`, evitando publicação acidental de ofertas incompletas.
+- Testar fornecedor inativo, domínio trocado, URL HTTP, credenciais embutidas, porta não padrão, link de outro domínio, produto sem URL, link aprovado e edição/revogação.
+- Verificar que o payload público não revela \`checkout_url\` ou \`supplier_cost\`.
+- Validar mobile, desktop, Supabase RLS, TypeScript, lint, build e CI.
+- Testar o retorno pós-login ao pré-checkout da RUBI, sem obrigatoriedade de cadastro e sem disparo de venda fictícia.
+
+A verificação sintática do link HTTPS e o aceite manual do Master **não** são prova técnica de que a Kairos recebeu pagamento. A prova requer execução real consentida e evidência do fornecedor.
