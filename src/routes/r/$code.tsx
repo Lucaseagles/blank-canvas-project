@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { resolvePartnerReferral } from "@/lib/partner-referral-visit.functions";
@@ -19,8 +19,15 @@ function ReferralLanding() {
       <h2 className="text-2xl font-bold">{product.title}</h2>
       {product.description && <p className="text-muted-foreground">{product.description}</p>}
       <p className="text-2xl font-black">{Number(product.retail_price).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p>
-      <p className="text-sm text-muted-foreground">Indicação registrada. A compra será disponibilizada quando houver integração de checkout do fornecedor.</p>
-      <Button asChild><a href="/hub-shop">Explorar catálogo</a></Button>
+      <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 space-y-2">
+        <h3 className="font-semibold">Conheça também a RUBI</h3>
+        <p className="text-sm text-muted-foreground">Crie sua conta gratuitamente para descobrir ofertas e produtos da sua preferência. O cadastro é opcional e não conclui nem reserva uma compra.</p>
+        <div className="flex flex-wrap gap-3">
+          <Button asChild><Link to="/auth" search={{ returnTo: `/r/${code}`, ref: undefined, campaign_id: undefined, audience: undefined }}>Entrar ou criar conta</Link></Button>
+          <Button asChild variant="outline"><Link to="/hub-shop">Explorar produtos RUBI</Link></Button>
+        </div>
+      </div>
+      <p className="text-sm text-muted-foreground">Seu acesso pelo link de indicação foi registrado. A compra deste produto só estará disponível após validação e integração do checkout do fornecedor. Nenhum pedido ou comissão foi criado nesta página.</p>
     </article>}
   </main>;
 }
