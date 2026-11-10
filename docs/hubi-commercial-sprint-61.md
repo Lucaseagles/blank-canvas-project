@@ -67,3 +67,27 @@ Sem migrations, mudanças de checkout, disparos de marketing, pagamentos reais, 
 3. Verificar margem exibida para `varejo=97`, `custo=48`, `B2B=58`, `mínimo=10`: direta R$49; exemplo parceiro R$24,50 por lado; atacado R$10/unidade e R$100/pedido mínimo.
 4. Obter integração oficial da Kairos, regras de atribuição e evidência de pedido confirmado **antes** de habilitar CTA de pagamento ou liberar comissão.
 5. Validar ofertas e perfis com testes manuais mobile/desktop dos três logins; medir taxas reais em operação antes de ajustar a projeção.
+
+
+## Incremento RUBI 11× — ciclo de 2026-11-09, 35 estratégias
+
+### Implementações desta branch
+- `src/lib/rubi-growth-11x.ts`: registro tipado de 35 iniciativas organizadas em Eclipse/Base, Store/Margem, Achadinhos/Aquisição, Partners/Distribuição e Business/Recorrência. Cada entrada inclui público, ação, métrica, rota e **evidência** (`code-observed` = código identificado, não testado; `execution-plan` = execução planejada; `external-blocker` = dependência externa). É inventário de acompanhamento, **não** ativação automática de estratégias.
+- `src/routes/admin/hub-catalog.tsx`: painel de metas 11× com filtro dos cinco pilares e lista das 35 estratégias; conserva os campos de fornecedor, preços e margens, sem alterar banco, permissões ou acordo comercial.
+- `src/routes/index.tsx`: destaque explícito à RUBI Store e CTAs de candidatura a Partners e Business com rotas de onboarding existentes; sem inventar botão de pagamento.
+- Permanecem as melhorias anteriores: simulação de margem privada no catálogo e convite opcional ao cadastro na página de indicação.
+
+### Prioridade de aceitação por pilar
+1. **Base**: entrada correta dos três públicos, consentimento de canais e coortes de ativação sem cadastro duplicado.
+2. **Store**: catálogo elegível, custo e margem verificados por fornecedor, disponibilidade real, checkout oficial e confirmação de pagamento (pendente fornecedor).
+3. **Achadinhos**: vídeo/afiliado → link elegível → atribuição da plataforma, separando GMV externo de comissão.
+4. **Partners**: expert/influenciador/micro/afiliado → aprovação → produto concedido → material legítimo → link → pedido confirmado → comissão conciliada; não usar visita como venda.
+5. **Business**: lojista aprovado → preços por volume → cotação → pedido confirmado → recompra; distinguir valores simulados de compras pagas.
+
+### Testes ainda necessários
+- `npx tsc --noEmit`, `npm run lint`, `npm run build` e testes E2E dos três logins.
+- Verificar no navegador desktop/mobile os CTAs da home e a matriz de estratégias no Admin Master.
+- Testar acesso negativo a endpoints de fornecedor, precificação, partner e Shadow Master.
+- Confirmar Kairos/checkout e fontes oficiais de atribuição antes de habilitar pagamentos ou declarar faturamento.
+
+**Importante:** manter o PR como draft até validação técnica; não contabilizar 11× como receita realizada.
