@@ -78,6 +78,26 @@ export const saveHubProductAdmin=createServerFn({method:"POST"}).middleware([req
  // Treat URL edits as unverified unless the owner explicitly marks this offer
  // reviewed. Publishing requires verified matching HTTPS checkout URL.
  const checkoutUrl = data.checkout_url?.trim() || null;
+ // Existing published offers must be reviewed again whenever their commercial
+ // identity, supplier, price, cost or checkout destination changes.
+ if (data.id) {
+   const { data: existing, error: existingError } = await (supabaseAdmin as any)
+     .from("hub_products")
+     .select("supplier_id,title,sku,retail_price,supplier_cost,checkout_url,checkout_verified")
+     .eq("id", data.id).maybeSingle();
+   if (existingError) throw existingError;
+   if (!existing) throw new Error("Produto não encontrado.");
+   const commercialChange = existing.supplier_id !== data.supplier_id
+     || existing.title !== data.title
+     || (existing.sku ?? "") !== (data.sku ?? "")
+     || Number(existing.retail_price) !== data.retail_price
+     || Number(existing.supplier_cost) !== data.supplier_cost
+     || (existing.checkout_url ?? "") !== (checkoutUrl ?? "");
+   if (commercialChange && data.active) {
+     throw new Error("Oferta alterada: desmarque Publicar, salve o rascunho e revise novamente o checkout antes de ativar.");
+   }
+   if (commercialChange) data.checkout_verified = false;
+ }
  const checkoutValid = verifyRubiCheckoutUrl(checkoutUrl, supplier.checkout_host);
  if (checkoutUrl && !checkoutValid) throw new Error("Checkout inválido: confirme o domínio oficial exato do fornecedor e utilize HTTPS.");
  if (data.checkout_verified && !checkoutValid) throw new Error("Não é possível validar este checkout sem URL oficial aprovada.");
