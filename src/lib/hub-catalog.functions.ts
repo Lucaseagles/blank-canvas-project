@@ -5,9 +5,9 @@ import { approvedRubiCheckout, normalizeRubiCheckoutHost, verifyRubiCheckoutUrl 
 
 export const getRetailHubCatalog = createServerFn({method:"GET"}).handler(async()=>{
  const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
- const {data,error}=await (supabaseAdmin as any).from("hub_products").select("id,title,description,image_url,category,retail_price,hub_suppliers!inner(active,checkout_host)").eq("hub_suppliers.active",true).eq("active",true).eq("checkout_verified",true).not("checkout_url","is",null).gt("retail_price",0).order("created_at",{ascending:false}).limit(60);
+ const {data,error}=await (supabaseAdmin as any).from("hub_products").select("id,title,description,image_url,category,retail_price,checkout_url,checkout_verified,hub_suppliers!inner(active,checkout_host)").eq("hub_suppliers.active",true).eq("active",true).eq("checkout_verified",true).not("checkout_url","is",null).gt("retail_price",0).order("created_at",{ascending:false}).limit(60);
  if(error) throw error;
- return (data??[]).filter((p:any)=>approvedRubiCheckout(p)).map(({hub_suppliers: _supplier,...product}:any)=>product);
+ return (data??[]).filter((p:any)=>approvedRubiCheckout(p)).map(({hub_suppliers: _supplier, checkout_url: _checkoutUrl, checkout_verified: _verified, ...product}:any)=>product);
 });
 /**
  * Public product detail for a shareable RUBI Store offer.
@@ -20,7 +20,7 @@ export const getRetailHubProduct = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: product, error } = await (supabaseAdmin as any)
       .from("hub_products")
-      .select("id,title,description,image_url,category,retail_price,hub_suppliers!inner(active,checkout_host)")
+      .select("id,title,description,image_url,category,retail_price,checkout_url,checkout_verified,hub_suppliers!inner(active,checkout_host)")
       .eq("id", data.productId)
       .eq("hub_suppliers.active", true)
       .eq("active", true)
@@ -30,7 +30,7 @@ export const getRetailHubProduct = createServerFn({ method: "POST" })
       .maybeSingle();
     if (error) throw error;
     if (!product || !approvedRubiCheckout(product as any)) return null;
-    const { hub_suppliers: _supplier, ...publicProduct } = product;
+    const { hub_suppliers: _supplier, checkout_url: _checkoutUrl, checkout_verified: _verified, ...publicProduct } = product;
     return publicProduct as {
       id: string;
       title: string;
