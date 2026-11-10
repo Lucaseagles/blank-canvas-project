@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { approvedRubiCheckout } from "./rubi-checkout-validation";
 
 const productSchema = z.object({ productId: z.string().uuid() });
 const checkoutSchema = productSchema.extend({ partnerCode: z.string().uuid().optional() });
@@ -13,16 +14,17 @@ type PublicProduct = {
   retail_price: number;
 };
 
-const publicFields = "id,title,description,image_url,category,retail_price,hub_suppliers!inner(active)";
+const publicFields = "id,title,description,image_url,category,retail_price,checkout_url,checkout_verified,hub_suppliers!inner(active,checkout_host)";
 
 async function getAvailableProduct(productId: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await (supabaseAdmin as any).from("hub_products")
     .select(publicFields).eq("id", productId)
+    .eq("checkout_verified", true).not("checkout_url", "is", null)
     .eq("active", true).eq("hub_suppliers.active", true)
     .gt("retail_price", 0).maybeSingle();
   if (error) throw error;
-  return data;
+  return data && approvedRubiCheckout(data as any) ? data : null;
 }
 
 /** Show only other published RUBI products, with an active supplier and consumer price. */
@@ -33,47 +35,25 @@ export const getRubiRelatedProducts = createServerFn({ method: "POST" })
     if (!primary) return [];
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const baseQuery = () => (supabaseAdmin as any).from("hub_products")
-      .select(publicFields).eq("active", true).eq("hub_suppliers.active", true)
+      .select(publicFields).eq("checkout_verified", true).not("checkout_url", "is", null).eq("active", true).eq("hub_suppliers.active", true)
       .gt("retail_price", 0).neq("id", data.productId)
       .order("created_at", { ascending: false });
     const category = typeof primary.category === "string" ? primary.category.trim() : "";
     const first = await (category ? baseQuery().eq("category", category) : baseQuery()).limit(4);
     if (first.error) throw first.error;
     // Prefer the same category; never silently merge results from different offers.
-    const rows = first.data ?? [];
-    return rows.map(({ hub_suppliers: _supplier, ...item }: any) => item as PublicProduct);
+    const rows = (first.data ?? []).filter((item: any) => approvedRubiCheckout(item));
+    return rows.map(({ hub_suppliers: _supplier, checkout_url: _checkoutUrl, checkout_verified: _verified, ...item }: any) => item as PublicProduct);
   });
 
 type CheckoutReadiness =
   | { ready: true; destination: string }
   | { ready: false; reason: string };
 
-function getApprovedCheckoutUrl(identifier: string, partner: boolean): string | null {
-  // Private deployment configuration only: never take a destination from query parameters.
-  const variable = partner
-    ? process.env["RUBI_APPROVED_PARTNER_CHECKOUT_URLS_JSON"]
-    : process.env["RUBI_APPROVED_CHECKOUT_URLS_JSON"];
-  const hosts = (process.env["RUBI_APPROVED_CHECKOUT_HOSTS"] ?? "")
-    .split(",").map(value => value.trim().toLowerCase()).filter(Boolean);
-  if (!variable || !hosts.length) return null;
-  try {
-    const parsed: unknown = JSON.parse(variable);
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
-    const value = (parsed as Record<string, unknown>)[identifier];
-    if (typeof value !== "string") return null;
-    const url = new URL(value);
-    if (url.protocol !== "https:" || url.username || url.password || url.port) return null;
-    if (!hosts.includes(url.hostname.toLowerCase())) return null;
-    return url.toString();
-  } catch {
-    return null;
-  }
-}
-
 /**
- * Only returns a verified, explicitly configured external checkout destination.
- * This does not create an order or claim payment confirmation. Partner attribution
- * requires a separately approved checkout URL keyed by the partner's referral code.
+ * Direct SKU checkout links are configured by the owner in the catalog.
+ * Partner checkout remains closed until a verified attribution mechanism exists.
+ * No request creates a payment/order or confirms a conversion.
  */
 export const getRubiCheckoutReadiness = createServerFn({ method: "POST" })
   .validator((input: unknown) => checkoutSchema.parse(input))
@@ -104,7 +84,9 @@ export const getRubiCheckoutReadiness = createServerFn({ method: "POST" })
       if (!profile.data || !grant.data) return { ready: false, reason: "Indicação sem autorização comercial ativa." };
       // A direct checkout URL must never be substituted for a partner link:
       // that would lose attribution and make commissions unreliable.
-      const destination = getApprovedCheckoutUrl(partnerCode, true);
+      // Partner URLs must be independently verified with Kairos and must
+      // preserve exact attribution; never fall back to the direct SKU URL.
+      const destination: string | null = null;
       if (!destination) return {
         ready: false,
         reason: "Checkout do parceiro aguardando link oficial e atribuição confirmada pelo fornecedor.",
@@ -112,7 +94,7 @@ export const getRubiCheckoutReadiness = createServerFn({ method: "POST" })
       return { ready: true, destination };
     }
 
-    const destination = getApprovedCheckoutUrl(data.productId, false);
+    const destination = approvedRubiCheckout(product as any);
     if (!destination) return {
       ready: false,
       reason: "Checkout principal aguardando o link oficial aprovado para este produto.",
