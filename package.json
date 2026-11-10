@@ -9,7 +9,8 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test:rubi-checkout": "node --experimental-strip-types --test src/lib/rubi-checkout-validation.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
