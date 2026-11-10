@@ -5,7 +5,8 @@ import { useEffect } from "react";
 import { getRetailHubProduct } from "@/lib/hub-catalog.functions";
 import { trackEvent } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ShoppingBag, ShieldCheck } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { RubiPreCheckout } from "@/components/store/RubiPreCheckout";
 
 export const Route = createFileRoute("/hub-product/$productId")({
   component: HubProductDetail,
@@ -58,37 +59,7 @@ function HubProductDetail() {
           </div>
         )}
         {product && (
-          <article className="grid overflow-hidden rounded-3xl border bg-card lg:grid-cols-2">
-            <div className="flex min-h-64 items-center justify-center bg-muted/30">
-              {product.image_url ? (
-                <img src={product.image_url} alt={product.title} className="h-full w-full object-contain" />
-              ) : (
-                <ShoppingBag aria-hidden="true" className="h-16 w-16 text-muted-foreground" />
-              )}
-            </div>
-            <div className="space-y-5 p-6 md:p-10">
-              <p className="text-xs font-black uppercase tracking-widest text-primary">RUBI Store · {product.category || "Seleção oficial"}</p>
-              <h1 className="text-3xl font-black tracking-tight md:text-4xl">{product.title}</h1>
-              {product.description && <p className="whitespace-pre-line text-muted-foreground">{product.description}</p>}
-              <p className="text-3xl font-black">{money(product.retail_price)}</p>
-              <div className="space-y-3 rounded-2xl border border-primary/20 bg-primary/5 p-5">
-                <div className="flex items-center gap-2 font-semibold">
-                  <ShieldCheck aria-hidden="true" className="h-5 w-5 text-primary" />
-                  Oferta da seleção RUBI
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Produto exibido com o preço cadastrado. Compra, condições de frete e entrega serão disponibilizadas
-                  somente após a integração e validação do checkout do fornecedor.
-                </p>
-                <Button asChild>
-                  <Link to="/auth" search={{ returnTo: `/hub-product/${product.id}`, audience: undefined, ref: undefined, campaign_id: undefined }}>
-                    Entrar ou criar conta (opcional)
-                  </Link>
-                </Button>
-                <p className="text-xs text-muted-foreground">Cadastro não representa pedido, reserva ou pagamento.</p>
-              </div>
-            </div>
-          </article>
+          <RubiPreCheckout product={product} returnTo={`/hub-product/${product.id}`} origin="store" />
         )}
       </div>
     </main>
