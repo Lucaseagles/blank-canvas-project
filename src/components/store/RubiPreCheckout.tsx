@@ -10,6 +10,7 @@ import {
 import { getRubiRelatedProducts, getRubiCheckoutReadiness } from "@/lib/rubi-precheckout.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { trackEvent } from "@/lib/analytics";
+import { RubiPostSignupActivation } from "@/components/store/RubiPostSignupActivation";
 
 type Product = {
   id: string;
@@ -92,6 +93,7 @@ export function RubiPreCheckout({ product, returnTo, partnerCode, origin }: Prop
 
   return (
     <div className="space-y-8">
+      <RubiPostSignupActivation returnTo={returnTo} />
       <article aria-label="Revisão do produto selecionado" className="overflow-hidden rounded-3xl border bg-card lg:grid lg:grid-cols-2">
         <div className="flex min-h-72 items-center justify-center bg-muted/30">
           {product.image_url ? (
