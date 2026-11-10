@@ -1,0 +1,25 @@
+{
+  "name": "RUBI Eagles — Ofertas e Descobertas",
+  "short_name": "RUBI Eagles",
+  "description": "Descubra produtos, ofertas e recomendações da RUBI Eagles.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#17112e",
+  "theme_color": "#17112e",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/rubi-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon",
+      "purpose": "any"
+    }
+  ]
+}
