@@ -10,22 +10,22 @@ import { GROWTH_PILLARS, GROWTH_STRATEGIES, GROWTH_11X_TARGETS, type GrowthPilla
 
 export const Route = createFileRoute("/admin/hub-catalog")({ component: HubCatalogAdmin });
 
-type Supplier = { id: string; name: string };
+type Supplier = { id: string; name: string; checkout_host: string | null };
 type Product = {
   id: string; title: string; description: string | null; image_url: string | null;
   category: string | null; sku: string | null; supplier_id: string;
   retail_price: number; supplier_cost: number; b2b_base_price: number | null;
-  min_b2b_quantity: number; active: boolean;
+  min_b2b_quantity: number; active: boolean; checkout_url: string | null; checkout_verified: boolean;
 };
 type ProductForm = {
   id?: string; title: string; description: string; image_url: string;
   category: string; sku: string; supplier_id: string; retail_price: string;
-  supplier_cost: string; b2b_base_price: string; min_b2b_quantity: string; active: boolean;
+  supplier_cost: string; b2b_base_price: string; min_b2b_quantity: string; active: boolean; checkout_url: string; checkout_verified: boolean;
 };
 const emptyForm = (): ProductForm => ({
   title: "", description: "", image_url: "", category: "", sku: "",
   supplier_id: "", retail_price: "", supplier_cost: "",
-  b2b_base_price: "", min_b2b_quantity: "1", active: false,
+  b2b_base_price: "", min_b2b_quantity: "1", active: false, checkout_url: "", checkout_verified: false,
 });
 const brl = (value: number) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -39,6 +39,8 @@ function HubCatalogAdmin() {
   const [tierQuantity, setTierQuantity] = useState("");
   const [tierPrice, setTierPrice] = useState("");
   const [supplierName, setSupplierName] = useState("");
+  const [supplierId, setSupplierId] = useState("");
+  const [supplierCheckoutHost, setSupplierCheckoutHost] = useState("");
   const [supplierMode, setSupplierMode] = useState<"supplier" | "hub">("supplier");
   const query = useQuery({ queryKey: ["admin-hub-catalog"], queryFn: () => load() });
   const [form, setForm] = useState<ProductForm>(emptyForm);
@@ -73,6 +75,7 @@ function HubCatalogAdmin() {
         category: form.category.trim(), sku: form.sku.trim(),
         retail_price: retail, supplier_cost: cost, b2b_base_price: b2b,
         min_b2b_quantity: minimum, active: form.active,
+        checkout_url: form.checkout_url.trim(), checkout_verified: form.checkout_verified,
       } });
     },
     onSuccess: () => {
@@ -84,10 +87,12 @@ function HubCatalogAdmin() {
   });
 
   const supplierMutation = useMutation({
-    mutationFn: () => saveSupplier({ data: { name: supplierName.trim(), fulfillment_mode: supplierMode, active: true } }),
+    mutationFn: () => saveSupplier({ data: { ...(supplierId ? { id: supplierId } : {}), name: supplierName.trim(), fulfillment_mode: supplierMode, active: true, checkout_host: supplierCheckoutHost.trim() || null } }),
     onSuccess: () => {
       toast.success("Fornecedor cadastrado");
       setSupplierName("");
+      setSupplierId("");
+      setSupplierCheckoutHost("");
       void queryClient.invalidateQueries({ queryKey: ["admin-hub-catalog"] });
     },
     onError: (error: Error) => toast.error(error.message),
@@ -119,6 +124,7 @@ function HubCatalogAdmin() {
       retail_price: String(product.retail_price), supplier_cost: String(product.supplier_cost),
       b2b_base_price: product.b2b_base_price === null ? "" : String(product.b2b_base_price),
       min_b2b_quantity: String(product.min_b2b_quantity), active: product.active,
+      checkout_url: product.checkout_url ?? "", checkout_verified: product.checkout_verified,
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -212,13 +218,17 @@ function HubCatalogAdmin() {
                   <option value="hub">Hub</option>
                 </select>
               </label>
-              <Button type="submit" disabled={supplierMutation.isPending || supplierName.trim().length < 2}>
-                {supplierMutation.isPending ? "Salvando..." : "Cadastrar fornecedor"}
+              <label className="space-y-2 text-sm font-medium">
+                <span className="block">Domínio exato de checkout autorizado (sem https://)</span>
+                <Input placeholder="dominio-do-fornecedor.com.br" value={supplierCheckoutHost} onChange={event => setSupplierCheckoutHost(event.target.value)} />
+              </label>
+                            <Button type="submit" disabled={supplierMutation.isPending || supplierName.trim().length < 2}>
+                {supplierMutation.isPending ? "Salvando..." : supplierId ? "Salvar fornecedor" : "Cadastrar fornecedor"}
               </Button>
             </form>
             {suppliers.length === 0 && <p className="text-sm text-muted-foreground">Nenhum fornecedor cadastrado.</p>}
             <ul className="space-y-2 text-sm">
-              {suppliers.map(supplier => <li key={supplier.id} className="rounded-xl border border-white/10 p-3">{supplier.name}</li>)}
+              {suppliers.map(supplier => <li key={supplier.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 p-3"><span>{supplier.name} · <span className="text-xs text-muted-foreground">{supplier.checkout_host ?? "Sem domínio aprovado"}</span></span><Button size="sm" variant="outline" onClick={() => { setSupplierId(supplier.id); setSupplierName(supplier.name); setSupplierCheckoutHost(supplier.checkout_host ?? ""); }}>Configurar checkout</Button></li>)}
             </ul>
           </section>
           <form onSubmit={event => { event.preventDefault(); mutation.mutate(); }} className="grid gap-5 rounded-3xl border border-white/10 bg-card/80 p-6 md:grid-cols-2">
@@ -239,6 +249,19 @@ function HubCatalogAdmin() {
             {field("b2b_base_price", "Preço lojista (R$)", "number")}
             {field("min_b2b_quantity", "Quantidade mínima B2B", "number")}
             {field("description", "Descrição")}
+            <div className="md:col-span-2 space-y-3 rounded-2xl border border-primary/30 bg-card p-4">
+              <h3 className="font-bold">Checkout principal do fornecedor · RUBI 11×</h3>
+              <p className="text-xs text-muted-foreground">
+                Cole a URL oficial do checkout do produto enviada pela Kairos ou outro fornecedor.
+                O domínio precisa estar cadastrado e aprovado no fornecedor abaixo. Não utilize links genéricos de afiliados.
+              </p>
+              {field("checkout_url", "URL HTTPS do checkout oficial", "url")}
+              <label className="flex items-start gap-3 text-sm">
+                <input type="checkbox" checked={form.checkout_verified} onChange={event => setForm(previous => ({ ...previous, checkout_verified: event.target.checked }))} />
+                <span>Confirmei manualmente que este link pertence ao fornecedor, é deste produto e corresponde à oferta cadastrada. A aprovação será revalidada ao salvar.</span>
+              </label>
+              <p className="text-xs text-muted-foreground">Sem URL, domínio verificado e aprovação manual, o produto permanece como rascunho e não entra na vitrine pública.</p>
+            </div>
             <aside aria-label="Simulação de margens RUBI 11×" className="md:col-span-2 space-y-3 rounded-2xl border border-primary/30 bg-primary/5 p-5">
               <h3 className="text-lg font-bold">RUBI 11× · Margem por canal</h3>
               <p className="text-sm text-muted-foreground">Simulação baseada nos preços e no custo que você cadastrou. Não é previsão de vendas nem lucro líquido.</p>
@@ -256,7 +279,7 @@ function HubCatalogAdmin() {
             </aside>
             <label className="flex items-center gap-3 text-sm">
               <input type="checkbox" checked={form.active} onChange={event => setForm(previous => ({ ...previous, active: event.target.checked }))} />
-              Publicar produto
+              Publicar produto (exige checkout oficial validado)
             </label>
             <div className="flex flex-wrap items-center gap-3">
               <Button type="submit" disabled={mutation.isPending || !form.supplier_id || query.isLoading}>
