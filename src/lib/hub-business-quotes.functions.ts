@@ -14,6 +14,7 @@ const createQuoteSchema = z.object({
   accessToken: z.string().min(1),
   lines: z.array(quoteLine).min(1).max(MAX_LINES),
   merchantNote: z.string().trim().max(500).default(""),
+  replenishmentOfQuoteId: z.string().uuid().optional(),
 });
 
 type QuoteLine = {
@@ -33,6 +34,8 @@ type QuoteRow = {
   owner_note: string;
   created_at: string;
   updated_at: string;
+  replenishment_of_quote_id: string | null;
+  responded_at: string | null;
 };
 
 async function approvedMerchantProfile(accessToken: string) {
@@ -57,6 +60,24 @@ export const createHubBusinessQuote = createServerFn({ method: "POST" })
   .validator((input: unknown) => createQuoteSchema.parse(input))
   .handler(async ({ data }) => {
     const { supabaseAdmin, userId, profileId } = await approvedMerchantProfile(data.accessToken);
+    // Replenishment is an explicitly linked *new quote*, never an order.
+    // A merchant cannot claim another merchant's history as the source.
+    if (data.replenishmentOfQuoteId) {
+      const { data: previous, error: previousError } = await (supabaseAdmin as any)
+        .from("hub_b2b_quote_requests")
+        .select("id,requested_lines")
+        .eq("id", data.replenishmentOfQuoteId)
+        .eq("commercial_profile_id", profileId)
+        .maybeSingle();
+      if (previousError) throw previousError;
+      if (!previous) throw new Error("Solicitação original de reposição não encontrada para este lojista.");
+      const originalIds = new Set(
+        ((previous.requested_lines ?? []) as Array<{ productId?: string }>)
+          .map(row => row.productId).filter((id): id is string => typeof id === "string"),
+      );
+      if (!data.lines.some(line => originalIds.has(line.productId)))
+        throw new Error("Para solicitar reposição, mantenha ao menos um produto da cotação anterior.");
+    }
     const ids = data.lines.map(line => line.productId);
     if (new Set(ids).size !== ids.length) throw new Error("Não repita o mesmo produto na solicitação.");
 
@@ -109,6 +130,7 @@ export const createHubBusinessQuote = createServerFn({ method: "POST" })
         requested_lines: calculated,
         total_estimate: totalCents / 100,
         merchant_note: data.merchantNote,
+        replenishment_of_quote_id: data.replenishmentOfQuoteId ?? null,
       }).select("id,status,created_at").single();
     if (error) throw error;
     return { id: String(inserted.id), status: String(inserted.status), createdAt: String(inserted.created_at) };
@@ -120,7 +142,7 @@ export const getMyHubBusinessQuotes = createServerFn({ method: "POST" })
     const { supabaseAdmin, profileId } = await approvedMerchantProfile(data.accessToken);
     const { data: rows, error } = await (supabaseAdmin as any)
       .from("hub_b2b_quote_requests")
-      .select("id,status,total_estimate,requested_lines,merchant_note,owner_note,created_at,updated_at")
+      .select("id,status,total_estimate,requested_lines,merchant_note,owner_note,created_at,updated_at,replenishment_of_quote_id,responded_at")
       .eq("commercial_profile_id", profileId)
       .order("created_at", { ascending: false }).limit(30);
     if (error) throw error;
@@ -133,7 +155,7 @@ export const getHubBusinessQuotesAdmin = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await (supabaseAdmin as any)
       .from("hub_b2b_quote_requests")
-      .select("id,commercial_profile_id,status,total_estimate,requested_lines,merchant_note,owner_note,created_at,updated_at")
+      .select("id,commercial_profile_id,status,total_estimate,requested_lines,merchant_note,owner_note,created_at,updated_at,replenishment_of_quote_id,responded_at")
       .order("created_at", { ascending: false }).limit(100);
     if (error) throw error;
     return data ?? [];
@@ -149,14 +171,22 @@ export const updateHubBusinessQuoteAdmin = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: existing, error: lookupError } = await (supabaseAdmin as any)
-      .from("hub_b2b_quote_requests").select("id,status").eq("id", data.quoteId).maybeSingle();
+      .from("hub_b2b_quote_requests").select("id,status,owner_note,responded_at").eq("id", data.quoteId).maybeSingle();
     if (lookupError) throw lookupError;
     if (!existing) throw new Error("Cotação não encontrada.");
     if (existing.status === "closed" && data.status !== "closed")
       throw new Error("Solicitação encerrada. Não é possível reabri-la.");
     const { error } = await (supabaseAdmin as any)
       .from("hub_b2b_quote_requests")
-      .update({ status: data.status, owner_note: data.ownerNote, updated_at: new Date().toISOString() })
+      .update({
+        status: data.status,
+        owner_note: data.ownerNote,
+        updated_at: new Date().toISOString(),
+        // First response is a server-side timestamp, never the time of a mere
+        // status change. Preserve it after follow-ups or closure.
+        responded_at: existing.responded_at || (data.ownerNote.trim() && !String(existing.owner_note ?? "").trim()
+          ? new Date().toISOString() : null),
+      })
       .eq("id", data.quoteId);
     if (error) throw error;
     return { success: true };
