@@ -3,6 +3,7 @@ import { Bell, BellRing, Download, Smartphone, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useWebPush } from "@/hooks/useWebPush";
+import { trackEvent } from "@/lib/analytics";
 
 const ACTIVATION_KEY = "rubi_new_account_activation";
 
@@ -20,6 +21,15 @@ export function RubiPostSignupActivation({ returnTo }: { returnTo: string }) {
   const [deferredInstall, setDeferredInstall] = useState<InstallPromptEvent | null>(null);
   const [showInstructions, setShowInstructions] = useState(false);
   const [installDecision, setInstallDecision] = useState("");
+  const eventSource = returnTo.startsWith("/r/") ? "rubi_partner" : "rubi_store";
+  const trackActivation = (action: string) => {
+    // Each event represents an explicit action or a verified browser outcome,
+    // never a confirmed sale, installed app, or delivered notification.
+    void trackEvent("RUBI_POST_SIGNUP_ACTIVATION", {
+      action, route: returnTo, origin: eventSource,
+    }, { source: eventSource });
+  };
+
 
   useEffect(() => {
     let canceled = false;
@@ -31,6 +41,7 @@ export function RubiPostSignupActivation({ returnTo }: { returnTo: string }) {
         const pending = JSON.parse(saved) as ActivationRecord;
         if (pending.userId === data.user.id && pending.returnTo === returnTo) {
           setEligible(true);
+          void trackEvent("RUBI_POST_SIGNUP_ACTIVATION", { action: "guide_shown", route: returnTo, origin: returnTo.startsWith("/r/") ? "rubi_partner" : "rubi_store" }, { source: returnTo.startsWith("/r/") ? "rubi_partner" : "rubi_store" });
           // The guide is only opened once; dismissing it does not affect checkout.
           sessionStorage.removeItem(ACTIVATION_KEY);
         }
@@ -51,6 +62,7 @@ export function RubiPostSignupActivation({ returnTo }: { returnTo: string }) {
     };
     const onInstalled = () => {
       setInstalled(true);
+      trackActivation("appinstalled_browser_event");
       setDeferredInstall(null);
       setShowInstructions(false);
     };
@@ -63,17 +75,21 @@ export function RubiPostSignupActivation({ returnTo }: { returnTo: string }) {
   }, []);
 
   const install = async () => {
+    trackActivation("install_cta_clicked");
     if (!deferredInstall) {
+      trackActivation("install_instructions_shown");
       setShowInstructions(true);
       return;
     }
     try {
       await deferredInstall.prompt();
       const choice = await deferredInstall.userChoice;
+      trackActivation(choice.outcome === "accepted" ? "install_prompt_accepted" : "install_prompt_dismissed");
       setInstallDecision(choice.outcome === "accepted"
         ? "Pedido de instalação enviado ao navegador."
         : "Você pode instalar depois pelo menu do navegador.");
     } catch {
+      trackActivation("install_prompt_unavailable");
       setShowInstructions(true);
     } finally {
       setDeferredInstall(null);
@@ -96,7 +112,7 @@ export function RubiPostSignupActivation({ returnTo }: { returnTo: string }) {
           </p>
         </div>
         <Button type="button" size="icon" variant="ghost" aria-label="Dispensar convite"
-          onClick={() => setEligible(false)}><X className="h-4 w-4" /></Button>
+          onClick={() => { trackActivation("guide_dismissed"); setEligible(false); }}><X className="h-4 w-4" /></Button>
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-3 rounded-2xl border bg-card p-4">
@@ -115,7 +131,7 @@ export function RubiPostSignupActivation({ returnTo }: { returnTo: string }) {
             : !push.isSupported ? <p className="text-xs text-muted-foreground">
                 Notificações push não disponíveis neste navegador ou dispositivo.
               </p>
-            : <Button type="button" onClick={() => push.subscribe()}
+            : <Button type="button" onClick={() => { trackActivation("push_cta_clicked"); push.subscribe(); }}
                 disabled={push.isPending} variant="outline">
                 <Bell className="mr-2 h-4 w-4" />{push.isPending ? "Ativando..." : "Ativar notificações"}
               </Button>}
@@ -139,7 +155,7 @@ export function RubiPostSignupActivation({ returnTo }: { returnTo: string }) {
           </p>}
         </div>
       </div>
-      <Button type="button" variant="ghost" className="w-full" onClick={() => setEligible(false)}>
+      <Button type="button" variant="ghost" className="w-full" onClick={() => { trackActivation("guide_dismissed"); setEligible(false); }}>
         Agora não, continuar vendo o produto
       </Button>
     </section>
