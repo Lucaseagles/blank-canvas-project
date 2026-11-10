@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { createHubBusinessQuote, getMyHubBusinessQuotes } from "@/lib/hub-business-quotes.functions";
+import { createHubBusinessQuote, getMyHubBusinessQuotes, revokeHubBusinessFollowup } from "@/lib/hub-business-quotes.functions";
 import { toast } from "sonner";
 
 type NewQuoteLine = { id: string; title: string; quantity: number; unitPrice: number; total: number; valid: boolean };
@@ -18,6 +18,8 @@ type QuoteRow = {
   created_at: string;
   replenishment_of_quote_id: string | null;
   responded_at: string | null;
+  followup_opt_in: boolean;
+  followup_due_at: string | null;
 };
 const money = (value: number) => Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const labels: Record<string,string> = {
@@ -39,8 +41,10 @@ export function RubiBusinessQuotePanel({
 }) {
   const load = useServerFn(getMyHubBusinessQuotes);
   const create = useServerFn(createHubBusinessQuote);
+  const revoke = useServerFn(revokeHubBusinessFollowup);
   const client = useQueryClient();
   const [note, setNote] = useState("");
+  const [followupDays, setFollowupDays] = useState<14 | 30 | 60 | null>(null);
   const [replenishmentOfQuoteId, setReplenishmentOfQuoteId] = useState<string | null>(null);
   const quotes = useQuery({
     queryKey: ["hub-business-my-quotes"],
@@ -60,6 +64,7 @@ export function RubiBusinessQuotePanel({
       return create({ data: {
         accessToken: session.access_token,
         merchantNote: note.trim(),
+        followupIntervalDays: followupDays,
         ...(replenishmentOfQuoteId ? { replenishmentOfQuoteId } : {}),
         lines: lines.map(line => ({ productId: line.id, quantity: line.quantity })),
       } });
@@ -67,6 +72,7 @@ export function RubiBusinessQuotePanel({
     onSuccess: () => {
       toast.success("Solicitação de cotação registrada. Ainda não é um pedido.");
       setNote("");
+      setFollowupDays(null);
       setReplenishmentOfQuoteId(null);
       void client.invalidateQueries({ queryKey: ["hub-business-my-quotes"] });
       void client.invalidateQueries({ queryKey: ["admin-hub-business-quotes"] });
@@ -87,6 +93,19 @@ export function RubiBusinessQuotePanel({
         placeholder="Ex.: interesse em reposição mensal, prazo desejado, dúvidas sobre volume"
         value={note} onChange={event => setNote(event.target.value)}/>
     </label>
+    <div className="space-y-2 rounded-xl border p-4">
+      <label className="flex items-start gap-2 text-sm font-medium">
+        <input type="checkbox" checked={followupDays !== null} onChange={e => setFollowupDays(e.target.checked ? 30 : null)} />
+        <span>Quero que a RUBI registre uma oportunidade interna de me oferecer nova cotação no futuro.</span>
+      </label>
+      {followupDays !== null && <label className="block space-y-1 text-sm">Prazo sugerido para retorno
+        <select className="block rounded-lg border bg-background p-2" value={followupDays}
+          onChange={e => setFollowupDays(Number(e.target.value) as 14 | 30 | 60)}>
+          <option value={14}>14 dias</option><option value={30}>30 dias</option><option value={60}>60 dias</option>
+        </select>
+      </label>}
+      <p className="text-xs text-muted-foreground">Opcional e cancelável. Isto apenas cria um lembrete interno para a equipe; não envia notificações, WhatsApp, e-mails ou cobranças automaticamente.</p>
+    </div>
     {replenishmentOfQuoteId && <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
       <p className="text-sm font-semibold">Solicitação de reposição vinculada à cotação {replenishmentOfQuoteId.slice(0, 8)}</p>
       <Button type="button" size="sm" variant="outline" onClick={() => setReplenishmentOfQuoteId(null)}>Desvincular reposição</Button>
@@ -117,6 +136,22 @@ export function RubiBusinessQuotePanel({
           {quote.owner_note && <p className="rounded-lg border bg-muted/40 p-3 text-sm"><strong>Resposta comercial:</strong> {quote.owner_note}</p>}
           {quote.responded_at && <p className="text-xs text-muted-foreground">Primeira resposta: {new Date(quote.responded_at).toLocaleString("pt-BR")}</p>}
           {quote.replenishment_of_quote_id && <p className="text-xs font-semibold text-primary">Reposição solicitada com base na cotação {quote.replenishment_of_quote_id.slice(0, 8)}</p>}
+          {quote.followup_opt_in && <div className="flex flex-wrap items-center gap-2 rounded-lg border p-2 text-xs">
+            <span>Acompanhamento interno autorizado para {quote.followup_due_at ? new Date(quote.followup_due_at).toLocaleDateString("pt-BR") : "data pendente"}.</span>
+            <Button type="button" size="sm" variant="outline" onClick={() => {
+              void (async () => {
+                try {
+                  const { data: { session } } = await supabase.auth.getSession();
+                  if (!session?.access_token) throw new Error("Entre na sua conta.");
+                  await revoke({ data: { accessToken: session.access_token, quoteId: quote.id } });
+                  toast.success("Acompanhamento opcional cancelado.");
+                  void client.invalidateQueries({ queryKey: ["hub-business-my-quotes"] });
+                } catch (error) {
+                  toast.error(error instanceof Error ? error.message : "Falha ao cancelar acompanhamento.");
+                }
+              })();
+            }}>Cancelar acompanhamento</Button>
+          </div>}
           <div className="flex flex-wrap gap-2">
             <Button type="button" size="sm" variant="outline" onClick={() => { setReplenishmentOfQuoteId(null); onRepeat(quote.requested_lines, quote.id); }}>
               Usar quantidades em nova simulação
