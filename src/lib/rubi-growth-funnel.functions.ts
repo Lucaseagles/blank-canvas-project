@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireOwnerRole } from "./auth-guards.server";
+import { RUBI_ORGANIC_CHANNELS } from "./rubi-organic-campaigns";
 
 const funnelEvents = [
   "RUBI_STORE_PRODUCT_VIEW",
@@ -42,10 +43,22 @@ export const getRubiGrowthFunnelAdmin = createServerFn({ method: "GET" })
       return count ?? 0;
     };
 
-    const [eventCounts, signupCounts, activationCounts] = await Promise.all([
+    const countOrganicChannel = async (channel: string) => {
+      const { count, error } = await (supabaseAdmin as any)
+        .from("analytics_events")
+        .select("id", { count: "exact", head: true })
+        .eq("event_name", "RUBI_STORE_PRODUCT_VIEW")
+        .eq("source", channel)
+        .eq("metadata->>utm_medium", "organic_social")
+        .gte("created_at", since);
+      if (error) throw error;
+      return count ?? 0;
+    };
+    const [eventCounts, signupCounts, activationCounts, organicChannelCounts] = await Promise.all([
       Promise.all(funnelEvents.map(name => countEvent(name))),
       Promise.all(signupActions.map(action => countEvent("RUBI_SIGNUP_INVITE_ACTION", action))),
       Promise.all(activationActions.map(action => countEvent("RUBI_POST_SIGNUP_ACTIVATION", action))),
+      Promise.all(RUBI_ORGANIC_CHANNELS.map(channel => countOrganicChannel(channel.id))),
     ]);
 
     return {
@@ -53,5 +66,10 @@ export const getRubiGrowthFunnelAdmin = createServerFn({ method: "GET" })
       events: Object.fromEntries(funnelEvents.map((name, index) => [name, eventCounts[index]])) as Record<typeof funnelEvents[number], number>,
       signupActions: Object.fromEntries(signupActions.map((name, index) => [name, signupCounts[index]])) as Record<typeof signupActions[number], number>,
       activationActions: Object.fromEntries(activationActions.map((name, index) => [name, activationCounts[index]])) as Record<typeof activationActions[number], number>,
+      organicChannels: RUBI_ORGANIC_CHANNELS.map((channel, index) => ({
+        id: channel.id,
+        label: channel.label,
+        productViews: organicChannelCounts[index] ?? 0,
+      })),
     };
   });

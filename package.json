@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "test:rubi-checkout": "node --experimental-strip-types --test src/lib/rubi-checkout-validation.test.mjs"
+    "test:rubi-checkout": "node --experimental-strip-types --test src/lib/rubi-checkout-validation.test.mjs",
+    "test:rubi-organic": "node --experimental-strip-types --test src/lib/rubi-organic-campaigns.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
