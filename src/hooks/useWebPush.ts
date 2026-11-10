@@ -16,14 +16,23 @@ export function useWebPush() {
 
   useEffect(() => {
     const checkSupport = async () => {
-      const supported = 'serviceWorker' in navigator && 'PushManager' in window;
+      const supported = typeof window !== "undefined"
+        && window.isSecureContext
+        && "serviceWorker" in navigator && "PushManager" in window
+        && "Notification" in window;
       setIsSupported(supported);
 
       if (supported) {
-        setPermission(Notification.permission);
-        const registration = await navigator.serviceWorker.ready;
-        const sub = await registration.pushManager.getSubscription();
-        setSubscription(sub);
+        try {
+          setPermission(Notification.permission);
+          // Explicit registration ensures navigator.serviceWorker.ready resolves.
+          const registration = await navigator.serviceWorker.register("/sw.js");
+          const sub = await registration.pushManager.getSubscription();
+          setSubscription(sub);
+        } catch (error) {
+          console.error("Push service worker unavailable:", error);
+          setIsSupported(false);
+        }
       }
     };
 
