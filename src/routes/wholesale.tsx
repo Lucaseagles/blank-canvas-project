@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Store, ShieldCheck, Package } from "lucide-react";
 import { RubiBusinessQuotePanel } from "@/components/business/RubiBusinessQuotePanel";
 import { RubiStorefrontEntry } from "@/components/store/RubiStorefrontEntry";
+import { RubiConversionGuide } from "@/components/growth/RubiConversionGuide";
 
 export const Route = createFileRoute("/wholesale")({ component: Catalog });
 
@@ -61,6 +62,7 @@ function Catalog() {
     <main className="min-h-screen px-4 pb-24 pt-32">
       <div className="mx-auto max-w-7xl space-y-10">
         <RubiStorefrontEntry audience="merchant" />
+        <RubiConversionGuide audience="merchant" />
         <header className="rounded-[2rem] border border-primary/20 bg-gradient-to-br from-primary/15 via-background to-blue-500/10 p-8 md:p-12">
           <div className="mb-5 flex items-center gap-3 text-primary">
             <Store className="h-8 w-8" />

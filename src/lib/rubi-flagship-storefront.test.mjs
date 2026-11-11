@@ -116,3 +116,30 @@ test("Countdown appears only for real active published editorial section deadlin
  assert.match(store,/<RubiEditorialDeadline productId=\{product\.id\}/);
  assert.match(checkout,/<RubiEditorialDeadline productId=\{product\.id\}/);
 });
+
+test("Three login experiences include conversion guidance without fabricated urgency",()=>{
+ const guide=source("../components/growth/RubiConversionGuide.tsx");
+ const feed=source("../routes/feed.tsx");
+ const wholesale=source("../routes/wholesale.tsx");
+ const partner=source("../routes/partner/portal.tsx");
+ assert.match(feed,/<RubiConversionGuide audience="consumer"/);
+ assert.match(wholesale,/<RubiConversionGuide audience="merchant"/);
+ assert.match(partner,/<RubiConversionGuide audience="partner"/);
+ assert.match(guide,/aria-expanded=\{open\}/);
+ assert.match(guide,/identifique a publicidade/);
+ assert.match(guide,/não confirma pedido/);
+ assert.match(guide,/quando confirmadas/);
+ assert.doesNotMatch(guide,/Fulana comprou|restam só 2|compradores agora/);
+});
+
+test("Partner kit offers five transparent sales approaches without invented claims",()=>{
+ const kit=source("../components/partner/PartnerCreativeKit.tsx");
+ assert.match(kit,/Demonstração/);
+ assert.match(kit,/Story \/ Comunidade/);
+ assert.match(kit,/Expert \/ Nicho/);
+ assert.match(kit,/Dúvidas frequentes/);
+ assert.match(kit,/Comparação honesta/);
+ assert.match(kit,/Publicidade · link de parceiro RUBI/);
+ assert.match(kit,/referralCode/);
+ assert.doesNotMatch(kit,/compra confirmada por|garantia de vendas|pessoas compraram agora/);
+});
