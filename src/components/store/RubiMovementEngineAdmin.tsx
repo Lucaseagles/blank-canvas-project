@@ -3,6 +3,7 @@ import {useMutation,useQuery,useQueryClient} from "@tanstack/react-query";
 import {useServerFn} from "@tanstack/react-start";
 import {toast} from "sonner";
 import {Button} from "@/components/ui/button";
+import {RubiMovementVariantsAdmin} from "@/components/store/RubiMovementVariantsAdmin";
 import {emptyRubiMovement,rubiMovementChecklist,type RubiMovement} from "@/lib/rubi-movements";
 import {listRubiMovementsAdmin,saveRubiMovementAdmin,archiveRubiMovementAdmin} from "@/lib/rubi-movements.functions";
 
@@ -84,5 +85,6 @@ export function RubiMovementEngineAdmin({products}:{products:Product[]}){
     <Button variant="outline" onClick={()=>{if(dirty&&!window.confirm("Descartar alterações?"))return;setDraft(null);setDirty(false);}}>Fechar editor</Button>
    </div>
   </div>}
+  {draft?.id&&<RubiMovementVariantsAdmin key={draft.id} movementId={draft.id} movementName={draft.name} movementStatus={draft.status}/>}
  </section>;
 }
