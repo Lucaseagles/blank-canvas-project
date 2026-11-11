@@ -1,4 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { verifyOptionalUser } from "./personalization.server";
+import { rankRubiOffersByInterests, type RubiInterestCategory } from "./rubi-unified-interest-ranking";
 import { approvedRubiCheckout } from "./rubi-checkout-validation";
 import { canServeApprovedMovementPage } from "./rubi-movement-publication";
 import { RUBI_ORGANIC_CHANNELS, rubiOrganicProductPath, type RubiOrganicChannel } from "./rubi-organic-campaigns";
@@ -16,11 +19,16 @@ export type RubiFeedMovement = {
 
 const allowedChannels = new Set<string>(RUBI_ORGANIC_CHANNELS.map(item => item.id));
 
-/** Public editorial feed of previously approved and currently valid campaigns.
- * No profile information is accessed: interest-based delivery is a separate future gate.
- * Never expose checkout URLs, supplier costs, draft copy or customer identifiers.
+/** Approved campaigns ranked using only the authenticated person's category interests.
+ * Anonymous visitors see the editorial fallback. Never expose private interest records.
  */
-export const getRubiApprovedMovementFeed = createServerFn({ method: "GET" }).handler(async (): Promise<RubiFeedMovement[]> => {
+export const getRubiApprovedMovementFeed = createServerFn({ method: "POST" })
+ .validator((input: unknown) => z.object({
+  userId:z.string().uuid().nullable(),
+  accessToken:z.string().min(20).max(8192).nullable().optional()
+ }).parse(input))
+ .handler(async ({ data }): Promise<RubiFeedMovement[]> => {
+ await verifyOptionalUser(data.userId,data.accessToken);
  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
  const db = supabaseAdmin as any;
  const { data: plans, error: plansError } = await db.from("rubi_movement_distribution")
@@ -75,7 +83,21 @@ export const getRubiApprovedMovementFeed = createServerFn({ method: "GET" }).han
    imageUrl:product.image_url ?? null,price:Number(product.retail_price),
    headline:variant.page_headline,promise:movement.truthful_promise,href
   });
-  if (result.length >= 6) break;
  }
- return result;
+ if (!data.userId || !result.length) return result.slice(0,6);
+ // Map marketplace category UUIDs to the display names used by RUBI Store SKUs.
+ const { data: interestRows, error: interestError } = await db.from("user_interests")
+  .select("category_id,score").eq("user_id",data.userId)
+  .order("score",{ascending:false}).limit(20);
+ if (interestError || !interestRows?.length) return result.slice(0,6);
+ const categoryIds = interestRows.map((row: any)=>row.category_id as string);
+ const { data: categories, error: categoriesError } = await db.from("categories")
+  .select("id,name,slug").in("id",categoryIds);
+ if (categoriesError || !categories?.length) return result.slice(0,6);
+ const byCategory = new Map<string,any>(categories.map((category:any)=>[category.id,category]));
+ const interests:RubiInterestCategory[] = interestRows.flatMap((row:any)=>{
+  const category=byCategory.get(row.category_id);
+  return category ? [{name:category.name,slug:category.slug,score:Number(row.score)}] : [];
+ });
+ return rankRubiOffersByInterests(result,interests,6);
 });
