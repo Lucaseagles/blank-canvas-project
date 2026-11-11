@@ -5,6 +5,7 @@ import {toast} from "sonner";
 import {Button} from "@/components/ui/button";
 import {RUBI_ORGANIC_CHANNELS,movementCampaign,movementCampaignPath,type RubiDistributionPlan} from "@/lib/rubi-movement-distribution";
 import {listRubiDistributionAdmin,saveRubiDistributionAdmin} from "@/lib/rubi-movement-distribution.functions";
+import {setRubiMovementPagePublishedAdmin} from "@/lib/rubi-movement-publishing.functions";
 
 const blank=(variantId:string,variantName:string):RubiDistributionPlan=>({
  variant_id:variantId,channel:"instagram",campaign:movementCampaign(variantName,variantId),
@@ -13,8 +14,10 @@ const blank=(variantId:string,variantName:string):RubiDistributionPlan=>({
 export function RubiMovementDistributionAdmin({variantId,variantName,variantStatus,productId}:{variantId:string;variantName:string;variantStatus:"draft"|"review";productId:string}){
  const [draft,setDraft]=useState<RubiDistributionPlan|null>(null);
  const [dirty,setDirty]=useState(false);
+ const [publishing,setPublishing]=useState(false);
  const list=useServerFn(listRubiDistributionAdmin);
  const save=useServerFn(saveRubiDistributionAdmin);
+ const setPublished=useServerFn(setRubiMovementPagePublishedAdmin);
  const qc=useQueryClient();
  const query=useQuery({queryKey:["rubi-distribution",variantId],queryFn:()=>list({data:{variantId}}),retry:false});
  const change=<K extends keyof RubiDistributionPlan>(key:K,value:RubiDistributionPlan[K])=>{setDraft(p=>p?{...p,[key]:value}:p);setDirty(true);};
@@ -24,6 +27,18 @@ export function RubiMovementDistributionAdmin({variantId,variantName,variantStat
   onError:(error:Error)=>toast.error(error.message)
  });
  const path=draft?movementCampaignPath(productId,draft.channel,draft.campaign):"";
+ const changePagePublication=async(publish:boolean)=>{
+  if(!draft?.id||dirty||publishing)return;
+  if(publish&&!window.confirm("Confirmo revisão das afirmações, direitos das mídias e condições reais do produto. Publicar esta página?"))return;
+  setPublishing(true);
+  try{
+   await setPublished({data:{planId:draft.id,publish,confirmedEvidence:publish}});
+   toast.success(publish?"Página do movimento publicada.":"Página retirada do público.");
+   setDraft(null);setDirty(false);
+   await qc.invalidateQueries({queryKey:["rubi-distribution",variantId]});
+  }catch(e){toast.error(e instanceof Error?e.message:"Falha na publicação.");}
+  finally{setPublishing(false);}
+ };
  const open=(p:RubiDistributionPlan)=>{if(dirty&&!window.confirm("Descartar alterações não salvas?"))return;setDraft({...p});setDirty(false);};
  return <section className="space-y-3 rounded-xl border border-primary/20 p-4" aria-label="Distribuição do criativo por canal">
   <h5 className="font-bold">Movimentação e links rastreáveis · {variantName}</h5>
@@ -33,7 +48,7 @@ export function RubiMovementDistributionAdmin({variantId,variantName,variantStat
   {query.isError&&<p role="alert" className="text-destructive">Não foi possível carregar. Confirme banco e permissões.</p>}
   <div className="grid gap-2 sm:grid-cols-2">{query.data?.map(p=><button type="button" key={p.id} className="rounded-xl border p-3 text-left hover:border-primary" onClick={()=>open(p)}>
    <strong className="block text-sm">{RUBI_ORGANIC_CHANNELS.find(c=>c.id===p.channel)?.label||p.channel}</strong>
-   <span className="text-xs text-muted-foreground">{p.status==="planned"?"Planejado":"Publicação informada manualmente"} · {p.campaign}</span>
+   <span className="text-xs text-muted-foreground">{p.status==="planned"?"Planejado":"Post informado manualmente"} · {p.campaign} · {p.page_published_at?"Página pública":"Página privada"}</span>
   </button>)}</div>
   {draft&&<div className="space-y-3 rounded-lg border p-3">
    <label className="block space-y-1 text-sm font-semibold">Canal<select value={draft.channel} className="w-full rounded-lg border bg-background p-2" disabled={!!draft.id} onChange={e=>change("channel",e.target.value as RubiDistributionPlan["channel"])}>
@@ -47,6 +62,14 @@ export function RubiMovementDistributionAdmin({variantId,variantName,variantStat
      <option value="planned">Planejado</option><option value="manually_published" disabled={variantStatus!=="review"}>Publicado por mim (declaração)</option>
    </select></label>
    {draft.status==="manually_published"&&<label className="block space-y-1 text-sm font-semibold">Referência do post publicado<input className="w-full rounded-lg border bg-background p-2" maxLength={500} value={draft.published_reference} onChange={e=>change("published_reference",e.target.value)} placeholder="URL ou identificação do post"/></label>}
+   {draft.id&&<div className="space-y-2 rounded-lg border p-3">
+    <p className="font-semibold text-sm">Página deste movimento: {draft.page_published_at?"Publicada":"Não publicada"}</p>
+    <p className="text-xs text-muted-foreground">Aprovação separada do post na rede. O produto precisa estar ativo e com checkout oficial validado. Alterar o plano, movimento ou criativo exige nova aprovação.</p>
+    <Button type="button" variant="outline" disabled={dirty||publishing||(!draft.page_published_at&&variantStatus!=="review")}
+      onClick={()=>void changePagePublication(!draft.page_published_at)}>
+      {draft.page_published_at?"Despublicar página":"Aprovar e publicar página"}
+    </Button>
+   </div>}
    <div className="flex flex-wrap gap-2">
     <Button disabled={mutation.isPending||(!dirty&&!!draft.id)||!draft.campaign||draft.status==="manually_published"&&(variantStatus!=="review"||draft.published_reference.trim().length<8)} onClick={()=>mutation.mutate()}>{mutation.isPending?"Salvando...":"Salvar plano"}</Button>
     <Button variant="outline" onClick={()=>{const url=window.location.origin+path;void navigator.clipboard.writeText(url).then(()=>toast.success("Link copiado."),()=>toast.error("Não foi possível copiar."));}}>Copiar link da RUBI</Button>
