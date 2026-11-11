@@ -13,6 +13,7 @@ export const RUBI_TEST_MATRIX=[
 const outcomes=new Set(["passed","failed","skipped","timedOut","interrupted"]);
 function collect(specs,results=[],prefix=""){
  for(const spec of specs??[]){
+  if(spec.suites)collect(spec.suites,results,prefix+" "+(spec.title??""));
   if(spec.specs)collect(spec.specs,results,prefix+" "+(spec.title??""));
   else if(spec.tests)results.push({title:spec.title??"",fullTitle:(prefix+" "+spec.title).trim(),
     outcomes:spec.tests.flatMap(t=>t.results?.map(r=>r.status)??[])});
