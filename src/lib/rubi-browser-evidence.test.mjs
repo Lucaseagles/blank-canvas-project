@@ -5,7 +5,7 @@ import {RUBI_TEST_MATRIX,summarizeRubiBrowserEvidence,rubiBrowserEvidenceMarkdow
 const paths=(p)=>readFileSync(new URL(p,import.meta.url),"utf8");
 test("Empty report must not claim a passed browser test",()=>{
  const result=summarizeRubiBrowserEvidence({suites:[]});
- assert.equal(result.length,7);
+ assert.equal(result.length,8);
  assert.equal(result.every(item=>item.state==="not_run"),true);
  assert.match(rubiBrowserEvidenceMarkdown(result,""),/não configurada/);
  assert.match(rubiBrowserEvidenceMarkdown(result,""),/NÃO podem ser consideradas aprovadas/);
@@ -27,6 +27,7 @@ test("Mobile and desktop results are classified independently",()=>{
  assert.equal(x.find(i=>i.id==="video_desktop")?.state,"passed");
  assert.equal(x.find(i=>i.id==="guest_master")?.state,"passed");
  assert.equal(x.find(i=>i.id==="guest_partner")?.state,"not_run");
+ assert.equal(x.find(i=>i.id==="guest_consumer")?.state,"not_run");
 });
 test("Workflow always uploads evidence even on browser failures",()=>{
  const wf=paths("../../.github/workflows/rubi-browser-qa.yml");
