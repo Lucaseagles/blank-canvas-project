@@ -26,7 +26,8 @@
     "test:rubi-launch-qa": "node --experimental-strip-types --test src/lib/rubi-launch-qa.test.mjs",
     "test:rubi-master": "node --experimental-strip-types --test src/lib/rubi-master-candidates.test.mjs",
     "test:rubi-supplier-host": "node --experimental-strip-types --test src/lib/rubi-supplier-host-safety.test.mjs",
-    "test:rubi-supplier-csv": "node --experimental-strip-types --test src/lib/rubi-supplier-csv.test.mjs"
+    "test:rubi-supplier-csv": "node --experimental-strip-types --test src/lib/rubi-supplier-csv.test.mjs",
+    "test:rubi-launch-gates": "node --experimental-strip-types --test src/lib/rubi-launch-gates.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

@@ -10,7 +10,7 @@ export function RubiLaunchReadinessAdmin(){
   <div className="flex flex-wrap items-start justify-between gap-3">
    <div><p className="text-xs font-black uppercase tracking-widest text-primary">RUBI 11× · Operação real</p>
     <h2 className="text-2xl font-black">Diagnóstico de lançamentos e fornecedores</h2>
-    <p className="text-sm text-muted-foreground">Identifique o que falta para lançar produtos sem alterar código. A prontidão é técnica e cadastral; não comprova checkout Kairos transacionado nem venda confirmada.</p>
+    <p className="text-sm text-muted-foreground">Identifique o que falta para lançar produtos sem alterar código. Indicadores separados de cadastro apto e QA manual, sem confundir nenhum dos dois com checkout Kairos transacionado ou venda confirmada.</p>
    </div>
    <Button size="sm" variant="outline" disabled={query.isFetching} onClick={()=>void query.refetch()}>{query.isFetching?"Atualizando...":"Atualizar diagnóstico"}</Button>
   </div>
@@ -22,7 +22,7 @@ export function RubiLaunchReadinessAdmin(){
      {label:"Fornecedores",value:query.data.suppliersCount},
      {label:"Produtos analisados",value:query.data.productsCount},
      {label:"Prontos no cadastro",value:query.data.readyCount},
-     {label:"Bloqueados",value:query.data.blockedCount}
+     {label:"Conferidos manualmente",value:query.data.reviewedCount}
     ].map(x=><div key={x.label} className="rounded-xl border p-3"><p className="text-xl font-bold tabular-nums">{x.value}</p><p className="text-xs text-muted-foreground">{x.label}</p></div>)}
    </div>
    {query.data.productsCount===0&&<div className="rounded-xl border p-4 text-sm">
@@ -32,12 +32,18 @@ export function RubiLaunchReadinessAdmin(){
    <div className="space-y-3">
     {query.data.productRows.map(p=><article key={p.productId} className="rounded-xl border p-4 space-y-2">
      <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-bold">{p.title}</h3>
-      <span className="text-xs font-semibold">{p.readyForRetail?"Cadastro apto para publicação":"Cadastro bloqueado"}</span>
+      <span className="text-xs font-semibold">{p.readyForRetail?"Cadastro apto":"Cadastro bloqueado"} · {p.operational.launchReviewed?"QA declarado completo":"QA pendente"}</span>
      </div>
      <div className="grid gap-2 text-xs sm:grid-cols-3">
       <span>Margem bruta: {p.grossMarginAmount===null?"Não calculável":p.grossMarginAmount.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</span>
       <span>Margem bruta %: {p.grossMarginPercent===null?"Não calculável":p.grossMarginPercent.toLocaleString("pt-BR")+"%"}</span>
       <span>Campanha: {p.editorial.movements} movimentos · {p.editorial.variants} variantes · {p.editorial.approvedPages} páginas aprovadas</span>
+     </div>
+     <div className="space-y-1 rounded-lg border p-3">
+      <p className="text-sm font-semibold">Conferência operacional registrada: {p.operational.qaVerified}/{p.operational.qaTotal}</p>
+      <p className="text-xs text-muted-foreground">Status informado manualmente pelo Master; não substitui testes automatizados ou pagamentos reais.</p>
+      {p.operational.qaMissing.length>0&&<p className="text-xs text-muted-foreground">Pendente: {p.operational.qaMissing.join(", ")}</p>}
+      {p.operational.qaBlocked.length>0&&<p className="text-xs text-destructive">Bloqueado: {p.operational.qaBlocked.join(", ")}</p>}
      </div>
      {p.blocking.length>0&&<div className="space-y-1"><p className="text-sm font-semibold">Bloqueios de cadastro</p><ul className="list-disc pl-5 text-sm text-muted-foreground">{p.blocking.map(x=><li key={x}>{x}</li>)}</ul></div>}
      {p.recommendations.length>0&&<div className="space-y-1"><p className="text-sm font-semibold">Próximas melhorias</p><ul className="list-disc pl-5 text-sm text-muted-foreground">{p.recommendations.map(x=><li key={x}>{x}</li>)}</ul></div>}

@@ -1,6 +1,8 @@
 import {createServerFn} from "@tanstack/react-start";
 import {requireOwnerRole} from "./auth-guards.server";
 import {assessRubiLaunch,type RubiLaunchProduct,type RubiLaunchEditorial} from "./rubi-launch-readiness";
+import {assessRubiLaunchGate} from "./rubi-launch-gates";
+import {RUBI_LAUNCH_QA_ITEMS,type RubiQaChecklist} from "./rubi-launch-qa";
 const zero=():RubiLaunchEditorial=>({playbooks:0,approvedPlaybooks:0,movements:0,variants:0,approvedPages:0});
 /** Server-side master-only launch diagnostic; never changes checkout, prices or orders. */
 export const getRubiLaunchReadinessAdmin=createServerFn({method:"GET"})
@@ -44,7 +46,26 @@ export const getRubiLaunchReadinessAdmin=createServerFn({method:"GET"})
    }
   }
  }
- const entries=products.map(product=>assessRubiLaunch(product,totals.get(product.id)??zero()));
+ const qaByProduct=new Map<string,RubiQaChecklist>();
+ if(products.length){
+  const {data:qaRows,error:qaError}=await db.from("rubi_launch_qa_checklists")
+   .select("*").in("product_id",products.map(p=>p.id)).limit(200);
+  if(qaError)throw qaError;
+  for(const row of (qaRows??[]) as Array<Record<string,unknown>>){
+   const checklist={product_id:String(row["product_id"])} as RubiQaChecklist;
+   for(const item of RUBI_LAUNCH_QA_ITEMS){
+    checklist[item.key]={
+     status:row[`${item.key}_status`] as RubiQaChecklist[typeof item.key]["status"],
+     evidence:String(row[`${item.key}_evidence`]??""),
+    };
+   }
+   qaByProduct.set(checklist.product_id,checklist);
+  }
+ }
+ const entries=products.map(product=>{
+  const basic=assessRubiLaunch(product,totals.get(product.id)??zero());
+  return {...basic,operational:assessRubiLaunchGate(basic.readyForRetail,qaByProduct.get(product.id)??null)};
+ });
  const suppliers=(suppliersResult.data??[]) as Array<{id:string;name:string;active:boolean;checkout_host:string|null}>;
  return {
   asOf:new Date().toISOString(),productLimit:200,productsCount:products.length,
@@ -52,8 +73,10 @@ export const getRubiLaunchReadinessAdmin=createServerFn({method:"GET"})
   suppliersWithoutHost:suppliers.filter(s=>s.active&&!s.checkout_host).length,
   readyCount:entries.filter(e=>e.readyForRetail).length,
   blockedCount:entries.filter(e=>!e.readyForRetail).length,
+  reviewedCount:entries.filter(e=>e.operational.launchReviewed).length,
+  pendingOperationalCount:entries.filter(e=>!e.operational.launchReviewed).length,
   productRows:entries,
   externalDependencies:["Confirmar origem e titularidade das URLs Kairos.","Configurar domínio anual e HTTPS no ambiente de hospedagem.","Testar navegação e checkout real autorizado com fornecedor.","Validar pedido, comissões e estorno com evidência oficial."],
-  caution:"ReadyForRetail representa checagem de cadastro, não pagamento real, retorno financeiro ou publicação testada."
+  caution:"Prontidão cadastral é diferente de conferência manual; nenhuma delas comprova pedido pago, comissão recebida ou teste de navegador executado automaticamente."
  };
 });

@@ -81,6 +81,8 @@ jobs:
         run: npm run test:rubi-supplier-host
       - name: RUBI supplier CSV import tests
         run: npm run test:rubi-supplier-csv
+      - name: RUBI launch operational gates tests
+        run: npm run test:rubi-launch-gates
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint
