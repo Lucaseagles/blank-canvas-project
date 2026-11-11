@@ -1,8 +1,8 @@
 import {createServerFn} from "@tanstack/react-start";
 import {z} from "zod";
 import {requireOwnerRole} from "./auth-guards.server";
+import {canProposeMasterCandidate} from "./rubi-master-candidates";
 const emailSchema=z.string().trim().toLowerCase().email().max(254);
-const PRIMARY_OWNER_EMAIL="eaglesfr49@gmail.com";
 
 /** Solo-master control panel: future candidates do NOT receive any authorization. */
 export const listRubiMasterCandidatesAdmin=createServerFn({method:"GET"})
@@ -18,7 +18,7 @@ export const proposeRubiMasterCandidateAdmin=createServerFn({method:"POST"})
  .middleware([requireOwnerRole])
  .validator((input:unknown)=>z.object({email:emailSchema}).parse(input))
  .handler(async({data,context})=>{
-  if(data.email===PRIMARY_OWNER_EMAIL)throw new Error("O Master principal já possui acesso.");
+  if(!canProposeMasterCandidate(data.email))throw new Error("E-mail não elegível para pré-cadastro.");
   const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
   const {error}=await (supabaseAdmin as any).from("rubi_master_delegations")
    .upsert({email:data.email,requested_by:context.userId,status:"pending",updated_at:new Date().toISOString()},{onConflict:"email"});
