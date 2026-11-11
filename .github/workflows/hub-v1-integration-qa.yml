@@ -79,6 +79,8 @@ jobs:
         run: npm run test:rubi-master
       - name: RUBI supplier checkout host tests
         run: npm run test:rubi-supplier-host
+      - name: RUBI supplier CSV import tests
+        run: npm run test:rubi-supplier-csv
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint
