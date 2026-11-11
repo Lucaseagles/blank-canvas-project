@@ -6,7 +6,7 @@ const source=(name)=>readFileSync(new URL(name,import.meta.url),"utf8");
 test("Flagship store keeps only official retail catalog and product route",()=>{
  const code=source("../routes/hub-shop.tsx");
  assert.match(code,/getRetailHubCatalog/);
- assert.match(code,/to="\/hub-product\/\$productId"/);
+ assert.match(code,/const link="\\/hub-product\\/\\$productId"/);\n assert.match(code,/to=\\{link\\}/);
  assert.match(code,/to="\/wholesale"/);
  assert.match(code,/to="\/partner\/portal"/);
  assert.match(code,/to="\/videos"/);
