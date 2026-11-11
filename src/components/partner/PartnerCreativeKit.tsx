@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-type Template = "demonstration" | "story" | "expert";
+type Template = "demonstration" | "story" | "expert" | "faq" | "comparison";
 
 type PartnerCreativeKitProps = {
   productTitle: string;
@@ -14,6 +14,8 @@ const templates: { id: Template; label: string; guidance: string }[] = [
   { id: "demonstration", label: "Demonstração", guidance: "Mostre apenas características que você verificou. Grave material próprio ou autorizado." },
   { id: "story", label: "Story / Comunidade", guidance: "Explique para quem o produto pode ser interessante, sem alegar desconto ou escassez não comprovados." },
   { id: "expert", label: "Expert / Nicho", guidance: "Conecte a apresentação ao seu nicho sem prometer resultados técnicos, médicos ou financeiros." },
+  { id: "faq", label: "Dúvidas frequentes", guidance: "Responda apenas a dúvidas para as quais há informação confirmada pelo fornecedor; encaminhe outras à página oficial." },
+  { id: "comparison", label: "Comparação honesta", guidance: "Compare apenas especificações demonstráveis, sem inventar vantagens sobre concorrentes ou escassez." },
 ];
 
 /**
@@ -29,6 +31,10 @@ export function PartnerCreativeKit({ productTitle, category, referralCode }: Par
 
   const getCopy = (link: string): string => {
     switch (selected) {
+      case "faq":
+        return `Publicidade · link de parceiro RUBI\n\nDúvidas sobre "${product}"? Antes de decidir, confira a descrição, o valor atualizado e as condições de compra na página oficial. Se tiver alguma dúvida que não esteja respondida, consulte o fornecedor.\n\n${link}`;
+      case "comparison":
+        return `Publicidade · link de parceiro RUBI\n\nBuscando opções de ${niche}? Veja as especificações de "${product}" e compare com outros produtos para escolher de acordo com a sua necessidade. Confira o preço e os detalhes oficiais.\n\n${link}`;
       case "story":
         return `Publicidade · link de parceiro RUBI\n\nVocê gosta de ${niche}? Conheça "${product}" e confira se faz sentido para você. Veja os detalhes e o preço atualizado na página oficial da indicação.\n\n${link}`;
       case "expert":
