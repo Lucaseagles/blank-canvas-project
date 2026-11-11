@@ -102,3 +102,17 @@ test("Social activity supports persistent opt-out and cannot invent purchases",(
  assert.match(counts,/visualizações/);
  assert.doesNotMatch(stats,/PURCHASE_CONFIRMED|PAID_ORDER/);
 });
+
+test("Countdown appears only for real active published editorial section deadlines",()=>{
+ const server=source("./rubi-editorial-deadline.functions.ts");
+ const timer=source("../components/store/RubiEditorialDeadline.tsx");
+ const store=source("../routes/hub-product.$productId.tsx");
+ const checkout=source("../components/store/RubiPreCheckout.tsx");
+ assert.match(server,/activeRubiStorefrontSection\(section,now\)/);
+ assert.match(server,/\.eq\("status","published"\)/);
+ assert.match(server,/\.contains\("product_ids",\[data\.productId\]\)/);
+ assert.match(timer,/if\(!Number\.isFinite\(left\)\|\|left<=0\)return null/);
+ assert.match(timer,/Não significa que o preço, o estoque ou o checkout vencerão/);
+ assert.match(store,/<RubiEditorialDeadline productId=\{product\.id\}/);
+ assert.match(checkout,/<RubiEditorialDeadline productId=\{product\.id\}/);
+});
