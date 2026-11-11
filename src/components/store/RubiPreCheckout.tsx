@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { trackEvent } from "@/lib/analytics";
 import { RubiPostSignupActivation } from "@/components/store/RubiPostSignupActivation";
 import { currentRubiOrganicAttribution } from "@/lib/rubi-organic-campaigns";
+import { getRubiEditorialSection } from "@/lib/rubi-editorial-context";
 
 type Product = {
   id: string;
@@ -113,6 +114,7 @@ export function RubiPreCheckout({ product, returnTo, partnerCode, origin }: Prop
         action: "external_checkout_intent",
         utm_medium: organic ? "organic_social" : null,
         utm_campaign: organic?.campaign ?? null,
+        editorial_section_id: origin === "store" ? getRubiEditorialSection(product.id) : null,
       }, { productId: product.id, source: origin === "partner" ? "rubi_partner" : organic?.source ?? "rubi_store" });
       window.location.assign(url.toString());
     } catch {

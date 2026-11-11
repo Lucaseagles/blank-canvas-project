@@ -10,8 +10,8 @@ export function RubiEditorialMetricsAdmin(){
  return <section className="space-y-4 rounded-3xl border bg-card p-6" aria-label="Resultados de coleções da loja">
   <div className="flex flex-wrap items-start justify-between gap-3">
    <div><p className="text-xs font-black uppercase tracking-widest text-primary">RUBI Intelligence · 30 dias</p>
-    <h2 className="mt-1 text-2xl font-black">Cliques nas coleções</h2>
-    <p className="mt-2 text-sm text-muted-foreground">Medição de cliques de produtos e sessões observadas nas vitrines. Não representa vendas nem visitas totais à seção.</p></div>
+    <h2 className="mt-1 text-2xl font-black">Funil de descoberta por coleção</h2>
+    <p className="mt-2 text-sm text-muted-foreground">Acompanhe cliques nos cards, visualizações de produtos e saídas ao checkout, sem atribuir compras não confirmadas.</p></div>
    <Button type="button" variant="outline" disabled={query.isFetching} onClick={()=>void query.refetch()}>{query.isFetching?"Atualizando...":"Atualizar"}</Button>
   </div>
   {query.isLoading&&<p role="status">Calculando eventos observados...</p>}
@@ -20,12 +20,13 @@ export function RubiEditorialMetricsAdmin(){
    {!rows.length&&<p className="text-sm text-muted-foreground">Nenhuma coleção com produtos cadastrada no período consultado.</p>}
    {groups.map(id=><div key={id} className="space-y-2 rounded-xl border p-4">
     <h3 className="font-bold">{rows.find(r=>r.sectionId===id)?.sectionTitle}</h3>
-    <div className="space-y-2">{rows.filter(r=>r.sectionId===id).map(r=><div key={r.productId} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 text-sm">
+    <div className="space-y-2">{rows.filter(r=>r.sectionId===id).map(r=><div key={r.productId} className="grid grid-cols-1 items-center gap-2 border-t py-2 text-sm sm:grid-cols-[minmax(0,1fr)_repeat(3,minmax(0,auto))]">
      <span className="truncate" title={r.productTitle}>{r.productTitle}</span>
      <span className="tabular-nums">{r.clickEvents.toLocaleString("pt-BR")} cliques</span>
-     <span className="tabular-nums text-muted-foreground">{r.clickSessions.toLocaleString("pt-BR")} sessões</span>
+     <span className="tabular-nums">{r.productViews.toLocaleString("pt-BR")} visualizações</span>
+     <span className="tabular-nums">{r.checkoutIntents.toLocaleString("pt-BR")} saídas ao checkout</span>
     </div>)}</div></div>)}
-   <p className="text-xs text-muted-foreground">Atualizado em {new Date(query.data.asOf).toLocaleString("pt-BR")}. Sem dados de exposição/impressão, não é possível calcular CTR. Zero significa nenhum clique registrado na janela, e não prova ausência de visitas. O rastreamento pode ser limitado por bloqueadores ou consentimento.</p>
+   <p className="text-xs text-muted-foreground">Atualizado em {new Date(query.data.asOf).toLocaleString("pt-BR")}. As três contagens são eventos observados, não necessariamente a jornada da mesma pessoa. Não representam vendas, receita, taxa de conversão ou retenção de vídeo. As coleções refletem a associação atual de produtos; mudanças anteriores na curadoria podem limitar a leitura histórica. Bloqueadores e consentimento podem reduzir a coleta.</p>
   </>}
  </section>;
 }

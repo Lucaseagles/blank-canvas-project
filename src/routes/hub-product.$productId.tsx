@@ -11,6 +11,7 @@ import { RubiMovementLanding } from "@/components/store/RubiMovementLanding";
 import { RubiComplementarySuggestions } from "@/components/store/RubiComplementarySuggestions";
 import { RubiProductStories } from "@/components/store/RubiProductStories";
 import { currentRubiOrganicAttribution } from "@/lib/rubi-organic-campaigns";
+import { getRubiEditorialSection } from "@/lib/rubi-editorial-context";
 
 export const Route = createFileRoute("/hub-product/$productId")({
   component: HubProductDetail,
@@ -42,6 +43,7 @@ function HubProductDetail() {
       utm_medium: attribution ? "organic_social" : null,
       utm_campaign: campaign,
       sales_status: "view_only",
+      editorial_section_id: getRubiEditorialSection(product.id),
     }, { productId: product.id, source });
   }, [product?.id]);
 

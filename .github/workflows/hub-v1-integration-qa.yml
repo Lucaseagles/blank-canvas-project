@@ -95,6 +95,8 @@ jobs:
         run: npm run test:rubi-editorial-story
       - name: RUBI editorial metrics tests
         run: npm run test:rubi-editorial-metrics
+      - name: RUBI editorial funnel tests
+        run: npm run test:rubi-editorial-funnel
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint

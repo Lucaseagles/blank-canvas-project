@@ -12,7 +12,7 @@ test("Editorial cards track their own clicked section and product, never a sale"
 test("Analytics report has owner-only access and no visitor identities",()=>{
  const src=read("./rubi-editorial-metrics.functions.ts");
  assert.match(src,/requireOwnerRole/);
- assert.match(src,/rubi_editorial_click_summary/);
+ assert.match(src,/rubi_editorial_funnel_summary/);
  assert.doesNotMatch(src,/anonymous_id|user_id|session_id/);
 });
 test("SQL aggregation restricts public RPC and includes only existing section/product pairs",()=>{
