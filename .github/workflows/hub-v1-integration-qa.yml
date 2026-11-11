@@ -99,6 +99,8 @@ jobs:
         run: npm run test:rubi-editorial-funnel
       - name: RUBI qualified journey tests
         run: npm run test:rubi-qualified-journey
+      - name: RUBI QA commercial snapshot tests
+        run: npm run test:rubi-qa-snapshot
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint
