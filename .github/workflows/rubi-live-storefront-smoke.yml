@@ -1,0 +1,34 @@
+name: RUBI Live Storefront Smoke
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      RUBI_STOREFRONT_URL: ${{ vars.RUBI_STOREFRONT_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify domain is configured
+        run: |
+          if [ -z "$RUBI_STOREFRONT_URL" ]; then
+            echo "::error::Configure repository variable RUBI_STOREFRONT_URL with the published HTTPS origin."
+            exit 1
+          fi
+      - name: Probe public pages and report profile HTTP responses
+        run: node scripts/rubi-live-storefront-smoke.mjs
+      - name: Upload auditable evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rubi-live-smoke-results
+          path: artifacts/rubi-live-smoke.*
+          if-no-files-found: ignore
+          retention-days: 30
