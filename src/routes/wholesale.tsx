@@ -7,6 +7,7 @@ import { getMerchantHubCatalog } from "@/lib/hub-catalog.functions";
 import { Button } from "@/components/ui/button";
 import { Store, ShieldCheck, Package } from "lucide-react";
 import { RubiBusinessQuotePanel } from "@/components/business/RubiBusinessQuotePanel";
+import { RubiStorefrontEntry } from "@/components/store/RubiStorefrontEntry";
 
 export const Route = createFileRoute("/wholesale")({ component: Catalog });
 
