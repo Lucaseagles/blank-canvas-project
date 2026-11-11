@@ -36,3 +36,10 @@ test("Workflow always uploads evidence even on browser failures",()=>{
  assert.match(config,/rubi-browser-results\.json/);
  assert.equal(RUBI_TEST_MATRIX.filter(r=>r.kind==="guest_guard").length,3);
 });
+
+test("Nested Playwright JSON suites retain actual browser results",()=>{
+ const report={suites:[{title:"scripts/rubi-browser.e2e.spec.mjs",suites:[
+  {title:"RUBI loja pública — mobile",specs:[{title:"vitrine HTTPS renderiza e permite descobrir produtos sem pagamento",tests:[{results:[{status:"passed"}]}]}]}
+ ]}]};
+ assert.equal(summarizeRubiBrowserEvidence(report).find(x=>x.id==="store_mobile")?.state,"passed");
+});
