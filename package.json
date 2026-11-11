@@ -19,7 +19,8 @@
     "test:rubi-complementary": "node --experimental-strip-types --test src/lib/rubi-complementary-offers.test.mjs",
     "test:rubi-movement": "node --experimental-strip-types --test src/lib/rubi-movements.test.mjs",
     "test:rubi-variants": "node --experimental-strip-types --test src/lib/rubi-movement-variants.test.mjs",
-    "test:rubi-distribution": "node --experimental-strip-types --test src/lib/rubi-movement-distribution.test.mjs"
+    "test:rubi-distribution": "node --experimental-strip-types --test src/lib/rubi-movement-distribution.test.mjs",
+    "test:rubi-performance": "node --experimental-strip-types --test src/lib/rubi-movement-performance.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
