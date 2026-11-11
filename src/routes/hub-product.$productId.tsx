@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { RubiPreCheckout } from "@/components/store/RubiPreCheckout";
 import { RubiPublishedOffer } from "@/components/store/RubiPublishedOffer";
+import { RubiComplementarySuggestions } from "@/components/store/RubiComplementarySuggestions";
 import { currentRubiOrganicAttribution } from "@/lib/rubi-organic-campaigns";
 
 export const Route = createFileRoute("/hub-product/$productId")({
@@ -67,6 +68,7 @@ function HubProductDetail() {
           <>
             <RubiPublishedOffer productId={product.id} />
             <div id="rubi-purchase"><RubiPreCheckout product={product} returnTo={`/hub-product/${product.id}`} origin="store" /></div>
+            <RubiComplementarySuggestions productId={product.id} />
           </>
         )}
       </div>
