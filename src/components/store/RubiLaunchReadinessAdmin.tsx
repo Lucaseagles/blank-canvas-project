@@ -20,11 +20,12 @@ export function RubiLaunchReadinessAdmin(){
    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
     {[
      {label:"Fornecedores",value:query.data.suppliersCount},
-     {label:"Produtos analisados",value:query.data.productsCount},
+     {label:"Produtos no banco",value:query.data.totalProducts},
      {label:"Prontos no cadastro",value:query.data.readyCount},
      {label:"Conferidos manualmente",value:query.data.reviewedCount}
     ].map(x=><div key={x.label} className="rounded-xl border p-3"><p className="text-xl font-bold tabular-nums">{x.value}</p><p className="text-xs text-muted-foreground">{x.label}</p></div>)}
    </div>
+   {query.data.isPartial&&<div role="alert" className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 text-sm"><strong>Diagnóstico parcial:</strong> {query.data.productsCount} de {query.data.totalProducts} produtos analisados; {query.data.productsNotAnalyzed} ainda não conferidos nesta consulta. Os números de prontos, bloqueados e QA não são totais gerais.</div>}
    {query.data.productsCount===0&&<div className="rounded-xl border p-4 text-sm">
     <p className="font-semibold">Ainda não há produto no catálogo para lançar.</p>
     <p className="text-muted-foreground">Cadastre primeiro o fornecedor, o domínio oficial exato do checkout, os preços e o produto. Ative somente após verificar as informações reais.</p>
@@ -54,7 +55,7 @@ export function RubiLaunchReadinessAdmin(){
    <div className="rounded-xl border p-4 space-y-2">
     <h3 className="font-bold">Verificações externas ainda necessárias</h3>
     <ul className="list-disc pl-5 text-sm text-muted-foreground">{query.data.externalDependencies.map(d=><li key={d}>{d}</li>)}</ul>
-    <p className="text-xs text-muted-foreground">Consultado em {new Date(query.data.asOf).toLocaleString("pt-BR")}. Máximo de {query.data.productLimit} produtos por consulta. Atividade comercial não inferida.</p>
+    <p className="text-xs text-muted-foreground">Consultado em {new Date(query.data.asOf).toLocaleString("pt-BR")}. Analisados {query.data.productsCount} de {query.data.totalProducts} produtos, limite de {query.data.productLimit} por consulta. {query.data.isPartial?"Resultados parciais.":"Todos os produtos contabilizados no limite."} Atividade comercial não inferida.</p>
    </div>
   </>}
  </section>;

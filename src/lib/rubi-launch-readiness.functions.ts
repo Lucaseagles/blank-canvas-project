@@ -10,13 +10,14 @@ export const getRubiLaunchReadinessAdmin=createServerFn({method:"GET"})
 .middleware([requireOwnerRole]).handler(async()=>{
  const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
  const db=supabaseAdmin as any;
- const [productsResult,suppliersResult,playbooksResult,movementsResult]=await Promise.all([
+ const [productsResult,productsCountResult,suppliersResult,playbooksResult,movementsResult]=await Promise.all([
   db.from("hub_products").select("id,title,active,retail_price,supplier_cost,description,image_url,checkout_url,checkout_verified,supplier_id,hub_suppliers!inner(active,checkout_host)").order("created_at",{ascending:false}).limit(200),
+  db.from("hub_products").select("id",{count:"exact",head:true}),
   db.from("hub_suppliers").select("id,name,active,checkout_host").order("name"),
   db.from("rubi_offer_playbooks").select("product_id,published_at").limit(2000),
   db.from("rubi_movements").select("id,product_id").limit(2000),
  ]);
- for(const response of [productsResult,suppliersResult,playbooksResult,movementsResult])if(response.error)throw response.error;
+ for(const response of [productsResult,productsCountResult,suppliersResult,playbooksResult,movementsResult])if(response.error)throw response.error;
  const products=(productsResult.data??[]) as Array<RubiLaunchProduct&{supplier_id:string}>;
  const movements=(movementsResult.data??[]) as Array<{id:string;product_id:string}>;
  const totals=new Map<string,RubiLaunchEditorial>();
@@ -71,8 +72,12 @@ export const getRubiLaunchReadinessAdmin=createServerFn({method:"GET"})
   return {...basic,operational,qaStale:!!qa&&!current};
  });
  const suppliers=(suppliersResult.data??[]) as Array<{id:string;name:string;active:boolean;checkout_host:string|null}>;
+ if(typeof productsCountResult.count!=="number"||!Number.isSafeInteger(productsCountResult.count))throw new Error("Não foi possível consultar a contagem total de produtos.");
+ const totalProducts=productsCountResult.count;
+ const isPartial=totalProducts>products.length;
  return {
   asOf:new Date().toISOString(),productLimit:200,productsCount:products.length,
+  totalProducts,isPartial,productsNotAnalyzed:Math.max(0,totalProducts-products.length),
   suppliersCount:suppliers.length,activeSuppliers:suppliers.filter(s=>s.active).length,
   suppliersWithoutHost:suppliers.filter(s=>s.active&&!s.checkout_host).length,
   readyCount:entries.filter(e=>e.readyForRetail).length,
@@ -81,6 +86,6 @@ export const getRubiLaunchReadinessAdmin=createServerFn({method:"GET"})
   pendingOperationalCount:entries.filter(e=>!e.operational.launchReviewed).length,
   productRows:entries,
   externalDependencies:["Confirmar origem e titularidade das URLs Kairos.","Configurar domínio anual e HTTPS no ambiente de hospedagem.","Testar navegação e checkout real autorizado com fornecedor.","Validar pedido, comissões e estorno com evidência oficial."],
-  caution:"Prontidão cadastral é diferente de conferência manual; nenhuma delas comprova pedido pago, comissão recebida ou teste de navegador executado automaticamente."
+  caution:"Contagens de prontos/conferidos são somente dos produtos analisados. Em catálogo com mais de 200 produtos, os totais são PARCIAIS. QA manual não comprova pedido pago ou teste de navegador executado."
  };
 });
