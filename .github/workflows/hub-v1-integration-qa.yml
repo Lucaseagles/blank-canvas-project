@@ -97,6 +97,8 @@ jobs:
         run: npm run test:rubi-editorial-metrics
       - name: RUBI editorial funnel tests
         run: npm run test:rubi-editorial-funnel
+      - name: RUBI qualified journey tests
+        run: npm run test:rubi-qualified-journey
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint
