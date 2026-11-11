@@ -34,7 +34,8 @@
     "test:rubi-editorial": "node --experimental-strip-types --test src/lib/rubi-storefront-sections.test.mjs",
     "test:rubi-editorial-story": "node --experimental-strip-types --test src/lib/rubi-editorial-story-bridge.test.mjs",
     "test:rubi-editorial-metrics": "node --experimental-strip-types --test src/lib/rubi-editorial-metrics.test.mjs",
-    "test:rubi-editorial-funnel": "node --experimental-strip-types --test src/lib/rubi-editorial-funnel.test.mjs"
+    "test:rubi-editorial-funnel": "node --experimental-strip-types --test src/lib/rubi-editorial-funnel.test.mjs",
+    "test:rubi-qualified-journey": "node --experimental-strip-types --test src/lib/rubi-qualified-journey.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
