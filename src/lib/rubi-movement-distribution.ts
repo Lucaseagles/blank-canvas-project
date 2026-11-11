@@ -1,7 +1,7 @@
 import {normalizeRubiCampaign,rubiOrganicProductPath, RUBI_ORGANIC_CHANNELS,type RubiOrganicChannel} from "./rubi-organic-campaigns.ts";
 export type RubiDistributionPlan = {
  id?:string | undefined;variant_id:string;channel:RubiOrganicChannel;campaign:string;
- status:"planned"|"manually_published";notes:string;published_reference:string;
+ status:"planned"|"manually_published";notes:string;published_reference:string;page_published_at?:string|null;
 };
 export function movementCampaign(name:string,variantId:string){
  const suffix=variantId.replaceAll("-","").slice(0,12).toLowerCase();
