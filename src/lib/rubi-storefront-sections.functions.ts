@@ -2,6 +2,7 @@ import {createServerFn} from "@tanstack/react-start";
 import {z} from "zod";
 import {requireOwnerRole} from "./auth-guards.server";
 import {approvedRubiCheckout} from "./rubi-checkout-validation";
+import {validRubiStoryMediaUrl} from "./rubi-product-stories";
 import {activeRubiStorefrontSection,validRubiStorefrontWindow,type RubiStorefrontSection} from "./rubi-storefront-sections";
 const uuid=z.string().uuid();
 const form=z.object({
@@ -63,10 +64,25 @@ export const getRubiStorefrontPublishedSections=createServerFn({method:"GET"}).h
  const ids=[...new Set(sections.flatMap(s=>s.product_ids))];
  const products=await authorizedProducts(admin,ids);
  const byId=new Map<string,any>(products.map((p:any)=>[p.id,p]));
+ // Only approved, licensed media for products with a currently authorized checkout.
+ const approvedIds=products.map((p:any)=>p.id as string);
+ const {data:storyRows,error:storyError}=await admin.from("rubi_product_stories")
+  .select("product_id,title,poster_url,video_url,position")
+  .in("product_id",approvedIds).eq("status","approved").eq("rights_confirmed",true)
+  .order("position",{ascending:true}).limit(500);
+ if(storyError)throw storyError;
+ const storyByProduct=new Map<string,{title:string;poster_url:string|null}>();
+ for(const row of (storyRows??[]) as Array<{product_id:string;title:string;poster_url:string|null;video_url:string}>){
+  if(storyByProduct.has(row.product_id)||!validRubiStoryMediaUrl(row.video_url,"video")||
+     (row.poster_url&&!validRubiStoryMediaUrl(row.poster_url,"poster")))continue;
+  storyByProduct.set(row.product_id,{title:row.title,poster_url:row.poster_url});
+ }
+
  return sections.map(section=>({
   id:section.id!,kind:section.kind,title:section.title,subtitle:section.subtitle,
   products:section.product_ids.map(id=>byId.get(id)).filter(Boolean).map((p:any)=>({
-   id:p.id,title:p.title,image_url:p.image_url,retail_price:Number(p.retail_price)
+   id:p.id,title:p.title,image_url:p.image_url,retail_price:Number(p.retail_price),
+   story:storyByProduct.get(p.id)??null
   }))
  })).filter(s=>s.products.length>0);
 });
