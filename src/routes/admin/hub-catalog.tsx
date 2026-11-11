@@ -19,6 +19,7 @@ import { RubiOfferEngineAdmin } from "@/components/store/RubiOfferEngineAdmin";
 import { RubiComplementaryOffersAdmin } from "@/components/store/RubiComplementaryOffersAdmin";
 import { RubiMovementEngineAdmin } from "@/components/store/RubiMovementEngineAdmin";
 import { RubiLaunchReadinessAdmin } from "@/components/store/RubiLaunchReadinessAdmin";
+import { RubiLaunchQaAdmin } from "@/components/store/RubiLaunchQaAdmin";
 
 export const Route = createFileRoute("/admin/hub-catalog")({ component: HubCatalogAdmin });
 
@@ -188,6 +189,7 @@ function HubCatalogAdmin() {
         </div>
       </header>
       <RubiLaunchReadinessAdmin />
+      <RubiLaunchQaAdmin products={products} />
       <RubiMovementEngineAdmin products={products} />
       <RubiOfferEngineAdmin products={products} />
       <RubiComplementaryOffersAdmin products={products} />
