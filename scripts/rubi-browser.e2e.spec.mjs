@@ -26,6 +26,11 @@ for(const viewport of widths){
 }
 
 test.describe("RUBI — isolamento sem credenciais",()=>{
+ test("feed público do consumidor mantém entrada da loja sem exigir login",async({page})=>{
+  await page.goto(RUBI_BROWSER_PATHS.feed,{waitUntil:"domcontentloaded"});
+  await expect(page.getByRole("heading",{name:/FEED DE DESCOBERTA/i})).toBeVisible();
+  await expect(page.getByRole("heading",{name:/Explore a nossa vitrine/i})).toBeVisible();
+ });
  test("área Master não libera painel para sessão anônima",async({page})=>{
   await page.goto(RUBI_BROWSER_PATHS.master,{waitUntil:"domcontentloaded"});
   await expect(page.locator("body")).toBeVisible();

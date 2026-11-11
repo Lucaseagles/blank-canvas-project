@@ -39,7 +39,8 @@
     "test:rubi-qa-snapshot": "node --experimental-strip-types --test src/lib/rubi-launch-qa-snapshot.test.mjs",
     "test:rubi-live-smoke": "node --test src/lib/rubi-live-storefront-smoke.test.mjs",
     "test:rubi-four-profiles": "node --experimental-strip-types --test src/lib/rubi-four-profile-contracts.test.mjs",
-    "test:rubi-browser-contract": "node --test src/lib/rubi-browser-e2e-config.test.mjs"
+    "test:rubi-browser-contract": "node --test src/lib/rubi-browser-e2e-config.test.mjs",
+    "test:rubi-browser-evidence": "node --test src/lib/rubi-browser-evidence.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
