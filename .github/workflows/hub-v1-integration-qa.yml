@@ -73,6 +73,8 @@ jobs:
         run: npm run test:rubi-publication
       - name: RUBI Kairos launch readiness tests
         run: npm run test:rubi-launch
+      - name: RUBI launch QA checklist tests
+        run: npm run test:rubi-launch-qa
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint
