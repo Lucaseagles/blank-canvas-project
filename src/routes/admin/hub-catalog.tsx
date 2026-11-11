@@ -16,6 +16,7 @@ import { RubiBusinessQuotesAdmin } from "@/components/business/RubiBusinessQuote
 import { RubiBusinessRetentionAdmin } from "@/components/business/RubiBusinessRetentionAdmin";
 import { RubiBusinessFollowupsAdmin } from "@/components/business/RubiBusinessFollowupsAdmin";
 import { RubiOfferEngineAdmin } from "@/components/store/RubiOfferEngineAdmin";
+import { RubiComplementaryOffersAdmin } from "@/components/store/RubiComplementaryOffersAdmin";
 
 export const Route = createFileRoute("/admin/hub-catalog")({ component: HubCatalogAdmin });
 
@@ -185,6 +186,7 @@ function HubCatalogAdmin() {
         </div>
       </header>
       <RubiOfferEngineAdmin products={products} />
+      <RubiComplementaryOffersAdmin products={products} />
       <RubiOrganicLinkBuilder products={products} />
       <section aria-label="RUBI 11× · Desempenho de campanhas por produto" className="space-y-4 rounded-3xl border border-primary/25 bg-card/80 p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
