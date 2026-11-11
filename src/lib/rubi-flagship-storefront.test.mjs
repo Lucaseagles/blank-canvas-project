@@ -159,3 +159,21 @@ test("Conversion interest reporting is master-only and distinguishes actions fro
  assert.match(dashboard,/<RubiAudienceConversionPulse \/>/);
  assert.doesNotMatch(api,/orders.*confirmed|fake_purchase/);
 });
+
+test("Three funnels dashboard uses exact protected counts and distinct stages",()=>{
+ const api=source("./rubi-three-funnel-pulse.functions.ts");
+ const panel=source("../components/admin/RubiThreeFunnelPulseAdmin.tsx");
+ const dashboard=source("../routes/admin/dashboard.tsx");
+ assert.match(api,/requireOwnerRole/);
+ assert.match(api,/count:"exact"/);
+ assert.match(api,/RUBI_STORE_PRODUCT_VIEW/);
+ assert.match(api,/RUBI_PRECHECKOUT_CONTINUE/);
+ assert.match(api,/hub_b2b_quote_requests/);
+ assert.match(api,/replenishment_of_quote_id/);
+ assert.match(api,/hub_partner_referral_visits/);
+ assert.match(api,/hub_partner_confirmed_sales/);
+ assert.match(api,/\.gte\(dateColumn,since\)/);
+ assert.match(panel,/etapas independentes/i);
+ assert.match(panel,/não uma coorte de pessoas/i);
+ assert.match(dashboard,/<RubiThreeFunnelPulseAdmin \/>/);
+});
