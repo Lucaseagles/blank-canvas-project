@@ -42,3 +42,12 @@ test("Authorized checkout remains reachable when analytics fails, with a visible
  assert.match(code,/window\.location\.assign\(url\.toString\(\)\)/);
  assert.match(code,/checkoutError && <p role="alert"/);
 });
+
+test("Unavailable partner referrals show a safe fallback without checkout",()=>{
+ const route=source("../routes/r/$code.tsx");
+ assert.match(route,/!query\.isLoading && !query\.isError && !product/);
+ assert.match(route,/Indicação indisponível/);
+ assert.match(route,/href="\/hub-shop"/);
+ assert.match(route,/\{product && \(/);
+ assert.match(route,/partnerCode=\{code\}/);
+});
