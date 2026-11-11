@@ -59,6 +59,8 @@ jobs:
         run: npm run test:rubi-followup
       - name: RUBI Offer Engine playbook tests
         run: npm run test:rubi-offer
+      - name: RUBI complementary offers tests
+        run: npm run test:rubi-complementary
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint
