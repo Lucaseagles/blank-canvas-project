@@ -39,6 +39,7 @@ export function RubiPreCheckout({ product, returnTo, partnerCode, origin }: Prop
   const getReadiness = useServerFn(getRubiCheckoutReadiness);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [inviteEligible, setInviteEligible] = useState(false);
 
   const related = useQuery({
@@ -93,6 +94,7 @@ export function RubiPreCheckout({ product, returnTo, partnerCode, origin }: Prop
   const continueToSupplier = async () => {
     if (!checkout?.ready || redirecting) return;
     setRedirecting(true);
+    setCheckoutError(null);
     try {
       // Never trust the cached availability: an owner can disable a product,
       // revoke a supplier or replace an approved URL while this page is open.
@@ -109,15 +111,20 @@ export function RubiPreCheckout({ product, returnTo, partnerCode, origin }: Prop
       // Editorial campaign context applies only to a direct Store visit.
       // Partner referral attribution always stays with its verified code.
       const organic = origin === "store" ? currentRubiOrganicAttribution(product.id) : null;
-      await trackEvent("RUBI_PRECHECKOUT_CONTINUE", {
+      try {
+        await trackEvent("RUBI_PRECHECKOUT_CONTINUE", {
         product_id: product.id, origin, has_partner_referral: !!partnerCode,
         action: "external_checkout_intent",
         utm_medium: organic ? "organic_social" : null,
         utm_campaign: organic?.campaign ?? null,
         editorial_section_id: origin === "store" ? getRubiEditorialSection(product.id) : null,
-      }, { productId: product.id, source: origin === "partner" ? "rubi_partner" : organic?.source ?? "rubi_store" });
+        }, { productId: product.id, source: origin === "partner" ? "rubi_partner" : organic?.source ?? "rubi_store" });
+      } catch {
+        // A telemetry outage must never prevent a freshly authorized purchase.
+      }
       window.location.assign(url.toString());
     } catch {
+      setCheckoutError("Não foi possível abrir o pagamento seguro. Tente novamente.");
       setRedirecting(false);
     }
   };
@@ -154,6 +161,7 @@ export function RubiPreCheckout({ product, returnTo, partnerCode, origin }: Prop
               Esta é uma vitrine anterior ao checkout. A RUBI não coleta dados do cartão nesta página.
               Frete, entrega e pagamento são informados no checkout principal do fornecedor.
             </p>
+            {checkoutError && <p role="alert" className="text-xs text-destructive">{checkoutError}</p>}
             {readiness.isLoading && <p role="status" className="text-xs text-muted-foreground">Verificando disponibilidade do checkout...</p>}
             {readiness.isError && <p role="alert" className="text-xs text-destructive">Não foi possível verificar o checkout. Tente novamente.</p>}
             <Button className="h-12 w-full" disabled={!ready || redirecting} onClick={() => void continueToSupplier()}>
