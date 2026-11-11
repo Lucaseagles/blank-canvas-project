@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { RubiStoreActivityProof } from "@/components/store/RubiStoreActivityProof";
+import { RubiEditorialDeadline } from "@/components/store/RubiEditorialDeadline";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -132,6 +134,8 @@ export function RubiPreCheckout({ product, returnTo, partnerCode, origin }: Prop
   return (
     <div className="space-y-8">
       <RubiPostSignupActivation returnTo={returnTo} />
+      <RubiStoreActivityProof productId={product.id} compact />
+      <RubiEditorialDeadline productId={product.id} />
       <article aria-label="Revisão do produto selecionado" className="overflow-hidden rounded-3xl border bg-card lg:grid lg:grid-cols-2">
         <div className="flex min-h-72 items-center justify-center bg-muted/30">
           {product.image_url ? (
