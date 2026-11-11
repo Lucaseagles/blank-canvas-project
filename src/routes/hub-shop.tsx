@@ -4,6 +4,7 @@ import {useServerFn} from "@tanstack/react-start";
 import {useMemo,useState} from "react";
 import {getRetailHubCatalog} from "@/lib/hub-catalog.functions";
 import {RubiStorefrontStories} from "@/components/store/RubiStorefrontStories";
+import {RubiStorefrontSections} from "@/components/store/RubiStorefrontSections";
 import {Button} from "@/components/ui/button";
 import {ArrowRight,ArrowUpRight,CheckCircle2,ChevronRight,PlayCircle,Search,ShoppingBag,SlidersHorizontal,Sparkles,Store,Truck,Users,Video} from "lucide-react";
 
@@ -84,6 +85,7 @@ function Catalog(){
      <Button variant="outline" size="lg" asChild className="rounded-xl"><Link to="/videos">Explorar vídeos <ArrowRight className="ml-2 h-4 w-4"/></Link></Button>
     </div>
    </section>
+   <RubiStorefrontSections />
    <RubiStorefrontStories />
    <section id="rubi-products" className="scroll-mt-28 space-y-6" aria-label="Vitrine de produtos RUBI">
     <div className="flex flex-wrap items-end justify-between gap-3">
