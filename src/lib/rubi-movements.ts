@@ -1,5 +1,5 @@
 export type RubiMovement = {
-  id?: string;
+  id?: string | undefined;
   product_id:string;
   name:string;
   audience:"consumer"|"merchant"|"partner";
@@ -11,7 +11,7 @@ export type RubiMovement = {
   narrative:string;
   evidence_notes:string;
   status:"draft"|"review";
-  revision?:number;
+  revision?:number | undefined;
 };
 export function emptyRubiMovement(productId:string):RubiMovement {
   return {product_id:productId,name:"",audience:"consumer",buyer_persona:"",problem:"",desired_outcome:"",truthful_promise:"",differentiator:"",narrative:"",evidence_notes:"",status:"draft"};
