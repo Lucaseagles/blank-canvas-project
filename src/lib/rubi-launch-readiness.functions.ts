@@ -2,6 +2,7 @@ import {createServerFn} from "@tanstack/react-start";
 import {requireOwnerRole} from "./auth-guards.server";
 import {assessRubiLaunch,type RubiLaunchProduct,type RubiLaunchEditorial} from "./rubi-launch-readiness";
 import {assessRubiLaunchGate} from "./rubi-launch-gates";
+import {rubiQaSnapshotCurrent} from "./rubi-launch-qa-snapshot";
 import {RUBI_LAUNCH_QA_ITEMS,type RubiQaChecklist} from "./rubi-launch-qa";
 const zero=():RubiLaunchEditorial=>({playbooks:0,approvedPlaybooks:0,movements:0,variants:0,approvedPages:0});
 /** Server-side master-only launch diagnostic; never changes checkout, prices or orders. */
@@ -46,7 +47,7 @@ export const getRubiLaunchReadinessAdmin=createServerFn({method:"GET"})
    }
   }
  }
- const qaByProduct=new Map<string,RubiQaChecklist>();
+ const qaByProduct=new Map<string,{checklist:RubiQaChecklist;snapshot:string|null}>();
  if(products.length){
   const {data:qaRows,error:qaError}=await db.from("rubi_launch_qa_checklists")
    .select("*").in("product_id",products.map(p=>p.id)).limit(200);
@@ -59,12 +60,15 @@ export const getRubiLaunchReadinessAdmin=createServerFn({method:"GET"})
      evidence:String(row[`${item.key}_evidence`]??""),
     };
    }
-   qaByProduct.set(checklist.product_id,checklist);
+   qaByProduct.set(checklist.product_id,{checklist,snapshot:typeof row["commercial_snapshot"]==="string"?row["commercial_snapshot"]:null});
   }
  }
  const entries=products.map(product=>{
   const basic=assessRubiLaunch(product,totals.get(product.id)??zero());
-  return {...basic,operational:assessRubiLaunchGate(basic.readyForRetail,qaByProduct.get(product.id)??null)};
+  const qa=qaByProduct.get(product.id);
+  const current=!!qa&&rubiQaSnapshotCurrent(qa.snapshot,product);
+  const operational=assessRubiLaunchGate(basic.readyForRetail,current?qa!.checklist:null);
+  return {...basic,operational,qaStale:!!qa&&!current};
  });
  const suppliers=(suppliersResult.data??[]) as Array<{id:string;name:string;active:boolean;checkout_host:string|null}>;
  return {
