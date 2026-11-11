@@ -1,4 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { verifyOptionalUser } from "./personalization.server";
+import { rankRubiOffersByInterests, type RubiInterestCategory } from "./rubi-unified-interest-ranking";
 import { approvedRubiCheckout } from "./rubi-checkout-validation";
 import { canServeApprovedMovementPage } from "./rubi-movement-publication";
 import { RUBI_ORGANIC_CHANNELS, rubiOrganicProductPath, type RubiOrganicChannel } from "./rubi-organic-campaigns";
@@ -16,11 +19,16 @@ export type RubiFeedMovement = {
 
 const allowedChannels = new Set<string>(RUBI_ORGANIC_CHANNELS.map(item => item.id));
 
-/** Public editorial feed of previously approved and currently valid campaigns.
- * No profile information is accessed: interest-based delivery is a separate future gate.
- * Never expose checkout URLs, supplier costs, draft copy or customer identifiers.
+/** Approved campaigns ranked using only the authenticated person's category interests.
+ * Anonymous visitors see the editorial fallback. Never expose private interest records.
  */
-export const getRubiApprovedMovementFeed = createServerFn({ method: "GET" }).handler(async (): Promise<RubiFeedMovement[]> => {
+export const getRubiApprovedMovementFeed = createServerFn({ method: "POST" })
+ .validator((input: unknown) => z.object({
+  userId:z.string().uuid().nullable(),
+  accessToken:z.string().min(20).max(8192).nullable().optional()
+ }).parse(input))
+ .handler(async ({ data }): Promise<RubiFeedMovement[]> => {
+ await verifyOptionalUser(data.userId,data.accessToken);
  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
  const db = supabaseAdmin as any;
  const { data: plans, error: plansError } = await db.from("rubi_movement_distribution")
@@ -75,7 +83,19 @@ export const getRubiApprovedMovementFeed = createServerFn({ method: "GET" }).han
    imageUrl:product.image_url ?? null,price:Number(product.retail_price),
    headline:variant.page_headline,promise:movement.truthful_promise,href
   });
-  if (result.length >= 6) break;
  }
- return result;
+ if (!data.userId || !result.length) return result.slice(0,6);
+ // Only explicit category preferences are used for movement targeting at this stage.
+ // Behavioral interest scoring requires a separately validated opt-in control.
+ const { data: preference, error: preferenceError } = await db.from("user_preferences")
+  .select("preferred_categories").eq("user_id",data.userId).maybeSingle();
+ if (preferenceError || !Array.isArray(preference?.preferred_categories) ||
+     !preference.preferred_categories.length) return result.slice(0,6);
+ const { data: categories, error: categoriesError } = await db.from("categories")
+  .select("id,name,slug").in("id",preference.preferred_categories.slice(0,20));
+ if (categoriesError || !categories?.length) return result.slice(0,6);
+ const interests:RubiInterestCategory[] = categories.map((category:any)=>({
+  name:category.name,slug:category.slug,score:1
+ }));
+ return rankRubiOffersByInterests(result,interests,6);
 });

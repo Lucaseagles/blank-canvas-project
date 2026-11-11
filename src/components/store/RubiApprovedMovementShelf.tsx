@@ -1,20 +1,36 @@
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { getRubiApprovedMovementFeed } from "@/lib/rubi-movement-feed.functions";
 
 const money = (value: number) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-/** Public, approved discovery. This does not claim personalized targeting. */
+/** Approved RUBI discovery ranked by account category interests, with anonymous fallback. */
 export function RubiApprovedMovementShelf() {
  const load = useServerFn(getRubiApprovedMovementFeed);
- const query = useQuery({ queryKey:["rubi-approved-movement-feed"],queryFn:()=>load(),retry:false,staleTime:60000 });
+ const [identity,setIdentity] = useState<{userId:string|null;accessToken:string|null}|null>(null);
+ useEffect(()=>{
+  let active=true;
+  const refresh=()=>{void supabase.auth.getSession().then(({data})=>{
+   if(active)setIdentity({userId:data.session?.user.id??null,accessToken:data.session?.access_token??null});
+  }).catch(()=>{if(active)setIdentity({userId:null,accessToken:null});});};
+  refresh();
+  const {data:subscription}=supabase.auth.onAuthStateChange(()=>refresh());
+  return ()=>{active=false;subscription.subscription.unsubscribe();};
+ },[]);
+ const query = useQuery({
+  queryKey:["rubi-approved-movement-feed",identity?.userId??"anonymous"],
+  queryFn:()=>load({data:{userId:identity!.userId,accessToken:identity!.accessToken}}),
+  enabled:identity!==null,retry:false,staleTime:60000
+ });
  if (!query.data?.length) return null;
  return <section aria-label="Movimentos oficiais RUBI" className="mb-12 space-y-5 rounded-3xl border border-primary/20 bg-card p-5 sm:p-8">
   <header className="space-y-2">
    <p className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-primary"><Sparkles className="h-4 w-4"/> RUBI Eagles · Movimentos</p>
    <h2 className="text-2xl font-black sm:text-3xl">Ofertas especiais da RUBI</h2>
-   <p className="max-w-2xl text-sm text-muted-foreground">Lançamentos e páginas oficiais revisados pela RUBI. Seleção editorial; recomendações individuais ainda dependem da ativação do motor de interesses.</p>
+   <p className="max-w-2xl text-sm text-muted-foreground">Lançamentos e páginas oficiais revisados pela RUBI. Seleção com prioridade para categorias do seu interesse quando disponíveis, mantendo espaço para descobrir novidades.</p>
   </header>
   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
    {query.data.map(item=><article key={item.productId} className="flex min-w-0 flex-col overflow-hidden rounded-2xl border bg-background">
