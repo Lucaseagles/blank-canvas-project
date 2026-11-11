@@ -15,6 +15,13 @@ function ReferralLanding() {
     <h1 className="text-3xl font-black">RUBI · Produto indicado</h1>
     {query.isLoading && <p>Carregando indicação...</p>}
     {query.isError && <div role="alert" className="space-y-3"><p>Este link não está disponível no momento.</p><Button asChild variant="outline"><a href="/hub-shop">Ver catálogo</a></Button></div>}
+    {!query.isLoading && !query.isError && !product && (
+      <div role="status" className="space-y-3 rounded-2xl border bg-card p-6">
+        <h2 className="text-xl font-bold">Indicação indisponível</h2>
+        <p className="text-sm text-muted-foreground">Este link pode ter expirado, ter sido revogado ou o produto não está disponível. Explore outras ofertas da RUBI.</p>
+        <Button asChild variant="outline"><a href="/hub-shop">Explorar RUBI Store</a></Button>
+      </div>
+    )}
     {product && (
       <RubiPreCheckout product={product} returnTo={`/r/${code}`} partnerCode={code} origin="partner" />
     )}
