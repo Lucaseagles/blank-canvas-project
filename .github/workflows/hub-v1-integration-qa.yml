@@ -83,6 +83,8 @@ jobs:
         run: npm run test:rubi-supplier-csv
       - name: RUBI launch operational gates tests
         run: npm run test:rubi-launch-gates
+      - name: RUBI flagship storefront integration tests
+        run: npm run test:rubi-flagship
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint
