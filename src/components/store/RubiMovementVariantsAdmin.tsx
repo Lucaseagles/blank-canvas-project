@@ -3,10 +3,11 @@ import {useMutation,useQuery,useQueryClient} from "@tanstack/react-query";
 import {useServerFn} from "@tanstack/react-start";
 import {toast} from "sonner";
 import {Button} from "@/components/ui/button";
+import {RubiMovementDistributionAdmin} from "@/components/store/RubiMovementDistributionAdmin";
 import {emptyRubiMovementVariant,rubiVariantChecklist,type RubiMovementVariant} from "@/lib/rubi-movement-variants";
 import {listRubiMovementVariantsAdmin,saveRubiMovementVariantAdmin,deleteRubiMovementVariantAdmin} from "@/lib/rubi-movement-variants.functions";
 
-export function RubiMovementVariantsAdmin({movementId,movementName,movementStatus}:{movementId:string;movementName:string;movementStatus:"draft"|"review"}){
+export function RubiMovementVariantsAdmin({movementId,movementName,movementStatus,productId}:{movementId:string;movementName:string;movementStatus:"draft"|"review";productId:string}){
  const [draft,setDraft]=useState<RubiMovementVariant|null>(null);
  const [dirty,setDirty]=useState(false);
  const list=useServerFn(listRubiMovementVariantsAdmin);
@@ -72,6 +73,7 @@ export function RubiMovementVariantsAdmin({movementId,movementName,movementStatu
     {draft.id&&<Button variant="outline" disabled={deletion.isPending} onClick={()=>{if(window.confirm("Excluir esta variante privada?"))deletion.mutate();}}>Excluir</Button>}
     <Button variant="outline" onClick={()=>{if(dirty&&!window.confirm("Descartar alterações?"))return;setDraft(null);setDirty(false);}}>Fechar</Button>
    </div>
+   {draft.id&&<RubiMovementDistributionAdmin key={draft.id} variantId={draft.id} variantName={draft.name} variantStatus={draft.status} productId={productId}/>}
   </div>}
  </section>;
 }
