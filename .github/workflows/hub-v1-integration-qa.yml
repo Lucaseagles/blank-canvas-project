@@ -69,6 +69,8 @@ jobs:
         run: npm run test:rubi-distribution
       - name: RUBI movement performance tests
         run: npm run test:rubi-performance
+      - name: RUBI movement publication safety tests
+        run: npm run test:rubi-publication
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint
