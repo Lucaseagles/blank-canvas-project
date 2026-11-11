@@ -11,7 +11,7 @@ export const listRubiMasterCandidatesAdmin=createServerFn({method:"GET"})
   const {data:rows,error}=await (supabaseAdmin as any).from("rubi_master_delegations")
    .select("email,status,created_at,updated_at").order("created_at",{ascending:false}).limit(100);
   if(error)throw error;
-  return {ownerOnly:true,grantedMasterCount:0,candidates:(rows??[]) as Array<{email:string;status:"pending"|"cancelled";created_at:string;updated_at:string}>,
+  return {ownerOnly:true,candidates:(rows??[]) as Array<{email:string;status:"pending"|"cancelled";created_at:string;updated_at:string}>,
    note:"A inclusão nesta lista NÃO cria usuário, convite de acesso, papel owner nem permissão Master."};
  });
 export const proposeRubiMasterCandidateAdmin=createServerFn({method:"POST"})
