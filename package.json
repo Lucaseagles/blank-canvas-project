@@ -23,7 +23,8 @@
     "test:rubi-performance": "node --experimental-strip-types --test src/lib/rubi-movement-performance.test.mjs",
     "test:rubi-publication": "node --experimental-strip-types --test src/lib/rubi-movement-publication.test.mjs",
     "test:rubi-launch": "node --experimental-strip-types --test src/lib/rubi-launch-readiness.test.mjs",
-    "test:rubi-launch-qa": "node --experimental-strip-types --test src/lib/rubi-launch-qa.test.mjs"
+    "test:rubi-launch-qa": "node --experimental-strip-types --test src/lib/rubi-launch-qa.test.mjs",
+    "test:rubi-master": "node --experimental-strip-types --test src/lib/rubi-master-candidates.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
