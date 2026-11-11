@@ -72,7 +72,8 @@ export const getRubiLaunchReadinessAdmin=createServerFn({method:"GET"})
   return {...basic,operational,qaStale:!!qa&&!current};
  });
  const suppliers=(suppliersResult.data??[]) as Array<{id:string;name:string;active:boolean;checkout_host:string|null}>;
- const totalProducts=Number(productsCountResult.count??0);
+ if(typeof productsCountResult.count!=="number"||!Number.isSafeInteger(productsCountResult.count))throw new Error("Não foi possível consultar a contagem total de produtos.");
+ const totalProducts=productsCountResult.count;
  const isPartial=totalProducts>products.length;
  return {
   asOf:new Date().toISOString(),productLimit:200,productsCount:products.length,
