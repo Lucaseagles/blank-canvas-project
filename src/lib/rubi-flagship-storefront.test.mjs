@@ -51,3 +51,19 @@ test("Unavailable partner referrals show a safe fallback without checkout",()=>{
  assert.match(route,/\{product && \(/);
  assert.match(route,/partnerCode=\{code\}/);
 });
+
+test("Consumer feed discovers only published movement pages with current approvals",()=>{
+ const feed=source("../routes/feed.tsx");
+ const shelf=source("../components/store/RubiApprovedMovementShelf.tsx");
+ const server=source("./rubi-movement-feed.functions.ts");
+ assert.match(feed,/<RubiApprovedMovementShelf \/>/);
+ assert.match(shelf,/getRubiApprovedMovementFeed/);
+ assert.match(shelf,/Seleção editorial/);
+ assert.match(server,/\.not\("page_published_at", "is", null\)/);
+ assert.match(server,/canServeApprovedMovementPage\(/);
+ assert.match(server,/approvedRubiCheckout\(product\)/);
+ assert.match(server,/movement\.product_id===product\.id/);
+ assert.match(server,/rubiOrganicProductPath\(/);
+ assert.doesNotMatch(server,/user_interests|user_metadata|user_id|supplier_cost/);
+ assert.doesNotMatch(shelf,/checkout_url|supplier_cost|comissão confirmada/);
+});
