@@ -20,6 +20,7 @@ import { RubiComplementaryOffersAdmin } from "@/components/store/RubiComplementa
 import { RubiMovementEngineAdmin } from "@/components/store/RubiMovementEngineAdmin";
 import { RubiLaunchReadinessAdmin } from "@/components/store/RubiLaunchReadinessAdmin";
 import { RubiLaunchQaAdmin } from "@/components/store/RubiLaunchQaAdmin";
+import { approvedRubiCheckout } from "@/lib/rubi-checkout-validation";
 
 export const Route = createFileRoute("/admin/hub-catalog")({ component: HubCatalogAdmin });
 
@@ -70,7 +71,14 @@ function HubCatalogAdmin() {
   const suppliers = (query.data?.suppliers ?? []) as Supplier[];
   const products = (query.data?.products ?? []) as Product[];
   const tiers = (query.data?.tiers ?? []) as Array<{ id: string; product_id: string; min_quantity: number; unit_price: number }>;
-  const publishedCount = products.filter(product => product.active && product.checkout_verified && !!product.checkout_url).length;
+  const publishedCount = products.filter(product => {
+    const supplier = suppliers.find(item => item.id === product.supplier_id);
+    return product.active && !!approvedRubiCheckout({
+      checkout_url: product.checkout_url,
+      checkout_verified: product.checkout_verified,
+      hub_suppliers: supplier ? { active: true, checkout_host: supplier.checkout_host } : null,
+    });
+  }).length;
   const wholesaleCount = products.filter(product => product.active && Number(product.b2b_base_price) > 0).length;
 
   const mutation = useMutation({
