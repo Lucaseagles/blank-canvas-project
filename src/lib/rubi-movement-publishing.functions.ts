@@ -4,7 +4,6 @@ import {requireOwnerRole} from "./auth-guards.server";
 import {canReviewRubiVariant,type RubiMovementVariant} from "./rubi-movement-variants";
 import {canReviewRubiMovement,type RubiMovement} from "./rubi-movements";
 import {approvedRubiCheckout} from "./rubi-checkout-validation";
-import {readRubiOrganicAttribution} from "./rubi-organic-campaigns";
 
 const uuid=z.string().uuid();
 const origin=z.object({productId:uuid,channel:z.enum(["instagram","tiktok","youtube","facebook","pinterest","whatsapp","telegram"]),campaign:z.string().regex(/^[a-z0-9][a-z0-9_-]{0,59}$/)});
