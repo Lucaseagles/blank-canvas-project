@@ -61,6 +61,8 @@ jobs:
         run: npm run test:rubi-offer
       - name: RUBI complementary offers tests
         run: npm run test:rubi-complementary
+      - name: RUBI Movement Engine tests
+        run: npm run test:rubi-movement
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint

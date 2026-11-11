@@ -17,6 +17,7 @@ import { RubiBusinessRetentionAdmin } from "@/components/business/RubiBusinessRe
 import { RubiBusinessFollowupsAdmin } from "@/components/business/RubiBusinessFollowupsAdmin";
 import { RubiOfferEngineAdmin } from "@/components/store/RubiOfferEngineAdmin";
 import { RubiComplementaryOffersAdmin } from "@/components/store/RubiComplementaryOffersAdmin";
+import { RubiMovementEngineAdmin } from "@/components/store/RubiMovementEngineAdmin";
 
 export const Route = createFileRoute("/admin/hub-catalog")({ component: HubCatalogAdmin });
 
@@ -185,6 +186,7 @@ function HubCatalogAdmin() {
           <div className="rounded-2xl border bg-card/70 p-4"><p className="text-sm text-muted-foreground">Disponíveis no atacado</p><p className="text-3xl font-black">{wholesaleCount}</p></div>
         </div>
       </header>
+      <RubiMovementEngineAdmin products={products} />
       <RubiOfferEngineAdmin products={products} />
       <RubiComplementaryOffersAdmin products={products} />
       <RubiOrganicLinkBuilder products={products} />
