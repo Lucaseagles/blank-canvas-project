@@ -20,10 +20,11 @@ import { RubiComplementaryOffersAdmin } from "@/components/store/RubiComplementa
 import { RubiMovementEngineAdmin } from "@/components/store/RubiMovementEngineAdmin";
 import { RubiLaunchReadinessAdmin } from "@/components/store/RubiLaunchReadinessAdmin";
 import { RubiLaunchQaAdmin } from "@/components/store/RubiLaunchQaAdmin";
+import { approvedRubiCheckout } from "@/lib/rubi-checkout-validation";
 
 export const Route = createFileRoute("/admin/hub-catalog")({ component: HubCatalogAdmin });
 
-type Supplier = { id: string; name: string; checkout_host: string | null; fulfillment_mode: "supplier" | "hub" };
+type Supplier = { id: string; name: string; active: boolean; checkout_host: string | null; fulfillment_mode: "supplier" | "hub" };
 type Product = {
   id: string; title: string; description: string | null; image_url: string | null;
   category: string | null; sku: string | null; supplier_id: string;
@@ -70,7 +71,14 @@ function HubCatalogAdmin() {
   const suppliers = (query.data?.suppliers ?? []) as Supplier[];
   const products = (query.data?.products ?? []) as Product[];
   const tiers = (query.data?.tiers ?? []) as Array<{ id: string; product_id: string; min_quantity: number; unit_price: number }>;
-  const publishedCount = products.filter(product => product.active && product.checkout_verified && !!product.checkout_url).length;
+  const publishedCount = products.filter(product => {
+    const supplier = suppliers.find(item => item.id === product.supplier_id);
+    return product.active && !!approvedRubiCheckout({
+      checkout_url: product.checkout_url,
+      checkout_verified: product.checkout_verified,
+      hub_suppliers: supplier ? { active: supplier.active, checkout_host: supplier.checkout_host } : null,
+    });
+  }).length;
   const wholesaleCount = products.filter(product => product.active && Number(product.b2b_base_price) > 0).length;
 
   const mutation = useMutation({

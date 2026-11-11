@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireOwnerRole } from "./auth-guards.server";
 import { approvedRubiCheckout, normalizeRubiCheckoutHost, verifyRubiCheckoutUrl } from "./rubi-checkout-validation";
+import { requiresSupplierCheckoutReverification } from "./rubi-supplier-host-safety";
 
 export const getRetailHubCatalog = createServerFn({method:"GET"}).handler(async()=>{
  const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
@@ -125,6 +126,27 @@ export const saveHubSupplierAdmin = createServerFn({ method: "POST" })
       const validHost = normalizeRubiCheckoutHost(payload.checkout_host);
       if (!validHost) throw new Error("Informe um domínio de checkout válido, sem https:// ou caminhos.");
       payload.checkout_host = validHost;
+    }
+    if (id) {
+      const { data: current, error: currentError } = await (supabaseAdmin as any)
+        .from("hub_suppliers")
+        .select("id,checkout_host")
+        .eq("id", id)
+        .maybeSingle();
+      if (currentError) throw currentError;
+      if (!current) throw new Error("Fornecedor não encontrado.");
+      if (requiresSupplierCheckoutReverification(current.checkout_host, payload.checkout_host)) {
+        const { data: affected, error: affectedError } = await (supabaseAdmin as any)
+          .from("hub_products")
+          .select("id")
+          .eq("supplier_id", id)
+          .or("active.eq.true,checkout_verified.eq.true")
+          .limit(1);
+        if (affectedError) throw affectedError;
+        if (affected?.length) {
+          throw new Error("Não é possível trocar o domínio: despublique os produtos associados e retire a validação de seus checkouts individualmente antes de alterar o fornecedor.");
+        }
+      }
     }
     const { error } = await (supabaseAdmin as any)
       .from("hub_suppliers")
