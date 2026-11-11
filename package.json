@@ -15,7 +15,8 @@
     "test:rubi-business": "node --experimental-strip-types --test src/lib/rubi-business-quote-pricing.test.mjs",
     "test:rubi-retention": "node --experimental-strip-types --test src/lib/rubi-business-retention.test.mjs",
     "test:rubi-followup": "node --experimental-strip-types --test src/lib/rubi-business-followup.test.mjs",
-    "test:rubi-offer": "node --experimental-strip-types --test src/lib/rubi-offer-playbook.test.mjs"
+    "test:rubi-offer": "node --experimental-strip-types --test src/lib/rubi-offer-playbook.test.mjs",
+    "test:rubi-complementary": "node --experimental-strip-types --test src/lib/rubi-complementary-offers.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
