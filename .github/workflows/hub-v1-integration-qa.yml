@@ -93,6 +93,8 @@ jobs:
         run: npm run test:rubi-editorial
       - name: RUBI editorial Story bridge tests
         run: npm run test:rubi-editorial-story
+      - name: RUBI editorial metrics tests
+        run: npm run test:rubi-editorial-metrics
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint
