@@ -6,6 +6,7 @@ export const RUBI_TEST_MATRIX=[
  {id:"store_desktop",title:"vitrine HTTPS renderiza e permite descobrir produtos sem pagamento",project:"desktop",area:"RUBI Store",kind:"browser_public"},
  {id:"video_mobile",title:"feed de vídeos pode ser aberto sem confirmar pedidos",project:"mobile",area:"RUBI Story",kind:"browser_public"},
  {id:"video_desktop",title:"feed de vídeos pode ser aberto sem confirmar pedidos",project:"desktop",area:"RUBI Story",kind:"browser_public"},
+ {id:"guest_consumer",title:"feed público do consumidor mantém entrada da loja sem exigir login",project:null,area:"Eclipse consumidor",kind:"guest_public"},
  {id:"guest_master",title:"área Master não libera painel para sessão anônima",project:null,area:"Shadow Master",kind:"guest_guard"},
  {id:"guest_merchant",title:"atacado não mostra valores B2B sem login aprovado",project:null,area:"Business",kind:"guest_guard"},
  {id:"guest_partner",title:"portal de parceiros não mostra comissões sem autenticação",project:null,area:"Partners",kind:"guest_guard"}
