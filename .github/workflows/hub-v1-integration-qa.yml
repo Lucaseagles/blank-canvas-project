@@ -103,6 +103,8 @@ jobs:
         run: npm run test:rubi-qa-snapshot
       - name: RUBI live smoke safe validation tests
         run: npm run test:rubi-live-smoke
+      - name: RUBI four audience authorization contract tests
+        run: npm run test:rubi-four-profiles
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint

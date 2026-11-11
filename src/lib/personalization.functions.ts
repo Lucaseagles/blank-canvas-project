@@ -32,10 +32,10 @@ export const updateInterestScore = createServerFn({ method: "POST" })
     }
   });
 
-export const getPersonalizedFeed = createServerFn({ method: "GET" })
-  .validator((data: { userId: string | null, limit?: number }) => z.object({ userId: z.string().uuid().nullable(), limit: z.number().int().min(1).max(40).optional().default(12) }).parse(data))
-  .handler(async ({ data: { userId, limit } }) => {
-    await verifyOptionalUser(userId);
+export const getPersonalizedFeed = createServerFn({ method: "POST" })
+  .validator((data: { userId: string | null, accessToken?: string | null, limit?: number }) => z.object({ userId: z.string().uuid().nullable(), accessToken: z.string().min(20).max(8192).nullable().optional(), limit: z.number().int().min(1).max(40).optional().default(12) }).parse(data))
+  .handler(async ({ data: { userId, accessToken, limit } }) => {
+    await verifyOptionalUser(userId, accessToken);
     try {
       const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
 

@@ -20,11 +20,11 @@ export async function loadWeights() {
   }
 }
 
-export async function verifyOptionalUser(userId: string | null): Promise<void> {
+export async function verifyOptionalUser(userId: string | null, providedToken?: string | null): Promise<void> {
   if (!userId) return;
 
   const request = getRequest();
-  const token = request?.headers.get("authorization")?.replace(/^Bearer\s+/, "");
+  const token = providedToken ?? request?.headers.get("authorization")?.replace(/^Bearer\s+/, "");
   if (!token || token.split(".").length !== 3) {
     throw new Error("Unauthorized: authenticated feed requires a valid session");
   }
