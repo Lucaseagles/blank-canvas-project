@@ -3,6 +3,7 @@ import {useQuery} from "@tanstack/react-query";
 import {useServerFn} from "@tanstack/react-start";
 import {useMemo,useState} from "react";
 import {getRetailHubCatalog} from "@/lib/hub-catalog.functions";
+import {RubiStorefrontStories} from "@/components/store/RubiStorefrontStories";
 import {Button} from "@/components/ui/button";
 import {ArrowRight,ArrowUpRight,CheckCircle2,ChevronRight,PlayCircle,Search,ShoppingBag,SlidersHorizontal,Sparkles,Store,Truck,Users,Video} from "lucide-react";
 
@@ -83,6 +84,7 @@ function Catalog(){
      <Button variant="outline" size="lg" asChild className="rounded-xl"><Link to="/videos">Explorar vídeos <ArrowRight className="ml-2 h-4 w-4"/></Link></Button>
     </div>
    </section>
+   <RubiStorefrontStories />
    <section id="rubi-products" className="scroll-mt-28 space-y-6" aria-label="Vitrine de produtos RUBI">
     <div className="flex flex-wrap items-end justify-between gap-3">
      <div><p className="text-[10px] font-black uppercase tracking-[.22em] text-primary">RUBI EDIT · SUA VITRINE</p><h2 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">Explore a coleção</h2><p className="mt-2 text-sm text-muted-foreground">Produtos com fornecedor ativo, preço cadastrado e checkout oficial validado.</p></div>
