@@ -11,6 +11,7 @@ import { RubiMovementLanding } from "@/components/store/RubiMovementLanding";
 import { RubiComplementarySuggestions } from "@/components/store/RubiComplementarySuggestions";
 import { RubiProductStories } from "@/components/store/RubiProductStories";
 import { RubiStoreActivityProof } from "@/components/store/RubiStoreActivityProof";
+import { RubiEditorialDeadline } from "@/components/store/RubiEditorialDeadline";
 import { currentRubiOrganicAttribution } from "@/lib/rubi-organic-campaigns";
 import { getRubiEditorialSection } from "@/lib/rubi-editorial-context";
 
@@ -91,6 +92,7 @@ function HubProductDetail() {
               </div>
             </section>
             <RubiStoreActivityProof productId={product.id} />
+            <RubiEditorialDeadline productId={product.id} />
             <RubiProductStories productId={product.id} />
             <RubiMovementLanding productId={product.id} />
             <div id="rubi-purchase"><RubiPreCheckout product={product} returnTo={`/hub-product/${product.id}`} origin="store" /></div>
