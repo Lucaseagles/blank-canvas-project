@@ -25,6 +25,11 @@ export function RubiLaunchReadinessAdmin(){
      {label:"Conferidos manualmente",value:query.data.reviewedCount}
     ].map(x=><div key={x.label} className="rounded-xl border p-3"><p className="text-xl font-bold tabular-nums">{x.value}</p><p className="text-xs text-muted-foreground">{x.label}</p></div>)}
    </div>
+   {query.data.suppliersWithoutHost>0&&<div role="alert" className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-4 text-sm space-y-2">
+    <p className="font-bold">Bloqueio de lançamento: {query.data.suppliersWithoutHost} fornecedor(es) ativo(s) sem domínio de checkout autorizado.</p>
+    <p className="text-muted-foreground">No cadastro de fornecedores do Shadow Master, informe o domínio oficial exato confirmado pelo fornecedor (sem https:// nem caminhos). Só marque o checkout de um produto como verificado após conferir seu link HTTPS real. Não utilize endereços de exemplo.</p>
+    <p className="font-semibold">Enquanto o domínio oficial não estiver validado, não publique produtos desse fornecedor.</p>
+   </div>}
    {query.data.isPartial&&<div role="alert" className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 text-sm"><strong>Diagnóstico parcial:</strong> {query.data.productsCount} de {query.data.totalProducts} produtos analisados; {query.data.productsNotAnalyzed} ainda não conferidos nesta consulta. Os números de prontos, bloqueados e QA não são totais gerais.</div>}
    {query.data.productsCount===0&&<div className="rounded-xl border p-4 text-sm">
     <p className="font-semibold">Ainda não há produto no catálogo para lançar.</p>
