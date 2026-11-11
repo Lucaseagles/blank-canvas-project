@@ -105,6 +105,8 @@ jobs:
         run: npm run test:rubi-live-smoke
       - name: RUBI four audience authorization contract tests
         run: npm run test:rubi-four-profiles
+      - name: RUBI browser E2E config safety tests
+        run: npm run test:rubi-browser-contract
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint
