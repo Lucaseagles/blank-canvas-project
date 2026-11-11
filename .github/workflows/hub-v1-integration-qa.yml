@@ -71,6 +71,8 @@ jobs:
         run: npm run test:rubi-performance
       - name: RUBI movement publication safety tests
         run: npm run test:rubi-publication
+      - name: RUBI Kairos launch readiness tests
+        run: npm run test:rubi-launch
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint
