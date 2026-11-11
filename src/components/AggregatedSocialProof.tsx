@@ -36,14 +36,14 @@ export function AggregatedSocialProof({
           <div className="flex items-center gap-1 text-[9px] font-black uppercase tracking-tighter text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full border border-primary/10">
             <Eye className="w-3 h-3" />
             <span>
-              {views} viram {timeLabel}
+              {views} visualizações {timeLabel}
             </span>
           </div>
         )}
         {favorites > 0 && (
           <div className="flex items-center gap-1 text-[9px] font-black uppercase tracking-tighter text-red-500/80 bg-red-500/5 px-2 py-0.5 rounded-full border border-red-500/10">
             <Heart className="w-3 h-3 fill-red-500/20" />
-            <span>{favorites} favoritaram</span>
+            <span>{favorites} eventos de favorito</span>
           </div>
         )}
       </div>
@@ -57,8 +57,8 @@ export function AggregatedSocialProof({
           <TrendingUp className="w-4 h-4 text-primary animate-pulse" />
           <p className="text-xs font-bold text-foreground/90 uppercase tracking-tight">
             🔥{" "}
-            <span className="text-primary font-black">{views} pessoas</span>{" "}
-            viram esta oferta {timeLabel}
+            <span className="text-primary font-black">{views} visualizações</span>{" "}
+            registradas nesta oferta {timeLabel}
           </p>
         </div>
       )}
@@ -67,8 +67,8 @@ export function AggregatedSocialProof({
           <Heart className="w-4 h-4 text-red-500 fill-red-500/20" />
           <p className="text-xs font-bold text-foreground/90 uppercase tracking-tight">
             ❤️{" "}
-            <span className="text-red-500 font-black">{favorites} pessoas</span>{" "}
-            favoritaram este item
+            <span className="text-red-500 font-black">{favorites} favoritos</span>{" "}
+            registrados neste item
           </p>
         </div>
       )}
