@@ -67,6 +67,7 @@ function PartnerPortal() {
   const profile = query.data?.profile;
   const products = (query.data?.products ?? []) as Product[];
   return <main className="mx-auto max-w-6xl space-y-8 px-4 py-28">
+    <RubiStorefrontEntry audience="partner" />
     <header className="space-y-3">
       <p className="text-xs font-black uppercase tracking-widest text-primary">RUBI · Parceiros</p>
       <h1 className="text-4xl font-black">Seu portal de parceiros</h1>
