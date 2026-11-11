@@ -85,6 +85,8 @@ jobs:
         run: npm run test:rubi-launch-gates
       - name: RUBI flagship storefront integration tests
         run: npm run test:rubi-flagship
+      - name: RUBI product story media tests
+        run: npm run test:rubi-product-stories
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint
