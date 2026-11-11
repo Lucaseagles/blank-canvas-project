@@ -77,6 +77,8 @@ jobs:
         run: npm run test:rubi-launch-qa
       - name: RUBI sole-Master safeguards tests
         run: npm run test:rubi-master
+      - name: RUBI supplier checkout host tests
+        run: npm run test:rubi-supplier-host
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint
