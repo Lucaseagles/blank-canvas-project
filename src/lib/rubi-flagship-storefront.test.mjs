@@ -131,3 +131,15 @@ test("Three login experiences include conversion guidance without fabricated urg
  assert.match(guide,/quando confirmadas/);
  assert.doesNotMatch(guide,/Fulana comprou|restam só 2|compradores agora/);
 });
+
+test("Partner kit offers five transparent sales approaches without invented claims",()=>{
+ const kit=source("../components/partner/PartnerCreativeKit.tsx");
+ assert.match(kit,/Demonstração/);
+ assert.match(kit,/Story \/ Comunidade/);
+ assert.match(kit,/Expert \/ Nicho/);
+ assert.match(kit,/Dúvidas frequentes/);
+ assert.match(kit,/Comparação honesta/);
+ assert.match(kit,/Publicidade · link de parceiro RUBI/);
+ assert.match(kit,/referralCode/);
+ assert.doesNotMatch(kit,/compra confirmada por|garantia de vendas|pessoas compraram agora/);
+});
