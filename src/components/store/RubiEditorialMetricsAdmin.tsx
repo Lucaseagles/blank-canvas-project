@@ -20,13 +20,15 @@ export function RubiEditorialMetricsAdmin(){
    {!rows.length&&<p className="text-sm text-muted-foreground">Nenhuma coleção com produtos cadastrada no período consultado.</p>}
    {groups.map(id=><div key={id} className="space-y-2 rounded-xl border p-4">
     <h3 className="font-bold">{rows.find(r=>r.sectionId===id)?.sectionTitle}</h3>
+    <p className="text-xs text-muted-foreground">Sessões com sequência observada: clique → visualização → saída ao fornecedor (até 30 minutos)</p>
     <div className="space-y-2">{rows.filter(r=>r.sectionId===id).map(r=><div key={r.productId} className="grid grid-cols-1 items-center gap-2 border-t py-2 text-sm sm:grid-cols-[minmax(0,1fr)_repeat(3,minmax(0,auto))]">
      <span className="truncate" title={r.productTitle}>{r.productTitle}</span>
      <span className="tabular-nums">{r.clickEvents.toLocaleString("pt-BR")} cliques</span>
      <span className="tabular-nums">{r.productViews.toLocaleString("pt-BR")} visualizações</span>
      <span className="tabular-nums">{r.checkoutIntents.toLocaleString("pt-BR")} saídas ao checkout</span>
+     <div className="sm:col-span-4 text-xs text-muted-foreground">Sessões: {r.qualifiedClickedSessions} cliques únicos · {r.qualifiedViewedSessions} avançaram à página · {r.qualifiedCheckoutSessions} seguiram ao checkout</div>
     </div>)}</div></div>)}
-   <p className="text-xs text-muted-foreground">Atualizado em {new Date(query.data.asOf).toLocaleString("pt-BR")}. As três contagens são eventos observados, não necessariamente a jornada da mesma pessoa. Não representam vendas, receita, taxa de conversão ou retenção de vídeo. As coleções refletem a associação atual de produtos; mudanças anteriores na curadoria podem limitar a leitura histórica. Bloqueadores e consentimento podem reduzir a coleta.</p>
+   <p className="text-xs text-muted-foreground">Atualizado em {new Date(query.data.asOf).toLocaleString("pt-BR")}. Os três números principais são eventos, enquanto a linha de sessões acompanha uma sequência no mesmo identificador de sessão, sem identificar pessoas. Não representam vendas, receita, taxa de conversão ou retenção de vídeo. As coleções refletem a associação atual de produtos; mudanças anteriores na curadoria podem limitar a leitura histórica. Bloqueadores e consentimento podem reduzir a coleta.</p>
   </>}
  </section>;
 }
