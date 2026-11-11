@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getMyPartnerPortal } from "@/lib/partner-portal.functions";
 import { Button } from "@/components/ui/button";
 import { PartnerCreativeKit } from "@/components/partner/PartnerCreativeKit";
+import { RubiStorefrontEntry } from "@/components/store/RubiStorefrontEntry";
 
 export const Route = createFileRoute("/partner/portal")({ component: PartnerPortal });
 
