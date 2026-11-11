@@ -39,6 +39,7 @@ export function RubiLaunchReadinessAdmin(){
       <span>Margem bruta %: {p.grossMarginPercent===null?"Não calculável":p.grossMarginPercent.toLocaleString("pt-BR")+"%"}</span>
       <span>Campanha: {p.editorial.movements} movimentos · {p.editorial.variants} variantes · {p.editorial.approvedPages} páginas aprovadas</span>
      </div>
+     {p.qaStale&&<p role="status" className="text-sm font-semibold text-destructive">Conferência desatualizada: os dados comerciais mudaram. Refaça o checklist.</p>}
      <div className="space-y-1 rounded-lg border p-3">
       <p className="text-sm font-semibold">Conferência operacional registrada: {p.operational.qaVerified}/{p.operational.qaTotal}</p>
       <p className="text-xs text-muted-foreground">Status informado manualmente pelo Master; não substitui testes automatizados ou pagamentos reais.</p>
