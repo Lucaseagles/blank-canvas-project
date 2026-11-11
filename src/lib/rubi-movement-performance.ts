@@ -36,3 +36,32 @@ export function correlateMovementTraffic(
   };
  });
 }
+
+/** Comparable observed events only. Campaigns without attribution or observed views are not zeros. */
+export type RubiVariantTrafficSummary = {
+ variantId:string; observedCampaigns:number; ambiguousCampaigns:number; unobservedCampaigns:number;
+ viewEvents:number; checkoutIntents:number; intentPerViewPercent:number|null;
+};
+export function summarizeMovementVariants(rows:RubiMovementPerformanceRow[]):RubiVariantTrafficSummary[] {
+ const summaries=new Map<string,RubiVariantTrafficSummary>();
+ for(const row of rows){
+  let item=summaries.get(row.variantId);
+  if(!item){
+   item={variantId:row.variantId,observedCampaigns:0,ambiguousCampaigns:0,unobservedCampaigns:0,
+    viewEvents:0,checkoutIntents:0,intentPerViewPercent:null};
+   summaries.set(row.variantId,item);
+  }
+  if(row.ambiguousAttribution){item.ambiguousCampaigns++;continue;}
+  // Aggregate has a top-N bound. A missing campaign must never count as a verified zero.
+  if(!Number.isFinite(row.viewEvents)||row.viewEvents<=0||
+    !Number.isFinite(row.checkoutIntents)||row.checkoutIntents<0){
+   item.unobservedCampaigns++;continue;
+  }
+  item.observedCampaigns++;
+  item.viewEvents+=row.viewEvents;
+  item.checkoutIntents+=row.checkoutIntents;
+ }
+ return [...summaries.values()].map(item=>({
+  ...item,intentPerViewPercent:percentOfIntentToView(item.checkoutIntents,item.viewEvents)
+ })).sort((a,b)=>b.viewEvents-a.viewEvents||a.variantId.localeCompare(b.variantId));
+}
