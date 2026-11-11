@@ -85,6 +85,6 @@ export function RubiMovementEngineAdmin({products}:{products:Product[]}){
     <Button variant="outline" onClick={()=>{if(dirty&&!window.confirm("Descartar alterações?"))return;setDraft(null);setDirty(false);}}>Fechar editor</Button>
    </div>
   </div>}
-  {draft?.id&&<RubiMovementVariantsAdmin key={draft.id} movementId={draft.id} movementName={draft.name} movementStatus={draft.status}/>}
+  {draft?.id&&<RubiMovementVariantsAdmin key={draft.id} movementId={draft.id} movementName={draft.name} movementStatus={draft.status} productId={draft.product_id}/>}
  </section>;
 }
