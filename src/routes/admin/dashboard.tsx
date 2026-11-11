@@ -3,6 +3,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getAdminIntelligenceData } from "../../lib/admin_intel.functions";
 import { CommandCenterPulse } from "@/components/admin/CommandCenterPulse";
+import { RubiAudienceConversionPulse } from "@/components/admin/RubiAudienceConversionPulse";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users, ShoppingBag, Play, Heart, MousePointer2, TrendingUp, AlertCircle, Calendar, ArrowUpRight, ArrowDownRight, UserPlus } from "lucide-react";
@@ -38,6 +39,7 @@ function AdminDashboard() {
       </div>
 
       <CommandCenterPulse />
+      <RubiAudienceConversionPulse />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
         {kpiCards.map((kpi) => <Card key={kpi.title} className="bg-glass-fallback border-glass-border backdrop-blur-xl rounded-3xl p-4 lg:p-8 min-h-[140px] flex flex-col justify-between"><CardHeader className="p-0 pb-2 lg:pb-6 flex flex-row items-center justify-between space-y-0"><CardTitle className="text-[10px] lg:text-xs font-black uppercase tracking-widest text-muted-foreground">{kpi.title}</CardTitle><div className="p-2 rounded-xl bg-muted/50"><kpi.icon className={`w-4 h-4 lg:w-5 lg:h-5 ${kpi.color}`} /></div></CardHeader><CardContent className="p-0 space-y-1 lg:space-y-2"><div className="flex items-baseline gap-2 flex-wrap"><span className="text-2xl lg:text-5xl font-black tracking-tighter italic break-all">{typeof kpi.value === 'number' ? kpi.value.toLocaleString() : kpi.value}</span>{kpi.trend && <span className="flex items-center text-[10px] font-bold">{kpi.trend === 'up' ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}</span>}</div><p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">{kpi.subValue}</p></CardContent></Card>)}

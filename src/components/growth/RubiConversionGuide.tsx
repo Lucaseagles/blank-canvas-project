@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { trackEvent } from "@/lib/analytics";
 import { CheckCircle2, ChevronDown, ChevronUp, Lightbulb, ShieldCheck } from "lucide-react";
 
 type Audience="consumer"|"merchant"|"partner";
@@ -33,7 +34,7 @@ export function RubiConversionGuide({audience}:{audience:Audience}){
  const [open,setOpen]=useState(false);
  const guide=guides[audience];
  return <section aria-label={guide.heading} className="overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/[0.10] via-card to-background shadow-sm">
-  <button type="button" aria-expanded={open} onClick={()=>setOpen(value=>!value)}
+  <button type="button" aria-expanded={open} onClick={()=>setOpen(value=>{if(!value)void trackEvent("RUBI_CONVERSION_GUIDE_OPEN",{audience});return !value;})}
    className="flex min-h-20 w-full items-center justify-between gap-4 p-5 text-left sm:p-6">
    <span className="flex min-w-0 items-center gap-3">
     <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary"><Lightbulb className="h-5 w-5"/></span>

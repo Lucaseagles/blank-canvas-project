@@ -143,3 +143,19 @@ test("Partner kit offers five transparent sales approaches without invented clai
  assert.match(kit,/referralCode/);
  assert.doesNotMatch(kit,/compra confirmada por|garantia de vendas|pessoas compraram agora/);
 });
+
+test("Conversion interest reporting is master-only and distinguishes actions from sales",()=>{
+ const guide=source("../components/growth/RubiConversionGuide.tsx");
+ const kit=source("../components/partner/PartnerCreativeKit.tsx");
+ const api=source("./rubi-audience-conversion-pulse.functions.ts");
+ const panel=source("../components/admin/RubiAudienceConversionPulse.tsx");
+ const dashboard=source("../routes/admin/dashboard.tsx");
+ assert.match(guide,/RUBI_CONVERSION_GUIDE_OPEN/);
+ assert.match(kit,/RUBI_PARTNER_KIT_COPIED/);
+ assert.match(api,/requireOwnerRole/);
+ assert.match(api,/limit\(1000\)/);
+ assert.match(api,/partial:rows\.length===1000/);
+ assert.match(panel,/não são pessoas únicas nem vendas/);
+ assert.match(dashboard,/<RubiAudienceConversionPulse \/>/);
+ assert.doesNotMatch(api,/orders.*confirmed|fake_purchase/);
+});

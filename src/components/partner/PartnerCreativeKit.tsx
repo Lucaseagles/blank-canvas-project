@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { trackEvent } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -51,6 +52,7 @@ export function PartnerCreativeKit({ productTitle, category, referralCode }: Par
       }
       const url = new URL(`/r/${referralCode}`, window.location.origin).toString();
       await navigator.clipboard.writeText(getCopy(url));
+      void trackEvent("RUBI_PARTNER_KIT_COPIED",{template:selected});
       toast.success("Texto e link individual copiados.");
     } catch {
       toast.error("Não foi possível copiar. Tente em um navegador seguro (HTTPS).");
