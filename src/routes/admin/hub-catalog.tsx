@@ -24,7 +24,7 @@ import { approvedRubiCheckout } from "@/lib/rubi-checkout-validation";
 
 export const Route = createFileRoute("/admin/hub-catalog")({ component: HubCatalogAdmin });
 
-type Supplier = { id: string; name: string; checkout_host: string | null; fulfillment_mode: "supplier" | "hub" };
+type Supplier = { id: string; name: string; active: boolean; checkout_host: string | null; fulfillment_mode: "supplier" | "hub" };
 type Product = {
   id: string; title: string; description: string | null; image_url: string | null;
   category: string | null; sku: string | null; supplier_id: string;
@@ -76,7 +76,7 @@ function HubCatalogAdmin() {
     return product.active && !!approvedRubiCheckout({
       checkout_url: product.checkout_url,
       checkout_verified: product.checkout_verified,
-      hub_suppliers: supplier ? { active: true, checkout_host: supplier.checkout_host } : null,
+      hub_suppliers: supplier ? { active: supplier.active, checkout_host: supplier.checkout_host } : null,
     });
   }).length;
   const wholesaleCount = products.filter(product => product.active && Number(product.b2b_base_price) > 0).length;
