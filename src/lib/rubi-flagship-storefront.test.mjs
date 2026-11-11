@@ -58,12 +58,26 @@ test("Consumer feed discovers only published movement pages with current approva
  const server=source("./rubi-movement-feed.functions.ts");
  assert.match(feed,/<RubiApprovedMovementShelf \/>/);
  assert.match(shelf,/getRubiApprovedMovementFeed/);
- assert.match(shelf,/Seleção editorial/);
+ assert.match(shelf,/categorias do seu interesse/);
  assert.match(server,/\.not\("page_published_at", "is", null\)/);
  assert.match(server,/canServeApprovedMovementPage\(/);
  assert.match(server,/approvedRubiCheckout\(product\)/);
  assert.match(server,/movement\.product_id===product\.id/);
  assert.match(server,/rubiOrganicProductPath\(/);
- assert.doesNotMatch(server,/user_interests|user_metadata|user_id|supplier_cost/);
+ assert.match(server,/preferred_categories/);
+ assert.match(server,/verifyOptionalUser\(data\.userId,data\.accessToken\)/);
+ assert.doesNotMatch(server,/user_interests|user_metadata|supplier_cost/);
  assert.doesNotMatch(shelf,/checkout_url|supplier_cost|comissão confirmada/);
+});
+
+test("Marketplace feed and official RUBI movement use declared category preferences",()=>{
+ const marketplace=source("./personalization.functions.ts");
+ const movement=source("./rubi-movement-feed.functions.ts");
+ const shelf=source("../components/store/RubiApprovedMovementShelf.tsx");
+ assert.match(marketplace,/explicitCategories = \(preferences\?\.preferred_categories/);
+ assert.match(marketplace,/categoryIds = explicitCategories\.slice/);
+ assert.match(movement,/user_preferences/);
+ assert.match(movement,/rankRubiOffersByInterests/);
+ assert.match(shelf,/supabase\.auth\.getSession/);
+ assert.match(shelf,/accessToken:identity!\.accessToken/);
 });
