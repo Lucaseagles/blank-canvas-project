@@ -85,19 +85,17 @@ export const getRubiApprovedMovementFeed = createServerFn({ method: "POST" })
   });
  }
  if (!data.userId || !result.length) return result.slice(0,6);
- // Map marketplace category UUIDs to the display names used by RUBI Store SKUs.
- const { data: interestRows, error: interestError } = await db.from("user_interests")
-  .select("category_id,score").eq("user_id",data.userId)
-  .order("score",{ascending:false}).limit(20);
- if (interestError || !interestRows?.length) return result.slice(0,6);
- const categoryIds = interestRows.map((row: any)=>row.category_id as string);
+ // Only explicit category preferences are used for movement targeting at this stage.
+ // Behavioral interest scoring requires a separately validated opt-in control.
+ const { data: preference, error: preferenceError } = await db.from("user_preferences")
+  .select("preferred_categories").eq("user_id",data.userId).maybeSingle();
+ if (preferenceError || !Array.isArray(preference?.preferred_categories) ||
+     !preference.preferred_categories.length) return result.slice(0,6);
  const { data: categories, error: categoriesError } = await db.from("categories")
-  .select("id,name,slug").in("id",categoryIds);
+  .select("id,name,slug").in("id",preference.preferred_categories.slice(0,20));
  if (categoriesError || !categories?.length) return result.slice(0,6);
- const byCategory = new Map<string,any>(categories.map((category:any)=>[category.id,category]));
- const interests:RubiInterestCategory[] = interestRows.flatMap((row:any)=>{
-  const category=byCategory.get(row.category_id);
-  return category ? [{name:category.name,slug:category.slug,score:Number(row.score)}] : [];
- });
+ const interests:RubiInterestCategory[] = categories.map((category:any)=>({
+  name:category.name,slug:category.slug,score:1
+ }));
  return rankRubiOffersByInterests(result,interests,6);
 });
