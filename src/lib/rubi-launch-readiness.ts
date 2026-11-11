@@ -1,4 +1,4 @@
-import {approvedRubiCheckout,type RubiCheckoutRecord} from "./rubi-checkout-validation";
+import {approvedRubiCheckout,type RubiCheckoutRecord} from "./rubi-checkout-validation.ts";
 
 export type RubiLaunchProduct = RubiCheckoutRecord & {
  id:string;title:string;active:boolean;retail_price:number;supplier_cost:number;
