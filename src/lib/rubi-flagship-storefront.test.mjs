@@ -32,3 +32,13 @@ test("Audience entry never discloses wholesale or partner transactions in retail
  assert.match(entry,/preços de atacado continuam exclusivos/);
  assert.doesNotMatch(entry,/checkout_url|b2b_base_price/);
 });
+
+test("Authorized checkout remains reachable when analytics fails, with a visible retry error",()=>{
+ const code=source("../components/store/RubiPreCheckout.tsx");
+ assert.match(code,/const latest = await getReadiness/);
+ assert.match(code,/if \(!latest\.ready\)/);
+ assert.match(code,/try \{\s*await trackEvent\("RUBI_PRECHECKOUT_CONTINUE"/);
+ assert.match(code,/A telemetry outage must never prevent a freshly authorized purchase/);
+ assert.match(code,/window\.location\.assign\(url\.toString\(\)\)/);
+ assert.match(code,/checkoutError && <p role="alert"/);
+});
