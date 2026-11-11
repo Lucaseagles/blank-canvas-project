@@ -16,7 +16,7 @@ export const listRubiDistributionAdmin=createServerFn({method:"POST"}).middlewar
 .handler(async({data})=>{
  const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
  const {data:rows,error}=await (supabaseAdmin as any).from("rubi_movement_distribution")
-  .select("id,variant_id,channel,campaign,status,notes,published_reference")
+  .select("id,variant_id,channel,campaign,status,notes,published_reference,page_published_at")
   .eq("variant_id",data.variantId).order("channel").limit(20);
  if(error)throw error;
  return (rows??[]) as RubiDistributionPlan[];
@@ -44,7 +44,7 @@ export const saveRubiDistributionAdmin=createServerFn({method:"POST"}).middlewar
   if(existingError)throw existingError;
   if(!existing || existing.variant_id!==data.variant_id)throw new Error("Plano pertence a outra variante.");
   const {error}=await (supabaseAdmin as any).from("rubi_movement_distribution")
-    .update({...values,updated_at:new Date().toISOString()}).eq("id",id).eq("variant_id",data.variant_id);
+    .update({...values,page_published_at:null,published_variant_revision:null,published_movement_revision:null,updated_at:new Date().toISOString()}).eq("id",id).eq("variant_id",data.variant_id);
   if(error)throw error;
  }else{
   const {error}=await (supabaseAdmin as any).from("rubi_movement_distribution").insert(values);
