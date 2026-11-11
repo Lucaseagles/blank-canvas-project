@@ -4,6 +4,7 @@ import {requireOwnerRole} from "./auth-guards.server";
 import {canReviewRubiVariant,type RubiMovementVariant} from "./rubi-movement-variants";
 import {canReviewRubiMovement,type RubiMovement} from "./rubi-movements";
 import {approvedRubiCheckout} from "./rubi-checkout-validation";
+import {canServeApprovedMovementPage} from "./rubi-movement-publication";
 
 const uuid=z.string().uuid();
 const origin=z.object({productId:uuid,channel:z.enum(["instagram","tiktok","youtube","facebook","pinterest","whatsapp","telegram"]),campaign:z.string().regex(/^[a-z0-9][a-z0-9_-]{0,59}$/)});
@@ -72,13 +73,18 @@ export const getRubiMovementPublishedPage=createServerFn({method:"POST"})
   .select("id,movement_id,revision,status,page_headline,page_body,call_to_action")
   .eq("id",plan.variant_id).maybeSingle();
  if(variantError)throw variantError;
- if(!variant||variant.status!=="review"||variant.revision!==plan.published_variant_revision)return null;
+ if(!variant)return null;
  const {data:movement,error:movementError}=await admin.from("rubi_movements")
   .select("id,product_id,revision,status,audience,truthful_promise")
   .eq("id",variant.movement_id).maybeSingle();
  if(movementError)throw movementError;
- if(!movement||movement.product_id!==data.productId||movement.status!=="review"||movement.audience!=="consumer"||
-    movement.revision!==plan.published_movement_revision)return null;
+ if(!movement || !canServeApprovedMovementPage({
+  variantStatus:variant.status,movementStatus:movement.status,movementAudience:movement.audience,
+  variantRevision:variant.revision,movementRevision:movement.revision,
+  approvedVariantRevision:plan.published_variant_revision,
+  approvedMovementRevision:plan.published_movement_revision,
+  productMatches:movement.product_id===data.productId,checkoutReady:true,
+ }))return null;
  return {headline:variant.page_headline,body:variant.page_body,callToAction:variant.call_to_action,
   promise:movement.truthful_promise};
 });
