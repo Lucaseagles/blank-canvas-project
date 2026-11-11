@@ -7,7 +7,7 @@ import { trackEvent } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { RubiPreCheckout } from "@/components/store/RubiPreCheckout";
-import { RubiPublishedOffer } from "@/components/store/RubiPublishedOffer";
+import { RubiMovementLanding } from "@/components/store/RubiMovementLanding";
 import { RubiComplementarySuggestions } from "@/components/store/RubiComplementarySuggestions";
 import { currentRubiOrganicAttribution } from "@/lib/rubi-organic-campaigns";
 
@@ -66,7 +66,7 @@ function HubProductDetail() {
         )}
         {product && (
           <>
-            <RubiPublishedOffer productId={product.id} />
+            <RubiMovementLanding productId={product.id} />
             <div id="rubi-purchase"><RubiPreCheckout product={product} returnTo={`/hub-product/${product.id}`} origin="store" /></div>
             <RubiComplementarySuggestions productId={product.id} />
           </>
