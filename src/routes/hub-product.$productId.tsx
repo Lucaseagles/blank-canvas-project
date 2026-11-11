@@ -9,6 +9,7 @@ import { ArrowLeft,ArrowRight,PlayCircle,ShieldCheck,ShoppingBag } from "lucide-
 import { RubiPreCheckout } from "@/components/store/RubiPreCheckout";
 import { RubiMovementLanding } from "@/components/store/RubiMovementLanding";
 import { RubiComplementarySuggestions } from "@/components/store/RubiComplementarySuggestions";
+import { RubiProductStories } from "@/components/store/RubiProductStories";
 import { currentRubiOrganicAttribution } from "@/lib/rubi-organic-campaigns";
 
 export const Route = createFileRoute("/hub-product/$productId")({
@@ -86,6 +87,7 @@ function HubProductDetail() {
                 </div>
               </div>
             </section>
+            <RubiProductStories productId={product.id} />
             <RubiMovementLanding productId={product.id} />
             <div id="rubi-purchase"><RubiPreCheckout product={product} returnTo={`/hub-product/${product.id}`} origin="store" /></div>
             <RubiComplementarySuggestions productId={product.id} />
