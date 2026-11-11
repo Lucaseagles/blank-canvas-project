@@ -6,7 +6,7 @@ export default defineConfig({
  expect:{timeout:20000},
  retries:1,
  workers:1,
- reporter:[["list"],["html",{outputFolder:"artifacts/rubi-playwright-report",open:"never"}]],
+ reporter:[["list"],["html",{outputFolder:"artifacts/rubi-playwright-report",open:"never"}],["json",{outputFile:"artifacts/rubi-browser-results.json"}]],
  outputDir:"artifacts/rubi-browser-test-results",
  use:{...devices["Desktop Chrome"],ignoreHTTPSErrors:false},
 });
