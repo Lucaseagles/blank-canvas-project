@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { getRetailHubProduct } from "@/lib/hub-catalog.functions";
 import { trackEvent } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft,ArrowRight,PlayCircle,ShieldCheck,ShoppingBag } from "lucide-react";
 import { RubiPreCheckout } from "@/components/store/RubiPreCheckout";
 import { RubiMovementLanding } from "@/components/store/RubiMovementLanding";
 import { RubiComplementarySuggestions } from "@/components/store/RubiComplementarySuggestions";
@@ -66,6 +66,26 @@ function HubProductDetail() {
         )}
         {product && (
           <>
+            <section aria-label="Apresentação do produto" className="overflow-hidden rounded-[2rem] border bg-card shadow-sm">
+              <div className="grid gap-0 md:grid-cols-2">
+                <div className="relative aspect-square bg-gradient-to-br from-muted to-muted/20">
+                  {product.image_url ? <img src={product.image_url} alt={product.title} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center"><ShoppingBag className="h-24 w-24 text-muted-foreground/30" /></div>}
+                  <span className="absolute left-5 top-5 rounded-full border bg-background/90 px-4 py-2 text-[10px] font-black uppercase tracking-widest shadow-sm backdrop-blur">RUBI Eagles · Store</span>
+                </div>
+                <div className="flex flex-col justify-center gap-5 p-6 sm:p-8 lg:p-10">
+                  <p className="text-[11px] font-black uppercase tracking-[.2em] text-primary">{product.category || "Nossa seleção"}</p>
+                  <h1 className="text-3xl font-black leading-tight tracking-tight sm:text-4xl">{product.title}</h1>
+                  {product.description && <p className="whitespace-pre-line text-sm leading-7 text-muted-foreground">{product.description}</p>}
+                  <div className="rounded-2xl border bg-muted/30 p-4">
+                    <p className="text-xs font-semibold text-muted-foreground">Preço de varejo cadastrado</p>
+                    <p className="mt-1 text-3xl font-black">{money(product.retail_price)}</p>
+                    <p className="mt-2 flex items-center gap-2 text-xs text-muted-foreground"><ShieldCheck className="h-4 w-4 text-primary" /> Condições finais no checkout oficial do fornecedor.</p>
+                  </div>
+                  <a href="#rubi-purchase" className="inline-flex min-h-12 items-center justify-center rounded-xl bg-primary px-6 py-3 text-sm font-black text-primary-foreground transition hover:opacity-90">Consultar compra e disponibilidade <ArrowRight className="ml-2 h-4 w-4"/></a>
+                  <Link to="/videos" className="inline-flex items-center justify-center gap-2 text-sm font-semibold text-primary hover:underline"><PlayCircle className="h-4 w-4"/> Explorar o feed de vídeos da RUBI</Link>
+                </div>
+              </div>
+            </section>
             <RubiMovementLanding productId={product.id} />
             <div id="rubi-purchase"><RubiPreCheckout product={product} returnTo={`/hub-product/${product.id}`} origin="store" /></div>
             <RubiComplementarySuggestions productId={product.id} />
