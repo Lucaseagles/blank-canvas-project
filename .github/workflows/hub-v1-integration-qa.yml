@@ -89,6 +89,8 @@ jobs:
         run: npm run test:rubi-product-stories
       - name: RUBI storefront Story discovery tests
         run: npm run test:rubi-story-discovery
+      - name: RUBI storefront editorial tests
+        run: npm run test:rubi-editorial
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint
