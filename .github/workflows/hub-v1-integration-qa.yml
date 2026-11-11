@@ -65,6 +65,8 @@ jobs:
         run: npm run test:rubi-movement
       - name: RUBI Movement variants tests
         run: npm run test:rubi-variants
+      - name: RUBI movement distribution tests
+        run: npm run test:rubi-distribution
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint
