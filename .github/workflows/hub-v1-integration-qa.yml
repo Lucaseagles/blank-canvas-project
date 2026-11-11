@@ -109,6 +109,8 @@ jobs:
         run: npm run test:rubi-browser-contract
       - name: RUBI browser evidence integrity tests
         run: npm run test:rubi-browser-evidence
+      - name: RUBI inventory truth tests
+        run: npm run test:rubi-inventory-truth
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint
