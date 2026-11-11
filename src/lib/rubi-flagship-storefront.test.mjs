@@ -81,3 +81,24 @@ test("Marketplace feed and official RUBI movement use declared category preferen
  assert.match(shelf,/supabase\.auth\.getSession/);
  assert.match(shelf,/accessToken:identity!\.accessToken/);
 });
+
+test("Social activity supports persistent opt-out and cannot invent purchases",()=>{
+ const popup=source("../components/SocialProofPopup.tsx");
+ const prefs=source("./rubi-social-proof-visibility.ts");
+ const profile=source("../routes/profile.tsx");
+ const stats=source("./rubi-store-activity-proof.functions.ts");
+ const store=source("../routes/hub-product.$productId.tsx");
+ const precheckout=source("../components/store/RubiPreCheckout.tsx");
+ const counts=source("../components/AggregatedSocialProof.tsx");
+ assert.match(popup,/hideNotices/);
+ assert.match(popup,/setSocialProofNoticesEnabled\(false\)/);
+ assert.match(prefs,/SOCIAL_PROOF_VISIBILITY_KEY/);
+ assert.match(profile,/setSocialProofNoticesEnabled\(value\)/);
+ assert.match(stats,/RUBI_STORE_PRODUCT_VIEW/);
+ assert.match(stats,/RUBI_PRECHECKOUT_CONTINUE/);
+ assert.match(stats,/min_events_for_counter/);
+ assert.match(store,/<RubiStoreActivityProof productId=\{product\.id\}/);
+ assert.match(precheckout,/<RubiStoreActivityProof productId=\{product\.id\} compact/);
+ assert.match(counts,/visualizações/);
+ assert.doesNotMatch(stats,/PURCHASE_CONFIRMED|PAID_ORDER/);
+});
