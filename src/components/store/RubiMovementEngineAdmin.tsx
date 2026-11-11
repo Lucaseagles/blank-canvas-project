@@ -4,6 +4,7 @@ import {useServerFn} from "@tanstack/react-start";
 import {toast} from "sonner";
 import {Button} from "@/components/ui/button";
 import {RubiMovementVariantsAdmin} from "@/components/store/RubiMovementVariantsAdmin";
+import {RubiMovementPerformanceAdmin} from "@/components/store/RubiMovementPerformanceAdmin";
 import {emptyRubiMovement,rubiMovementChecklist,type RubiMovement} from "@/lib/rubi-movements";
 import {listRubiMovementsAdmin,saveRubiMovementAdmin,archiveRubiMovementAdmin} from "@/lib/rubi-movements.functions";
 
@@ -86,5 +87,6 @@ export function RubiMovementEngineAdmin({products}:{products:Product[]}){
    </div>
   </div>}
   {draft?.id&&<RubiMovementVariantsAdmin key={draft.id} movementId={draft.id} movementName={draft.name} movementStatus={draft.status} productId={draft.product_id}/>}
+  {draft?.id&&<RubiMovementPerformanceAdmin key={draft.id} movementId={draft.id}/>}
  </section>;
 }
