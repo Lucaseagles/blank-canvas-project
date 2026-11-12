@@ -4,6 +4,7 @@ import {useServerFn} from "@tanstack/react-start";
 import {toast} from "sonner";
 import {Button} from "@/components/ui/button";
 import {ShieldCheck,UserCheck,Users} from "lucide-react";
+import {RubiCreatorTeamMembershipHistoryAdmin} from "./RubiCreatorTeamMembershipHistoryAdmin";
 import {listRubiCreatorTeamMembersAdmin,assignRubiCreatorTeamMemberAdmin} from "@/lib/rubi-creator-team-members.functions";
 
 type Team={id:string;name:string;niche:string};
@@ -21,7 +22,11 @@ export function RubiCreatorTeamMembersAdmin(){
  const teams=(query.data?.teams??[]) as Team[];
  const partners=(query.data?.approvedPartners??[]) as Partner[];
  const memberships=(query.data?.members??[]) as Membership[];
- const refresh=()=>void qc.invalidateQueries({queryKey:["rubi-approved-creator-members"]});
+ const refresh=()=>{
+  void qc.invalidateQueries({queryKey:["rubi-approved-creator-members"]});
+  void qc.invalidateQueries({queryKey:["rubi-creator-team-history"]});
+  void qc.invalidateQueries({queryKey:["rubi-creator-team-performance-30d"]});
+ };
  const mutation=useMutation({mutationFn:(input:{teamId:string;commercialProfileId:string;status:"active"|"paused"})=>assign({data:input}),
   onSuccess:result=>{toast.success(result.notice);refresh();},
   onError:(error:Error)=>toast.error(error.message)});
@@ -66,6 +71,7 @@ export function RubiCreatorTeamMembersAdmin(){
    </div>})}
    {query.data.partial&&<p role="status" className="text-xs text-muted-foreground">Amostra parcial: 100 times, 200 parceiros e 500 vínculos por consulta. Números não representam inventário completo.</p>}
   </div>}
+  <RubiCreatorTeamMembershipHistoryAdmin teams={teams} />
   <p className="flex items-start gap-2 text-xs text-muted-foreground"><ShieldCheck className="h-4 w-4 shrink-0 text-primary"/> Este vínculo não cria link de venda, grant de produto, comissão, contrato nem pagamento. A autorização comercial e a atribuição oficial continuam em fluxos separados.</p>
  </section>;
 }
