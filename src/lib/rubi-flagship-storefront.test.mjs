@@ -177,3 +177,17 @@ test("Three funnels dashboard uses exact protected counts and distinct stages",(
  assert.match(panel,/não uma coorte de pessoas/i);
  assert.match(dashboard,/<RubiThreeFunnelPulseAdmin \/>/);
 });
+
+test("AI paid traffic funnels are only planned inside owner-gated movement distribution",()=>{
+ const admin=source("../components/store/RubiMovementDistributionAdmin.tsx");
+ const planner=source("../components/store/RubiAiPaidFunnelPlanner.tsx");
+ const plan=source("./rubi-ai-paid-funnel.ts");
+ assert.match(admin,/<RubiAiPaidFunnelPlanner productId=\{productId\}/);
+ assert.match(planner,/buildRubiPaidFunnelBrief/);
+ assert.match(planner,/!approved/);
+ assert.match(planner,/Nenhum anúncio foi publicado/);
+ assert.match(plan,/ai_seller_video/);
+ assert.match(plan,/direct_response/);
+ assert.match(plan,/MICROINFLUENCIADORES/);
+ assert.doesNotMatch(plan,/fetch\(|supabase\.from\(|publishAd\(/);
+});
