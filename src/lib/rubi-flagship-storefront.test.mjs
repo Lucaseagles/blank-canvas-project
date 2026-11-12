@@ -249,3 +249,25 @@ test("Shadow Master growth action center is read-only and grounded in existing m
  assert.match(logic,/merchant/);
  assert.doesNotMatch(panel,/saveHub|createAd|publishCampaign|payCommission/);
 });
+
+test("Master campaign plans have a private persistent approval ledger and no ad-spend side effect",()=>{
+ const migration=source("../../supabase/migrations/20261112013000_rubi_master_campaign_plans.sql");
+ const server=source("./rubi-master-campaign-plans.functions.ts");
+ const panel=source("../components/store/RubiMasterCampaignApprovalAdmin.tsx");
+ const distribution=source("../components/store/RubiMovementDistributionAdmin.tsx");
+ assert.match(migration,/rubi_master_campaign_plans/);
+ assert.match(migration,/rubi_master_campaign_plan_audit_trigger/);
+ assert.match(migration,/enable row level security/g);
+ assert.match(migration,/revoke all on public\.rubi_master_campaign_plans from public,anon,authenticated/);
+ assert.match(server,/requireOwnerRole/g);
+ assert.match(server,/approvedRubiCheckout\(product\)/);
+ assert.match(server,/\.eq\("status",expected\)/);
+ assert.match(server,/note\.length<10/);
+ assert.match(server,/Aprovação interna apenas/);
+ assert.match(panel,/creator_team/);
+ assert.match(panel,/ai_seller_video/);
+ assert.match(panel,/direct_response/);
+ assert.match(panel,/Salvar novo rascunho/);
+ assert.match(distribution,/<RubiMasterCampaignApprovalAdmin productId=\{productId\}/);
+ assert.doesNotMatch(server,/publishAd|spendBudget|createCheckout|payCommission/);
+});

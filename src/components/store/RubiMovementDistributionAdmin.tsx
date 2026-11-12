@@ -1,5 +1,6 @@
 import {useState} from "react";
 import {RubiAiPaidFunnelPlanner} from "./RubiAiPaidFunnelPlanner";
+import {RubiMasterCampaignApprovalAdmin} from "./RubiMasterCampaignApprovalAdmin";
 import {useQuery,useMutation,useQueryClient} from "@tanstack/react-query";
 import {useServerFn} from "@tanstack/react-start";
 import {toast} from "sonner";
@@ -72,6 +73,7 @@ export function RubiMovementDistributionAdmin({variantId,variantName,variantStat
     </Button>
    </div>}
    <RubiAiPaidFunnelPlanner productId={productId} variantName={variantName} campaign={draft.campaign} />
+   <RubiMasterCampaignApprovalAdmin productId={productId} campaign={draft.campaign} />
    <div className="flex flex-wrap gap-2">
     <Button disabled={mutation.isPending||(!dirty&&!!draft.id)||!draft.campaign||draft.status==="manually_published"&&(variantStatus!=="review"||draft.published_reference.trim().length<8)} onClick={()=>mutation.mutate()}>{mutation.isPending?"Salvando...":"Salvar plano"}</Button>
     <Button variant="outline" onClick={()=>{const url=window.location.origin+path;void navigator.clipboard.writeText(url).then(()=>toast.success("Link copiado."),()=>toast.error("Não foi possível copiar."));}}>Copiar link da RUBI</Button>
