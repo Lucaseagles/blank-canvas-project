@@ -59,7 +59,7 @@ function ReferralLanding() {
       </div>
     )}
     {product && (
-      <RubiPreCheckout product={product} returnTo={`/r/${code}${pub ? `?pub=${encodeURIComponent(pub)}` : ""}`} partnerCode={code} origin="partner" />
+      <RubiPreCheckout product={product} returnTo={`/r/${code}${pub ? `?pub=${encodeURIComponent(pub)}` : ""}`} partnerCode={code} visitToken={visitToken??undefined} publicationId={pub} origin="partner" />
     )}
   </main>;
 }
