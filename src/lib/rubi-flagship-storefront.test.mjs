@@ -326,3 +326,23 @@ test("Creator team analytics are owner-only and never infer paid outcomes from v
  assert.match(owner,/<RubiCreatorTeamPerformanceAdmin \/>/);
  assert.doesNotMatch(api,/payCommission|grantProduct|update\("hub_partner/);
 });
+
+test("Team historical ledger is protected and drives conservative time-accurate attribution",()=>{
+ const migration=source("../../supabase/migrations/20261112043000_rubi_creator_team_membership_history.sql");
+ const history=source("./rubi-creator-team-membership-history.functions.ts");
+ const attribution=source("./rubi-creator-team-performance.functions.ts");
+ const panel=source("../components/partner/RubiCreatorTeamMembersAdmin.tsx");
+ const performance=source("../components/partner/RubiCreatorTeamPerformanceAdmin.tsx");
+ assert.match(migration,/rubi_creator_team_membership_events/);
+ assert.match(migration,/enable row level security/);
+ assert.match(migration,/revoke all on public\.rubi_creator_team_membership_events from public,anon,authenticated/);
+ assert.match(migration,/migrated_baseline/);
+ assert.match(migration,/append-only/);
+ assert.match(history,/requireOwnerRole/);
+ assert.match(history,/\.limit\(200\)/);
+ assert.match(attribution,/summarizeRubiCreatorTeamsPerformanceWithHistory/);
+ assert.match(attribution,/rubi_creator_team_membership_events/);
+ assert.match(attribution,/\.length===5000/);
+ assert.match(panel,/<RubiCreatorTeamMembershipHistoryAdmin teams=\{teams\} \/>/);
+ assert.match(performance,/query\.data&&!query\.data\.partial/);
+});
