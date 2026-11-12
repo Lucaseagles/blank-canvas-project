@@ -12,7 +12,7 @@ export function rankRubiOffersByInterests<T extends RubiRankableOffer>(
 ):T[] {
  const weights=new Map<string,number>();
  for(const interest of interests) {
-  const weight=Number.isFinite(interest.score)?Math.max(0,interest.score):0;
+  const weight=Number.isFinite(interest.score)?Math.min(100,Math.max(0,interest.score)):0;
   for(const label of [interest.name,interest.slug]) {
    const normalized=normalizeRubiInterestLabel(label);
    if(normalized)weights.set(normalized,Math.max(weights.get(normalized)??0,weight));
@@ -22,6 +22,15 @@ export function rankRubiOffersByInterests<T extends RubiRankableOffer>(
   offer,index,weight:weights.get(normalizeRubiInterestLabel(offer.category))??0
  }));
  // Maintain original editorial order when no interest applies; include discovery.
- return original.sort((a,b)=>b.weight-a.weight||a.index-b.index)
-  .slice(0,Math.max(0,maxItems)).map(item=>item.offer);
+ const chosen:T[]=[];
+ const seen=new Set<string>();
+ const limit=Number.isFinite(maxItems)?Math.min(40,Math.max(0,Math.floor(maxItems))):6;
+ for(const item of original.sort((a,b)=>b.weight-a.weight||a.index-b.index)){
+  // One product per shelf; duplicates must not displace relevant discovery items.
+  if(!item.offer.productId||seen.has(item.offer.productId))continue;
+  seen.add(item.offer.productId);
+  chosen.push(item.offer);
+  if(chosen.length>=limit)break;
+ }
+ return limit===0?[]:chosen;
 }
