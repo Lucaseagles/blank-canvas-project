@@ -84,8 +84,8 @@ export function RubiTeamPublicationsAdmin(){
     {p.review_notes&&<p className="text-xs">{p.review_notes}</p>}
     {p.review_status==="reviewed"&&referrals.data?.links.find(item=>item.publicationId===p.id)&&<div className="space-y-1 rounded-xl border border-primary/20 bg-primary/[0.05] p-3">
      <p className="text-xs font-semibold">Indicação oficial do parceiro para este produto</p>
-     <a href={"/r/"+referrals.data.links.find(item=>item.publicationId===p.id)!.code} className="break-all text-xs text-primary underline">/r/{referrals.data.links.find(item=>item.publicationId===p.id)!.code}</a>
-     <p className="text-[11px] text-muted-foreground">Link reutilizado do sistema de parceiros. Ainda não atribui visitas a esta publicação específica. Checkout com comissão continua bloqueado até validação com o fornecedor.</p>
+     <a href={"/r/"+referrals.data.links.find(item=>item.publicationId===p.id)!.code+"?pub="+encodeURIComponent(p.id)} className="break-all text-xs text-primary underline">/r/{referrals.data.links.find(item=>item.publicationId===p.id)!.code}</a>
+     <p className="text-[11px] text-muted-foreground">Link existente do parceiro com identificação desta publicação. A visita será marcada somente após validação no servidor; não comprova que o visitante viu o post. Checkout com comissão continua bloqueado até validação com o fornecedor.</p>
     </div>}
     {p.review_status==="submitted"&&<div className="space-y-2">
      <label className="block space-y-1 text-xs font-semibold">Nota de verificação (mínimo 10 caracteres)
