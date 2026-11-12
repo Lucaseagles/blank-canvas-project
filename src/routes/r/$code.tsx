@@ -7,7 +7,7 @@ import { RubiPreCheckout } from "@/components/store/RubiPreCheckout";
 
 export const Route = createFileRoute("/r/$code")({
   validateSearch: (search: Record<string, unknown>) => ({
-    pub: typeof search.pub === "string" ? search.pub : undefined,
+    pub: typeof search["pub"] === "string" ? search["pub"] : undefined,
   }),
   component: ReferralLanding,
 });
