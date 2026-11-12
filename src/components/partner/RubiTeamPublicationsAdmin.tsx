@@ -86,7 +86,7 @@ export function RubiTeamPublicationsAdmin(){
      <p className="text-xs font-semibold">Indicação oficial do parceiro para este produto</p>
      <a href={"/r/"+referrals.data.links.find(item=>item.publicationId===p.id)!.code} className="break-all text-xs text-primary underline">/r/{referrals.data.links.find(item=>item.publicationId===p.id)!.code}</a>
      <p className="text-[11px] text-muted-foreground">Link reutilizado do sistema de parceiros. Ainda não atribui visitas a esta publicação específica. Checkout com comissão continua bloqueado até validação com o fornecedor.</p>
-    </div>}}
+    </div>}
     {p.review_status==="submitted"&&<div className="space-y-2">
      <label className="block space-y-1 text-xs font-semibold">Nota de verificação (mínimo 10 caracteres)
       <textarea rows={2} maxLength={1000} value={note} onChange={e=>setNote(e.target.value)} className="block w-full rounded-xl border bg-background p-2"/>
