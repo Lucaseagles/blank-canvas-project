@@ -206,6 +206,7 @@ test("Creator recruitment teams are owner-only and cannot grant commissions or p
  assert.match(admin,/Patrocínio fixo/);
  assert.match(admin,/Não foi possível carregar times/);
  assert.match(admin,/Nenhum pagamento, grant ou link é criado aqui/);
+ assert.match(source("../routes/partner/portal.tsx"),/Rede de times RUBI Partners/);
  assert.match(migration,/enable row level security/g);
  assert.match(migration,/revoke all on public\.rubi_creator_prospects from public,anon,authenticated/);
  assert.doesNotMatch(api,/hub_partner_agreements|hub_partner_product_grants|hub_partner_confirmed_sales/);
