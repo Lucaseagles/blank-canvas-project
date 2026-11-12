@@ -407,3 +407,21 @@ test("Creator publication campaign audit distinguishes traffic from individual c
  assert.match(owner,/<RubiCreatorPublicationAuditAdmin \/>/);
  assert.doesNotMatch(api,/payCommission|grantProducts|publishAd/);
 });
+
+test("Master connected commercial flow reuses existing secure stages with navigable anchors",()=>{
+ const api=source("./rubi-connected-commercial-flow.functions.ts");
+ const panel=source("../components/admin/RubiConnectedCommercialFlowAdmin.tsx");
+ const owner=source("../routes/admin/hub-catalog.tsx");
+ assert.match(api,/requireOwnerRole/);
+ assert.match(api,/count:"exact",head:true/g);
+ assert.match(api,/rubi_master_campaign_plans/);
+ assert.match(api,/rubi_creator_team_members/);
+ assert.match(api,/rubi_creator_team_publication_evidence/);
+ assert.match(panel,/nextRubiConnectedFlowAction/);
+ assert.match(panel,/rubi-master-connected-flow/);
+ assert.match(owner,/<RubiConnectedCommercialFlowAdmin \/>/);
+ for(const anchor of ["rubi-catalog-entry","rubi-movement-entry","rubi-team-entry","rubi-team-members-entry","rubi-team-campaign-entry","rubi-team-publications-entry","rubi-team-publication-audit-entry"]){
+  assert.ok(owner.includes('id="'+anchor+'"'));
+ }
+ assert.doesNotMatch(api,/payCommission|createCheckout|publishAd|grantProducts/);
+});

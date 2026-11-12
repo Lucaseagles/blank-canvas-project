@@ -41,7 +41,8 @@
     "test:rubi-four-profiles": "node --experimental-strip-types --test src/lib/rubi-four-profile-contracts.test.mjs",
     "test:rubi-browser-contract": "node --test src/lib/rubi-browser-e2e-config.test.mjs",
     "test:rubi-browser-evidence": "node --test src/lib/rubi-browser-evidence.test.mjs",
-    "test:rubi-inventory-truth": "node --experimental-strip-types --test src/lib/rubi-launch-inventory-truth.test.mjs"
+    "test:rubi-inventory-truth": "node --experimental-strip-types --test src/lib/rubi-launch-inventory-truth.test.mjs",
+    "test:rubi-connected-flow": "node --experimental-strip-types --test src/lib/rubi-connected-commercial-flow.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
