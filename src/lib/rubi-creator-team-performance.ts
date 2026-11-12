@@ -23,7 +23,8 @@ export function summarizeRubiCreatorTeamsPerformance(
    }
    continue;
   }
-  const membership=assignments[0];const entry=counts.get(membership.team_id);
+  const membership=assignments[0];if(!membership)continue;
+  const entry=counts.get(membership.team_id);
   if(!entry)continue;
   entry.activeMembers++;
   entry.activeLinks+=links.filter(l=>l.commercial_profile_id===profileId).length;
@@ -32,7 +33,8 @@ export function summarizeRubiCreatorTeamsPerformance(
   const link=linkById.get(referralLinkId);if(!link)return;
   const assignments=membershipsByProfile.get(link.commercial_profile_id);
   if(!assignments||assignments.length!==1)return;
-  const membership=assignments[0];const entry=counts.get(membership.team_id);
+  const membership=assignments[0];if(!membership)return;
+  const entry=counts.get(membership.team_id);
   const timestamp=Date.parse(occurredAt),joined=Date.parse(membership.joined_at);
   if(!entry||!Number.isFinite(timestamp)||timestamp<joined)return;
   entry[key]++;
