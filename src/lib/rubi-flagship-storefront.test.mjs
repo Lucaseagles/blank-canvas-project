@@ -310,3 +310,19 @@ test("Only approved partners can be assigned to RUBI creator teams",()=>{
  assert.match(admin,/<RubiCreatorTeamMembersAdmin \/>/);
  assert.doesNotMatch(api,/hub_partner_agreements|hub_partner_product_grants|payCommission/);
 });
+
+test("Creator team analytics are owner-only and never infer paid outcomes from visits",()=>{
+ const api=source("./rubi-creator-team-performance.functions.ts");
+ const panel=source("../components/partner/RubiCreatorTeamPerformanceAdmin.tsx");
+ const owner=source("../routes/admin/hub-catalog.tsx");
+ assert.match(api,/requireOwnerRole/);
+ assert.match(api,/rubi_creator_team_members/);
+ assert.match(api,/hub_partner_referral_visits/);
+ assert.match(api,/hub_partner_confirmed_sales/);
+ assert.match(api,/\.eq\("status","approved"\)/);
+ assert.match(api,/partial/);
+ assert.match(panel,/Vendas confirmadas não significam pagamentos liquidados/);
+ assert.match(panel,/Não foi possível confirmar os indicadores/);
+ assert.match(owner,/<RubiCreatorTeamPerformanceAdmin \/>/);
+ assert.doesNotMatch(api,/payCommission|grantProduct|update\("hub_partner/);
+});
