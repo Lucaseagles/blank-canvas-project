@@ -33,12 +33,14 @@ export const getRubiTeamOfferKitAdmin=createServerFn({method:"POST"})
     plan.mode!=="creator_team"||plan.product_id!==movement.product_id||
     variant.movement_id!==movement.id)
    throw new Error("A associação possui referências inconsistentes.");
-  const [offer,product,members]=await Promise.all([
-   getOne("rubi_offer_playbooks","product_id,audience,promise,verified_benefits,proof_notes,creative_hook,creative_script,page_headline,page_body,objections,movement_plan,channels,stage","product_id",plan.product_id),
+  const [offerResult,product,members]=await Promise.all([
+   db.from("rubi_offer_playbooks").select("product_id,audience,promise,verified_benefits,proof_notes,creative_hook,creative_script,page_headline,page_body,objections,movement_plan,channels,stage").eq("product_id",plan.product_id).eq("audience","consumer").maybeSingle(),
    getOne("hub_products","id,title,category,active,retail_price,checkout_url,checkout_verified,hub_suppliers!inner(active,checkout_host)","id",plan.product_id),
    db.from("rubi_creator_team_members").select("id,commercial_profile_id,status").eq("team_id",team.id).limit(201)
   ]);
+  if(offerResult.error)throw offerResult.error;
   if(members.error)throw members.error;
+  const offer=offerResult.data as RubiOfferPlaybook|null;
   if(!product)throw new Error("Produto original não encontrado.");
   const offerReadiness=offer?rubiOfferReadiness(offer as RubiOfferPlaybook):null;
   const eligibleProduct=product.active===true&&Number(product.retail_price)>0&&!!approvedRubiCheckout(product);
