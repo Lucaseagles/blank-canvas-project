@@ -1,7 +1,7 @@
 import {createServerFn} from "@tanstack/react-start";
 import {z} from "zod";
 import {requireOwnerRole} from "./auth-guards.server";
-import {canReviewRubiMovement,type RubiMovement} from "./rubi-movements";
+import {canReviewRubiMovement,rubiMovementEditorialQuality,type RubiMovement} from "./rubi-movements";
 const uuid=z.string().uuid();
 const schema=z.object({
  id:uuid.optional(),
@@ -35,7 +35,11 @@ export const saveRubiMovementAdmin=createServerFn({method:"POST"}).middleware([r
    const {data:product,error:productError}=await (supabaseAdmin as any).from("hub_products").select("id").eq("id",data.product_id).maybeSingle();
    if(productError)throw productError;
    if(!product)throw new Error("Produto não encontrado no catálogo.");
-   if(data.status==="review"&&!canReviewRubiMovement(data))throw new Error("Complete o checklist antes de enviar para revisão.");
+   if(data.status==="review"&&!canReviewRubiMovement(data)){
+     const quality=rubiMovementEditorialQuality(data);
+     if(!quality.ready)throw new Error("Revise textos repetidos do movimento: "+quality.repeated.join("; "));
+     throw new Error("Complete o checklist antes de enviar para revisão.");
+   }
    const {id,revision,...changes}=data;
    if(id){
      const {data:existing,error:existingError}=await (supabaseAdmin as any).from("rubi_movements")
