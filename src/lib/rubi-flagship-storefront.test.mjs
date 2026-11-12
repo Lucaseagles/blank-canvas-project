@@ -598,3 +598,14 @@ test("Creative library copied text explicitly remains an internal unlicensed dra
  assert.match(api,/\.eq\("status","review"\)/);
  assert.doesNotMatch(api,/publishAd|payCommission|createCheckout/);
 });
+
+test("Movement reporting discloses incomplete bounded data rather than declaring A/B winners",()=>{
+ const server=source("./rubi-movement-performance.functions.ts");
+ const panel=source("../components/store/RubiMovementPerformanceAdmin.tsx");
+ assert.match(server,/variantsTruncated=variantRows\.length===100/);
+ assert.match(server,/plansTruncated=\(planRows\?\?\[\]\)\.length===800/);
+ assert.match(server,/aggregateTruncated=\(agg\?\?\[\]\)\.length>=200/);
+ assert.match(server,/coverage:partial\?"partial":"bounded"/);
+ assert.match(panel,/query\.data\.partial/);
+ assert.match(panel,/não classifique vencedores nem conclua testes A\/B/);
+});
