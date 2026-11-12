@@ -4,6 +4,7 @@ import {useServerFn} from "@tanstack/react-start";
 import {toast} from "sonner";
 import {Button} from "@/components/ui/button";
 import {Megaphone,Users,ExternalLink,ShieldCheck} from "lucide-react";
+import {RubiCreatorTeamGrowthAdmin,type GrowthTargetRow} from "./RubiCreatorTeamGrowthAdmin";
 import {listRubiCreatorTeamsAdmin,saveRubiCreatorTeamAdmin,saveRubiCreatorProspectAdmin} from "@/lib/rubi-creator-teams.functions";
 type Team={id:string;name:string;niche:string;objective:string;stage:string};
 type Prospect={id:string;team_id:string;creator_name:string;platform:string;profile_url:string;follower_count:number;tier:string;stage:string;compensation_model:string;proposed_commission_percent:number|null;proposed_fixed_fee:number|null;notes:string};
@@ -14,6 +15,7 @@ export function RubiCreatorTeamsAdmin(){
  const qc=useQueryClient();
  const query=useQuery({queryKey:["rubi-creator-teams"],queryFn:()=>get(),retry:false});
  const teams=(query.data?.teams??[]) as Team[],prospects=(query.data?.prospects??[]) as Prospect[];
+ const targets=(query.data?.targets??[]) as GrowthTargetRow[];
  const [selectedTeam,setSelectedTeam]=useState("");
  const [teamName,setTeamName]=useState(""),[niche,setNiche]=useState(""),[objective,setObjective]=useState("");
  const [creatorName,setCreatorName]=useState(""),[platform,setPlatform]=useState<"instagram"|"tiktok"|"youtube"|"other">("instagram"),[profileUrl,setProfileUrl]=useState("");
@@ -76,6 +78,7 @@ export function RubiCreatorTeamsAdmin(){
    {teams.length===0&&<p className="text-sm text-muted-foreground">Nenhum time cadastrado. Comece por um nicho específico e valide os primeiros criadores.</p>}
    {teams.map(team=>{const members=prospects.filter(p=>p.team_id===team.id);return <article key={team.id} className="space-y-3 rounded-2xl border p-4">
     <div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="text-lg font-black">{team.name}</h3><p className="text-xs text-muted-foreground">{team.niche} · {members.length} prospect(s) nesta amostra · {team.stage}</p>{team.objective&&<p className="mt-1 text-sm">{team.objective}</p>}</div><Megaphone className="h-5 w-5 text-primary"/></div>
+    <RubiCreatorTeamGrowthAdmin teamId={team.id} targets={targets.find(target=>target.team_id===team.id)} prospectTiers={members.map(member=>member.tier)}/>
     <div className="grid gap-2 md:grid-cols-2">{members.map(p=><div key={p.id} className="space-y-2 rounded-xl border bg-background/60 p-3">
      <div className="flex flex-wrap items-center justify-between gap-2"><strong className="text-sm">{p.creator_name}</strong><a href={p.profile_url} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-1 text-xs text-primary">Ver perfil <ExternalLink className="h-3 w-3"/></a></div>
      <p className="text-xs text-muted-foreground">{p.platform} · {p.tier} · {p.follower_count.toLocaleString("pt-BR")} seguidores informados</p>
