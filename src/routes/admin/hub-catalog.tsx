@@ -20,6 +20,7 @@ import { RubiTeamCampaignAssignmentsAdmin } from "@/components/partner/RubiTeamC
 import { RubiTeamPublicationsAdmin } from "@/components/partner/RubiTeamPublicationsAdmin";
 import { RubiCreatorPublicationAuditAdmin } from "@/components/partner/RubiCreatorPublicationAuditAdmin";
 import { RubiConnectedCommercialFlowAdmin } from "@/components/admin/RubiConnectedCommercialFlowAdmin";
+import { RubiCreatorTaggedVisitsAdmin } from "@/components/partner/RubiCreatorTaggedVisitsAdmin";
 import { RubiBusinessRetentionAdmin } from "@/components/business/RubiBusinessRetentionAdmin";
 import { RubiBusinessFollowupsAdmin } from "@/components/business/RubiBusinessFollowupsAdmin";
 import { RubiOfferEngineAdmin } from "@/components/store/RubiOfferEngineAdmin";
@@ -308,7 +309,8 @@ function HubCatalogAdmin() {
         <RubiCreatorTeamPerformanceAdmin />
         <div id="rubi-team-campaign-entry" className="scroll-mt-24"><RubiTeamCampaignAssignmentsAdmin /></div>
         <div id="rubi-team-publications-entry" className="scroll-mt-24"><RubiTeamPublicationsAdmin /></div>
-        <div id="rubi-team-publication-audit-entry" className="scroll-mt-24"><RubiCreatorPublicationAuditAdmin /></div>
+        <div id="rubi-team-publication-audit-entry" className="scroll-mt-24"><RubiCreatorPublicationAuditAdmin />
+        <RubiCreatorTaggedVisitsAdmin /></div>
         <RubiBusinessQuotesAdmin />
       <section aria-label="RUBI 11× · Indicadores comerciais reais" className="space-y-4 rounded-3xl border border-primary/25 bg-card/80 p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
