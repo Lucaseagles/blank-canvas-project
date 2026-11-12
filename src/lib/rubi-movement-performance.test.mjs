@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {correlateMovementTraffic,percentOfIntentToView,summarizeMovementVariants,assessRubiVariantDecisionReadiness} from "./rubi-movement-performance.ts";
+import {correlateMovementTraffic,percentOfIntentToView,summarizeMovementVariants,assessRubiVariantDecisionReadiness,preflightRubiExperimentTraffic} from "./rubi-movement-performance.ts";
 const product="00000000-0000-4000-8000-000000000001";
 test("never converts absence of traffic into a success rate",()=>{
  assert.equal(percentOfIntentToView(0,0),null);
@@ -72,4 +72,19 @@ test("decision support never declares A/B winner from observational or partial t
  const partial=assessRubiVariantDecisionReadiness(summaries,true);
  assert.equal(partial[1].status,"incomplete_attribution");
  assert.equal(partial[0].intentPerViewPercent,null);
+});
+
+test("future A/B traffic preflight rejects ambiguous, partial and implausible events",()=>{
+ const clean=[
+ {variantId:"a",observedCampaigns:1,ambiguousCampaigns:0,unobservedCampaigns:0,viewEvents:30,checkoutIntents:4,intentPerViewPercent:13.3},
+ {variantId:"b",observedCampaigns:1,ambiguousCampaigns:0,unobservedCampaigns:0,viewEvents:40,checkoutIntents:5,intentPerViewPercent:12.5}
+ ];
+ const accepted=preflightRubiExperimentTraffic(clean,false);
+ assert.equal(accepted.readyForDesign,true);
+ assert.match(accepted.blockers.join(" "),/alocação controlada/);
+ assert.equal(preflightRubiExperimentTraffic(clean,true).readyForDesign,false);
+ assert.equal(preflightRubiExperimentTraffic([{...clean[0],ambiguousCampaigns:1},clean[1]],false).readyForDesign,false);
+ assert.equal(preflightRubiExperimentTraffic([{...clean[0],unobservedCampaigns:1},clean[1]],false).readyForDesign,false);
+ assert.equal(preflightRubiExperimentTraffic([{...clean[0],checkoutIntents:999},clean[1]],false).readyForDesign,false);
+ assert.equal(preflightRubiExperimentTraffic([clean[0]],false).readyForDesign,false);
 });
