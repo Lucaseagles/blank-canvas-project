@@ -37,3 +37,28 @@ revoke all on public.rubi_master_campaign_plans from public,anon,authenticated;
 revoke all on public.rubi_master_campaign_plan_audit from public,anon,authenticated;
 comment on table public.rubi_master_campaign_plans is 'Private Master campaign planning; approval authorizes only internal preparation, not external advertising or financial spending.';
 comment on table public.rubi_master_campaign_plan_audit is 'Private append-only campaign decision log managed by owner-only server functions.';
+
+-- Database trigger records every insert and status/field change, including failed concurrent updates.
+create or replace function public.rubi_master_campaign_plan_audit_trigger()
+returns trigger language plpgsql security definer set search_path=public as $$
+begin
+ if tg_op='INSERT' then
+  insert into public.rubi_master_campaign_plan_audit(plan_id,action,old_status,new_status,details)
+  values(new.id,'created',null,new.status,'Campaign plan created');
+ elsif row(old.*) is distinct from row(new.*) then
+  insert into public.rubi_master_campaign_plan_audit(plan_id,action,old_status,new_status,details)
+  values(new.id,
+   case when new.status='approved' and old.status is distinct from new.status then 'approved'
+        when new.status='ready_for_review' and old.status is distinct from new.status then 'submitted'
+        when new.status='paused' and old.status is distinct from new.status then 'paused'
+        else 'edited' end,
+   old.status,new.status,'Master campaign plan updated');
+ end if;
+ return new;
+end;
+$$;
+revoke all on function public.rubi_master_campaign_plan_audit_trigger() from public,anon,authenticated;
+drop trigger if exists rubi_master_campaign_plan_audit_trg on public.rubi_master_campaign_plans;
+create trigger rubi_master_campaign_plan_audit_trg after insert or update
+on public.rubi_master_campaign_plans
+for each row execute function public.rubi_master_campaign_plan_audit_trigger();
