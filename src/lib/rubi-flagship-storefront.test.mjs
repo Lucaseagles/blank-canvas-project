@@ -425,3 +425,20 @@ test("Master connected commercial flow reuses existing secure stages with naviga
  }
  assert.doesNotMatch(api,/payCommission|createCheckout|publishAd|grantProducts/);
 });
+
+test("Reviewed creator publications reuse only approved existing partner SKU links",()=>{
+ const bridge=source("./rubi-publication-referrals.functions.ts");
+ const panel=source("../components/partner/RubiTeamPublicationsAdmin.tsx");
+ assert.match(bridge,/requireOwnerRole/);
+ assert.match(bridge,/rubi_creator_team_publication_evidence/);
+ assert.match(bridge,/hub_partner_referral_links/);
+ assert.match(bridge,/hub_partner_product_grants/);
+ assert.match(bridge,/approvedRubiCheckout\(product\)/);
+ assert.match(bridge,/member\.team_id!==assignment\.team_id/);
+ assert.match(bridge,/plan\.status!=="approved"/);
+ assert.match(bridge,/plan\.mode!=="creator_team"/);
+ assert.match(bridge,/if\(limited\)return \{links:\[\]/);
+ assert.match(panel,/getRubiPublicationAuthorizedReferralsAdmin/);
+ assert.match(panel,/Checkout com comissão continua bloqueado/);
+ assert.doesNotMatch(bridge,/insert\(|upsert\(|payCommission|spendBudget|publishAd/);
+});
