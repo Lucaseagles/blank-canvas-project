@@ -5,6 +5,7 @@ import {toast} from "sonner";
 import {Button} from "@/components/ui/button";
 import {ClipboardCheck,ExternalLink,ShieldCheck} from "lucide-react";
 import {listRubiTeamPublicationsAdmin,registerRubiTeamPublicationAdmin,reviewRubiTeamPublicationAdmin} from "@/lib/rubi-team-publications.functions";
+import {getRubiPublicationAuthorizedReferralsAdmin} from "@/lib/rubi-publication-referrals.functions";
 
 type Assignment={id:string;team_id:string;variant_id:string;status:string};
 type Member={id:string;team_id:string;commercial_profile_id:string;status:string};
@@ -15,8 +16,10 @@ export function RubiTeamPublicationsAdmin(){
  const list=useServerFn(listRubiTeamPublicationsAdmin);
  const register=useServerFn(registerRubiTeamPublicationAdmin);
  const review=useServerFn(reviewRubiTeamPublicationAdmin);
+ const loadReferrals=useServerFn(getRubiPublicationAuthorizedReferralsAdmin);
  const qc=useQueryClient();
  const query=useQuery({queryKey:["rubi-team-publication-evidence"],queryFn:()=>list(),retry:false});
+ const referrals=useQuery({queryKey:["rubi-publication-authorized-referrals"],queryFn:()=>loadReferrals(),retry:false});
  const [assignmentId,setAssignmentId]=useState(""),[membershipId,setMembershipId]=useState("");
  const [channel,setChannel]=useState<typeof channels[number]>("instagram"),[url,setUrl]=useState("");
  const [publishedAt,setPublishedAt]=useState(""),[note,setNote]=useState("");
@@ -26,7 +29,10 @@ export function RubiTeamPublicationsAdmin(){
  const publications=(query.data?.publications??[]) as Evidence[];
  const teamId=assignments.find(a=>a.id===assignmentId)?.team_id;
  const activeMembers=members.filter(m=>m.team_id===teamId&&m.status==="active"&&profiles.some(p=>p.id===m.commercial_profile_id));
- const invalidate=()=>void qc.invalidateQueries({queryKey:["rubi-team-publication-evidence"]});
+ const invalidate=()=>{
+  void qc.invalidateQueries({queryKey:["rubi-team-publication-evidence"]});
+  void qc.invalidateQueries({queryKey:["rubi-publication-authorized-referrals"]});
+ };
  const submit=useMutation({mutationFn:()=>register({data:{assignmentId,membershipId,channel,publicationUrl:url,publishedAt:new Date(publishedAt).toISOString()}}),
   onSuccess:result=>{toast.success(result.notice);setUrl("");setPublishedAt("");invalidate();},
   onError:(e:Error)=>toast.error(e.message)});
@@ -69,11 +75,18 @@ export function RubiTeamPublicationsAdmin(){
   {query.isError&&<p role="alert" className="text-sm text-destructive">Não foi possível consultar as publicações. Verifique migração e sessão Master.</p>}
   {query.data&&<div className="space-y-3">
    {publications.length===0&&<p className="text-sm text-muted-foreground">Nenhuma publicação registrada até o momento.</p>}
+   {referrals.isError&&<p role="alert" className="text-xs text-destructive">Não foi possível verificar os links autorizados. Nenhuma indicação será presumida.</p>}
+   {referrals.data?.limited&&<p role="status" className="text-xs text-amber-600">Consulta de autorizações incompleta: links ocultos por segurança.</p>}
    {publications.map(p=><article key={p.id} className="space-y-2 rounded-2xl border bg-background/60 p-4">
     <div className="flex flex-wrap justify-between gap-2"><strong className="text-xs">{p.channel} · {p.review_status==="reviewed"?"Revisada":p.review_status==="rejected"?"Rejeitada":"Aguardando revisão"}</strong><span className="text-xs text-muted-foreground">{new Date(p.published_at).toLocaleString("pt-BR")}</span></div>
     <a href={p.publication_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 break-all text-xs text-primary underline">{p.publication_url}<ExternalLink className="h-3 w-3 shrink-0"/></a>
     <p className="text-xs text-muted-foreground">Associação: {p.assignment_id.slice(0,8)} · Integrante: {p.membership_id.slice(0,8)}</p>
     {p.review_notes&&<p className="text-xs">{p.review_notes}</p>}
+    {p.review_status==="reviewed"&&referrals.data?.links.find(item=>item.publicationId===p.id)&&<div className="space-y-1 rounded-xl border border-primary/20 bg-primary/[0.05] p-3">
+     <p className="text-xs font-semibold">Indicação oficial do parceiro para este produto</p>
+     <a href={"/r/"+referrals.data.links.find(item=>item.publicationId===p.id)!.code} className="break-all text-xs text-primary underline">/r/{referrals.data.links.find(item=>item.publicationId===p.id)!.code}</a>
+     <p className="text-[11px] text-muted-foreground">Link reutilizado do sistema de parceiros. Ainda não atribui visitas a esta publicação específica. Checkout com comissão continua bloqueado até validação com o fornecedor.</p>
+    </div>}
     {p.review_status==="submitted"&&<div className="space-y-2">
      <label className="block space-y-1 text-xs font-semibold">Nota de verificação (mínimo 10 caracteres)
       <textarea rows={2} maxLength={1000} value={note} onChange={e=>setNote(e.target.value)} className="block w-full rounded-xl border bg-background p-2"/>
