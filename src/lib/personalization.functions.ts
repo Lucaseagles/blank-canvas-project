@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireOwnerRole } from "./auth-guards.server";
 import { loadWeights, verifyOptionalUser } from "./personalization.server";
+import { planRubiFeedMix } from "./rubi-feed-mix";
 
 export const getWeights = createServerFn({ method: "GET" })
   .middleware([requireOwnerRole])
@@ -46,16 +47,7 @@ export const getPersonalizedFeed = createServerFn({ method: "POST" })
         .maybeSingle();
       if (feedMixError) throw feedMixError;
 
-      const rawRelevant = Number(feedMix?.relevant_pct ?? 70);
-      const rawRelated = Number(feedMix?.related_pct ?? 20);
-      const rawDiscovery = Number(feedMix?.discovery_pct ?? 10);
-      const mixTotal = rawRelevant + rawRelated + rawDiscovery;
-      const relevantPct = mixTotal > 0 ? rawRelevant / mixTotal : 0.7;
-      const relatedPct = mixTotal > 0 ? rawRelated / mixTotal : 0.2;
-      const relevantCount = userId ? Math.max(0, Math.round(limit * relevantPct)) : 0;
-      const relatedCount = userId ? Math.max(0, Math.round(limit * relatedPct)) : 0;
-      const discoveryCount = Math.max(0, limit - relevantCount - relatedCount);
-
+      // Explicit interests are resolved below; never reserve relevance slots without them.
       let categoryIds: string[] = [];
       let recentlyShownIds: string[] = [];
       if (userId) {
@@ -74,7 +66,10 @@ export const getPersonalizedFeed = createServerFn({ method: "POST" })
         const { data: shown } = await supabaseAdmin.from("recently_shown").select("product_id").eq("user_id", userId).order("shown_at", { ascending: false }).limit(40);
         recentlyShownIds = shown?.map(s => s.product_id).filter(Boolean) || [];
       }
-      const select = `id, title, current_price, previous_price, discount, images, rating, review_count, affiliate_url, slug, category_id, is_best_offer, offer_score, marketplaces(name), video_products(id)`;
+      const {relevantCount,relatedCount,discoveryCount}=planRubiFeedMix(limit,{
+        relevant:feedMix?.relevant_pct??70,related:feedMix?.related_pct??20,
+        discovery:feedMix?.discovery_pct??10,
+      },Boolean(userId && categoryIds.length));      const select = `id, title, current_price, previous_price, discount, images, rating, review_count, affiliate_url, slug, category_id, is_best_offer, offer_score, marketplaces(name), video_products(id)`;
       const active = (q: any) => q.or("status.eq.active,status.eq.published");
       const used = new Set(recentlyShownIds);
       const relevantProducts: any[] = [];
