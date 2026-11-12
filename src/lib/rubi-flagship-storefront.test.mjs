@@ -346,3 +346,25 @@ test("Team historical ledger is protected and drives conservative time-accurate 
  assert.match(panel,/<RubiCreatorTeamMembershipHistoryAdmin teams=\{teams\} \/>/);
  assert.match(performance,/query\.data&&!query\.data\.partial/);
 });
+
+test("Creator team creative campaign assignments remain private and approval gated",()=>{
+ const schema=source("../../supabase/migrations/20261112053000_rubi_creator_team_campaign_assignments.sql");
+ const api=source("./rubi-team-campaign-assignments.functions.ts");
+ const panel=source("../components/partner/RubiTeamCampaignAssignmentsAdmin.tsx");
+ const owner=source("../routes/admin/hub-catalog.tsx");
+ assert.match(schema,/rubi_creator_team_campaign_assignments/);
+ assert.match(schema,/enable row level security/g);
+ assert.match(schema,/revoke all on public\.rubi_creator_team_campaign_assignments from public,anon,authenticated/);
+ assert.match(schema,/rubi_creator_team_campaign_assignment_events/);
+ assert.match(schema,/append-only/);
+ assert.match(api,/requireOwnerRole/g);
+ assert.match(api,/plan\.product_id!==movement\.product_id/);
+ assert.match(api,/variant\.movement_id!==movement\.id/);
+ assert.match(api,/checked\.plan\.status!=="approved"/);
+ assert.match(api,/checked\.variant\.media_rights_confirmed!==true/);
+ assert.match(api,/\.eq\("status",existing\.status\)/);
+ assert.match(panel,/Registrar associação planejada/);
+ assert.match(panel,/não publica anúncios/);
+ assert.match(owner,/<RubiTeamCampaignAssignmentsAdmin \/>/);
+ assert.doesNotMatch(api,/payCommission|publishAd|grantProducts|spendBudget/);
+});
