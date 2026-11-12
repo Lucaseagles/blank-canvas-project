@@ -33,7 +33,7 @@ export function auditRubiCreatorPublications(
   const key=[product,d.channel,d.campaign].join("::");
   occurrence.set(key,(occurrence.get(key)??0)+1);
  }
- return publications.map(p=>{
+ return publications.map((p):PublicationAudit=>{
   const base={id:p.id,channel:p.channel,campaign:null,viewEvents:null,checkoutIntents:null};
   if(p.review_status!=="reviewed")return {...base,status:"unreviewed",explanation:"A publicação não foi revisada como referência editorial."};
   const assignment=assignmentById.get(p.assignment_id);
