@@ -15,7 +15,7 @@ export function RubiCreativeLibraryAdmin(){
  const filtered=useMemo(()=>assets.filter(a=>(format==="all"||a.format===format)&&
   [a.productTitle,a.category,a.movement,a.name,a.hook].join(" ").toLocaleLowerCase("pt-BR").includes(search.toLocaleLowerCase("pt-BR"))),[assets,search,format]);
  const copy=async(asset:CreativeAsset)=>{
-  const content=[asset.productTitle,asset.name,"Gancho: "+asset.hook,"Roteiro: "+asset.script,
+  const content=["RASCUNHO INTERNO — NÃO PUBLICAR OU DISTRIBUIR", "A declaração de direitos não comprova licença de mídia. Revisar licenças, autorização editorial e aprovação comercial antes de qualquer uso externo.", asset.productTitle,asset.name,"Gancho: "+asset.hook,"Roteiro: "+asset.script,
    "Página: "+asset.pageHeadline,asset.pageBody,"CTA: "+asset.cta,"Referências de mídia: "+asset.mediaNotes,
    "Evidências: "+asset.proofNotes].join("\n\n");
   await navigator.clipboard.writeText(content);
@@ -46,7 +46,7 @@ export function RubiCreativeLibraryAdmin(){
      <div><p className="font-bold">{asset.productTitle} · {asset.name}</p>
       <p className="text-xs text-muted-foreground">{asset.category} · {asset.movement} · {asset.format} · revisão {asset.revision}</p></div>
      <Button type="button" size="sm" variant="outline" onClick={()=>{void copy(asset).catch(()=>undefined);}}>
-      <ClipboardCopy className="mr-1 h-4 w-4"/> Copiar roteiro
+      <ClipboardCopy className="mr-1 h-4 w-4"/> Copiar rascunho interno
      </Button>
     </div>
     <p className="text-sm font-semibold">{asset.hook}</p>
@@ -55,6 +55,6 @@ export function RubiCreativeLibraryAdmin(){
     <p className="text-xs text-muted-foreground">Referência de mídia: {asset.mediaNotes||"Não documentada"} · Evidências: {asset.proofNotes||"Não documentadas"}</p>
    </article>)}
   </div>}
-  <p className="flex items-start gap-2 text-xs leading-5 text-muted-foreground"><ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-primary"/> Uma declaração de direitos não é licença verificada. Material privado do Master: não publique, patrocine ou distribua ao criador sem checar direitos, aprovação editorial, produto autorizado e acordo comercial.</p>
+  <p className="flex items-start gap-2 text-xs leading-5 text-muted-foreground"><ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-primary"/> O texto copiado leva aviso obrigatório de rascunho interno. Uma declaração de direitos não é licença verificada. Material privado do Master: não publique, patrocine ou distribua ao criador sem checar direitos, aprovação editorial, produto autorizado e acordo comercial.</p>
  </section>;
 }
