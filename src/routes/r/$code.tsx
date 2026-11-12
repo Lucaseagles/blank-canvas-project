@@ -5,11 +5,17 @@ import { resolvePartnerReferral } from "@/lib/partner-referral-visit.functions";
 import { Button } from "@/components/ui/button";
 import { RubiPreCheckout } from "@/components/store/RubiPreCheckout";
 
-export const Route = createFileRoute("/r/$code")({ component: ReferralLanding });
+export const Route = createFileRoute("/r/$code")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    pub: typeof search["pub"] === "string" ? search["pub"] : undefined,
+  }),
+  component: ReferralLanding,
+});
 function ReferralLanding() {
   const { code } = Route.useParams();
+  const { pub } = Route.useSearch();
   const resolve = useServerFn(resolvePartnerReferral);
-  const query = useQuery({ queryKey: ["partner-referral", code], queryFn: () => resolve({ data: { code } }), retry: false });
+  const query = useQuery({ queryKey: ["partner-referral", code, pub], queryFn: () => resolve({ data: { code, ...(pub ? { publicationId: pub } : {}) } }), retry: false });
   const product = query.data;
   return <main className="mx-auto max-w-3xl space-y-6 px-4 py-28">
     <h1 className="text-3xl font-black">RUBI · Produto indicado</h1>
@@ -23,7 +29,7 @@ function ReferralLanding() {
       </div>
     )}
     {product && (
-      <RubiPreCheckout product={product} returnTo={`/r/${code}`} partnerCode={code} origin="partner" />
+      <RubiPreCheckout product={product} returnTo={`/r/${code}${pub ? `?pub=${encodeURIComponent(pub)}` : ""}`} partnerCode={code} origin="partner" />
     )}
   </main>;
 }
