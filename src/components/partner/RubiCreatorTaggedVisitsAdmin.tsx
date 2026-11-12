@@ -10,7 +10,7 @@ export function RubiCreatorTaggedVisitsAdmin(){
  return <section aria-label="Eventos de visita por publicação dos criadores" className="space-y-4 rounded-3xl border border-primary/20 bg-card p-5 sm:p-7">
   <header className="space-y-2">
    <h2 className="flex items-center gap-2 text-xl font-black"><BarChart3 className="h-5 w-5 text-primary"/> Visitas por publicação identificada</h2>
-   <p className="text-xs leading-5 text-muted-foreground">Eventos de acesso a links RUBI com identificador de publicação, registrados nos últimos 30 dias. As visitas e os pré-checkouts exibidos são eventos distintos da mesma indicação; não representam pessoas únicas, intenção de pagamento, vendas ou comissões.</p>
+   <p className="text-xs leading-5 text-muted-foreground">Eventos de acesso a links RUBI com identificador de publicação, registrados nos últimos 30 dias. A contagem de visitas não representa pessoas únicas. Pré-checkouts exibidos são outra etapa da mesma indicação, não intenção de pagamento, vendas ou comissões.</p>
   </header>
   {query.isLoading&&<p role="status" className="text-sm text-muted-foreground">Consultando registros de indicação...</p>}
   {query.isError&&<p role="alert" className="text-sm text-destructive">Não foi possível confirmar as visitas identificadas.</p>}
