@@ -454,12 +454,12 @@ test("Publication-tagged partner visits retain exact commercial checks and origi
  assert.match(resolve,/\.eq\("review_status", "reviewed"\)/);
  assert.match(resolve,/member\.commercial_profile_id !== link\.commercial_profile_id/);
  assert.match(resolve,/plan\.product_id !== link\.product_id/);
- assert.match(resolve,/\.from\("hub_partner_referral_visits"\)\.insert/);
+ assert.match(resolve,/\.from\("hub_partner_referral_visits"\)/);
  assert.match(resolve,/publication_id: input\.publicationId/);
  assert.match(route,/validateSearch/);
- assert.match(route,/\["partner-referral", code, pub\]/);
+ assert.match(route,/\["partner-referral", code, pub, visitToken\]/);
  assert.match(panel,/\?pub=/);
- assert.doesNotMatch(resolve,/payCommission|createCheckout|publishAd|upsert/);
+ assert.doesNotMatch(resolve,/payCommission|createCheckout|publishAd/);
 });
 
 test("Master tagged-visit panel uses exact DB aggregate and never equates events to buyers",()=>{
@@ -478,4 +478,23 @@ test("Master tagged-visit panel uses exact DB aggregate and never equates events
  assert.match(panel,/não representa pessoas únicas/);
  assert.match(owner,/<RubiCreatorTaggedVisitsAdmin \/>/);
  assert.doesNotMatch(api,/payCommission|createCheckout|publishAd/);
+});
+
+test("Referral visit idempotency does not track people or unlock partner checkout",()=>{
+ const migration=source("../../supabase/migrations/20261112093000_rubi_referral_visit_idempotency.sql");
+ const resolve=source("./partner-referral-visit.functions.ts");
+ const route=source("../routes/r/$code.tsx");
+ assert.match(migration,/add column if not exists visit_token uuid/);
+ assert.match(migration,/unique index if not exists hub_partner_referral_visits_token_uniq/);
+ assert.match(migration,/referral_link_id,visit_token/);
+ assert.match(resolve,/visitToken: z\.string\(\)\.uuid\(\)\.optional\(\)/);
+ assert.match(resolve,/ignoreDuplicates: true/);
+ assert.match(resolve,/onConflict: "referral_link_id,visit_token"/);
+ assert.match(resolve,/visitWrite\.insert\(visitRecord\)/);
+ assert.match(route,/sessionStorage\.getItem/);
+ assert.match(route,/crypto\.randomUUID/);
+ assert.match(route,/30 \* 60_000/);
+ assert.match(route,/enabled: visitToken !== null/);
+ assert.doesNotMatch(route,/localStorage\.|navigator\.userAgent|document\.cookie|geolocation\.getCurrentPosition/);
+ assert.doesNotMatch(resolve,/payCommission|createCheckout|publishAd|grantProduct/);
 });
