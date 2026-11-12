@@ -93,6 +93,17 @@ function PartnerPortal() {
     </div>}
     {profile?.status === "approved" && <>
       <p className="text-sm text-muted-foreground">Bem-vindo, {profile.display_name}. {products.length} produtos autorizados.</p>
+      <section aria-label="Rede de times RUBI Partners" className="space-y-3 rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 to-card p-5 sm:p-7">
+        <p className="text-xs font-black uppercase tracking-widest text-primary">RUBI Partners · Rede de Criadores</p>
+        <h2 className="text-2xl font-black">Crie campanhas que combinam com seu público</h2>
+        <p className="text-sm leading-6 text-muted-foreground">A RUBI está estruturando times por nicho, desde nano e microcriadores até influenciadores maiores. Sua divulgação continua baseada em produtos autorizados, seu link individual e conteúdo verdadeiro.</p>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="rounded-2xl border bg-background/70 p-4"><strong className="text-sm">Seu nicho</strong><p className="mt-2 text-xs text-muted-foreground">Selecione produtos relevantes para sua audiência e evite promessas que não possa comprovar.</p></div>
+          <div className="rounded-2xl border bg-background/70 p-4"><strong className="text-sm">Seu conteúdo</strong><p className="mt-2 text-xs text-muted-foreground">Use os cinco formatos de divulgação disponíveis no kit de cada oferta autorizada.</p></div>
+          <div className="rounded-2xl border bg-background/70 p-4"><strong className="text-sm">Seus resultados</strong><p className="mt-2 text-xs text-muted-foreground">Acompanhe visitas e vendas confirmadas no seu painel, sem confundir intenção com pagamento.</p></div>
+        </div>
+        <p className="text-xs text-muted-foreground">A formação e gestão dos times é, nesta fase, exclusiva do Shadow Master. Participar de um time não libera novos produtos, comissões adicionais nem acesso aos dados de outros criadores.</p>
+      </section>
       <section aria-label="Resumo das visitas" className="space-y-3">
         <h2 className="text-2xl font-bold">Seu desempenho</h2>
         {statsQuery.isLoading && <p role="status">Carregando indicadores...</p>}
