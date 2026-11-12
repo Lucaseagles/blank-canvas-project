@@ -58,6 +58,14 @@ export const registerRubiTeamPublicationAdmin=createServerFn({method:"POST"})
   const at=Date.parse(data.publishedAt);
   if(!Number.isFinite(at)||at<Date.parse(member.joined_at)||at>Date.now()+300000)
    throw new Error("A data de publicação deve estar após a entrada no time e não pode estar no futuro.");
+  // A member who is active today may have been paused on the publication date.
+  const {data:membershipState,error:historyError}=await db.from("rubi_creator_team_membership_events")
+   .select("status,effective_at").eq("membership_id",member.id)
+   .lte("effective_at",data.publishedAt).order("effective_at",{ascending:false})
+   .order("id",{ascending:false}).limit(1).maybeSingle();
+  if(historyError)throw historyError;
+  if(!membershipState||membershipState.status!=="active")
+   throw new Error("Não há vínculo ativo comprovado na data informada da publicação.");
   const {data:row,error}=await db.from("rubi_creator_team_publication_evidence").insert({
    assignment_id:data.assignmentId,membership_id:data.membershipId,channel:data.channel,
    publication_url:data.publicationUrl,published_at:data.publishedAt
