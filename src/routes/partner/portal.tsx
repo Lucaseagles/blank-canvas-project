@@ -74,6 +74,7 @@ function PartnerPortal() {
       <p className="text-xs font-black uppercase tracking-widest text-primary">RUBI · Parceiros</p>
       <h1 className="text-4xl font-black">Seu portal de parceiros</h1>
       <p className="text-muted-foreground">Produtos autorizados individualmente pelo Admin Master. Acesso exclusivo à sua conta.</p>
+      <p className="text-sm"><Link to="/creators" className="font-semibold text-primary underline underline-offset-4">Conheça a rede de criadores e convide profissionais do seu nicho</Link></p>
     </header>
     {query.isLoading && <p role="status">Carregando seu portal...</p>}
     {query.isError && <div role="alert" className="space-y-3 rounded-2xl border p-6">
