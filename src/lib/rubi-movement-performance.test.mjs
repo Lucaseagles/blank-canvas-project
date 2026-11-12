@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {correlateMovementTraffic,percentOfIntentToView,summarizeMovementVariants} from "./rubi-movement-performance.ts";
+import {correlateMovementTraffic,percentOfIntentToView,summarizeMovementVariants,assessRubiVariantDecisionReadiness} from "./rubi-movement-performance.ts";
 const product="00000000-0000-4000-8000-000000000001";
 test("never converts absence of traffic into a success rate",()=>{
  assert.equal(percentOfIntentToView(0,0),null);
@@ -58,4 +58,18 @@ test("variant with no trustworthy observations has no conversion ratio",()=>{
   [{id:"p0",variant_id:"v3",channel:"instagram",campaign:"absent",status:"planned"}],[]));
  assert.equal(result[0]?.unobservedCampaigns,1);
  assert.equal(result[0]?.intentPerViewPercent,null);
+});
+
+test("decision support never declares A/B winner from observational or partial traffic",()=>{
+ const summaries=[
+ {variantId:"v0",observedCampaigns:0,ambiguousCampaigns:0,unobservedCampaigns:1,viewEvents:0,checkoutIntents:0,intentPerViewPercent:null},
+ {variantId:"v1",observedCampaigns:1,ambiguousCampaigns:0,unobservedCampaigns:0,viewEvents:50,checkoutIntents:5,intentPerViewPercent:10},
+ {variantId:"v2",observedCampaigns:1,ambiguousCampaigns:1,unobservedCampaigns:0,viewEvents:100,checkoutIntents:20,intentPerViewPercent:20}
+ ];
+ const complete=assessRubiVariantDecisionReadiness(summaries,false);
+ assert.deepEqual(complete.map(x=>x.status),["no_observations","observational_only","incomplete_attribution"]);
+ assert.match(complete[1].reason,/não há vencedor A\/B/);
+ const partial=assessRubiVariantDecisionReadiness(summaries,true);
+ assert.equal(partial[1].status,"incomplete_attribution");
+ assert.equal(partial[0].intentPerViewPercent,null);
 });
