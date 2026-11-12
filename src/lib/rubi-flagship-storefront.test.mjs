@@ -537,7 +537,7 @@ test("Partner precheckout view is an idempotent stage of an existing validated v
  assert.match(api,/\.is\("publication_id",null\)/);
  assert.match(api,/\.gte\("visited_at",cutoff\)/);
  assert.doesNotMatch(api,/insert\(|payCommission|publishAd|createCheckout/);
- assert.match(route,/visitToken=\{visitToken\?\?undefined\}/);
+ assert.match(route,/visitToken \? \{visitToken\}/);
  assert.match(precheckout,/markRubiPartnerPrecheckoutViewed/);
  assert.match(metric,/rubi_creator_publication_precheckout_counts/);
  assert.match(metric,/count>\(byId\.get\(id\)\?\?0\)/);
