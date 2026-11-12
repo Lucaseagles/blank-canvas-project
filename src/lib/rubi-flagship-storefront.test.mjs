@@ -191,3 +191,23 @@ test("AI paid traffic funnels are only planned inside owner-gated movement distr
  assert.match(plan,/MICROINFLUENCIADORES/);
  assert.doesNotMatch(plan,/fetch\(|supabase\.from\(|publishAd\(/);
 });
+
+test("Creator recruitment teams are owner-only and cannot grant commissions or partner access",()=>{
+ const admin=source("../components/partner/RubiCreatorTeamsAdmin.tsx");
+ const api=source("./rubi-creator-teams.functions.ts");
+ const page=source("../routes/admin/hub-catalog.tsx");
+ const migration=source("../../supabase/migrations/20261112003000_rubi_creator_teams_crm.sql");
+ assert.match(page,/<RubiCreatorTeamsAdmin \/>/);
+ assert.match(api,/requireOwnerRole/g);
+ assert.match(api,/saveRubiCreatorProspectAdmin/);
+ assert.match(api,/rubi_creator_prospects/);
+ assert.match(api,/profile_url:z\.string\(\)\.trim\(\)\.url/);
+ assert.match(admin,/Nano|nano/);
+ assert.match(admin,/Patrocínio fixo/);
+ assert.match(admin,/Não foi possível carregar times/);
+ assert.match(admin,/Nenhum pagamento, grant ou link é criado aqui/);
+ assert.match(source("../routes/partner/portal.tsx"),/Rede de times RUBI Partners/);
+ assert.match(migration,/enable row level security/g);
+ assert.match(migration,/revoke all on public\.rubi_creator_prospects from public,anon,authenticated/);
+ assert.doesNotMatch(api,/hub_partner_agreements|hub_partner_product_grants|hub_partner_confirmed_sales/);
+});
