@@ -207,7 +207,7 @@ function HubCatalogAdmin() {
           <div className="rounded-2xl border bg-card/70 p-4"><p className="text-sm text-muted-foreground">Disponíveis no atacado</p><p className="text-3xl font-black">{wholesaleCount}</p></div>
         </div>
       </header>
-      <div id="rubi-catalog-entry" className="scroll-mt-24"><RubiSupplierCsvAdmin suppliers={suppliers} /></div>
+      <RubiSupplierCsvAdmin suppliers={suppliers} />
       <RubiProductStoriesAdmin products={products} />
       <RubiStorefrontSectionsAdmin products={products} />
       <RubiEditorialMetricsAdmin />
@@ -396,7 +396,7 @@ function HubCatalogAdmin() {
       {query.isError && <div role="alert" className="space-y-3"><p>Não foi possível carregar o catálogo.</p><Button variant="outline" onClick={() => void query.refetch()}>Tentar novamente</Button></div>}
       {!query.isError && (
         <>
-          <section className="space-y-4 rounded-3xl border border-white/10 bg-card/80 p-6">
+          <section id="rubi-catalog-entry" className="scroll-mt-24 space-y-4 rounded-3xl border border-white/10 bg-card/80 p-6">
             <h2 className="text-xl font-bold">Fornecedores ({suppliers.length})</h2>
             <form className="grid gap-4 md:grid-cols-2" onSubmit={event => { event.preventDefault(); supplierMutation.mutate(); }}>
               <label className="space-y-2 text-sm font-medium">
