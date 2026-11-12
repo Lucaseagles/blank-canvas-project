@@ -389,3 +389,21 @@ test("Creator publication evidence requires an active approved partner and manua
  assert.match(admin,/<RubiTeamPublicationsAdmin \/>/);
  assert.doesNotMatch(api,/payCommission|publishAd|spendBudget|grantProducts/);
 });
+
+test("Creator publication campaign audit distinguishes traffic from individual commission",()=>{
+ const api=source("./rubi-creator-publication-audit.functions.ts");
+ const core=source("./rubi-creator-publication-audit.ts");
+ const ui=source("../components/partner/RubiCreatorPublicationAuditAdmin.tsx");
+ const owner=source("../routes/admin/hub-catalog.tsx");
+ assert.match(api,/requireOwnerRole/);
+ assert.match(api,/rubi_creator_team_publication_evidence/);
+ assert.match(api,/rubi_organic_campaign_performance/);
+ assert.match(api,/limited/);
+ assert.match(core,/review_status!=="reviewed"/);
+ assert.match(core,/ambiguous_campaign/);
+ assert.match(core,/matched_campaign/);
+ assert.match(ui,/não mede alcance|não mede alcance/i);
+ assert.match(ui,/nenhuma comissão pode ser calculada/);
+ assert.match(owner,/<RubiCreatorPublicationAuditAdmin \/>/);
+ assert.doesNotMatch(api,/payCommission|grantProducts|publishAd/);
+});
