@@ -26,14 +26,19 @@ export const getRubiCreatorTaggedVisitsAdmin=createServerFn({method:"GET"})
   if(limited)return {rows:[],days:30,limited:true,asOf:new Date().toISOString()};
   const ids=posts.map((post:{id:string})=>post.id);
   if(ids.length===0)return {rows:[],days:30,limited:false,asOf:new Date().toISOString()};
-  const {data:counts,error}=await db.rpc("rubi_creator_publication_visit_counts",{
-   p_publication_ids:ids,p_since:since
-  });
-  if(error)throw error;
-  const byId=new Map<string,number>((counts??[]).map((row:{publication_id:string;visit_events:number|string})=>
+  const [visitResult,precheckoutResult]=await Promise.all([
+   db.rpc("rubi_creator_publication_visit_counts",{p_publication_ids:ids,p_since:since}),
+   db.rpc("rubi_creator_publication_precheckout_counts",{p_publication_ids:ids,p_since:since})
+  ]);
+  if(visitResult.error)throw visitResult.error;
+  if(precheckoutResult.error)throw precheckoutResult.error;
+  const byId=new Map<string,number>((visitResult.data??[]).map((row:{publication_id:string;visit_events:number|string})=>
    [row.publication_id,Number(row.visit_events)]));
-  if([...byId.values()].some(count=>!Number.isSafeInteger(count)||count<0))
-   throw new Error("A contagem de visitas excedeu os limites seguros.");
+  const byPrecheckout=new Map<string,number>((precheckoutResult.data??[]).map((row:{publication_id:string;precheckout_views:number|string})=>
+   [row.publication_id,Number(row.precheckout_views)]));
+  if([...byId.values(),...byPrecheckout.values()].some(count=>!Number.isSafeInteger(count)||count<0)||
+     [...byPrecheckout.entries()].some(([id,count])=>count>(byId.get(id)??0)))
+   throw new Error("Os totais de visitas e pré-checkout estão inconsistentes.");
   const byAssignment=new Map<string,any>(assignments.map((item:{id:string})=>[item.id,item]));
   const byMember=new Map<string,any>(members.map((item:{id:string})=>[item.id,item]));
   const byTeam=new Map<string,string>(teams.map((item:{id:string;name:string}):[string,string]=>[item.id,item.name]));
@@ -44,6 +49,7 @@ export const getRubiCreatorTaggedVisitsAdmin=createServerFn({method:"GET"})
     team:assignment?byTeam.get(assignment.team_id)??"Time não encontrado":"Associação não encontrada",
     creator:member?byProfile.get(member.commercial_profile_id)??"Perfil não encontrado":"Integrante não encontrado",
     campaignId:assignment?.campaign_plan_id??null,
-    taggedVisitEvents:byId.get(post.id)??0};
+    taggedVisitEvents:byId.get(post.id)??0,
+    precheckoutViews:byPrecheckout.get(post.id)??0};
   }),days:30,limited:false,asOf:new Date().toISOString()};
  });

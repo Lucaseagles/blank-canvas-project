@@ -516,3 +516,30 @@ test("RUBI referral quality diagnostic is owner-only, aggregated and separated f
  assert.match(route,/<RubiReferralTrafficQualityAdmin \/>/);
  assert.doesNotMatch(api,/visitor_id|ip_address|user_agent|payCommission|createCheckout/);
 });
+
+test("Partner precheckout view is an idempotent stage of an existing validated visit, not a sale",()=>{
+ const migration=source("../../supabase/migrations/20261112113000_rubi_partner_precheckout_stage.sql");
+ const api=source("./rubi-partner-precheckout-stage.functions.ts");
+ const route=source("../routes/r/$code.tsx");
+ const precheckout=source("../components/store/RubiPreCheckout.tsx");
+ const metric=source("./rubi-creator-tagged-visits.functions.ts");
+ const master=source("../components/partner/RubiCreatorTaggedVisitsAdmin.tsx");
+ assert.match(migration,/add column if not exists precheckout_viewed_at/);
+ assert.match(migration,/security invoker/);
+ assert.match(migration,/revoke all on function public\.rubi_creator_publication_precheckout_counts/);
+ assert.match(migration,/grant execute on function public\.rubi_creator_publication_precheckout_counts/);
+ assert.match(api,/visitToken:z\.string\(\)\.uuid\(\)/);
+ assert.match(api,/approvedRubiCheckout\(product\.data\)/);
+ assert.match(api,/\.eq\("active",true\)/);
+ assert.match(api,/\.eq\("visit_token",data\.visitToken\)/);
+ assert.match(api,/\.is\("precheckout_viewed_at",null\)/);
+ assert.match(api,/\.eq\("publication_id",data\.publicationId\)/);
+ assert.match(api,/\.is\("publication_id",null\)/);
+ assert.match(api,/\.gte\("visited_at",cutoff\)/);
+ assert.doesNotMatch(api,/insert\(|payCommission|publishAd|createCheckout/);
+ assert.match(route,/visitToken \? \{visitToken\}/);
+ assert.match(precheckout,/markRubiPartnerPrecheckoutViewed/);
+ assert.match(metric,/rubi_creator_publication_precheckout_counts/);
+ assert.match(metric,/count>\(byId\.get\(id\)\?\?0\)/);
+ assert.match(master,/Pré-checkouts exibidos/);
+});
