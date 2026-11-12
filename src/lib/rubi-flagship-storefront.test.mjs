@@ -291,3 +291,22 @@ test("Influencer teams plan nano-to-mega growth without treating prospects as pa
  assert.match(owner,/<RubiCreatorTeamGrowthAdmin teamId=\{team\.id\}/);
  assert.doesNotMatch(api,/hub_partner_confirmed_sales|payCommission|grantProducts/);
 });
+
+test("Only approved partners can be assigned to RUBI creator teams",()=>{
+ const migration=source("../../supabase/migrations/20261112033000_rubi_creator_team_members.sql");
+ const api=source("./rubi-creator-team-members.functions.ts");
+ const panel=source("../components/partner/RubiCreatorTeamMembersAdmin.tsx");
+ const admin=source("../routes/admin/hub-catalog.tsx");
+ assert.match(migration,/rubi_creator_team_members/);
+ assert.match(migration,/enable row level security/);
+ assert.match(migration,/revoke all on public\.rubi_creator_team_members from public,anon,authenticated/);
+ assert.match(api,/requireOwnerRole/g);
+ assert.match(api,/\.eq\("audience","partner"\)\.eq\("status","approved"\)/);
+ assert.match(api,/profile\.status!=="approved"/);
+ assert.match(api,/onConflict:"team_id,commercial_profile_id"/);
+ assert.match(panel,/Parceiro aprovado/);
+ assert.match(panel,/Vínculo pausado/);
+ assert.match(panel,/não cria link de venda, grant de produto, comissão/);
+ assert.match(admin,/<RubiCreatorTeamMembersAdmin \/>/);
+ assert.doesNotMatch(api,/hub_partner_agreements|hub_partner_product_grants|payCommission/);
+});
