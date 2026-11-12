@@ -609,3 +609,14 @@ test("Movement reporting discloses incomplete bounded data rather than declaring
  assert.match(panel,/query\.data\.partial/);
  assert.match(panel,/não classifique vencedores nem conclua testes A\/B/);
 });
+
+test("RUBI discovery gives transparent empty, error and preference navigation states",()=>{
+ const shelf=source("../components/store/RubiApprovedMovementShelf.tsx");
+ assert.match(shelf,/query\.isLoading/);
+ assert.match(shelf,/query\.isError/);
+ assert.match(shelf,/query\.refetch\(\)/);
+ assert.match(shelf,/Explorar a RUBI Store/);
+ assert.match(shelf,/href="\/hub-shop"/);
+ assert.match(shelf,/href="\/profile"/);
+ assert.match(shelf,/não usa características pessoais sensíveis/);
+});
