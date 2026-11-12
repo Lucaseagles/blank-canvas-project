@@ -19,6 +19,7 @@ import { RubiCreatorTeamPerformanceAdmin } from "@/components/partner/RubiCreato
 import { RubiTeamCampaignAssignmentsAdmin } from "@/components/partner/RubiTeamCampaignAssignmentsAdmin";
 import { RubiTeamPublicationsAdmin } from "@/components/partner/RubiTeamPublicationsAdmin";
 import { RubiCreatorPublicationAuditAdmin } from "@/components/partner/RubiCreatorPublicationAuditAdmin";
+import { RubiConnectedCommercialFlowAdmin } from "@/components/admin/RubiConnectedCommercialFlowAdmin";
 import { RubiBusinessRetentionAdmin } from "@/components/business/RubiBusinessRetentionAdmin";
 import { RubiBusinessFollowupsAdmin } from "@/components/business/RubiBusinessFollowupsAdmin";
 import { RubiOfferEngineAdmin } from "@/components/store/RubiOfferEngineAdmin";
@@ -206,13 +207,13 @@ function HubCatalogAdmin() {
           <div className="rounded-2xl border bg-card/70 p-4"><p className="text-sm text-muted-foreground">Disponíveis no atacado</p><p className="text-3xl font-black">{wholesaleCount}</p></div>
         </div>
       </header>
-      <RubiSupplierCsvAdmin suppliers={suppliers} />
+      <div id="rubi-catalog-entry" className="scroll-mt-24"><RubiSupplierCsvAdmin suppliers={suppliers} /></div>
       <RubiProductStoriesAdmin products={products} />
       <RubiStorefrontSectionsAdmin products={products} />
       <RubiEditorialMetricsAdmin />
       <RubiLaunchReadinessAdmin />
       <RubiLaunchQaAdmin products={products} />
-      <RubiMovementEngineAdmin products={products} />
+      <div id="rubi-movement-entry" className="scroll-mt-24"><RubiMovementEngineAdmin products={products} /></div>
       <RubiOfferEngineAdmin products={products} />
       <RubiComplementaryOffersAdmin products={products} />
       <RubiOrganicLinkBuilder products={products} />
@@ -301,12 +302,13 @@ function HubCatalogAdmin() {
       </section>
       <RubiBusinessRetentionAdmin />
       <RubiBusinessFollowupsAdmin />
-      <RubiCreatorTeamsAdmin />
-        <RubiCreatorTeamMembersAdmin />
+      <RubiConnectedCommercialFlowAdmin />
+      <div id="rubi-team-entry" className="scroll-mt-24"><RubiCreatorTeamsAdmin /></div>
+        <div id="rubi-team-members-entry" className="scroll-mt-24"><RubiCreatorTeamMembersAdmin /></div>
         <RubiCreatorTeamPerformanceAdmin />
-        <RubiTeamCampaignAssignmentsAdmin />
-        <RubiTeamPublicationsAdmin />
-        <RubiCreatorPublicationAuditAdmin />
+        <div id="rubi-team-campaign-entry" className="scroll-mt-24"><RubiTeamCampaignAssignmentsAdmin /></div>
+        <div id="rubi-team-publications-entry" className="scroll-mt-24"><RubiTeamPublicationsAdmin /></div>
+        <div id="rubi-team-publication-audit-entry" className="scroll-mt-24"><RubiCreatorPublicationAuditAdmin /></div>
         <RubiBusinessQuotesAdmin />
       <section aria-label="RUBI 11× · Indicadores comerciais reais" className="space-y-4 rounded-3xl border border-primary/25 bg-card/80 p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
