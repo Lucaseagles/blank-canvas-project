@@ -26,9 +26,10 @@ export function RubiMovementPerformanceAdmin({movementId}:{movementId:string}){
    {query.isError&&<p role="alert" className="text-destructive">Não foi possível carregar os resultados. Confira as permissões e a rotina de métricas.</p>}
    {query.data&&<>
     <p className="text-xs text-muted-foreground">Dados consultados em {new Date(query.data.asOf).toLocaleString("pt-BR")}. Relatório limitado às 200 campanhas orgânicas mais relevantes do agregado; ausência nesta tela não significa necessariamente zero tráfego.</p>
+    {query.data.partial&&<p role="alert" className="rounded-lg border border-amber-500/40 p-3 text-xs text-amber-700 dark:text-amber-300">Cobertura incompleta: parte das variantes, distribuições ou campanhas agregadas atingiu o limite de consulta. Os resultados abaixo são amostras observadas; não classifique vencedores nem conclua testes A/B com esta amostra.</p>}
     {!rows.length&&<p className="text-sm text-muted-foreground">Nenhum planejamento rastreável localizado para este movimento. Cadastre primeiro variantes e canais.</p>}
     {comparison.length>0&&<section className="space-y-3 rounded-xl border bg-muted/20 p-3" aria-label="Comparativo observacional de variantes">
-     <div><h5 className="font-bold">Comparativo de variantes (tráfego observado)</h5>
+     <div><h5 className="font-bold">Comparativo de variantes (tráfego observado, não experimental)</h5>
       <p className="text-xs text-muted-foreground">Ordenado por visualizações observadas, não por desempenho vencedor. Campanhas sem dados e campanhas com atribuição ambígua são excluídas dos totais. Os dados agregados são limitados e não comprovam vendas, CTR nem teste A/B estatisticamente válido.</p></div>
      <div className="grid gap-2 md:grid-cols-2">
       {comparison.map(item=><article key={item.variantId} className="rounded-lg border bg-card p-3 space-y-1">
