@@ -26,7 +26,7 @@ export function rubiMovementEditorialQuality(m:RubiMovement) {
  const seen=new Map<string,string>();
  const repeated:string[]=[];
  for(const [label,value] of labels){
-  const normalized=value.normalize("NFKD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+  const normalized=value.normalize("NFKD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
   if(!normalized)continue;
   const previous=seen.get(normalized);
   if(previous)repeated.push(`${label} repete ${previous}`);
