@@ -5,6 +5,7 @@ import {toast} from "sonner";
 import {Button} from "@/components/ui/button";
 import {RubiMovementDistributionAdmin} from "@/components/store/RubiMovementDistributionAdmin";
 import {emptyRubiMovementVariant,rubiVariantChecklist,type RubiMovementVariant} from "@/lib/rubi-movement-variants";
+import {assessRubiExperimentReadiness} from "@/lib/rubi-experiment-readiness";
 import {listRubiMovementVariantsAdmin,saveRubiMovementVariantAdmin,deleteRubiMovementVariantAdmin} from "@/lib/rubi-movement-variants.functions";
 
 export function RubiMovementVariantsAdmin({movementId,movementName,movementStatus,productId}:{movementId:string;movementName:string;movementStatus:"draft"|"review";productId:string}){
@@ -29,6 +30,7 @@ export function RubiMovementVariantsAdmin({movementId,movementName,movementStatu
  const field=(key:"name"|"creative_hook"|"creative_script"|"page_headline"|"page_body"|"call_to_action"|"media_notes"|"proof_notes",label:string,rows=2)=>
   <label className="block space-y-1 text-sm font-semibold"><span>{label}</span><textarea className="w-full rounded-xl border bg-background p-3 text-sm" rows={rows} value={draft?.[key]??""} onChange={event=>change(key,event.target.value)}/></label>;
  const checklist=draft?rubiVariantChecklist(draft):null;
+ const experiment=assessRubiExperimentReadiness(query.data??[],movementStatus);
  const text=draft?[`Movimento: ${movementName}`,`Variante: ${draft.name}`,`Formato: ${draft.format}`,`Gancho: ${draft.creative_hook}`,`Roteiro: ${draft.creative_script}`,`Página: ${draft.page_headline}`,draft.page_body,`CTA: ${draft.call_to_action}`,`Mídias e direitos: ${draft.media_notes}`,`Evidências: ${draft.proof_notes}`].join("\n\n"):"";
  return <section className="space-y-4 rounded-xl border border-primary/30 p-4" aria-label="Variantes de criativo e página">
   <div><h4 className="text-lg font-bold">Criativos e páginas · {movementName}</h4><p className="text-xs text-muted-foreground">Variantes privadas e independentes. Nenhuma publicação, anúncio, checkout ou cobrança é disparada.</p></div>
@@ -39,6 +41,11 @@ export function RubiMovementVariantsAdmin({movementId,movementName,movementStatu
    <span className="block font-semibold">{v.name}</span><span className="text-xs text-muted-foreground">{v.format} · {v.status==="review"?"Pronta para revisão":"Rascunho"} · revisão {v.revision}</span>
   </button>)}</div>
   {query.data?.length===0&&<p className="text-xs text-muted-foreground">Nenhuma variante cadastrada.</p>}
+  {query.data&&<aside className="space-y-2 rounded-xl border bg-muted/20 p-3" aria-label="Preparação para experimento A/B">
+   <h5 className="font-bold text-sm">Preparação editorial para experimento A/B</h5>
+   <p className="text-xs text-muted-foreground">{experiment.eligible?"Par de variantes com pré-requisitos editoriais básicos; ainda falta definir alocação controlada, evento de sucesso e amostra.":experiment.reasons.join(" · ")}</p>
+   <p className="text-xs text-muted-foreground">Este diagnóstico não executa testes nem declara vencedor. Nenhum tráfego ou orçamento é distribuído automaticamente.</p>
+  </aside>}
   {draft&&<div className="space-y-3 rounded-xl border p-4">
    {field("name","Nome da variante")}
    <div className="grid gap-2 sm:grid-cols-2">
