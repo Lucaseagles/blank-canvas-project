@@ -368,3 +368,24 @@ test("Creator team creative campaign assignments remain private and approval gat
  assert.match(owner,/<RubiTeamCampaignAssignmentsAdmin \/>/);
  assert.doesNotMatch(api,/payCommission|publishAd|grantProducts|spendBudget/);
 });
+
+test("Creator publication evidence requires an active approved partner and manual Master review",()=>{
+ const migration=source("../../supabase/migrations/20261112063000_rubi_creator_team_publication_evidence.sql");
+ const api=source("./rubi-team-publications.functions.ts");
+ const ui=source("../components/partner/RubiTeamPublicationsAdmin.tsx");
+ const admin=source("../routes/admin/hub-catalog.tsx");
+ assert.match(migration,/enable row level security/);
+ assert.match(migration,/revoke all on public\.rubi_creator_team_publication_evidence from public,anon,authenticated/);
+ assert.match(migration,/review_status in \('submitted','reviewed','rejected'\)/);
+ assert.match(api,/requireOwnerRole/g);
+ assert.match(api,/assignment\.status!=="ready"/);
+ assert.match(api,/member\.team_id!==assignment\.team_id/);
+ assert.match(api,/member\.status!=="active"/);
+ assert.match(api,/\.eq\("status","approved"\)/);
+ assert.match(api,/\.eq\("review_status","submitted"\)/);
+ assert.match(api,/at<Date\.parse\(member\.joined_at\)/);
+ assert.match(ui,/Registrar referência para revisão/);
+ assert.match(ui,/não certifica visualizações, pagamentos ou vendas atribuídas/);
+ assert.match(admin,/<RubiTeamPublicationsAdmin \/>/);
+ assert.doesNotMatch(api,/payCommission|publishAd|spendBudget|grantProducts/);
+});
