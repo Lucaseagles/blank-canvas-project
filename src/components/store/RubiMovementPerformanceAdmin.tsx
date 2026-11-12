@@ -2,7 +2,7 @@ import {useQuery} from "@tanstack/react-query";
 import {useServerFn} from "@tanstack/react-start";
 import {Button} from "@/components/ui/button";
 import {getRubiMovementPerformanceAdmin} from "@/lib/rubi-movement-performance.functions";
-import {summarizeMovementVariants,type RubiMovementPerformanceRow} from "@/lib/rubi-movement-performance";
+import {summarizeMovementVariants,assessRubiVariantDecisionReadiness,type RubiMovementPerformanceRow} from "@/lib/rubi-movement-performance";
 
 /** Performance of organic campaign labels, not checkout revenue or paid conversion. */
 export function RubiMovementPerformanceAdmin({movementId}:{movementId:string}){
@@ -15,6 +15,8 @@ export function RubiMovementPerformanceAdmin({movementId}:{movementId:string}){
  const rows=(query.data?.rows??[]) as RubiMovementPerformanceRow[];
  const names=query.data?.variantNames as Record<string,string>|undefined;
  const comparison=summarizeMovementVariants(rows);
+ const decisions=assessRubiVariantDecisionReadiness(comparison,query.data?.partial===true);
+ const byVariantDecision=new Map(decisions.map(item=>[item.variantId,item]));
  const fmt=(value:number)=>value.toLocaleString("pt-BR");
  return <section className="space-y-4 rounded-xl border border-primary/30 p-4" aria-label="Resultados orgânicos por movimento">
    <header>
@@ -34,6 +36,7 @@ export function RubiMovementPerformanceAdmin({movementId}:{movementId:string}){
      <div className="grid gap-2 md:grid-cols-2">
       {comparison.map(item=><article key={item.variantId} className="rounded-lg border bg-card p-3 space-y-1">
        <p className="font-semibold">{names?.[item.variantId]??"Variante"}</p>
+       <p className="text-xs text-muted-foreground" role="status">{byVariantDecision.get(item.variantId)?.reason}</p>
        <p className="text-xs text-muted-foreground">{item.observedCampaigns} campanha(s) com visualizações observadas · {item.ambiguousCampaigns} ambígua(s) · {item.unobservedCampaigns} sem observação</p>
        <p className="text-sm tabular-nums">{fmt(item.viewEvents)} visualizações · {fmt(item.checkoutIntents)} intenções de checkout</p>
        <p className="text-xs text-muted-foreground">{item.intentPerViewPercent===null?"Taxa indisponível":item.intentPerViewPercent.toLocaleString("pt-BR")+"% de eventos de saída por visualização (não é conversão paga)"}</p>
