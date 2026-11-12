@@ -3,7 +3,7 @@ import { approvedRubiCheckout } from "./rubi-checkout-validation";
 import { z } from "zod";
 
 export const resolvePartnerReferral = createServerFn({ method: "POST" })
-  .validator((input: unknown) => z.object({ code: z.string().uuid(), publicationId: z.string().uuid().optional() }).parse(input))
+  .validator((input: unknown) => z.object({ code: z.string().uuid(), publicationId: z.string().uuid().optional(), visitToken: z.string().uuid().optional() }).parse(input))
   .handler(async ({ data: input }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: link, error: linkError } = await (supabaseAdmin as any)
@@ -51,11 +51,20 @@ export const resolvePartnerReferral = createServerFn({ method: "POST" })
         throw new Error("Campanha da publicação sem aprovação para este produto.");
       }
     }
-    const { error: visitError } = await (supabaseAdmin as any)
-      .from("hub_partner_referral_visits").insert({
-        referral_link_id: link.id,
-        ...(input.publicationId ? { publication_id: input.publicationId } : {}),
-      });
+    // A repeated request with the same random navigation token should not
+    // inflate the referral counter. Legacy clients without a token still work.
+    const visitRecord = {
+      referral_link_id: link.id,
+      ...(input.publicationId ? { publication_id: input.publicationId } : {}),
+      ...(input.visitToken ? { visit_token: input.visitToken } : {}),
+    };
+    const visitWrite = (supabaseAdmin as any).from("hub_partner_referral_visits");
+    const { error: visitError } = input.visitToken
+      ? await visitWrite.upsert(visitRecord, {
+          onConflict: "referral_link_id,visit_token",
+          ignoreDuplicates: true,
+        })
+      : await visitWrite.insert(visitRecord);
     if (visitError) throw visitError;
     const { hub_suppliers: _supplier, checkout_url: _checkoutUrl, checkout_verified: _checkoutVerified, ...publicProduct } = product.data;
     return publicProduct as { id: string; title: string; description: string | null; image_url: string | null; category: string | null; retail_price: number };
