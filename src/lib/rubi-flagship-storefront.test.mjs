@@ -585,3 +585,16 @@ test("Master reviewed creative library reuses variants by product and forbids au
  assert.match(owner,/<RubiCreativeLibraryAdmin \/>/);
  assert.doesNotMatch(api,/\.insert\(|\.update\(|\.upsert\(|payCommission|publishAd|grantProducts/);
 });
+
+
+test("Creative library copied text explicitly remains an internal unlicensed draft",()=>{
+ const library=source("../components/store/RubiCreativeLibraryAdmin.tsx");
+ assert.match(library,/RASCUNHO INTERNO — NÃO PUBLICAR OU DISTRIBUIR/);
+ assert.match(library,/A declaração de direitos não comprova licença de mídia/);
+ assert.match(library,/Copiar rascunho interno/);
+ assert.match(library,/O texto copiado leva aviso obrigatório/);
+ const api=source("./rubi-creative-library.functions.ts");
+ assert.match(api,/requireOwnerRole/);
+ assert.match(api,/\.eq\("status","review"\)/);
+ assert.doesNotMatch(api,/publishAd|payCommission|createCheckout/);
+});
