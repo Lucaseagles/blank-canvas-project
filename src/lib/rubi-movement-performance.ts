@@ -95,3 +95,31 @@ export function assessRubiVariantDecisionReadiness(
    intentPerViewPercent:item.intentPerViewPercent};
  });
 }
+
+
+/** Data-quality preflight for a future controlled experiment, never a significance test. */
+export type RubiExperimentTrafficPreflight={
+ readyForDesign:boolean;
+ blockers:string[];
+ observedVariants:number;
+};
+export function preflightRubiExperimentTraffic(
+ summaries:RubiVariantTrafficSummary[],
+ reportPartial:boolean
+):RubiExperimentTrafficPreflight{
+ const blockers:string[]=[];
+ if(reportPartial)blockers.push("Relatório parcial: consulte todas as campanhas antes de desenhar o teste.");
+ const observed=summaries.filter(s=>s.observedCampaigns>0 && s.viewEvents>0);
+ if(observed.length!==2)blockers.push("São necessárias exatamente duas variantes com eventos observados.");
+ if(summaries.some(s=>s.ambiguousCampaigns>0))
+  blockers.push("Identificação de campanha ambígua: use rótulos exclusivos por variante.");
+ if(summaries.some(s=>s.unobservedCampaigns>0))
+  blockers.push("Há campanhas sem observação; verifique publicação e rastreamento.");
+ if(summaries.some(s=>s.checkoutIntents>s.viewEvents))
+  blockers.push("Eventos de saída excedem visualizações; revise a qualidade da instrumentação.");
+ if(blockers.length===0)
+  blockers.push("Os dados são observacionais: o teste causal ainda exige alocação controlada, métrica primária e plano de amostra.");
+ return {readyForDesign:!reportPartial && observed.length===2 &&
+  !summaries.some(s=>s.ambiguousCampaigns>0||s.unobservedCampaigns>0||s.checkoutIntents>s.viewEvents),
+  blockers,observedVariants:observed.length};
+}
