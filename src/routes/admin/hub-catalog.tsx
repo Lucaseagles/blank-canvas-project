@@ -17,6 +17,7 @@ import { RubiCreatorTeamsAdmin } from "@/components/partner/RubiCreatorTeamsAdmi
 import { RubiCreatorTeamMembersAdmin } from "@/components/partner/RubiCreatorTeamMembersAdmin";
 import { RubiCreatorTeamPerformanceAdmin } from "@/components/partner/RubiCreatorTeamPerformanceAdmin";
 import { RubiTeamCampaignAssignmentsAdmin } from "@/components/partner/RubiTeamCampaignAssignmentsAdmin";
+import { RubiTeamPublicationsAdmin } from "@/components/partner/RubiTeamPublicationsAdmin";
 import { RubiBusinessRetentionAdmin } from "@/components/business/RubiBusinessRetentionAdmin";
 import { RubiBusinessFollowupsAdmin } from "@/components/business/RubiBusinessFollowupsAdmin";
 import { RubiOfferEngineAdmin } from "@/components/store/RubiOfferEngineAdmin";
@@ -303,6 +304,7 @@ function HubCatalogAdmin() {
         <RubiCreatorTeamMembersAdmin />
         <RubiCreatorTeamPerformanceAdmin />
         <RubiTeamCampaignAssignmentsAdmin />
+        <RubiTeamPublicationsAdmin />
         <RubiBusinessQuotesAdmin />
       <section aria-label="RUBI 11× · Indicadores comerciais reais" className="space-y-4 rounded-3xl border border-primary/25 bg-card/80 p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
