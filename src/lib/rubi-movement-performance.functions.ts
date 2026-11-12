@@ -19,10 +19,12 @@ export const getRubiMovementPerformanceAdmin=createServerFn({method:"POST"})
   if(variantsError)throw variantsError;
   const variantRows=(variants??[]) as Array<{id:string;name:string}>;
   if(!variantRows.length)return {days:30,asOf:new Date().toISOString(),rows:[],variantNames:{},coverage:"empty"};
+  const variantsTruncated=variantRows.length===100;
   const ids=variantRows.map(v=>v.id);
   const {data:planRows,error:plansError}=await (supabaseAdmin as any).from("rubi_movement_distribution")
    .select("id,variant_id,channel,campaign,status").in("variant_id",ids).limit(800);
   if(plansError)throw plansError;
+  const plansTruncated=(planRows??[]).length===800;
   const plans=(planRows??[] as RubiMovementCampaignPlan[]).filter((p:RubiMovementCampaignPlan)=>validChannels.has(p.channel));
   const {data:agg,error:aggError}=await (supabaseAdmin as any).rpc("rubi_organic_campaign_performance",{p_days:30,p_limit:200});
   if(aggError)throw aggError;
@@ -34,10 +36,13 @@ export const getRubiMovementPerformanceAdmin=createServerFn({method:"POST"})
       viewEvents:Number(row["view_events"]??0),viewSessions:Number(row["view_sessions"]??0),
       checkoutIntents:Number(row["checkout_intents"]??0)
     }));
+  const aggregateTruncated=(agg??[]).length>=200;
+  const partial=variantsTruncated||plansTruncated||aggregateTruncated;
   const rows=correlateMovementTraffic(movement.product_id,plans,traffic);
   return {
    days:30,asOf:new Date().toISOString(),rows,
    variantNames:Object.fromEntries(variantRows.map(v=>[v.id,v.name])),
-   coverage:"top-200-aggregated-campaigns"
+   coverage:partial?"partial":"bounded",partial,
+   limitations:{variantsTruncated,plansTruncated,aggregateTruncated}
   };
  });
