@@ -65,3 +65,33 @@ export function summarizeMovementVariants(rows:RubiMovementPerformanceRow[]):Rub
   ...item,intentPerViewPercent:percentOfIntentToView(item.checkoutIntents,item.viewEvents)
  })).sort((a,b)=>b.viewEvents-a.viewEvents||a.variantId.localeCompare(b.variantId));
 }
+
+
+/** Conservative Master decision support: observational events are never an A/B winner. */
+export type RubiVariantDecisionReadiness={
+ variantId:string;
+ status:"no_observations"|"incomplete_attribution"|"observational_only";
+ reason:string;
+ viewEvents:number;
+ checkoutIntents:number;
+ intentPerViewPercent:number|null;
+};
+export function assessRubiVariantDecisionReadiness(
+ summaries:RubiVariantTrafficSummary[],
+ reportPartial:boolean
+):RubiVariantDecisionReadiness[]{
+ return summaries.map(item=>{
+  const incomplete=reportPartial||item.ambiguousCampaigns>0||item.unobservedCampaigns>0;
+  const status:RubiVariantDecisionReadiness["status"]=
+   item.observedCampaigns===0?"no_observations":
+   incomplete?"incomplete_attribution":"observational_only";
+  const reason=status==="no_observations"
+   ?"Sem campanhas observadas: não há base para comparação."
+   :status==="incomplete_attribution"
+    ?"Há dados parciais, campanhas ausentes ou atribuição ambígua. Não escolher vencedor."
+    :"Dados observacionais disponíveis; sem alocação controlada e desfecho de compra não há vencedor A/B.";
+  return {variantId:item.variantId,status,reason,
+   viewEvents:item.viewEvents,checkoutIntents:item.checkoutIntents,
+   intentPerViewPercent:item.intentPerViewPercent};
+ });
+}
