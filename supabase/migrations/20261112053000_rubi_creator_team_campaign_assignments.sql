@@ -39,11 +39,14 @@ comment on table public.rubi_creator_team_campaign_assignment_events is
 create or replace function public.rubi_log_creator_team_campaign_assignment()
 returns trigger language plpgsql security definer set search_path=public,pg_temp as $$
 begin
- if tg_op='INSERT' or old.status is distinct from new.status then
+ if tg_op='INSERT' then
    insert into public.rubi_creator_team_campaign_assignment_events
     (assignment_id,team_id,campaign_plan_id,variant_id,previous_status,new_status)
-   values (new.id,new.team_id,new.campaign_plan_id,new.variant_id,
-     case when tg_op='INSERT' then null else old.status end,new.status);
+   values (new.id,new.team_id,new.campaign_plan_id,new.variant_id,null,new.status);
+ elsif old.status is distinct from new.status then
+   insert into public.rubi_creator_team_campaign_assignment_events
+    (assignment_id,team_id,campaign_plan_id,variant_id,previous_status,new_status)
+   values (new.id,new.team_id,new.campaign_plan_id,new.variant_id,old.status,new.status);
  end if;
  return new;
 end;
