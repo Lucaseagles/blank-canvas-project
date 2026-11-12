@@ -234,3 +234,18 @@ test("Creator inbound page recruits transparently without bypassing approval",()
  assert.match(onboarding,/\.slice\(0,500\)/);
  assert.doesNotMatch(landing,/createMyPartnerReferralLink|saveHubPartnerAgreement|hub_partner_product_grants/);
 });
+
+test("Shadow Master growth action center is read-only and grounded in existing metrics",()=>{
+ const admin=source("../routes/admin/dashboard.tsx");
+ const panel=source("../components/admin/RubiMasterGrowthPlaybooksAdmin.tsx");
+ const logic=source("./rubi-master-growth-playbooks.ts");
+ assert.match(admin,/<RubiMasterGrowthPlaybooksAdmin \/>/);
+ assert.match(panel,/getRubiLaunchReadinessAdmin/);
+ assert.match(panel,/getRubiCommercialPulseAdmin/);
+ assert.match(panel,/Não foi possível confirmar os dados comerciais/);
+ assert.match(logic,/ai_seller/);
+ assert.match(logic,/direct/);
+ assert.match(logic,/creators/);
+ assert.match(logic,/merchant/);
+ assert.doesNotMatch(panel,/saveHub|createAd|publishCampaign|payCommission/);
+});
