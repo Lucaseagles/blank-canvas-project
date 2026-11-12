@@ -13,6 +13,7 @@ import { getRubiCommercialPulseAdmin } from "@/lib/rubi-commercial-pulse.functio
 import { RubiOrganicLinkBuilder } from "@/components/store/RubiOrganicLinkBuilder";
 import { getRubiOrganicCampaignPerformanceAdmin } from "@/lib/rubi-organic-performance.functions";
 import { RubiBusinessQuotesAdmin } from "@/components/business/RubiBusinessQuotesAdmin";
+import { RubiCreatorTeamsAdmin } from "@/components/partner/RubiCreatorTeamsAdmin";
 import { RubiBusinessRetentionAdmin } from "@/components/business/RubiBusinessRetentionAdmin";
 import { RubiBusinessFollowupsAdmin } from "@/components/business/RubiBusinessFollowupsAdmin";
 import { RubiOfferEngineAdmin } from "@/components/store/RubiOfferEngineAdmin";
@@ -295,7 +296,8 @@ function HubCatalogAdmin() {
       </section>
       <RubiBusinessRetentionAdmin />
       <RubiBusinessFollowupsAdmin />
-      <RubiBusinessQuotesAdmin />
+      <RubiCreatorTeamsAdmin />
+        <RubiBusinessQuotesAdmin />
       <section aria-label="RUBI 11× · Indicadores comerciais reais" className="space-y-4 rounded-3xl border border-primary/25 bg-card/80 p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
