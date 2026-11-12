@@ -9,11 +9,11 @@ export function RubiCreatorTeamPerformanceAdmin(){
  const query=useQuery({queryKey:["rubi-creator-team-performance-30d"],queryFn:()=>load(),retry:false,staleTime:60000});
  return <section aria-label="Desempenho observado dos times RUBI" className="space-y-4 rounded-3xl border border-primary/20 bg-card p-5 sm:p-7">
   <header><h2 className="flex items-center gap-2 text-xl font-black"><BarChart3 className="h-5 w-5 text-primary"/> Atividade observada por time</h2>
-   <p className="mt-2 text-xs leading-5 text-muted-foreground">Últimos 30 dias. Somente parceiros atualmente ativos e eventos posteriores ao vínculo com o time. Vendas confirmadas não significam pagamentos liquidados.</p>
+   <p className="mt-2 text-xs leading-5 text-muted-foreground">Últimos 30 dias. Vínculos ativos atuais para o quadro de integrantes; visitas e vendas atribuídas conforme o histórico de participação na data do evento. Vendas confirmadas não significam pagamentos liquidados.</p>
   </header>
   {query.isLoading&&<p role="status" className="text-sm text-muted-foreground">Consultando atividade das equipes...</p>}
   {query.isError&&<p role="alert" className="text-sm text-destructive">Não foi possível confirmar os indicadores dos times.</p>}
-  {query.data&&<div className="grid gap-3 lg:grid-cols-2">
+  {query.data&&!query.data.partial&&<div className="grid gap-3 lg:grid-cols-2">
    {query.data.teams.length===0&&<p className="text-sm text-muted-foreground">Nenhum time cadastrado.</p>}
    {query.data.teams.map((team:{id:string;name:string;niche:string;activeMembers:number;activeLinks:number;visitEvents:number;confirmedSales:number;excludedAmbiguousMembers:number})=>
     <article key={team.id} className="space-y-3 rounded-2xl border bg-background/60 p-4">
@@ -32,7 +32,7 @@ export function RubiCreatorTeamPerformanceAdmin(){
      {team.excludedAmbiguousMembers>0&&<p role="status" className="text-xs text-amber-600">Excluídos {team.excludedAmbiguousMembers} vínculos de perfis ativos em múltiplos times para evitar dupla atribuição.</p>}
     </article>)}
   </div>}
-  {query.data?.partial&&<p role="status" className="text-xs text-amber-600">Atenção: relatório parcial por limite de consulta. Não use os totais para determinar o melhor time ou autorizar patrocínios.</p>}
-  <p className="flex items-start gap-2 text-xs leading-5 text-muted-foreground"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary"/> Indicadores observacionais: não mostram pessoas únicas, receita líquida, custo de mídia, comissão paga, ROI ou causalidade. Mudanças de integrantes podem afetar a leitura histórica. Escala exige pedidos, estornos e margens conciliados.</p>
+  {query.data?.partial&&<p role="status" className="text-xs text-amber-600">Relatório incompleto: os dados ultrapassaram o limite da consulta. Totais ocultos para não apresentar atribuições equivocadas. Não use este painel para autorizar patrocínios.</p>}
+  <p className="flex items-start gap-2 text-xs leading-5 text-muted-foreground"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary"/> Indicadores observacionais: não mostram pessoas únicas, receita líquida, custo de mídia, comissão paga, ROI ou causalidade. O histórico anterior à implantação da auditoria não pode ser reconstruído. Escala exige pedidos, estornos e margens conciliados.</p>
  </section>;
 }
