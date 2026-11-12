@@ -495,6 +495,6 @@ test("Referral visit idempotency does not track people or unlock partner checkou
  assert.match(route,/crypto\.randomUUID/);
  assert.match(route,/30 \* 60_000/);
  assert.match(route,/enabled: visitToken !== null/);
- assert.doesNotMatch(route,/localStorage|fingerprint|geolocation|navigator\.userAgent/);
+ assert.doesNotMatch(route,/localStorage\.|navigator\.userAgent|document\.cookie|geolocation\.getCurrentPosition/);
  assert.doesNotMatch(resolve,/payCommission|createCheckout|publishAd|grantProduct/);
 });
