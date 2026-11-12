@@ -20,8 +20,8 @@ export const getRubiCreatorPublicationAuditAdmin=createServerFn({method:"GET"})
   ]);
   for(const r of [p,a,d,v,m,raw])if(r.error)throw r.error;
   const publications=p.data??[],assignments=a.data??[],distribution=d.data??[];
-  const variantToMovement=new Map((v.data??[]).map((x:{id:string;movement_id:string})=>[x.id,x.movement_id]));
-  const movementToProduct=new Map((m.data??[]).map((x:{id:string;product_id:string})=>[x.id,x.product_id]));
+  const variantToMovement=new Map<string,string>((v.data??[]).map((x:{id:string;movement_id:string}):[string,string]=>[x.id,x.movement_id]));
+  const movementToProduct=new Map<string,string>((m.data??[]).map((x:{id:string;product_id:string}):[string,string]=>[x.id,x.product_id]));
   const productByVariant:Record<string,string>={};
   for(const [variant,movement] of variantToMovement){
    const product=movementToProduct.get(movement);
