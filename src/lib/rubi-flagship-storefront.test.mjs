@@ -498,3 +498,21 @@ test("Referral visit idempotency does not track people or unlock partner checkou
  assert.doesNotMatch(route,/localStorage\.|navigator\.userAgent|document\.cookie|geolocation\.getCurrentPosition/);
  assert.doesNotMatch(resolve,/payCommission|createCheckout|publishAd|grantProduct/);
 });
+
+test("RUBI referral quality diagnostic is owner-only, aggregated and separated from sales",()=>{
+ const sql=source("../../supabase/migrations/20261112103000_rubi_referral_visit_quality_daily.sql");
+ const api=source("./rubi-referral-traffic-quality.functions.ts");
+ const panel=source("../components/partner/RubiReferralTrafficQualityAdmin.tsx");
+ const route=source("../routes/admin/hub-catalog.tsx");
+ assert.match(sql,/security invoker/);
+ assert.match(sql,/revoke all on function public\.rubi_referral_visit_quality_daily/);
+ assert.match(sql,/grant execute on function public\.rubi_referral_visit_quality_daily/);
+ assert.match(sql,/service_role/);
+ assert.match(sql,/count\(\*\) filter \(where v\.visit_token is null\)/);
+ assert.match(api,/requireOwnerRole/);
+ assert.match(api,/rubi_referral_visit_quality_daily/);
+ assert.match(api,/tokenized_events\+r\.legacy_events!==r\.total_events/);
+ assert.match(panel,/não comprova visitantes únicos/);
+ assert.match(route,/<RubiReferralTrafficQualityAdmin \/>/);
+ assert.doesNotMatch(api,/visitor_id|ip_address|user_agent|payCommission|createCheckout/);
+});
