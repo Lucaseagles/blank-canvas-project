@@ -227,5 +227,10 @@ test("Creator inbound page recruits transparently without bypassing approval",()
  assert.match(partner,/to="\/creators"/);
  assert.match(onboarding,/audience === "partner"/);
  assert.match(onboarding,/Solicitação recebida! Aguardando aprovação/);
+ assert.match(onboarding,/Nicho informado/);
+ assert.match(onboarding,/Audiência aproximada/);
+ assert.match(onboarding,/Profissional do meu nicho/);
+ assert.match(onboarding,/Nano ou microinfluenciador/);
+ assert.match(onboarding,/\.slice\(0,500\)/);
  assert.doesNotMatch(landing,/createMyPartnerReferralLink|saveHubPartnerAgreement|hub_partner_product_grants/);
 });
