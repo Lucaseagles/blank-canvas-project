@@ -16,7 +16,7 @@ const audiences = [
   { id: "partner" as const, icon: Megaphone, title: "Quero divulgar e ganhar comissões", detail: "Campanhas e produtos elegíveis da Hub Eagles." },
 ];
 const partnerTypes: { id: PartnerType; title: string }[] = [
-  { id: "micro_influencer", title: "Microinfluenciador" }, { id: "influencer", title: "Influenciador" },
+  { id: "micro_influencer", title: "Nano ou microinfluenciador" }, { id: "influencer", title: "Influenciador" },
   { id: "affiliate", title: "Afiliado" }, { id: "expert", title: "Expert" },
 ];
 
@@ -28,6 +28,9 @@ function CommercialOnboarding() {
   const [displayName, setDisplayName] = useState("");
   const [businessName, setBusinessName] = useState("");
   const [instagram, setInstagram] = useState("");
+  const [creatorNiche, setCreatorNiche] = useState("");
+  const [creatorBackground, setCreatorBackground] = useState<"professional" | "creator" | "both" | "unspecified">("unspecified");
+  const [audienceRange, setAudienceRange] = useState<"under_1000" | "1000_10000" | "10000_100000" | "over_100000" | "unspecified">("unspecified");
   const [document, setDocument] = useState("");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
@@ -38,12 +41,18 @@ function CommercialOnboarding() {
     try {
       const { data: auth, error: authError } = await supabase.auth.getUser();
       if (authError || !auth.user) throw new Error("Entre na sua conta para continuar.");
+      const partnerProfileNotes = audience === "partner" ? [
+        creatorNiche.trim() ? `Nicho informado: ${creatorNiche.trim()}` : "",
+        creatorBackground !== "unspecified" ? `Atuação: ${creatorBackground}` : "",
+        audienceRange !== "unspecified" ? `Audiência aproximada: ${audienceRange}` : "",
+        notes.trim()
+      ].filter(Boolean).join(" | ").slice(0,500) : notes.trim();
       const { error } = await (supabase as any).from("commercial_profiles").insert({
         user_id: auth.user.id, audience, partner_type: audience === "partner" ? partnerType : null,
         display_name: displayName.trim(), business_name: audience === "merchant" ? businessName.trim() : null,
         instagram_handle: audience === "partner" ? instagram.trim() || null : null,
         business_document: audience === "merchant" ? document.trim() || null : null,
-        notes: notes.trim() || null,
+        notes: partnerProfileNotes || null,
       });
       if (error) throw error;
       toast.success(audience === "consumer" ? "Perfil registrado!" : "Solicitação recebida! Aguardando aprovação.");
@@ -65,6 +74,33 @@ function CommercialOnboarding() {
           <label className="block space-y-2 text-sm font-medium">Seu nome ou nome profissional <Input required minLength={2} maxLength={120} value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Como podemos chamar você?"/></label>
           {audience === "merchant" && <><label className="block space-y-2 text-sm font-medium">Nome do comércio <Input required maxLength={120} value={businessName} onChange={e => setBusinessName(e.target.value)} placeholder="Nome da loja"/></label><label className="block space-y-2 text-sm font-medium">CNPJ ou documento comercial (opcional) <Input maxLength={30} value={document} onChange={e => setDocument(e.target.value)}/></label></>}
           {audience === "partner" && <><div className="space-y-2"><p className="text-sm font-medium">Como você divulga?</p><div className="flex flex-wrap gap-2">{partnerTypes.map(type => <button type="button" key={type.id} onClick={() => setPartnerType(type.id)} className={`rounded-full border px-4 py-2 text-sm ${partnerType === type.id ? "border-primary bg-primary/15 text-primary" : "border-white/15"}`}>{type.title}</button>)}</div></div><label className="block space-y-2 text-sm font-medium">Seu @ do Instagram (opcional) <Input maxLength={100} value={instagram} onChange={e => setInstagram(e.target.value)} placeholder="@seuperfil"/></label></>}
+          {audience === "partner" && <div className="space-y-4 rounded-2xl border border-primary/15 bg-primary/[0.04] p-4">
+            <h3 className="text-sm font-bold">Seu perfil profissional (opcional)</h3>
+            <p className="text-xs text-muted-foreground">Não precisa saber vender na internet. Conte apenas sobre seu trabalho e as pessoas que acompanham seu conteúdo.</p>
+            <label className="block space-y-2 text-sm font-medium">Qual é seu nicho ou especialidade?
+              <Input maxLength={80} value={creatorNiche} onChange={e=>setCreatorNiche(e.target.value)} placeholder="Ex.: beleza, manicure, casa, treino, tecnologia"/>
+            </label>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="block space-y-2 text-sm font-medium">Como você atua hoje?
+                <select value={creatorBackground} onChange={e=>setCreatorBackground(e.target.value as typeof creatorBackground)} className="block w-full rounded-xl border bg-background p-3 text-sm">
+                  <option value="unspecified">Prefiro não informar</option>
+                  <option value="professional">Profissional do meu nicho</option>
+                  <option value="creator">Criador de conteúdo</option>
+                  <option value="both">Profissional e criador</option>
+                </select>
+              </label>
+              <label className="block space-y-2 text-sm font-medium">Tamanho aproximado da sua audiência
+                <select value={audienceRange} onChange={e=>setAudienceRange(e.target.value as typeof audienceRange)} className="block w-full rounded-xl border bg-background p-3 text-sm">
+                  <option value="unspecified">Prefiro não informar</option>
+                  <option value="under_1000">Até 999 seguidores</option>
+                  <option value="1000_10000">1 mil a 10 mil</option>
+                  <option value="10000_100000">10 mil a 100 mil</option>
+                  <option value="over_100000">Acima de 100 mil</option>
+                </select>
+              </label>
+            </div>
+            <p className="text-xs text-muted-foreground">Essas respostas ajudam na avaliação comercial; não geram aprovação automática nem definem comissões.</p>
+          </div>}
           {audience !== "consumer" && <label className="block space-y-2 text-sm font-medium">Conte sobre sua atuação (opcional) <Input maxLength={500} value={notes} onChange={e => setNotes(e.target.value)} placeholder={audience === "merchant" ? "Segmento, cidade, volume de compra..." : "Nichos, público, canais e experiência..."}/></label>}
           <p className="text-xs text-muted-foreground">O cadastro não libera automaticamente preços exclusivos, campanhas ou comissões. O acesso depende de aprovação comercial.</p>
           <Button type="submit" size="lg" disabled={busy} className="w-full rounded-2xl font-bold">{busy ? "Salvando..." : "Continuar com meu perfil"}<ArrowRight className="ml-2 h-4 w-4"/></Button>
