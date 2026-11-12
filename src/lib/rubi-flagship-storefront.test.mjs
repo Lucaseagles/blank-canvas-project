@@ -211,3 +211,21 @@ test("Creator recruitment teams are owner-only and cannot grant commissions or p
  assert.match(migration,/revoke all on public\.rubi_creator_prospects from public,anon,authenticated/);
  assert.doesNotMatch(api,/hub_partner_agreements|hub_partner_product_grants|hub_partner_confirmed_sales/);
 });
+
+test("Creator inbound page recruits transparently without bypassing approval",()=>{
+ const landing=source("../routes/creators.tsx");
+ const feed=source("../routes/feed.tsx");
+ const partner=source("../routes/partner/portal.tsx");
+ const onboarding=source("../routes/onboarding.tsx");
+ assert.match(landing,/createFileRoute\("\/creators"\)/);
+ assert.match(landing,/Quero solicitar parceria/);
+ assert.match(landing,/audience:"partner",returnTo:"\/partner\/portal"/);
+ assert.match(landing,/nano ou microinfluenciador/);
+ assert.match(landing,/Cadastro sujeito a análise e aprovação/);
+ assert.match(landing,/Nenhum percentual é garantido/);
+ assert.match(feed,/to="\/creators"/);
+ assert.match(partner,/to="\/creators"/);
+ assert.match(onboarding,/audience === "partner"/);
+ assert.match(onboarding,/Solicitação recebida! Aguardando aprovação/);
+ assert.doesNotMatch(landing,/createMyPartnerReferralLink|saveHubPartnerAgreement|hub_partner_product_grants/);
+});
