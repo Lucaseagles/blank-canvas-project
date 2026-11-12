@@ -87,6 +87,8 @@ jobs:
         run: npm run test:rubi-flagship
       - name: RUBI connected commercial flow tests
         run: npm run test:rubi-connected-flow
+      - name: RUBI tagged creator visit event tests
+        run: npm run test:rubi-creator-tagged-visits
       - name: RUBI product story media tests
         run: npm run test:rubi-product-stories
       - name: RUBI storefront Story discovery tests
