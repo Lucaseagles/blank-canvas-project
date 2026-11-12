@@ -10,6 +10,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { getRubiRelatedProducts, getRubiCheckoutReadiness } from "@/lib/rubi-precheckout.functions";
+import { markRubiPartnerPrecheckoutViewed } from "@/lib/rubi-partner-precheckout-stage.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { trackEvent } from "@/lib/analytics";
 import { RubiPostSignupActivation } from "@/components/store/RubiPostSignupActivation";
@@ -29,6 +30,8 @@ type Props = {
   product: Product;
   returnTo: string;
   partnerCode?: string;
+  visitToken?: string;
+  publicationId?: string;
   origin: "store" | "partner";
 };
 
@@ -36,9 +39,19 @@ const brl = (value: number) => Number(value).toLocaleString("pt-BR", {
   style: "currency", currency: "BRL",
 });
 
-export function RubiPreCheckout({ product, returnTo, partnerCode, origin }: Props) {
+export function RubiPreCheckout({ product, returnTo, partnerCode, visitToken, publicationId, origin }: Props) {
+  const markViewed = useServerFn(markRubiPartnerPrecheckoutViewed);
   const getRelated = useServerFn(getRubiRelatedProducts);
   const getReadiness = useServerFn(getRubiCheckoutReadiness);
+  useEffect(() => {
+    if (origin !== "partner" || !partnerCode || !visitToken) return;
+    // Only mark a rendered precheckout for a previously validated URL-tagged
+    // visit. The server rechecks the link, product, grant and token atomically.
+    void markViewed({data:{
+      partnerCode,productId:product.id,visitToken,
+      ...(publicationId?{publicationId}:{})
+    }}).catch(() => undefined);
+  }, [origin,partnerCode,visitToken,publicationId,product.id,markViewed]);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
