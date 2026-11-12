@@ -30,7 +30,15 @@ export const listRubiCreatorTeamsAdmin=createServerFn({method:"GET"})
    .select("id,team_id,creator_name,platform,profile_url,follower_count,tier,stage,compensation_model,proposed_commission_percent,proposed_fixed_fee,notes")
    .order("created_at",{ascending:false}).limit(500);
   if(prospectError)throw prospectError;
-  return {teams:teams??[],prospects:prospects??[],partial:(teams??[]).length===100||(prospects??[]).length===500};
+  const teamIds=(teams??[]).map((team:{id:string})=>team.id);
+  let targets:any[]=[];
+  if(teamIds.length){
+   const response=await db.from("rubi_creator_team_growth_targets")
+    .select("team_id,nano_target,micro_target,mid_target,macro_target,mega_target,expansion_evidence,approved_budget").in("team_id",teamIds);
+   if(response.error)throw response.error;
+   targets=response.data??[];
+  }
+  return {teams:teams??[],prospects:prospects??[],targets,partial:(teams??[]).length===100||(prospects??[]).length===500};
  });
 export const saveRubiCreatorTeamAdmin=createServerFn({method:"POST"})
  .middleware([requireOwnerRole]).validator((input:unknown)=>teamSchema.parse(input))
@@ -71,4 +79,34 @@ export const saveRubiCreatorProspectAdmin=createServerFn({method:"POST"})
    .insert(values).select("id").single();
   if(error)throw error;
   return {id:String(row.id)};
+ });
+
+const growthTargetsSchema=z.object({
+ teamId:uuid,
+ nanoTarget:z.number().int().min(0).max(100000),
+ microTarget:z.number().int().min(0).max(100000),
+ midTarget:z.number().int().min(0).max(100000),
+ macroTarget:z.number().int().min(0).max(100000),
+ megaTarget:z.number().int().min(0).max(100000),
+ expansionEvidence:z.string().trim().max(1500),
+ approvedBudget:z.number().finite().min(0).max(100000000).nullable()
+});
+/** Targets do not activate a creator, approve expense or imply successful sales. */
+export const saveRubiCreatorTeamGrowthTargetsAdmin=createServerFn({method:"POST"})
+ .middleware([requireOwnerRole]).validator((input:unknown)=>growthTargetsSchema.parse(input))
+ .handler(async({data})=>{
+  const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
+  const db=supabaseAdmin as any;
+  const {data:team,error:teamError}=await db.from("rubi_creator_teams")
+   .select("id").eq("id",data.teamId).maybeSingle();
+  if(teamError)throw teamError;
+  if(!team)throw new Error("Time não localizado.");
+  const {error}=await db.from("rubi_creator_team_growth_targets").upsert({
+   team_id:data.teamId,nano_target:data.nanoTarget,micro_target:data.microTarget,
+   mid_target:data.midTarget,macro_target:data.macroTarget,mega_target:data.megaTarget,
+   expansion_evidence:data.expansionEvidence,approved_budget:data.approvedBudget,
+   updated_at:new Date().toISOString()
+  },{onConflict:"team_id"});
+  if(error)throw error;
+  return {ok:true,notice:"Meta de crescimento registrada. Nenhuma parceria ou despesa foi aprovada."};
  });

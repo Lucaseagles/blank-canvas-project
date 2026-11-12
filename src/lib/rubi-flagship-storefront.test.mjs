@@ -271,3 +271,23 @@ test("Master campaign plans have a private persistent approval ledger and no ad-
  assert.match(distribution,/<RubiMasterCampaignApprovalAdmin productId=\{productId\}/);
  assert.doesNotMatch(server,/publishAd|spendBudget|createCheckout|payCommission/);
 });
+
+test("Influencer teams plan nano-to-mega growth without treating prospects as paid creators",()=>{
+ const schema=source("../../supabase/migrations/20261112023000_rubi_creator_team_growth_targets.sql");
+ const api=source("./rubi-creator-teams.functions.ts");
+ const ui=source("../components/partner/RubiCreatorTeamGrowthAdmin.tsx");
+ const owner=source("../components/partner/RubiCreatorTeamsAdmin.tsx");
+ assert.match(schema,/rubi_creator_team_growth_targets/);
+ assert.match(schema,/enable row level security/);
+ assert.match(schema,/revoke all on public\.rubi_creator_team_growth_targets/);
+ assert.match(api,/saveRubiCreatorTeamGrowthTargetsAdmin/);
+ assert.match(api,/requireOwnerRole/g);
+ assert.match(api,/teamId:uuid/);
+ assert.match(api,/onConflict:"team_id"/);
+ assert.match(ui,/Grande \/ mega/);
+ assert.match(ui,/nano → grandes influenciadores/);
+ assert.match(ui,/não criadores ativos/);
+ assert.match(ui,/não autorizam despesas/);
+ assert.match(owner,/<RubiCreatorTeamGrowthAdmin teamId=\{team\.id\}/);
+ assert.doesNotMatch(api,/hub_partner_confirmed_sales|payCommission|grantProducts/);
+});
