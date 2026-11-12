@@ -567,3 +567,21 @@ test("Store offer and creator team movement kit reuses the same product and pres
  assert.match(owner,/<RubiTeamOfferKitAdmin \/>/);
  assert.doesNotMatch(api,/\.insert\(|\.update\(|\.upsert\(|payCommission|publishAd|createCheckout|grantProducts/);
 });
+
+test("Master reviewed creative library reuses variants by product and forbids automatic licensing claims",()=>{
+ const api=source("./rubi-creative-library.functions.ts");
+ const panel=source("../components/store/RubiCreativeLibraryAdmin.tsx");
+ const owner=source("../routes/admin/hub-catalog.tsx");
+ assert.match(api,/requireOwnerRole/);
+ assert.match(api,/rubi_movement_variants/);
+ assert.match(api,/rubi_movements/);
+ assert.match(api,/hub_products/);
+ assert.match(api,/\.eq\("status","review"\)/);
+ assert.match(api,/\.eq\("media_rights_confirmed",true\)/);
+ assert.match(api,/movement\.status!=="review"/);
+ assert.match(api,/if\(variants\.length>=201\)return \{items:\[\],partial:true\}/);
+ assert.match(panel,/Biblioteca central de criativos e páginas/);
+ assert.match(panel,/declaração de direitos não é licença verificada/);
+ assert.match(owner,/<RubiCreativeLibraryAdmin \/>/);
+ assert.doesNotMatch(api,/\.insert\(|\.update\(|\.upsert\(|payCommission|publishAd|grantProducts/);
+});
