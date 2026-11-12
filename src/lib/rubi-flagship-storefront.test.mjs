@@ -442,3 +442,22 @@ test("Reviewed creator publications reuse only approved existing partner SKU lin
  assert.match(panel,/Checkout com comissão continua bloqueado/);
  assert.doesNotMatch(bridge,/insert\(|upsert\(|payCommission|spendBudget|publishAd/);
 });
+
+test("Publication-tagged partner visits retain exact commercial checks and original checkout safeguards",()=>{
+ const sql=source("../../supabase/migrations/20261112073000_rubi_referral_publication_tag.sql");
+ const resolve=source("./partner-referral-visit.functions.ts");
+ const route=source("../routes/r/$code.tsx");
+ const panel=source("../components/partner/RubiTeamPublicationsAdmin.tsx");
+ assert.match(sql,/alter table public\.hub_partner_referral_visits/);
+ assert.match(sql,/references public\.rubi_creator_team_publication_evidence\(id\)/);
+ assert.match(resolve,/publicationId: z\.string\(\)\.uuid\(\)\.optional\(\)/);
+ assert.match(resolve,/\.eq\("review_status", "reviewed"\)/);
+ assert.match(resolve,/member\.commercial_profile_id !== link\.commercial_profile_id/);
+ assert.match(resolve,/plan\.product_id !== link\.product_id/);
+ assert.match(resolve,/\.from\("hub_partner_referral_visits"\)\.insert/);
+ assert.match(resolve,/publication_id: input\.publicationId/);
+ assert.match(route,/validateSearch/);
+ assert.match(route,/\["partner-referral", code, pub\]/);
+ assert.match(panel,/\?pub=/);
+ assert.doesNotMatch(resolve,/payCommission|createCheckout|publishAd|upsert/);
+});
