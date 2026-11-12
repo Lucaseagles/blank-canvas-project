@@ -17,6 +17,7 @@ import { RubiCreatorTeamsAdmin } from "@/components/partner/RubiCreatorTeamsAdmi
 import { RubiCreatorTeamMembersAdmin } from "@/components/partner/RubiCreatorTeamMembersAdmin";
 import { RubiCreatorTeamPerformanceAdmin } from "@/components/partner/RubiCreatorTeamPerformanceAdmin";
 import { RubiTeamCampaignAssignmentsAdmin } from "@/components/partner/RubiTeamCampaignAssignmentsAdmin";
+import { RubiTeamOfferKitAdmin } from "@/components/partner/RubiTeamOfferKitAdmin";
 import { RubiTeamPublicationsAdmin } from "@/components/partner/RubiTeamPublicationsAdmin";
 import { RubiCreatorPublicationAuditAdmin } from "@/components/partner/RubiCreatorPublicationAuditAdmin";
 import { RubiConnectedCommercialFlowAdmin } from "@/components/admin/RubiConnectedCommercialFlowAdmin";
@@ -309,6 +310,7 @@ function HubCatalogAdmin() {
         <div id="rubi-team-members-entry" className="scroll-mt-24"><RubiCreatorTeamMembersAdmin /></div>
         <RubiCreatorTeamPerformanceAdmin />
         <div id="rubi-team-campaign-entry" className="scroll-mt-24"><RubiTeamCampaignAssignmentsAdmin /></div>
+        <RubiTeamOfferKitAdmin />
         <div id="rubi-team-publications-entry" className="scroll-mt-24"><RubiTeamPublicationsAdmin /></div>
         <div id="rubi-team-publication-audit-entry" className="scroll-mt-24"><RubiCreatorPublicationAuditAdmin />
         <RubiCreatorTaggedVisitsAdmin />

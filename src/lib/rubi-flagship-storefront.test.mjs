@@ -543,3 +543,27 @@ test("Partner precheckout view is an idempotent stage of an existing validated v
  assert.match(metric,/count>\(byId\.get\(id\)\?\?0\)/);
  assert.match(master,/Pré-checkouts exibidos/);
 });
+
+test("Store offer and creator team movement kit reuses the same product and preserves private approvals",()=>{
+ const api=source("./rubi-team-offer-kit.functions.ts");
+ const panel=source("../components/partner/RubiTeamOfferKitAdmin.tsx");
+ const owner=source("../routes/admin/hub-catalog.tsx");
+ assert.match(api,/requireOwnerRole/);
+ assert.match(api,/rubi_creator_team_campaign_assignments/);
+ assert.match(api,/rubi_offer_playbooks/);
+ assert.match(api,/\.eq\("audience","consumer"\)/);
+ assert.match(api,/rubi_movement_variants/);
+ assert.match(api,/rubi_creator_teams/);
+ assert.match(api,/rubi_master_campaign_plans/);
+ assert.match(api,/plan\.product_id!==movement\.product_id/);
+ assert.match(api,/variant\.movement_id!==movement\.id/);
+ assert.match(api,/approvedRubiCheckout\(product\)/);
+ assert.match(api,/media_rights_confirmed===true/);
+ assert.match(api,/hub_partner_product_grants/);
+ assert.match(api,/hub_partner_referral_links/);
+ assert.match(api,/offerReadiness\?\.score===100/);
+ assert.match(api,/Compatibilidade entre nicho e categoria exige revisão humana/);
+ assert.match(panel,/Kit conectado: oferta, funil, movimento e time/);
+ assert.match(owner,/<RubiTeamOfferKitAdmin \/>/);
+ assert.doesNotMatch(api,/\.insert\(|\.update\(|\.upsert\(|payCommission|publishAd|createCheckout|grantProducts/);
+});
