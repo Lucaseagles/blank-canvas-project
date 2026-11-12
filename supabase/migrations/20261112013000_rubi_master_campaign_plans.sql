@@ -45,7 +45,7 @@ begin
  if tg_op='INSERT' then
   insert into public.rubi_master_campaign_plan_audit(plan_id,action,old_status,new_status,details)
   values(new.id,'created',null,new.status,'Campaign plan created');
- elsif row(old.*) is distinct from row(new.*) then
+ elsif old is distinct from new then
   insert into public.rubi_master_campaign_plan_audit(plan_id,action,old_status,new_status,details)
   values(new.id,
    case when new.status='approved' and old.status is distinct from new.status then 'approved'
