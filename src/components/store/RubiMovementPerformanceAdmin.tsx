@@ -2,7 +2,7 @@ import {useQuery} from "@tanstack/react-query";
 import {useServerFn} from "@tanstack/react-start";
 import {Button} from "@/components/ui/button";
 import {getRubiMovementPerformanceAdmin} from "@/lib/rubi-movement-performance.functions";
-import {summarizeMovementVariants,assessRubiVariantDecisionReadiness,type RubiMovementPerformanceRow} from "@/lib/rubi-movement-performance";
+import {summarizeMovementVariants,assessRubiVariantDecisionReadiness,preflightRubiExperimentTraffic,type RubiMovementPerformanceRow} from "@/lib/rubi-movement-performance";
 
 /** Performance of organic campaign labels, not checkout revenue or paid conversion. */
 export function RubiMovementPerformanceAdmin({movementId}:{movementId:string}){
@@ -17,6 +17,7 @@ export function RubiMovementPerformanceAdmin({movementId}:{movementId:string}){
  const comparison=summarizeMovementVariants(rows);
  const decisions=assessRubiVariantDecisionReadiness(comparison,query.data?.partial===true);
  const byVariantDecision=new Map(decisions.map(item=>[item.variantId,item]));
+ const trafficPreflight=preflightRubiExperimentTraffic(comparison,query.data?.partial===true);
  const fmt=(value:number)=>value.toLocaleString("pt-BR");
  return <section className="space-y-4 rounded-xl border border-primary/30 p-4" aria-label="Resultados orgânicos por movimento">
    <header>
@@ -30,6 +31,11 @@ export function RubiMovementPerformanceAdmin({movementId}:{movementId:string}){
     <p className="text-xs text-muted-foreground">Dados consultados em {new Date(query.data.asOf).toLocaleString("pt-BR")}. Relatório limitado às 200 campanhas orgânicas mais relevantes do agregado; ausência nesta tela não significa necessariamente zero tráfego.</p>
     {query.data.partial&&<p role="alert" className="rounded-lg border border-amber-500/40 p-3 text-xs text-amber-700 dark:text-amber-300">Cobertura incompleta: parte das variantes, distribuições ou campanhas agregadas atingiu o limite de consulta. Os resultados abaixo são amostras observadas; não classifique vencedores nem conclua testes A/B com esta amostra.</p>}
     {!rows.length&&<p className="text-sm text-muted-foreground">Nenhum planejamento rastreável localizado para este movimento. Cadastre primeiro variantes e canais.</p>}
+    {comparison.length>0&&<aside className="space-y-1 rounded-xl border bg-muted/20 p-3" aria-label="Diagnóstico de medição experimental">
+      <h5 className="text-sm font-bold">Diagnóstico de medição para futuro A/B</h5>
+      <p className="text-xs text-muted-foreground">{trafficPreflight.observedVariants} variante(s) com eventos observados · {trafficPreflight.readyForDesign?"Dados tecnicamente aproveitáveis para planejar o experimento.":"Pendências para desenho do experimento."}</p>
+      {trafficPreflight.blockers.map((reason,i)=><p key={i} className="text-xs text-muted-foreground">• {reason}</p>)}
+     </aside>}
     {comparison.length>0&&<section className="space-y-3 rounded-xl border bg-muted/20 p-3" aria-label="Comparativo observacional de variantes">
      <div><h5 className="font-bold">Comparativo de variantes (tráfego observado, não experimental)</h5>
       <p className="text-xs text-muted-foreground">Ordenado por visualizações observadas, não por desempenho vencedor. Campanhas sem dados e campanhas com atribuição ambígua são excluídas dos totais. Os dados agregados são limitados e não comprovam vendas, CTR nem teste A/B estatisticamente válido.</p></div>
