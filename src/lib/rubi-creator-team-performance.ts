@@ -43,3 +43,47 @@ export function summarizeRubiCreatorTeamsPerformance(
  for(const sale of sales)add(sale.referral_link_id,sale.confirmed_at,"confirmedSales");
  return [...counts.values()];
 }
+
+
+export type TeamMembershipEvent={
+ id:number;membership_id:string;team_id:string;commercial_profile_id:string;
+ status:"active"|"paused";action:string;effective_at:string;
+};
+/** Historical performance from append-only transitions, not today's membership state.
+ * An event is attributed only when exactly one team membership was active at its timestamp.
+ * Existing memberships migrated without earlier history begin at the migration baseline.
+ */
+export function summarizeRubiCreatorTeamsPerformanceWithHistory(
+ teams:{id:string}[],memberships:TeamMembershipRecord[],history:TeamMembershipEvent[],
+ links:ReferralRecord[],visits:VisitRecord[],sales:SaleRecord[]
+):TeamPulseRow[]{
+ const rows=summarizeRubiCreatorTeamsPerformance(teams,memberships,links,[],[]);
+ const byTeam=new Map(rows.map(row=>[row.teamId,row]));
+ const byProfile=new Map<string,TeamMembershipEvent[]>();
+ for(const event of history){
+  if(!Number.isFinite(Date.parse(event.effective_at)))continue;
+  const records=byProfile.get(event.commercial_profile_id)??[];
+  records.push(event);byProfile.set(event.commercial_profile_id,records);
+ }
+ for(const records of byProfile.values()){
+  records.sort((a,b)=>Date.parse(a.effective_at)-Date.parse(b.effective_at)||a.id-b.id);
+ }
+ const linkById=new Map(links.map(link=>[link.id,link]));
+ const add=(linkId:string,occurredAt:string,kind:"visitEvents"|"confirmedSales")=>{
+  const link=linkById.get(linkId);if(!link)return;
+  const at=Date.parse(occurredAt);if(!Number.isFinite(at))return;
+  const records=byProfile.get(link.commercial_profile_id);if(!records)return;
+  const current=new Map<string,TeamMembershipEvent>();
+  for(const event of records){
+   if(Date.parse(event.effective_at)>at)break;
+   current.set(event.membership_id,event);
+  }
+  const active=[...current.values()].filter(event=>event.status==="active");
+  if(active.length!==1)return;
+  const row=byTeam.get(active[0]!.team_id);
+  if(row)row[kind]++;
+ };
+ for(const visit of visits)add(visit.referral_link_id,visit.visited_at,"visitEvents");
+ for(const sale of sales)add(sale.referral_link_id,sale.confirmed_at,"confirmedSales");
+ return rows;
+}
