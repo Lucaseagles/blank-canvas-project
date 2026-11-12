@@ -23,3 +23,18 @@ test("unknown, negative and invalid signals never create positive interest ranki
  const invalid=[{name:"Eletrônicos",slug:"eletronicos",score:Number.NaN},{name:"Beleza",slug:"beleza",score:-99}];
  assert.deepEqual(rankRubiOffersByInterests(offers,invalid,4).map(x=>x.productId),["a","b","c","d"]);
 });
+
+test("ranking removes repeated SKUs without erasing distinct discovery",()=>{
+ const repeated=[offers[1],offers[1],offers[0],offers[2]];
+ const ranked=rankRubiOffersByInterests(repeated,[{name:"Beleza",slug:"beleza",score:9}],3);
+ assert.deepEqual(ranked.map(x=>x.productId),["b","a","c"]);
+});
+test("ranking rejects unlimited and invalid shelf sizes safely",()=>{
+ assert.deepEqual(rankRubiOffersByInterests(offers,[],0),[]);
+ assert.deepEqual(rankRubiOffersByInterests(offers,[],Number.NaN).map(x=>x.productId),["a","b","c","d"]);
+ assert.deepEqual(rankRubiOffersByInterests(offers,[],Number.POSITIVE_INFINITY).map(x=>x.productId),["a","b","c","d"]);
+});
+test("out-of-range interest scores cannot defeat the finite ranking cap",()=>{
+ const rows=rankRubiOffersByInterests(offers,[{name:"Eletrônicos",slug:"eletronicos",score:Number.POSITIVE_INFINITY},{name:"Casa e Organização",slug:"casa-e-organizacao",score:1e18}],4);
+ assert.deepEqual(rows.map(x=>x.productId),["a","d","b","c"]);
+});
