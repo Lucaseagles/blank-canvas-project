@@ -461,3 +461,21 @@ test("Publication-tagged partner visits retain exact commercial checks and origi
  assert.match(panel,/\?pub=/);
  assert.doesNotMatch(resolve,/payCommission|createCheckout|publishAd|upsert/);
 });
+
+test("Master tagged-visit panel uses exact DB aggregate and never equates events to buyers",()=>{
+ const sql=source("../../supabase/migrations/20261112083000_rubi_creator_publication_visit_counts.sql");
+ const api=source("./rubi-creator-tagged-visits.functions.ts");
+ const panel=source("../components/partner/RubiCreatorTaggedVisitsAdmin.tsx");
+ const owner=source("../routes/admin/hub-catalog.tsx");
+ assert.match(sql,/security invoker/);
+ assert.match(sql,/revoke all on function public\.rubi_creator_publication_visit_counts/);
+ assert.match(sql,/grant execute on function public\.rubi_creator_publication_visit_counts/);
+ assert.match(sql,/service_role/);
+ assert.match(api,/requireOwnerRole/);
+ assert.match(api,/rubi_creator_publication_visit_counts/);
+ assert.match(api,/if\(limited\)return \{rows:\[\]/);
+ assert.match(api,/p_publication_ids:ids/);
+ assert.match(panel,/não representa pessoas únicas/);
+ assert.match(owner,/<RubiCreatorTaggedVisitsAdmin \/>/);
+ assert.doesNotMatch(api,/payCommission|createCheckout|publishAd/);
+});
