@@ -62,7 +62,7 @@ export const saveRubiMasterCampaignPlanAdmin=createServerFn({method:"POST"})
 export const transitionRubiMasterCampaignPlanAdmin=createServerFn({method:"POST"})
  .middleware([requireOwnerRole])
  .validator((input:unknown)=>transitionSchema.parse(input))
- .handler(async({data})=>{
+ .handler(async({data,context})=>{
   const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
   const db=supabaseAdmin as any;
   const {data:plan,error:planError}=await db.from("rubi_master_campaign_plans")
@@ -83,14 +83,14 @@ export const transitionRubiMasterCampaignPlanAdmin=createServerFn({method:"POST"
    if(!product||!product.active||Number(product.retail_price)<=0||!approvedRubiCheckout(product))
     throw new Error("Campanha não pode ser aprovada sem produto e checkout oficial elegíveis.");
   }
-  const newStatus=data.action==="submit"?"ready_for_review":data.action==="approve"?"approved":"paused";
-  const {data:updated,error}=await db.from("rubi_master_campaign_plans").update({
-   status:newStatus,approval_note:data.note,
-   approved_at:data.action==="approve"?new Date().toISOString():null,
-   updated_at:new Date().toISOString()
-  }).eq("id",data.id).eq("status",expected).select("id").maybeSingle();
+  // The database commits state and named Owner audit in one transaction.
+  const {data:changed,error}=await db.rpc("rubi_transition_campaign_audited",{
+   p_id:data.id,p_action:data.action,p_expected_status:expected,
+   p_note:data.note,p_actor:context.userId
+  });
   if(error)throw error;
-  if(!updated)throw new Error("O plano mudou durante a revisão. Atualize e tente novamente.");
-  return {id:String(updated.id),status:newStatus,
+  const row=changed?.[0];
+  if(!row)throw new Error("Decisão não registrada.");
+  return {id:String(row.plan_id),status:String(row.new_status),
    disclaimer:"Aprovação interna apenas. Nenhum anúncio foi publicado ou orçamento gasto."};
  });

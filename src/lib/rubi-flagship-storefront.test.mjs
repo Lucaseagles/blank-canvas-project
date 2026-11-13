@@ -261,7 +261,11 @@ test("Master campaign plans have a private persistent approval ledger and no ad-
  assert.match(migration,/revoke all on public\.rubi_master_campaign_plans from public,anon,authenticated/);
  assert.match(server,/requireOwnerRole/g);
  assert.match(server,/approvedRubiCheckout\(product\)/);
- assert.match(server,/\.eq\("status",expected\)/);
+ assert.match(server,/p_expected_status:expected/);
+ assert.match(server,/rpc\("rubi_transition_campaign_audited"/);
+ const auditRpc=source("../../supabase/migrations/20261113070000_rubi_campaign_owner_atomic_audit.sql");
+ assert.match(auditRpc,/current_plan.status is distinct from p_expected_status/);
+ assert.match(auditRpc,/insert into public\.admin_audit_log/);
  assert.match(server,/note\.length<10/);
  assert.match(server,/Aprovação interna apenas/);
  assert.match(panel,/creator_team/);
