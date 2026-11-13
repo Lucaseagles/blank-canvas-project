@@ -755,3 +755,24 @@ test("License review is Owner-only; documentary upload does not publish or pay c
  assert.match(library,/<RubiCreativeLicenseAdmin assets=/);
  assert.doesNotMatch(api,/confirmPayment|payCommission|publishCampaign/);
 });
+
+test("Partner licensing is rechecked per session, product grant, license scope and current variant revision",()=>{
+ const server=source("./rubi-licensed-partner-assets.functions.ts");
+ const portal=source("../routes/partner/portal.tsx");
+ const ui=source("../components/partner/RubiLicensedPartnerCreatives.tsx");
+ assert.match(server,/auth.getUser\(data.accessToken\)/);
+ assert.match(server,/\.eq\("audience","partner"\)/);
+ assert.match(server,/profile.status!=="approved"/);
+ assert.match(server,/hub_partner_agreements/);
+ assert.match(server,/hub_partner_product_grants/);
+ assert.match(server,/approvedRubiCheckout\(p\)/);
+ assert.match(server,/rubi_creative_licenses/);
+ assert.match(server,/\.eq\("status","approved"\)/);
+ assert.match(server,/\.contains\("permitted_channels",\[data.channel\]\)/);
+ assert.match(server,/\.contains\("permitted_audiences",\["partner"\]\)/);
+ assert.match(server,/\.gt\("valid_until",now\)/);
+ assert.match(server,/variant.revision!==license.approved_variant_revision/);
+ assert.match(portal,/<RubiLicensedPartnerCreatives \/>/);
+ assert.match(ui,/Publicidade · parceiro RUBI/);
+ assert.doesNotMatch(server,/evidence_path|supplier_cost|document_url/);
+});
