@@ -5,8 +5,8 @@ values ('rubi-creative-license-evidence','rubi-creative-license-evidence',false,
 on conflict(id) do update set public=false,file_size_limit=10485760,
  allowed_mime_types=excluded.allowed_mime_types;
 
--- Never make licensing proof available through direct browser Storage policies.
-revoke all on storage.objects from anon,authenticated;
+-- Evidence access uses a private bucket; deny browser policies for this bucket.
+-- Existing policies for other storage buckets must remain unaffected.
 
 create table if not exists public.rubi_creative_licenses(
  id uuid primary key default gen_random_uuid(),
@@ -20,14 +20,15 @@ create table if not exists public.rubi_creative_licenses(
  revision integer not null default 1 check(revision>0),
  reviewed_by uuid references auth.users(id),
  reviewed_at timestamptz,
+ approved_variant_revision integer,
  revoked_at timestamptz,
  created_at timestamptz not null default now(),
  updated_at timestamptz not null default now(),
  constraint rubi_license_period check(valid_until>valid_from),
- constraint rubi_license_path check(evidence_path ~ '^[0-9a-f-]{36}/[0-9a-f-]{36}\\.(pdf|png|jpg)$'),
+ constraint rubi_license_path check(evidence_path ~ '^[0-9a-f-]{36}/[0-9a-f-]{36}\.(pdf|png|jpg)$'),
  constraint rubi_license_channels check(permitted_channels <@ array['instagram','tiktok','youtube','whatsapp','telegram','site']::text[]),
  constraint rubi_license_audiences check(permitted_audiences <@ array['partner','consumer','merchant']::text[]),
- constraint rubi_license_approval check(status <> 'approved' or (reviewed_by is not null and reviewed_at is not null and cardinality(permitted_channels)>0 and cardinality(permitted_audiences)>0))
+ constraint rubi_license_approval check(status <> 'approved' or (reviewed_by is not null and reviewed_at is not null and approved_variant_revision is not null and cardinality(permitted_channels)>0 and cardinality(permitted_audiences)>0))
 );
 create index if not exists rubi_creative_licenses_status_idx on public.rubi_creative_licenses(status,valid_until);
 alter table public.rubi_creative_licenses enable row level security;
@@ -83,7 +84,7 @@ begin
  if p_action='draft' then
    if old_record.id is not null and old_record.status<>'draft' then
     raise exception 'Approved or revoked license cannot be edited into draft'; end if;
-   if p_evidence_path is null or p_evidence_path !~ '^[0-9a-f-]{36}/[0-9a-f-]{36}\\.(pdf|png|jpg)$' then
+   if p_evidence_path is null or p_evidence_path !~ '^[0-9a-f-]{36}/[0-9a-f-]{36}\.(pdf|png|jpg)$' then
     raise exception 'Evidence must use controlled private path'; end if;
    if old_record.id is null then
     insert into public.rubi_creative_licenses(variant_id,evidence_path,permitted_channels,
@@ -98,7 +99,7 @@ begin
    end if;
  elsif p_action='approve' then
    update public.rubi_creative_licenses set status='approved',reviewed_by=p_actor,
-     reviewed_at=now(),revoked_at=null,revision=revision+1,updated_at=now()
+     reviewed_at=now(),approved_variant_revision=variant_record.revision,revoked_at=null,revision=revision+1,updated_at=now()
    where id=old_record.id and status='draft' returning * into new_record;
  else
    update public.rubi_creative_licenses set status='revoked',revoked_at=now(),
