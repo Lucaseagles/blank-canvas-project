@@ -25,13 +25,17 @@ export function RubiApprovedMovementShelf() {
   queryFn:()=>load({data:{userId:identity!.userId,accessToken:identity!.accessToken}}),
   enabled:identity!==null,retry:false,staleTime:60000
  });
- if (!query.data?.length) return null;
+ if (identity===null) return <section aria-label="Movimentos oficiais RUBI" className="mb-12 rounded-3xl border border-primary/20 p-5"><p role="status" className="text-sm text-muted-foreground">Preparando ofertas oficiais da RUBI...</p></section>;
+ if (query.isLoading) return <section aria-label="Movimentos oficiais RUBI" className="mb-12 rounded-3xl border border-primary/20 p-5"><p role="status" className="text-sm text-muted-foreground">Carregando ofertas oficiais...</p></section>;
+ if (query.isError) return <section aria-label="Movimentos oficiais RUBI" className="mb-12 space-y-3 rounded-3xl border border-primary/20 p-5"><p role="alert" className="text-sm">Não foi possível consultar as ofertas oficiais agora.</p><button type="button" className="rounded-xl border px-4 py-2 text-sm font-semibold" onClick={()=>void query.refetch()}>Tentar novamente</button><a href="/hub-shop" className="ml-3 text-sm font-semibold text-primary underline">Ver loja principal</a></section>;
+ if (!query.data?.length) return <section aria-label="Movimentos oficiais RUBI" className="mb-12 space-y-3 rounded-3xl border border-primary/20 p-5"><h2 className="font-bold">Ofertas oficiais da RUBI</h2><p className="text-sm text-muted-foreground">Ainda não há movimentos publicados e elegíveis. Você pode explorar a loja principal sem depender de recomendações personalizadas.</p><a href="/hub-shop" className="inline-flex rounded-xl border px-4 py-2 text-sm font-bold">Explorar a RUBI Store</a></section>;
  return <section aria-label="Movimentos oficiais RUBI" className="mb-12 space-y-5 rounded-3xl border border-primary/20 bg-card p-5 sm:p-8">
   <header className="space-y-2">
    <p className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-primary"><Sparkles className="h-4 w-4"/> RUBI Eagles · Movimentos</p>
    <h2 className="text-2xl font-black sm:text-3xl">Ofertas especiais da RUBI</h2>
    <p className="max-w-2xl text-sm text-muted-foreground">Lançamentos e páginas oficiais revisados pela RUBI. Seleção com prioridade para categorias do seu interesse quando disponíveis, mantendo espaço para descobrir novidades.</p>
   </header>
+  {identity.userId&&<p className="text-xs text-muted-foreground">As preferências de categorias podem ser alteradas no <a href="/profile" className="font-semibold text-primary underline">seu perfil</a>. A seleção não usa características pessoais sensíveis.</p>}
   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
    {query.data.map(item=><article key={item.productId} className="flex min-w-0 flex-col overflow-hidden rounded-2xl border bg-background">
     <div className="aspect-video bg-muted/40">
