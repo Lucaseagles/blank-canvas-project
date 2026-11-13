@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getMyPartnerPortal } from "@/lib/partner-portal.functions";
 import { Button } from "@/components/ui/button";
 import { PartnerCreativeKit } from "@/components/partner/PartnerCreativeKit";
+import { RubiLicensedPartnerCreatives } from "@/components/partner/RubiLicensedPartnerCreatives";
 import { RubiStorefrontEntry } from "@/components/store/RubiStorefrontEntry";
 import { RubiConversionGuide } from "@/components/growth/RubiConversionGuide";
 
@@ -93,6 +94,7 @@ function PartnerPortal() {
       <p className="text-muted-foreground">Os produtos só são liberados após aprovação comercial.</p>
     </div>}
     {profile?.status === "approved" && <>
+      <RubiLicensedPartnerCreatives />
       <p className="text-sm text-muted-foreground">Bem-vindo, {profile.display_name}. {products.length} produtos autorizados.</p>
       <section aria-label="Rede de times RUBI Partners" className="space-y-3 rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 to-card p-5 sm:p-7">
         <p className="text-xs font-black uppercase tracking-widest text-primary">RUBI Partners · Rede de Criadores</p>
