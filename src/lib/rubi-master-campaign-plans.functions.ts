@@ -4,7 +4,7 @@ import {requireOwnerRole} from "./auth-guards.server";
 import {approvedRubiCheckout} from "./rubi-checkout-validation";
 const uuid=z.string().uuid();
 const inputSchema=z.object({
- id:uuid.optional(),
+ id:uuid.optional(),revision:z.number().int().positive().optional(),
  productId:uuid,
  campaignCode:z.string().regex(/^[a-z0-9][a-z0-9_-]{0,59}$/),
  mode:z.enum(["ai_seller_video","direct_response","creator_team"]),
@@ -24,7 +24,7 @@ export const listRubiMasterCampaignPlansAdmin=createServerFn({method:"GET"})
   const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
   const db=supabaseAdmin as any;
   const {data,error}=await db.from("rubi_master_campaign_plans")
-   .select("id,product_id,campaign_code,mode,audience,daily_budget,run_days,claim_evidence,responsible_name,status,approval_note,approved_at,created_at,updated_at")
+   .select("id,revision,product_id,campaign_code,mode,audience,daily_budget,run_days,claim_evidence,responsible_name,status,approval_note,approved_at,created_at,updated_at")
    .order("created_at",{ascending:false}).limit(100);
   if(error)throw error;
   return {rows:data??[],partial:(data??[]).length===100};
@@ -32,32 +32,21 @@ export const listRubiMasterCampaignPlansAdmin=createServerFn({method:"GET"})
 export const saveRubiMasterCampaignPlanAdmin=createServerFn({method:"POST"})
  .middleware([requireOwnerRole])
  .validator((input:unknown)=>inputSchema.parse(input))
- .handler(async({data})=>{
+ .handler(async({data,context})=>{
+  if(data.id&&!data.revision)throw new Error("Informe a revisão atual do plano.");
+  if(!data.id&&data.revision)throw new Error("Revisão inesperada para novo plano.");
   const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
   const db=supabaseAdmin as any;
-  const {data:product,error:productError}=await db.from("hub_products")
-   .select("id").eq("id",data.productId).maybeSingle();
-  if(productError)throw productError;
-  if(!product)throw new Error("Escolha um produto real cadastrado antes de planejar campanha.");
-  const values={
-   product_id:data.productId,campaign_code:data.campaignCode,mode:data.mode,audience:data.audience,
-   daily_budget:data.dailyBudget,run_days:data.runDays,claim_evidence:data.claimEvidence,
-   responsible_name:data.responsibleName,status:"draft",approved_at:null,approval_note:"",
-   updated_at:new Date().toISOString()
-  };
-  if(data.id){
-   // Approved campaigns cannot be silently mutated; pause first, then create a fresh draft revision.
-   const {data:row,error}=await db.from("rubi_master_campaign_plans")
-    .update(values).eq("id",data.id).in("status",["draft","ready_for_review","paused"])
-    .select("id").maybeSingle();
-   if(error)throw error;
-   if(!row)throw new Error("Plano aprovado ou inexistente: pause antes de editar.");
-   return {id:String(row.id)};
-  }
-  const {data:row,error}=await db.from("rubi_master_campaign_plans")
-   .insert(values).select("id").single();
+  const {data:rows,error}=await db.rpc("rubi_save_master_campaign_draft_audited",{
+   p_id:data.id??null,p_expected_revision:data.revision??null,
+   p_product_id:data.productId,p_campaign_code:data.campaignCode,
+   p_mode:data.mode,p_audience:data.audience,p_daily_budget:data.dailyBudget,
+   p_run_days:data.runDays,p_claim_evidence:data.claimEvidence,
+   p_responsible_name:data.responsibleName,p_actor:context.userId
+  });
   if(error)throw error;
-  return {id:String(row.id)};
+  if(!rows?.length)throw new Error("Rascunho não registrado.");
+  return {id:String(rows[0].saved_id),revision:Number(rows[0].saved_revision)};
  });
 export const transitionRubiMasterCampaignPlanAdmin=createServerFn({method:"POST"})
  .middleware([requireOwnerRole])
