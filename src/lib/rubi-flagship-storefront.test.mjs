@@ -676,3 +676,18 @@ test("Master evidence review ledger is private, immutable, version-pinned and no
  assert.match(editor,/draft\?\.id&&draft\.revision&&!dirty&&<RubiAudienceEvidenceReviewAdmin/);
  assert.doesNotMatch(server,/publishAd|payCommission|createCheckout|confirmedSale/);
 });
+
+test("Movement campaign labels cannot silently overlap different variants of the same SKU",()=>{
+ const server=source("./rubi-movement-distribution.functions.ts");
+ const generator=source("./rubi-movement-distribution.ts");
+ assert.match(generator,/variantId\.replaceAll\("-",\s*""\)\.slice\(0,12\)/);
+ assert.match(server,/\.eq\("channel",data\.channel\)\.eq\("campaign",data\.campaign\)/);
+ assert.match(server,/othersOnLabel/);
+ assert.match(server,/x\.id!==data\.id/);
+ assert.match(server,/\.from\("rubi_movement_variants"\)/);
+ assert.match(server,/\.from\("rubi_movements"\)/);
+ assert.match(server,/x\.product_id===movement\.product_id/);
+ assert.match(server,/código exclusivo para atribuição confiável/);
+ assert.match(server,/Consulta de campanhas incompleta/);
+ assert.doesNotMatch(server,/publishAd|confirmPaidOrder|payCommission/);
+});

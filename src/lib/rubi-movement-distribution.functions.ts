@@ -36,6 +36,30 @@ export const saveRubiDistributionAdmin=createServerFn({method:"POST"}).middlewar
  if(movementError)throw movementError;
  if(!movement)throw new Error("Movimento ausente.");
  movementCampaignPath(movement.product_id,data.channel,data.campaign);
+ // Attribution must be unambiguous for the same product. This is an application
+ // preflight; database-level transaction protection remains a separate hardening gate.
+ const {data:collisions,error:collisionsError}=await (supabaseAdmin as any)
+  .from("rubi_movement_distribution").select("id,variant_id")
+  .eq("channel",data.channel).eq("campaign",data.campaign).limit(201);
+ if(collisionsError)throw collisionsError;
+ if((collisions??[]).length>=201)throw new Error("Consulta de campanhas incompleta: revise o identificador.");
+ const othersOnLabel=(collisions??[]).filter((x:{id:string})=>x.id!==data.id);
+ if(othersOnLabel.some((x:{variant_id:string})=>x.variant_id===data.variant_id))
+  throw new Error("A mesma variante já usa este código neste canal. Informe um identificador diferente.");
+ const otherVariantIds=[...new Set(othersOnLabel.map((x:{variant_id:string})=>x.variant_id))];
+ if(otherVariantIds.length){
+  const {data:others,error:othersError}=await (supabaseAdmin as any).from("rubi_movement_variants")
+   .select("movement_id").in("id",otherVariantIds);
+  if(othersError)throw othersError;
+  const ids=[...new Set((others??[]).map((x:{movement_id:string})=>x.movement_id))];
+  if(ids.length){
+   const {data:otherMovements,error:otherMovementsError}=await (supabaseAdmin as any)
+    .from("rubi_movements").select("product_id").in("id",ids);
+   if(otherMovementsError)throw otherMovementsError;
+   if((otherMovements??[]).some((x:{product_id:string})=>x.product_id===movement.product_id))
+    throw new Error("Identificador de campanha já utilizado por outra variante deste produto. Use um código exclusivo para atribuição confiável.");
+  }
+ }
  // No attribution codes or checkout parameters are created; only UTM marketing labels.
  const {id,...values}=data;
  if(id){
