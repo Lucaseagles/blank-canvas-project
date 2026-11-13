@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
 import {newRubiVideoWatchCoverage,markRubiVideoSeek,observeRubiVideoWatch} from "./rubi-video-watch-coverage.ts";
 test("manual seek to 90 percent cannot count as video completion",()=>{
  const state=newRubiVideoWatchCoverage(100);
@@ -37,4 +38,12 @@ test("large seeks and changing video duration invalidate progress",()=>{
  observeRubiVideoWatch(state,0,50);
  assert.equal(state.watchedBuckets.size,0);
  assert.equal(observeRubiVideoWatch(state,Number.NaN,50).completed,false);
+});
+
+test("video player invokes the watched-coverage gate before completion",()=>{
+ const code=readFileSync(new URL("../components/video/VideoPlayer.tsx",import.meta.url),"utf8");
+ assert.match(code,/observeRubiVideoWatch\(watchCoverageRef\.current,currentTime,duration\)/);
+ assert.match(code,/onSeeking=\{\(\)=>markRubiVideoSeek\(watchCoverageRef\.current\)\}/);
+ assert.match(code,/!completed&&watched\.completed/);
+ assert.doesNotMatch(code,/currentTime \/ duration\) >= 0\.9/);
 });
