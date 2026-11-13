@@ -1,6 +1,7 @@
 import {useQuery} from "@tanstack/react-query";
 import {useServerFn} from "@tanstack/react-start";
 import {Button} from "@/components/ui/button";
+import {RubiVideoRetentionAdmin} from "@/components/store/RubiVideoRetentionAdmin";
 import {getRubiMovementPerformanceAdmin} from "@/lib/rubi-movement-performance.functions";
 import {summarizeMovementVariants,assessRubiVariantDecisionReadiness,preflightRubiExperimentTraffic,summarizeRubiTrackingCoverage,type RubiMovementPerformanceRow} from "@/lib/rubi-movement-performance";
 
@@ -29,6 +30,7 @@ export function RubiMovementPerformanceAdmin({movementId}:{movementId:string}){
    <Button variant="outline" size="sm" onClick={()=>void query.refetch()} disabled={query.isFetching}>{query.isFetching?"Atualizando...":"Atualizar resultados"}</Button>
    {query.isLoading&&<p role="status">Consultando resultados orgânicos...</p>}
    {query.isError&&<p role="alert" className="text-destructive">Não foi possível carregar os resultados. Confira as permissões e a rotina de métricas.</p>}
+   <RubiVideoRetentionAdmin movementId={movementId}/>
    {query.data&&<>
     <p className="text-xs text-muted-foreground">Dados consultados em {new Date(query.data.asOf).toLocaleString("pt-BR")}. Relatório limitado às 200 campanhas orgânicas mais relevantes do agregado; ausência nesta tela não significa necessariamente zero tráfego.</p>
     {query.data.partial&&<p role="alert" className="rounded-lg border border-amber-500/40 p-3 text-xs text-amber-700 dark:text-amber-300">Cobertura incompleta: parte das variantes, distribuições ou campanhas agregadas atingiu o limite de consulta. Os resultados abaixo são amostras observadas; não classifique vencedores nem conclua testes A/B com esta amostra.</p>}
