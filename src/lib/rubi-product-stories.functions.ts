@@ -39,7 +39,7 @@ export const saveRubiProductStoryAdmin=createServerFn({method:"POST"})
    if(oldError)throw oldError;
    if(!old||old.product_id!==data.product_id||old.revision!==revision)throw new Error("Story não pertence ao produto ou versão foi alterada.");
    const {data:updated,error}=await db.from("rubi_product_stories")
-    .update({...values,status:"draft",revision:old.revision+1,updated_at:new Date().toISOString()})
+    .update({...values,status:"draft",approved_movement_revision:null,revision:old.revision+1,updated_at:new Date().toISOString()})
     .eq("id",id).eq("product_id",data.product_id).eq("revision",old.revision).select("id,revision").maybeSingle();
    if(error)throw error;
    if(!updated)throw new Error("Conflito de edição.");
@@ -69,6 +69,13 @@ export const setRubiProductStoryApprovalAdmin=createServerFn({method:"POST"})
    if(productError)throw productError;
    if(!product?.active||Number(product.retail_price)<=0||!approvedRubiCheckout(product))
     throw new Error("Para publicar Story, o produto precisa ter checkout oficial aprovado e fornecedor ativo.");
+   if(!story.movement_id)throw new Error("Vincule um movimento comercial antes de aprovar o Story.");
+   const {data:movement,error:movementError}=await db.from("rubi_movements")
+    .select("id,product_id,status,audience,revision")
+    .eq("id",story.movement_id).eq("product_id",data.productId).maybeSingle();
+   if(movementError)throw movementError;
+   if(!movement||movement.status!=="review"||movement.audience!=="consumer")
+    throw new Error("O Story exige movimento revisado do público consumidor e do mesmo produto.");
   }
   const {data:pinned,error:pinnedError}=data.approved
    ?await db.from("rubi_movements").select("revision").eq("id",story.movement_id).eq("product_id",data.productId).eq("status","review").maybeSingle()
@@ -101,10 +108,10 @@ export const listRubiApprovedProductStories=createServerFn({method:"POST"})
   const movementIds=[...new Set((rows??[]).map((row:{movement_id:string})=>row.movement_id))];
   if(!movementIds.length)return [];
   const {data:movements,error:movementsError}=await db.from("rubi_movements")
-   .select("id,product_id,status,revision").in("id",movementIds).eq("product_id",data.productId);
+   .select("id,product_id,status,audience,revision").in("id",movementIds).eq("product_id",data.productId);
   if(movementsError)throw movementsError;
-  const byId=new Map<string,{id:string;product_id:string;status:string;revision:number}>(
-   (movements??[]).map((m:{id:string;product_id:string;status:string;revision:number})=>[m.id,m])
+  const byId=new Map<string,{id:string;product_id:string;status:string;audience:string;revision:number}>(
+   (movements??[]).map((m:{id:string;product_id:string;status:string;audience:string;revision:number})=>[m.id,m])
   );
   return (rows??[]).filter((story:{movement_id:string;approved_movement_revision:number;status:string;rights_confirmed:boolean})=>
    canServeVersionedRubiStory(story,byId.get(story.movement_id)??null,data.productId))
