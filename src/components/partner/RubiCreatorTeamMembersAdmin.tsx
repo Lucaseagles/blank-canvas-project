@@ -27,7 +27,7 @@ export function RubiCreatorTeamMembersAdmin(){
   void qc.invalidateQueries({queryKey:["rubi-creator-team-history"]});
   void qc.invalidateQueries({queryKey:["rubi-creator-team-performance-30d"]});
  };
- const mutation=useMutation({mutationFn:(input:{teamId:string;commercialProfileId:string;status:"active"|"paused"})=>assign({data:input}),
+ const mutation=useMutation({mutationFn:(input:{teamId:string;commercialProfileId:string;status:"active"|"paused";expectedStatus:"active"|"paused"|null})=>assign({data:input}),
   onSuccess:result=>{toast.success(result.notice);refresh();},
   onError:(error:Error)=>toast.error(error.message)});
  const partnerById=new Map(partners.map(p=>[p.id,p]));
@@ -37,7 +37,7 @@ export function RubiCreatorTeamMembersAdmin(){
    <h2 className="text-xl font-black">Associar parceiros aprovados aos times</h2>
    <p className="text-sm text-muted-foreground">Conecte um perfil de parceiro já aprovado a um time por nicho. Prospectos ainda não aprovados não podem ser ativados aqui.</p>
   </header>
-  <form onSubmit={event=>{event.preventDefault();if(teamId&&profileId)mutation.mutate({teamId,commercialProfileId:profileId,status});}}
+  <form onSubmit={event=>{event.preventDefault();if(teamId&&profileId)mutation.mutate({teamId,commercialProfileId:profileId,status,expectedStatus:memberships.find(m=>m.team_id===teamId&&m.commercial_profile_id===profileId)?.status??null});}}
    className="grid items-end gap-3 rounded-2xl border bg-background/60 p-4 md:grid-cols-4">
    <label className="space-y-1 text-xs font-semibold">Time
     <select required aria-label="Time de criadores" className="block w-full rounded-xl border bg-background p-2.5" value={teamId} onChange={e=>setTeamId(e.target.value)}>
@@ -66,7 +66,7 @@ export function RubiCreatorTeamMembersAdmin(){
     {members.length===0?<p className="mt-2 text-xs text-muted-foreground">Nenhum parceiro vinculado.</p>:<div className="mt-3 grid gap-2 sm:grid-cols-2">{members.map(member=><div key={member.id} className="flex items-center justify-between gap-2 rounded-xl border bg-background/60 p-3">
      <span className="flex min-w-0 items-center gap-2"><UserCheck className="h-4 w-4 shrink-0 text-primary"/><span className="min-w-0"><strong className="block truncate text-xs">{partnerById.get(member.commercial_profile_id)?.display_name||"Perfil fora da amostra"}</strong><span className="text-[11px] text-muted-foreground">{member.status==="active"?"Vínculo ativo":"Vínculo pausado"}</span></span></span>
      <Button type="button" size="sm" variant="outline" disabled={mutation.isPending||!partnerById.has(member.commercial_profile_id)}
-      onClick={()=>mutation.mutate({teamId:team.id,commercialProfileId:member.commercial_profile_id,status:member.status==="active"?"paused":"active"})}>{member.status==="active"?"Pausar":"Reativar"}</Button>
+      onClick={()=>mutation.mutate({teamId:team.id,commercialProfileId:member.commercial_profile_id,status:member.status==="active"?"paused":"active",expectedStatus:member.status})}>{member.status==="active"?"Pausar":"Reativar"}</Button>
     </div>)}</div>}
    </div>})}
    {query.data.partial&&<p role="status" className="text-xs text-muted-foreground">Amostra parcial: 100 times, 200 parceiros e 500 vínculos por consulta. Números não representam inventário completo.</p>}
