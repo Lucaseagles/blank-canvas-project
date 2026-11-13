@@ -747,7 +747,7 @@ test("License review is Owner-only; documentary upload does not publish or pay c
  const api=source("./rubi-creative-licenses.functions.ts");
  const ui=source("../components/store/RubiCreativeLicenseAdmin.tsx");
  const library=source("../components/store/RubiCreativeLibraryAdmin.tsx");
- assert.equal((api.match(/requireOwnerRole/g)??[]).length,4);
+ assert.equal((api.match(/\.middleware\(\[requireOwnerRole\]\)/g)??[]).length,4);
  assert.match(api,/createSignedUploadUrl/);
  assert.match(ui,/uploadToSignedUrl/);
  assert.match(ui,/Aprovar após conferência documental/);
