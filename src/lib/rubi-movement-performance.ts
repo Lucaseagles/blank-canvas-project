@@ -138,3 +138,31 @@ export function summarizeRubiTrackingCoverage(
   status:reportPartial?"partial":total===0?"empty":ambiguous+unobserved===0?"complete":"needs_attention"
  } as const;
 }
+
+/** Compare recent 7 days with the previous 23 within the 30-day window.
+ * Event counts are observational, not verified unique customers or paid sales.
+ */
+export function compareRubiMovementPeriods(
+ thirtyDay:RubiMovementTrafficRow[],sevenDay:RubiMovementTrafficRow[],
+ productId:string,partial:boolean
+){
+ const byKey=(rows:RubiMovementTrafficRow[])=>new Map(rows.filter(x=>x.productId===productId)
+  .map(x=>[x.channel+"::"+x.campaign,x]));
+ const month=byKey(thirtyDay),recent=byKey(sevenDay);
+ const result: Array<{channel:string;campaign:string;recentViews:number;priorViews:number;recentIntents:number;priorIntents:number;recentRate:number|null;priorRate:number|null;quality:"comparable"|"invalid"}>=[];
+ for(const [key,m] of month){
+  const w=recent.get(key);
+  const rv=w?.viewEvents??0,ri=w?.checkoutIntents??0;
+  const pv=m.viewEvents-rv,pi=m.checkoutIntents-ri;
+  const valid=!partial&&[rv,ri,pv,pi].every(n=>Number.isFinite(n)&&n>=0)
+   && Number.isFinite(m.viewEvents)&&Number.isFinite(m.checkoutIntents);
+  result.push({
+   channel:m.channel,campaign:m.campaign,recentViews:rv,priorViews:pv,
+   recentIntents:ri,priorIntents:pi,
+   recentRate:valid?percentOfIntentToView(ri,rv):null,
+   priorRate:valid?percentOfIntentToView(pi,pv):null,
+   quality:valid?"comparable":"invalid"
+  });
+ }
+ return result;
+}
