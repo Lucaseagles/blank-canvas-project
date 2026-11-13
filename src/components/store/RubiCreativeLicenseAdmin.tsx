@@ -4,7 +4,7 @@ import {useServerFn} from "@tanstack/react-start";
 import {supabase} from "@/integrations/supabase/client";
 import {Button} from "@/components/ui/button";
 import {toast} from "sonner";
-import {createRubiCreativeLicenseDraftAdmin,listRubiCreativeLicensesAdmin,reviewRubiCreativeLicenseAdmin} from "@/lib/rubi-creative-licenses.functions";
+import {createRubiCreativeLicenseDraftAdmin,inspectRubiCreativeLicenseEvidenceAdmin,listRubiCreativeLicensesAdmin,reviewRubiCreativeLicenseAdmin} from "@/lib/rubi-creative-licenses.functions";
 
 type Creative={id:string;name:string;productTitle:string};
 type License={id:string;variantId:string;status:string;revision:number;channels:string[];audiences:string[];
@@ -19,6 +19,9 @@ export function RubiCreativeLicenseAdmin({assets}:{assets:Creative[]}){
  const list=useServerFn(listRubiCreativeLicensesAdmin);
  const create=useServerFn(createRubiCreativeLicenseDraftAdmin);
  const review=useServerFn(reviewRubiCreativeLicenseAdmin);
+ const inspect=useServerFn(inspectRubiCreativeLicenseEvidenceAdmin);
+ const [evidenceUrl,setEvidenceUrl]=useState("");
+ const [inspectedVariant,setInspectedVariant]=useState("");
  const query=useQuery({queryKey:["rubi-creative-licenses-admin"],queryFn:()=>list(),retry:false});
  const licenses=(query.data?.items??[]) as License[];
  const [variantId,setVariantId]=useState("");
@@ -30,6 +33,11 @@ export function RubiCreativeLicenseAdmin({assets}:{assets:Creative[]}){
  const activeLicense=useMemo(()=>licenses.find(v=>v.variantId===variantId),[licenses,variantId]);
  const toggle=<T extends string,>(current:T[],value:T,set:(v:T[])=>void)=>
   set(current.includes(value)?current.filter(v=>v!==value):[...current,value]);
+ const evidence=useMutation({mutationFn:async()=>{
+  if(!variantId)throw new Error("Selecione um criativo.");
+  return inspect({data:{variantId}});
+ },onSuccess:(signed)=>{setEvidenceUrl(signed.url);setInspectedVariant("");},
+   onError:(e:Error)=>toast.error(e.message)});
  const upload=useMutation({mutationFn:async()=>{
   if(!file||!variantId)throw new Error("Selecione um criativo e o documento de licença.");
   if(file.size>10485760||file.size===0||!["application/pdf","image/png","image/jpeg"].includes(file.type))
@@ -46,7 +54,7 @@ export function RubiCreativeLicenseAdmin({assets}:{assets:Creative[]}){
   if(error)throw error;
  },onSuccess:()=>{
   toast.success("Documento recebido em área privada. Revise a licença antes de aprovar.");
-  setFile(null);void client.invalidateQueries({queryKey:["rubi-creative-licenses-admin"]});
+  setFile(null);setEvidenceUrl("");setInspectedVariant("");void client.invalidateQueries({queryKey:["rubi-creative-licenses-admin"]});
  },onError:(e:Error)=>toast.error(e.message)});
  const transition=useMutation({mutationFn:({item,action}:{item:License;action:"approve"|"revoke"})=>
   review({data:{variantId:item.variantId,revision:item.revision,action}}),
@@ -60,7 +68,7 @@ export function RubiCreativeLicenseAdmin({assets}:{assets:Creative[]}){
   {query.isError&&<p role="alert" className="text-sm text-destructive">Não foi possível consultar as licenças. Confirme a migração do banco.</p>}
   {query.data?.partial&&<p role="alert">Mais de 200 licenças: snapshot oculto até existir paginação.</p>}
   <label className="block space-y-1 text-sm">Criativo
-   <select className="w-full rounded-xl border bg-background p-3" value={variantId} onChange={e=>setVariantId(e.target.value)}>
+   <select className="w-full rounded-xl border bg-background p-3" value={variantId} onChange={e=>{setVariantId(e.target.value);setEvidenceUrl("");setInspectedVariant("");}}>
     <option value="">Selecione um criativo em revisão</option>
     {assets.map(a=><option key={a.id} value={a.id}>{a.productTitle} · {a.name}</option>)}
    </select>
@@ -91,8 +99,16 @@ export function RubiCreativeLicenseAdmin({assets}:{assets:Creative[]}){
     </fieldset>
     <Button type="button" disabled={upload.isPending} onClick={()=>upload.mutate()}>Enviar documento privado e registrar rascunho</Button>
    </>}
+   {activeLicense&&<div className="space-y-2">
+    <Button type="button" variant="outline" disabled={evidence.isPending} onClick={()=>evidence.mutate()}>
+     Gerar acesso privado ao comprovante (60 segundos)
+    </Button>
+    {evidenceUrl&&<a href={evidenceUrl} target="_blank" rel="noopener noreferrer"
+     onClick={()=>setInspectedVariant(variantId)} className="block text-sm font-semibold text-primary underline">Abrir documento de licença em nova aba</a>}
+    <p className="text-xs text-muted-foreground">Acesse e confira autoria, titularidade, canais, território e prazo. O link expira; solicitar o link não comprova validade jurídica do documento.</p>
+   </div>}
    {activeLicense?.status==="draft"&&<Button type="button" variant="outline" disabled={transition.isPending||upload.isPending}
-    onClick={()=>{if(window.confirm("Confirma que conferiu o documento, a titularidade, canais e prazo da licença?"))transition.mutate({item:activeLicense,action:"approve"});}}>
+    onClick={()=>{if(inspectedVariant!==variantId){toast.error("Abra o documento de licença antes de aprová-lo.");return;}if(window.confirm("Confirma que conferiu o documento, a titularidade, canais e prazo da licença?"))transition.mutate({item:activeLicense,action:"approve"});}}>
      Aprovar após conferência documental
     </Button>}
    {activeLicense?.status==="approved"&&<Button type="button" variant="destructive" disabled={transition.isPending}

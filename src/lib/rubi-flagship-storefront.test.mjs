@@ -747,7 +747,7 @@ test("License review is Owner-only; documentary upload does not publish or pay c
  const api=source("./rubi-creative-licenses.functions.ts");
  const ui=source("../components/store/RubiCreativeLicenseAdmin.tsx");
  const library=source("../components/store/RubiCreativeLibraryAdmin.tsx");
- assert.equal((api.match(/requireOwnerRole/g)??[]).length,4);
+ assert.equal((api.match(/\.middleware\(\[requireOwnerRole\]\)/g)??[]).length,4);
  assert.match(api,/createSignedUploadUrl/);
  assert.match(ui,/uploadToSignedUrl/);
  assert.match(ui,/Aprovar após conferência documental/);
@@ -775,4 +775,17 @@ test("Partner licensing is rechecked per session, product grant, license scope a
  assert.match(portal,/<RubiLicensedPartnerCreatives \/>/);
  assert.match(ui,/Publicidade · parceiro RUBI/);
  assert.doesNotMatch(server,/evidence_path|supplier_cost|document_url/);
+});
+
+test("Documentary license evidence can only be inspected by Master with short-lived URL",()=>{
+ const api=source("./rubi-creative-licenses.functions.ts");
+ const admin=source("../components/store/RubiCreativeLicenseAdmin.tsx");
+ assert.match(api,/inspectRubiCreativeLicenseEvidenceAdmin=createServerFn/);
+ assert.match(api,/\.middleware\(\[requireOwnerRole\]\)/);
+ assert.match(api,/createSignedUrl\(license.evidence_path,60\)/);
+ assert.match(admin,/Gerar acesso privado ao comprovante \(60 segundos\)/);
+ assert.match(admin,/Abrir documento de licença em nova aba/);
+ assert.match(admin,/inspectedVariant!==variantId/);
+ assert.match(admin,/rel="noopener noreferrer"/);
+ assert.doesNotMatch(api,/getPublicUrl\(/);
 });
