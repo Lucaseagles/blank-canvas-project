@@ -5,6 +5,7 @@ import {toast} from "sonner";
 import {Button} from "@/components/ui/button";
 import {RubiMovementVariantsAdmin} from "@/components/store/RubiMovementVariantsAdmin";
 import {RubiMovementPerformanceAdmin} from "@/components/store/RubiMovementPerformanceAdmin";
+import {RubiAudienceMovementSummaryAdmin} from "@/components/store/RubiAudienceMovementSummaryAdmin";
 import {RubiAudienceEvidenceBuilder} from "@/components/store/RubiAudienceEvidenceBuilder";
 import {RubiAudienceEvidenceReviewAdmin} from "@/components/store/RubiAudienceEvidenceReviewAdmin";
 import {assessRubiAudienceEvidenceStatus} from "@/lib/rubi-audience-evidence-status";
@@ -64,6 +65,7 @@ export function RubiMovementEngineAdmin({products}:{products:Product[]}){
    </div>
    {query.data?.length===0&&<p className="text-sm text-muted-foreground">Nenhum movimento. Crie o primeiro para este produto.</p>}
   </div>}
+  {productId&&<RubiAudienceMovementSummaryAdmin productId={productId}/>}
   {draft&&<div className="space-y-4 rounded-xl border p-4">
    <h3 className="text-lg font-bold">{draft.id?"Editar movimento existente":"Novo movimento"}</h3>
    {field("name","Nome do movimento","Ex.: Sua Casa, Seu Olhar")}
