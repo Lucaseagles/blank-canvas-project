@@ -2,17 +2,17 @@ import {createServerFn} from "@tanstack/react-start";
 import {z} from "zod";
 import {requireOwnerRole} from "./auth-guards.server";
 import {approvedRubiCheckout} from "./rubi-checkout-validation";
-import {canApproveRubiProductStory,validRubiStoryMediaUrl,type RubiProductStory} from "./rubi-product-stories";
+import {canApproveRubiProductStory,canServeVersionedRubiStory,validRubiStoryMediaUrl,type RubiProductStory} from "./rubi-product-stories";
 const uuid=z.string().uuid();
 const schema=z.object({
- id:uuid.optional(),product_id:uuid,title:z.string().trim().min(3).max(160),
+ id:uuid.optional(),product_id:uuid,movement_id:uuid.nullable(),title:z.string().trim().min(3).max(160),
  description:z.string().trim().max(1200),video_url:z.string().trim().min(14).max(2000),
  poster_url:z.string().trim().max(2000).nullable(),
  evidence_notes:z.string().trim().max(1200),rights_confirmed:z.boolean(),
  position:z.number().int().min(0).max(1000),
  revision:z.number().int().positive().optional(),
 });
-const storyFields="id,product_id,title,description,video_url,poster_url,evidence_notes,rights_confirmed,position,status,revision";
+const storyFields="id,product_id,title,description,video_url,poster_url,evidence_notes,rights_confirmed,position,status,revision,movement_id,approved_movement_revision";
 export const listRubiProductStoriesAdmin=createServerFn({method:"POST"})
  .middleware([requireOwnerRole])
  .validator((input:unknown)=>z.object({productId:uuid}).parse(input))
@@ -39,7 +39,7 @@ export const saveRubiProductStoryAdmin=createServerFn({method:"POST"})
    if(oldError)throw oldError;
    if(!old||old.product_id!==data.product_id||old.revision!==revision)throw new Error("Story não pertence ao produto ou versão foi alterada.");
    const {data:updated,error}=await db.from("rubi_product_stories")
-    .update({...values,status:"draft",revision:old.revision+1,updated_at:new Date().toISOString()})
+    .update({...values,status:"draft",approved_movement_revision:null,revision:old.revision+1,updated_at:new Date().toISOString()})
     .eq("id",id).eq("product_id",data.product_id).eq("revision",old.revision).select("id,revision").maybeSingle();
    if(error)throw error;
    if(!updated)throw new Error("Conflito de edição.");
@@ -69,9 +69,21 @@ export const setRubiProductStoryApprovalAdmin=createServerFn({method:"POST"})
    if(productError)throw productError;
    if(!product?.active||Number(product.retail_price)<=0||!approvedRubiCheckout(product))
     throw new Error("Para publicar Story, o produto precisa ter checkout oficial aprovado e fornecedor ativo.");
+   if(!story.movement_id)throw new Error("Vincule um movimento comercial antes de aprovar o Story.");
+   const {data:movement,error:movementError}=await db.from("rubi_movements")
+    .select("id,product_id,status,audience,revision")
+    .eq("id",story.movement_id).eq("product_id",data.productId).maybeSingle();
+   if(movementError)throw movementError;
+   if(!movement||movement.status!=="review"||movement.audience!=="consumer")
+    throw new Error("O Story exige movimento revisado do público consumidor e do mesmo produto.");
   }
+  const {data:pinned,error:pinnedError}=data.approved
+   ?await db.from("rubi_movements").select("revision").eq("id",story.movement_id).eq("product_id",data.productId).eq("status","review").maybeSingle()
+   :{data:null,error:null};
+  if(pinnedError)throw pinnedError;
+  if(data.approved&&!pinned)throw new Error("O movimento perdeu a revisão antes da aprovação.");
   const {data:updated,error:updateError}=await db.from("rubi_product_stories")
-   .update({status:data.approved?"approved":"draft",updated_at:new Date().toISOString(),revision:story.revision+1})
+   .update({status:data.approved?"approved":"draft",approved_movement_revision:data.approved?pinned.revision:null,updated_at:new Date().toISOString(),revision:story.revision+1})
    .eq("id",data.id).eq("product_id",data.productId).eq("revision",data.revision).select("id").maybeSingle();
   if(updateError)throw updateError;
   if(!updated)throw new Error("Story alterada em outra sessão.");
@@ -88,8 +100,22 @@ export const listRubiApprovedProductStories=createServerFn({method:"POST"})
   if(productError)throw productError;
   if(!product?.active||Number(product.retail_price)<=0||!approvedRubiCheckout(product))return [];
   const {data:rows,error}=await db.from("rubi_product_stories")
-   .select("id,title,description,video_url,poster_url").eq("product_id",data.productId)
-   .eq("status","approved").eq("rights_confirmed",true).order("position").limit(6);
+   .select("id,title,description,video_url,poster_url,movement_id,approved_movement_revision,status,rights_confirmed").eq("product_id",data.productId)
+   .eq("status","approved").eq("rights_confirmed",true).not("movement_id","is",null).order("position").limit(51);
   if(error)throw error;
-  return (rows??[]) as Array<{id:string;title:string;description:string;video_url:string;poster_url:string|null}>;
+  // Fail closed if an upper bound could conceal a more recently eligible Story.
+  if((rows??[]).length>50)return [];
+  const movementIds=[...new Set((rows??[]).map((row:{movement_id:string})=>row.movement_id))];
+  if(!movementIds.length)return [];
+  const {data:movements,error:movementsError}=await db.from("rubi_movements")
+   .select("id,product_id,status,audience,revision").in("id",movementIds).eq("product_id",data.productId);
+  if(movementsError)throw movementsError;
+  const byId=new Map<string,{id:string;product_id:string;status:string;audience:string;revision:number}>(
+   (movements??[]).map((m:{id:string;product_id:string;status:string;audience:string;revision:number})=>[m.id,m])
+  );
+  return (rows??[]).filter((story:{movement_id:string;approved_movement_revision:number;status:string;rights_confirmed:boolean})=>
+   canServeVersionedRubiStory(story,byId.get(story.movement_id)??null,data.productId))
+   .slice(0,6).map((story:{id:string;title:string;description:string;video_url:string;poster_url:string|null})=>({
+    id:story.id,title:story.title,description:story.description,video_url:story.video_url,poster_url:story.poster_url
+   }));
  });

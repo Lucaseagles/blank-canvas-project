@@ -4,6 +4,7 @@ import {useServerFn} from "@tanstack/react-start";
 import {toast} from "sonner";
 import {Button} from "@/components/ui/button";
 import {emptyRubiProductStory,canApproveRubiProductStory,type RubiProductStory} from "@/lib/rubi-product-stories";
+import {listRubiMovementsAdmin} from "@/lib/rubi-movements.functions";
 import {listRubiProductStoriesAdmin,saveRubiProductStoryAdmin,setRubiProductStoryApprovalAdmin} from "@/lib/rubi-product-stories.functions";
 export function RubiProductStoriesAdmin({products}:{products:Array<{id:string;title:string}>}){
  const [productId,setProductId]=useState("");
@@ -11,6 +12,8 @@ export function RubiProductStoriesAdmin({products}:{products:Array<{id:string;ti
  const [dirty,setDirty]=useState(false);
  const [publishing,setPublishing]=useState(false);
  const load=useServerFn(listRubiProductStoriesAdmin);
+ const listMovements=useServerFn(listRubiMovementsAdmin);
+ const movements=useQuery({queryKey:["rubi-movements-for-stories",productId],enabled:!!productId,retry:false,queryFn:()=>listMovements({data:{productId}})});
  const save=useServerFn(saveRubiProductStoryAdmin);
  const approve=useServerFn(setRubiProductStoryApprovalAdmin);
  const client=useQueryClient();
@@ -47,6 +50,13 @@ export function RubiProductStoriesAdmin({products}:{products:Array<{id:string;ti
    <strong className="block">{story.title}</strong><span className="text-xs text-muted-foreground">{story.status==="approved"?"Aprovado e visível":"Rascunho privado"} · versão {story.revision}</span>
   </button>)}</div>
   {draft&&<div className="space-y-4 rounded-xl border p-4">
+   <label className="block space-y-1 text-sm font-semibold">Movimento versionado vinculado
+    <select value={draft.movement_id??""} className="w-full rounded-lg border bg-background p-2" onChange={e=>change("movement_id",e.target.value||null)}>
+     <option value="">Selecione um movimento revisado</option>
+     {movements.data?.filter(m=>m.status==="review"&&m.audience==="consumer").map(m=><option key={m.id} value={m.id}>{m.name} · versão {m.revision}</option>)}
+    </select>
+    <span className="block text-xs text-muted-foreground">Editar o movimento depois da aprovação suspende a exibição deste Story até nova revisão.</span>
+   </label>
    {field("title","Título da história")}
    {field("description","Narrativa e benefício verificável",4)}
    {field("video_url","URL HTTPS direta do vídeo .mp4 ou .webm")}
@@ -54,11 +64,11 @@ export function RubiProductStoriesAdmin({products}:{products:Array<{id:string;ti
    {field("evidence_notes","Evidências, fornecedor e licença do conteúdo",3)}
    <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={draft.rights_confirmed} onChange={e=>change("rights_confirmed",e.target.checked)}/> Possuo autorização para usar, divulgar e incorporar este vídeo na loja.</label>
    <label className="block space-y-1 text-sm font-semibold">Ordem na página<input type="number" min={0} max={1000} className="w-full rounded-lg border bg-background p-2" value={draft.position} onChange={e=>change("position",Math.max(0,Math.min(1000,Number(e.target.value)||0)))}/></label>
-   <p className="text-xs text-muted-foreground">Aprovação editorial: {canApproveRubiProductStory(draft)?"Campos e confirmação presentes; ainda exige revisão humana.":"Complete os dados e a licença para solicitar publicação."}</p>
+   <p className="text-xs text-muted-foreground">Aprovação editorial: {draft.movement_id&&canApproveRubiProductStory(draft)?"Campos e confirmação presentes; ainda exige revisão humana.":"Complete os dados e a licença para solicitar publicação."}</p>
    {draft.video_url&&<video key={draft.video_url} controls playsInline preload="none" className="max-h-80 w-full rounded-xl bg-black" src={draft.video_url} poster={draft.poster_url||undefined}>Seu navegador não suporta vídeo.</video>}
    <div className="flex flex-wrap gap-2">
     <Button disabled={mutation.isPending||(!dirty&&!!draft.id)} onClick={()=>mutation.mutate()}>{mutation.isPending?"Salvando...":"Salvar rascunho"}</Button>
-    {draft.id&&<Button variant="outline" disabled={dirty||publishing||(!draft.status||draft.status==="draft")&&!canApproveRubiProductStory(draft)} onClick={()=>void setApproval(draft.status!=="approved")}>{draft.status==="approved"?"Retirar Story do público":"Aprovar e publicar Story"}</Button>}
+    {draft.id&&<Button variant="outline" disabled={dirty||publishing||(!draft.status||draft.status==="draft")&&(!draft.movement_id||!canApproveRubiProductStory(draft))} onClick={()=>void setApproval(draft.status!=="approved")}>{draft.status==="approved"?"Retirar Story do público":"Aprovar e publicar Story"}</Button>}
     <Button variant="outline" onClick={()=>{if(dirty&&!window.confirm("Descartar alterações?"))return;setDraft(null);setDirty(false);}}>Fechar editor</Button>
    </div>
    <p className="text-xs text-muted-foreground">Qualquer edição salva volta o Story para rascunho. Pagamentos e preços de fornecedor nunca são alterados.</p>
