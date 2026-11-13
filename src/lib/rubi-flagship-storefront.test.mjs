@@ -654,3 +654,25 @@ test("Movement Master editor exposes evidence validation and respects server edi
  assert.match(server,/rubiMovementEditorialQuality\(data\)/);
  assert.match(server,/if\(data.status==="review"&&!canReviewRubiMovement\(data\)\)/);
 });
+
+test("Master evidence review ledger is private, immutable, version-pinned and not publication",()=>{
+ const schema=source("../../supabase/migrations/20261112210000_rubi_audience_evidence_reviews.sql");
+ const server=source("./rubi-audience-review.functions.ts");
+ const panel=source("../components/store/RubiAudienceEvidenceReviewAdmin.tsx");
+ const editor=source("../components/store/RubiMovementEngineAdmin.tsx");
+ assert.match(schema,/rubi_audience_evidence_reviews/);
+ assert.match(schema,/enable row level security/);
+ assert.match(schema,/revoke all on public\.rubi_audience_evidence_reviews from public,anon,authenticated/);
+ assert.match(schema,/before update or delete/);
+ assert.match(schema,/before insert/);
+ assert.match(schema,/Movement evidence changed/);
+ assert.match(server,/requireOwnerRole/g);
+ assert.match(server,/movement\.revision!==data\.movementRevision/);
+ assert.match(server,/assessRubiAudienceEvidenceStatus\(evidence\)/);
+ assert.match(server,/movement_revision:data\.movementRevision/);
+ assert.match(server,/evidence_snapshot:evidence/);
+ assert.match(panel,/Registro documental não|Revisão documental não significa/);
+ assert.match(panel,/Histórico parcial/);
+ assert.match(editor,/draft\?\.id&&draft\.revision&&!dirty&&<RubiAudienceEvidenceReviewAdmin/);
+ assert.doesNotMatch(server,/publishAd|payCommission|createCheckout|confirmedSale/);
+});

@@ -6,6 +6,7 @@ import {Button} from "@/components/ui/button";
 import {RubiMovementVariantsAdmin} from "@/components/store/RubiMovementVariantsAdmin";
 import {RubiMovementPerformanceAdmin} from "@/components/store/RubiMovementPerformanceAdmin";
 import {RubiAudienceEvidenceBuilder} from "@/components/store/RubiAudienceEvidenceBuilder";
+import {RubiAudienceEvidenceReviewAdmin} from "@/components/store/RubiAudienceEvidenceReviewAdmin";
 import {assessRubiAudienceEvidenceStatus} from "@/lib/rubi-audience-evidence-status";
 import {emptyRubiMovement,rubiMovementChecklist,rubiMovementEditorialQuality,type RubiMovement} from "@/lib/rubi-movements";
 import {listRubiMovementsAdmin,saveRubiMovementAdmin,archiveRubiMovementAdmin} from "@/lib/rubi-movements.functions";
@@ -104,6 +105,7 @@ export function RubiMovementEngineAdmin({products}:{products:Product[]}){
     <Button variant="outline" onClick={()=>{if(dirty&&!window.confirm("Descartar alterações?"))return;setDraft(null);setDirty(false);}}>Fechar editor</Button>
    </div>
   </div>}
+  {draft?.id&&draft.revision&&!dirty&&<RubiAudienceEvidenceReviewAdmin movementId={draft.id} movementRevision={draft.revision} evidenceNotes={draft.evidence_notes}/>}
   {draft?.id&&<RubiMovementVariantsAdmin key={draft.id} movementId={draft.id} movementName={draft.name} movementStatus={draft.status} productId={draft.product_id}/>}
   {draft?.id&&<RubiMovementPerformanceAdmin key={draft.id} movementId={draft.id}/>}
  </section>;
