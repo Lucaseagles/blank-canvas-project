@@ -620,3 +620,24 @@ test("RUBI discovery gives transparent empty, error and preference navigation st
  assert.match(shelf,/href="\/profile"/);
  assert.match(shelf,/não usa características pessoais sensíveis/);
 });
+
+test("Consent-first category personalization reaches marketplace and approved Store shelf",()=>{
+ const marketplace=source("./personalization.functions.ts");
+ const store=source("./rubi-movement-feed.functions.ts");
+ const shelf=source("../components/store/RubiApprovedMovementShelf.tsx");
+ const profile=source("../routes/profile.tsx");
+ const ranking=source("./rubi-unified-interest-ranking.ts");
+ const mix=source("./rubi-feed-mix.ts");
+ assert.match(marketplace,/const explicitCategories = \(preferences\?\.preferred_categories/);
+ assert.match(marketplace,/categoryIds = explicitCategories\.slice\(0, 10\)/);
+ assert.match(marketplace,/Consent-first: category targeting never derives preferences from behavioral scores/);
+ assert.doesNotMatch(marketplace,/from\("user_interests"\)\.select\("category_id"\)/);
+ assert.match(marketplace,/planRubiFeedMix\(limit/);
+ assert.match(mix,/hasVerifiedInterests/);
+ assert.match(store,/preferred_categories/);
+ assert.match(store,/rankRubiOffersByInterests\(result,interests,6\)/);
+ assert.match(store,/approvedRubiCheckout\(product\)/);
+ assert.match(shelf,/refetchOnWindowFocus:"always"/);
+ assert.match(profile,/preferred_categories: selectedCategories/);
+ assert.match(ranking,/seen\.has\(item\.offer\.productId\)/);
+});

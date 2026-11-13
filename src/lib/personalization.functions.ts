@@ -58,10 +58,8 @@ export const getPersonalizedFeed = createServerFn({ method: "POST" })
         if (explicitCategories.length) {
           categoryIds = explicitCategories.slice(0, 10);
         } else {
-          // Keep the existing legacy marketplace feed behavior until the opt-in rollout is audited.
-          const { data: interests } = await supabaseAdmin.from("user_interests").select("category_id")
-            .eq("user_id", userId).order("score", { ascending: false }).limit(3);
-          categoryIds = interests?.map(i => i.category_id).filter(Boolean) || [];
+          // Consent-first: category targeting never derives preferences from behavioral scores.
+          categoryIds = [];
         }
         const { data: shown } = await supabaseAdmin.from("recently_shown").select("product_id").eq("user_id", userId).order("shown_at", { ascending: false }).limit(40);
         recentlyShownIds = shown?.map(s => s.product_id).filter(Boolean) || [];
