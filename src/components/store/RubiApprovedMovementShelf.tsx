@@ -23,7 +23,7 @@ export function RubiApprovedMovementShelf() {
  const query = useQuery({
   queryKey:["rubi-approved-movement-feed",identity?.userId??"anonymous"],
   queryFn:()=>load({data:{userId:identity!.userId,accessToken:identity!.accessToken}}),
-  enabled:identity!==null,retry:false,staleTime:60000
+  enabled:identity!==null,retry:false,staleTime:60000,refetchOnWindowFocus:"always"
  });
  if (identity===null) return <section aria-label="Movimentos oficiais RUBI" className="mb-12 rounded-3xl border border-primary/20 p-5"><p role="status" className="text-sm text-muted-foreground">Preparando ofertas oficiais da RUBI...</p></section>;
  if (query.isLoading) return <section aria-label="Movimentos oficiais RUBI" className="mb-12 rounded-3xl border border-primary/20 p-5"><p role="status" className="text-sm text-muted-foreground">Carregando ofertas oficiais...</p></section>;
