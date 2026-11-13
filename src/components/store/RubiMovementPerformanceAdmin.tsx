@@ -20,6 +20,7 @@ export function RubiMovementPerformanceAdmin({movementId}:{movementId:string}){
  const trafficPreflight=preflightRubiExperimentTraffic(comparison,query.data?.partial===true);
  const trackingCoverage=summarizeRubiTrackingCoverage(comparison,query.data?.partial===true);
  const fmt=(value:number)=>value.toLocaleString("pt-BR");
+ const trends=query.data?.trends??[];
  return <section className="space-y-4 rounded-xl border border-primary/30 p-4" aria-label="Resultados orgânicos por movimento">
    <header>
     <h4 className="font-bold text-lg">Resultados de campanhas · últimos 30 dias</h4>
@@ -64,6 +65,7 @@ export function RubiMovementPerformanceAdmin({movementId}:{movementId:string}){
        <div className="rounded-lg bg-muted/40 p-2"><p className="font-bold tabular-nums">{fmt(row.viewSessions)}</p><p className="text-xs text-muted-foreground">Sessões</p></div>
        <div className="rounded-lg bg-muted/40 p-2"><p className="font-bold tabular-nums">{fmt(row.checkoutIntents)}</p><p className="text-xs text-muted-foreground">Saídas ao checkout</p></div>
       </div>
+      {trends.filter(t=>t.planId===row.planId).map(t=><p key={t.planId} className="text-xs text-muted-foreground">{t.quality==="comparable"&&typeof t.recentViews==="number"&&typeof t.priorViews==="number"?`Últimos 7 dias: ${fmt(t.recentViews)} visualizações · 23 dias anteriores: ${fmt(t.priorViews)} visualizações. Períodos de durações diferentes; não equivale a crescimento percentual comparável.`:"Comparação temporal indisponível: cobertura ou atribuição incompleta."}</p>)}
       {row.ambiguousAttribution?
        <p className="text-xs text-amber-700 dark:text-amber-300">Campanha repetida em outras variantes deste movimento. Não é possível atribuir estes eventos a uma variante específica.</p>:
        <p className="text-xs text-muted-foreground">{row.intentPerViewPercent===null?"Relação de intenção por visualização indisponível (sem visualizações observadas).":`${row.intentPerViewPercent.toLocaleString("pt-BR")}% de eventos de saída por visualização de página (pode exceder 100%; não equivale a conversão paga).`}</p>

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {correlateMovementTraffic,percentOfIntentToView,summarizeMovementVariants,assessRubiVariantDecisionReadiness,preflightRubiExperimentTraffic,summarizeRubiTrackingCoverage} from "./rubi-movement-performance.ts";
+import {correlateMovementTraffic,percentOfIntentToView,summarizeMovementVariants,assessRubiVariantDecisionReadiness,preflightRubiExperimentTraffic,summarizeRubiTrackingCoverage,compareRubiMovementPeriods} from "./rubi-movement-performance.ts";
 const product="00000000-0000-4000-8000-000000000001";
 test("never converts absence of traffic into a success rate",()=>{
  assert.equal(percentOfIntentToView(0,0),null);
@@ -95,4 +95,18 @@ test("tracking coverage excludes ambiguous and missing campaigns; partial remain
  assert.equal(summarizeRubiTrackingCoverage(summaries,true).coveragePercent,null);
  assert.equal(summarizeRubiTrackingCoverage([],false).coveragePercent,null);
  assert.equal(summarizeRubiTrackingCoverage(summaries,false).status,"needs_attention");
+});
+
+test("7-day versus preceding 23-day event comparison never invents a growth rate",()=>{
+ const old={productId:product,channel:"instagram",campaign:"test",viewEvents:100,viewSessions:70,checkoutIntents:20};
+ const week={...old,viewEvents:30,viewSessions:20,checkoutIntents:6};
+ const result=compareRubiMovementPeriods([old],[week],product,false)[0];
+ assert.equal(result.quality,"comparable");
+ assert.equal(result.recentViews,30);
+ assert.equal(result.priorViews,70);
+ assert.equal(result.recentRate,20);
+ assert.equal(result.priorRate,20);
+ assert.equal(compareRubiMovementPeriods([old],[week],product,true)[0].quality,"invalid");
+ assert.equal(compareRubiMovementPeriods([old],[{...week,viewEvents:101}],product,false)[0].quality,"invalid");
+ assert.equal(compareRubiMovementPeriods([{...old,productId:"other"}],[week],product,false).length,0);
 });
