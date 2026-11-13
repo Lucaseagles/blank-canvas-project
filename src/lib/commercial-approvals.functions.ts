@@ -22,17 +22,14 @@ export const decideCommercialApprovalAdmin = createServerFn({ method: "POST" })
     id: z.string().uuid(),
     decision: z.enum(["approved", "rejected"]),
   }).parse(input))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: updated, error } = await (supabaseAdmin as any)
-      .from("commercial_profiles")
-      .update({ status: data.decision })
-      .eq("id", data.id)
-      .eq("status", "pending")
-      .in("audience", ["merchant", "partner"])
-      .select("id,status")
-      .maybeSingle();
+    const { data: rows, error } = await (supabaseAdmin as any)
+      .rpc("rubi_decide_commercial_profile_audited", {
+        p_actor: context.userId, p_profile_id: data.id, p_decision: data.decision
+      });
     if (error) throw error;
-    if (!updated) throw new Error("Solicitação não encontrada ou já analisada. Atualize a lista.");
-    return { success: true, status: updated.status };
+    const row = rows?.[0];
+    if (!row) throw new Error("Decisão não registrada.");
+    return { success: true, status: String(row.new_status) };
   });
