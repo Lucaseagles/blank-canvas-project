@@ -147,20 +147,12 @@ export const createBanner = createServerFn({ method: "POST" }).middleware([requi
     target_product_id: data.target_product_id ?? null,
     campaign_id: data.campaign_id ?? null,
   };
-  const { data: row, error } = await db.from("banners").insert(payload).select("*").single();
-  if (error) throw error;
-
-  const authDb = context.supabase as any;
-  const { error: auditError } = await authDb.rpc("append_admin_audit", {
-    p_action_type: "CREATE",
-    p_entity_type: "banners",
-    p_entity_id: row.id,
-    p_previous_value: null,
-    p_new_value: sanitize(row),
+  const {data:row,error}=await db.rpc("rubi_create_banner_audited",{
+    p_data:payload,p_actor:context.userId
   });
-  if (auditError) throw auditError;
-
-  return { success: true, row: sanitize(row) };
+  if(error)throw error;
+  if(!row)throw new Error("Banner não cadastrado.");
+  return {success:true,row:sanitize(row)};
 });
 
 export const deleteBanner = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).inputValidator((data: unknown) => z.object({
@@ -168,22 +160,11 @@ export const deleteBanner = createServerFn({ method: "POST" }).middleware([requi
 }).parse(data)).handler(async ({ data, context }) => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const db = supabaseAdmin as any;
-  const { data: before, error: readError } = await db.from("banners").select("*").eq("id", data.id).single();
-  if (readError) throw readError;
-  const { error } = await db.from("banners").delete().eq("id", data.id);
-  if (error) throw error;
-
-  const authDb = context.supabase as any;
-  const { error: auditError } = await authDb.rpc("append_admin_audit", {
-    p_action_type: "DELETE",
-    p_entity_type: "banners",
-    p_entity_id: data.id,
-    p_previous_value: sanitize(before),
-    p_new_value: null,
+  const {error}=await db.rpc("rubi_delete_banner_audited",{
+    p_id:data.id,p_actor:context.userId
   });
-  if (auditError) throw auditError;
-
-  return { success: true, id: data.id };
+  if(error)throw error;
+  return {success:true,id:data.id};
 });
 
 export const getAdminAuditLog = createServerFn({ method: "GET" }).middleware([requireOwnerRole]).inputValidator((data: unknown) => z.object({ page: z.number().int().min(0).default(0), pageSize: z.number().int().min(1).max(100).default(25), actionType: z.string().trim().max(80).optional(), entityType: z.string().trim().max(120).optional() }).parse(data)).handler(async ({ data }) => {
