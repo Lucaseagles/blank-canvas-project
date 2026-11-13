@@ -726,3 +726,32 @@ test("Creative draft copying excludes private media references and proof notes",
  assert.match(library,/Rascunho interno copiado sem notas de mídia ou evidências privadas/);
  assert.match(library,/Uso externo continua bloqueado até verificação de licença/);
 });
+
+
+test("Licenses use private documentary evidence, scope, optimistic locking and atomic audit",()=>{
+ const sql=source("../../supabase/migrations/20261113130000_rubi_creative_licensing.sql");
+ assert.match(sql,/rubi-creative-license-evidence/);
+ assert.match(sql,/false,10485760/);
+ assert.match(sql,/permitted_channels/);
+ assert.match(sql,/permitted_audiences/);
+ assert.match(sql,/approved_variant_revision/);
+ assert.match(sql,/p_expected_revision<>old_record.revision/);
+ assert.match(sql,/storage.objects/);
+ assert.match(sql,/rubi_mutate_creative_license_audited/);
+ assert.match(sql,/admin_audit_log/);
+ assert.match(sql,/revoke all on function public.rubi_mutate_creative_license_audited/);
+ assert.match(sql,/grant execute on function public.rubi_mutate_creative_license_audited/);
+ assert.doesNotMatch(sql,/revoke all on storage.objects from anon,authenticated/);
+});
+test("License review is Owner-only; documentary upload does not publish or pay commissions",()=>{
+ const api=source("./rubi-creative-licenses.functions.ts");
+ const ui=source("../components/store/RubiCreativeLicenseAdmin.tsx");
+ const library=source("../components/store/RubiCreativeLibraryAdmin.tsx");
+ assert.equal((api.match(/requireOwnerRole/g)??[]).length,4);
+ assert.match(api,/createSignedUploadUrl/);
+ assert.match(ui,/uploadToSignedUrl/);
+ assert.match(ui,/Aprovar após conferência documental/);
+ assert.match(ui,/Revogar licença/);
+ assert.match(library,/<RubiCreativeLicenseAdmin assets=/);
+ assert.doesNotMatch(api,/confirmPayment|payCommission|publishCampaign/);
+});
