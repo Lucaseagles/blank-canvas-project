@@ -22,7 +22,7 @@ begin
  end if;
  if p_action='create' then
   if p_id is not null then raise exception 'Creation ID must be empty'; end if;
-  if not exists(select 1 from public.hub_products where id=p_product_id) then
+  if not exists(select 1 from public.hub_products hp where hp.id=p_product_id) then
    raise exception 'Product not found';
   end if;
   next_status:=p_values->>'status';
