@@ -9,7 +9,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/admin/partner-agreements")({ component: PartnerAgreementsAdmin });
 
 type Profile = { id: string; display_name: string; partner_type: string; status: string };
-type Agreement = { commercial_profile_id: string; commission_percent: number; active: boolean };
+type Agreement = { commercial_profile_id: string; commission_percent: number; active: boolean; revision: number };
 
 function PartnerAgreementsAdmin() {
   const load = useServerFn(getPartnerAgreementsAdmin);
@@ -18,7 +18,7 @@ function PartnerAgreementsAdmin() {
   const query = useQuery({ queryKey: ["admin-partner-agreements"], queryFn: () => load(), retry: false });
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const mutation = useMutation({
-    mutationFn: (data: { commercial_profile_id: string; commission_percent: number; active: boolean }) => save({ data }),
+    mutationFn: (data: { commercial_profile_id: string; commission_percent: number; active: boolean; expectedRevision: number | null }) => save({ data }),
     onSuccess: () => { toast.success("Acordo atualizado."); void queryClient.invalidateQueries({ queryKey: ["admin-partner-agreements"] }); },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -38,8 +38,8 @@ function PartnerAgreementsAdmin() {
         return <article key={profile.id} className="flex flex-wrap items-end gap-4 rounded-2xl border bg-card p-5">
           <div className="min-w-48 flex-1"><h2 className="font-bold">{profile.display_name}</h2><p className="text-sm text-muted-foreground">{profile.partner_type} · {profile.status}</p></div>
           <label className="space-y-1 text-sm"><span className="block">Comissão (%)</span><input className="w-28 rounded-md border bg-background px-3 py-2" type="number" min="0" max="100" step="0.01" value={percent} onChange={event => setDrafts(current => ({ ...current, [profile.id]: event.target.value }))} /></label>
-          <Button variant="outline" disabled={!valid || mutation.isPending} onClick={() => mutation.mutate({ commercial_profile_id: profile.id, commission_percent: numeric, active: false })}>Salvar inativo</Button>
-          <Button disabled={profile.status !== "approved" || !valid || mutation.isPending} onClick={() => mutation.mutate({ commercial_profile_id: profile.id, commission_percent: numeric, active: true })}>Salvar e ativar</Button>
+          <Button variant="outline" disabled={!valid || mutation.isPending} onClick={() => mutation.mutate({ commercial_profile_id: profile.id, commission_percent: numeric, active: false, expectedRevision: agreement?.revision ?? null })}>Salvar inativo</Button>
+          <Button disabled={profile.status !== "approved" || !valid || mutation.isPending} onClick={() => mutation.mutate({ commercial_profile_id: profile.id, commission_percent: numeric, active: true, expectedRevision: agreement?.revision ?? null })}>Salvar e ativar</Button>
           {agreement && <p className="w-full text-xs text-muted-foreground">Estado atual: {agreement.active ? "Ativo" : "Inativo"} · {agreement.commission_percent}%</p>}
         </article>;
       })}
