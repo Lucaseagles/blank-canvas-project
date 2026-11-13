@@ -306,8 +306,9 @@ test("Only approved partners can be assigned to RUBI creator teams",()=>{
  assert.match(migration,/revoke all on public\.rubi_creator_team_members from public,anon,authenticated/);
  assert.match(api,/requireOwnerRole/g);
  assert.match(api,/\.eq\("audience","partner"\)\.eq\("status","approved"\)/);
- assert.match(api,/profile\.status!=="approved"/);
- assert.match(api,/onConflict:"team_id,commercial_profile_id"/);
+ assert.match(api,/rpc\("rubi_set_team_membership_audited"/);
+ assert.match(source("../../supabase/migrations/20261113210000_rubi_team_decisions_atomic_audit.sql"),/profile_status<>'approved'/);
+ assert.match(source("../../supabase/migrations/20261112033000_rubi_creator_team_members.sql"),/team_id,commercial_profile_id/);
  assert.match(panel,/Parceiro aprovado/);
  assert.match(panel,/Vínculo pausado/);
  assert.match(panel,/não cria link de venda, grant de produto, comissão/);
@@ -362,11 +363,11 @@ test("Creator team creative campaign assignments remain private and approval gat
  assert.match(schema,/rubi_creator_team_campaign_assignment_events/);
  assert.match(schema,/append-only/);
  assert.match(api,/requireOwnerRole/g);
- assert.match(api,/plan\.product_id!==movement\.product_id/);
- assert.match(api,/variant\.movement_id!==movement\.id/);
- assert.match(api,/checked\.plan\.status!=="approved"/);
- assert.match(api,/checked\.variant\.media_rights_confirmed!==true/);
- assert.match(api,/\.eq\("status",existing\.status\)/);
+ assert.match(api,/rpc\("rubi_create_team_campaign_assignment_audited"/);
+ assert.match(source("../../supabase/migrations/20261113210000_rubi_team_decisions_atomic_audit.sql"),/variant_row.movement_id<>movement_row.id/);
+ assert.match(api,/rpc\("rubi_transition_team_campaign_assignment_audited"/);
+ assert.match(source("../../supabase/migrations/20261113210000_rubi_team_decisions_atomic_audit.sql"),/variant_row.media_rights_confirmed is distinct from true/);
+ assert.match(api,/p_expected_status:data.expectedStatus/);
  assert.match(panel,/Registrar associação planejada/);
  assert.match(panel,/não publica anúncios/);
  assert.match(owner,/<RubiTeamCampaignAssignmentsAdmin \/>/);
