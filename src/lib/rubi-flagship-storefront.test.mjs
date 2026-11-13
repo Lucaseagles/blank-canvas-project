@@ -680,7 +680,7 @@ test("Master evidence review ledger is private, immutable, version-pinned and no
 test("Movement campaign labels cannot silently overlap different variants of the same SKU",()=>{
  const server=source("./rubi-movement-distribution.functions.ts");
  const generator=source("./rubi-movement-distribution.ts");
- assert.match(generator,/variantId\.replaceAll\("-", ""\)\.slice\(0,12\)/);
+ assert.match(generator,/variantId\.replaceAll\("-",\s*""\)\.slice\(0,12\)/);
  assert.match(server,/\.eq\("channel",data\.channel\)\.eq\("campaign",data\.campaign\)/);
  assert.match(server,/othersOnLabel/);
  assert.match(server,/x\.id!==data\.id/);
