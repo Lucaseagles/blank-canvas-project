@@ -58,7 +58,7 @@ function BannerPreviewPage() {
   const saveMutation = useMutation({
     mutationFn: async (payload: Banner) => {
       const clean = bannerPayload(payload);
-      if (editing?.["id"]) return update({ data: { source: "banners", id: String(editing["id"]), patch: clean } });
+      if (editing?.["id"]) return update({ data: { source: "banners", id: String(editing["id"]), patch: clean, expected: Object.fromEntries(Object.keys(clean).map(key => [key, editing[key] ?? null])) } });
       return create({ data: clean });
     },
     onSuccess: (result) => { toast.success(editing?.["id"] ? "Banner atualizado." : "Banner criado."); setEditorOpen(false); setEditing(null); setSelectedId(String((result.row as any)?.["id"] ?? "")); refresh(); },

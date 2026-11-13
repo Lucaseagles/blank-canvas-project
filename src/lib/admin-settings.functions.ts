@@ -51,67 +51,49 @@ export const getAdminSettings = createServerFn({ method: "GET" }).middleware([re
   }));
 });
 
-export const updateAdminSetting = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).inputValidator((data: unknown) => z.object({ source: z.string().trim().min(1).max(100), id: z.string().uuid(), patch: z.record(z.string(), z.unknown()) }).parse(data)).handler(async ({ data, context }) => {
-  const entry = registryEntry(data.source);
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const db = supabaseAdmin as any;
-  const patch: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(data.patch)) {
-    if (!entry.editable.includes(key as never)) continue;
-    if (SECRET_KEYS.has(key.toLowerCase())) throw new Error("Secrets cannot be edited through the generic settings editor");
-    patch[key] = value;
+export const updateAdminSetting = createServerFn({ method: "POST" })
+ .middleware([requireOwnerRole])
+ .inputValidator((input: unknown) => z.object({
+  source:z.string().trim().min(1).max(100),id:z.string().uuid(),
+  patch:z.record(z.string(),z.unknown()),
+  expected:z.record(z.string(),z.unknown()),
+ }).parse(input))
+ .handler(async({data,context})=>{
+  const entry=registryEntry(data.source);
+  const patch:Record<string,unknown>={};
+  const expected:Record<string,unknown>={};
+  for(const [key,value] of Object.entries(data.patch)){
+   if(!entry.editable.includes(key as never))
+    throw new Error("Campo não permitido para esta configuração: "+key);
+   if(SECRET_KEYS.has(key.toLowerCase()))
+    throw new Error("Secrets cannot be edited through the generic settings editor");
+   if(!Object.prototype.hasOwnProperty.call(data.expected,key))
+    throw new Error("Valor anterior obrigatório para proteger contra conflitos.");
+   patch[key]=value;expected[key]=data.expected[key];
   }
-  if (Object.keys(patch).length === 0) throw new Error("No editable fields supplied");
-
-  if (entry.key === "personalization_weights") {
-    const weight = patch["weight"];
-    if (typeof weight !== "number" || !Number.isFinite(weight) || weight < -1000 || weight > 1000) {
-      throw new Error("Invalid personalization weight");
-    }
+  if(Object.keys(patch).length===0)throw new Error("Nenhum campo editável informado.");
+  if(entry.key==="personalization_weights"){
+   const weight=patch["weight"];
+   if(typeof weight!=="number"||!Number.isFinite(weight)||weight< -1000||weight>1000)
+    throw new Error("Peso de personalização inválido");
   }
-
-  if (entry.key === "feed_mix_config") {
-    const allowed = ["relevant_pct", "related_pct", "discovery_pct"] as const;
-    for (const key of allowed) {
-      if (key in patch) {
-        const value = patch[key];
-        if (typeof value !== "number" || !Number.isInteger(value) || value < 0 || value > 100) {
-          throw new Error("Feed mix values must be integers between 0 and 100");
-        }
-      }
+  if(entry.key==="feed_mix_config"){
+   for(const key of ["relevant_pct","related_pct","discovery_pct"]){
+    if(key in patch){
+     const n=patch[key];
+     if(typeof n!=="number"||!Number.isInteger(n)||n<0||n>100)
+      throw new Error("Percentuais precisam estar entre 0 e 100");
     }
-    const { data: currentMix, error: mixReadError } = await db.from(entry.table).select("relevant_pct,related_pct,discovery_pct").eq("id", data.id).single();
-    if (mixReadError) throw mixReadError;
-    const nextMix = {
-      relevant_pct: Number(patch["relevant_pct"] ?? currentMix.relevant_pct),
-      related_pct: Number(patch["related_pct"] ?? currentMix.related_pct),
-      discovery_pct: Number(patch["discovery_pct"] ?? currentMix.discovery_pct),
-    };
-    if (nextMix.relevant_pct + nextMix.related_pct + nextMix.discovery_pct !== 100) {
-      throw new Error("O mix do feed deve totalizar 100%");
-    }
+   }
   }
-
-  if (HAS_UPDATED_AT.has(entry.key)) patch["updated_at"] = new Date().toISOString();
-
-  const { data: before, error: readError } = await db.from(entry.table).select("*").eq("id", data.id).single();
-  if (readError) throw readError;
-  const { data: after, error } = await db.from(entry.table).update(patch).eq("id", data.id).select("*").single();
-  if (error) throw error;
-
-  // Use the verified user-bound client for the audit RPC so auth.uid() is the owner who made the mutation.
-  const authDb = context.supabase as any;
-  const { error: auditError } = await authDb.rpc("append_admin_audit", {
-    p_action_type: "UPDATE",
-    p_entity_type: entry.table,
-    p_entity_id: data.id,
-    p_previous_value: sanitize(before),
-    p_new_value: sanitize(after),
+  const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
+  const {data:row,error}=await (supabaseAdmin as any).rpc("rubi_update_admin_setting_audited",{
+   p_source:entry.table,p_id:data.id,p_patch:patch,p_expected:expected,p_actor:context.userId
   });
-  if (auditError) throw auditError;
-
-  return { success: true, row: sanitize(after) };
-});
+  if(error)throw error;
+  if(!row)throw new Error("Configuração não atualizada.");
+  return {success:true,row:sanitize(row)};
+ });
 
 export const createBanner = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).inputValidator((data: unknown) => z.object({
   title: z.string().trim().min(1).max(180),
