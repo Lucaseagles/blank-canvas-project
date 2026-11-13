@@ -48,7 +48,7 @@ export const getRubiMovementPerformanceAdmin=createServerFn({method:"POST"})
   const trend=compareRubiMovementPeriods(traffic,weekTraffic,movement.product_id,partial);
   const trendByKey=new Map(trend.map(item=>[item.channel+"::"+item.campaign,item]));
   const trends=rows.map(row=>({planId:row.planId,variantId:row.variantId,
-   ...(trendByKey.get(row.channel+"::"+row.campaign)??{quality:"invalid" as const}),
+   ...(trendByKey.get(row.channel+"::"+row.campaign)??{channel:row.channel,campaign:row.campaign,recentViews:0,priorViews:0,recentIntents:0,priorIntents:0,recentRate:null,priorRate:null,quality:"invalid" as const}),
    quality:row.ambiguousAttribution?"invalid" as const:(trendByKey.get(row.channel+"::"+row.campaign)?.quality??"invalid" as const)}));
   return {
    days:30,asOf:new Date().toISOString(),rows,trends,
