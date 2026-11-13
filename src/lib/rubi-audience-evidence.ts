@@ -18,7 +18,7 @@ export function buildRubiAudienceEvidence(input:RubiAudienceEvidenceInput):{vali
  const date=new Date(input.observedAt+"T12:00:00Z");
  if(!/^\d{4}-\d{2}-\d{2}$/.test(input.observedAt)||
   Number.isNaN(date.getTime())||date.toISOString().slice(0,10)!==input.observedAt||
-  date.getTime()>Date.now()+86400000)issues.push("Informe uma data real e não futura.");
+  input.observedAt>new Date().toISOString().slice(0,10))issues.push("Informe uma data real e não futura.");
  const notes=[
   "[VALIDAÇÃO DECLARADA — REVISÃO HUMANA PENDENTE]",
   "Fonte: "+value(input.source),
