@@ -714,3 +714,15 @@ test("video to creative linkage remains Master-only and never fabricates paid at
  assert.match(manager,/draft\.format==="short_video"&&draft\.status==="review"&&!dirty/);
  assert.doesNotMatch(server,/paid_order|confirmPayment|payCommission|attributedSale/);
 });
+
+
+test("Creative draft copying excludes private media references and proof notes",()=>{
+ const library=source("../components/store/RubiCreativeLibraryAdmin.tsx");
+ const copyBody=library.split("const content=")[1]?.split("await navigator.clipboard.writeText")[0]??"";
+ assert.ok(copyBody.includes("RASCUNHO INTERNO — NÃO PUBLICAR OU DISTRIBUIR"));
+ assert.ok(copyBody.includes("asset.script"));
+ assert.ok(copyBody.includes("asset.cta"));
+ assert.doesNotMatch(copyBody,/asset\.mediaNotes|asset\.proofNotes/);
+ assert.match(library,/Rascunho interno copiado sem notas de mídia ou evidências privadas/);
+ assert.match(library,/Uso externo continua bloqueado até verificação de licença/);
+});

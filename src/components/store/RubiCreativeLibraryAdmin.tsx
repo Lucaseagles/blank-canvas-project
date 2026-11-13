@@ -11,14 +11,15 @@ export function RubiCreativeLibraryAdmin(){
  const query=useQuery({queryKey:["rubi-master-creative-library"],queryFn:()=>load(),retry:false});
  const [search,setSearch]=useState("");
  const [format,setFormat]=useState("all");
+ const [copyNotice,setCopyNotice]=useState("");
  const assets=(query.data?.items??[]) as CreativeAsset[];
  const filtered=useMemo(()=>assets.filter(a=>(format==="all"||a.format===format)&&
   [a.productTitle,a.category,a.movement,a.name,a.hook].join(" ").toLocaleLowerCase("pt-BR").includes(search.toLocaleLowerCase("pt-BR"))),[assets,search,format]);
  const copy=async(asset:CreativeAsset)=>{
   const content=["RASCUNHO INTERNO — NÃO PUBLICAR OU DISTRIBUIR", "A declaração de direitos não comprova licença de mídia. Revisar licenças, autorização editorial e aprovação comercial antes de qualquer uso externo.", asset.productTitle,asset.name,"Gancho: "+asset.hook,"Roteiro: "+asset.script,
-   "Página: "+asset.pageHeadline,asset.pageBody,"CTA: "+asset.cta,"Referências de mídia: "+asset.mediaNotes,
-   "Evidências: "+asset.proofNotes].join("\n\n");
+   "Página: "+asset.pageHeadline,asset.pageBody,"CTA: "+asset.cta].join("\n\n");
   await navigator.clipboard.writeText(content);
+  setCopyNotice("Rascunho interno copiado sem notas de mídia ou evidências privadas. Uso externo continua bloqueado até verificação de licença.");
  };
  return <section aria-label="Biblioteca reutilizável de criativos RUBI" className="space-y-4 rounded-3xl border border-primary/20 bg-card p-5 sm:p-7">
   <header className="space-y-2">
@@ -36,6 +37,7 @@ export function RubiCreativeLibraryAdmin(){
     </select>
    </label>
   </div>
+  {copyNotice&&<p role="status" className="text-xs text-muted-foreground">{copyNotice}</p>}
   {query.isLoading&&<p role="status" className="text-sm text-muted-foreground">Carregando materiais da biblioteca...</p>}
   {query.isError&&<p role="alert" className="text-sm text-destructive">Biblioteca indisponível. Confirme autorização Master e integridade dos movimentos.</p>}
   {query.data?.partial&&<p role="alert" className="text-sm text-amber-600">Consulta atingiu o limite. Biblioteca parcial ocultada para não sugerir distribuição incompleta.</p>}
@@ -55,6 +57,6 @@ export function RubiCreativeLibraryAdmin(){
     <p className="text-xs text-muted-foreground">Referência de mídia: {asset.mediaNotes||"Não documentada"} · Evidências: {asset.proofNotes||"Não documentadas"}</p>
    </article>)}
   </div>}
-  <p className="flex items-start gap-2 text-xs leading-5 text-muted-foreground"><ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-primary"/> O texto copiado leva aviso obrigatório de rascunho interno. Uma declaração de direitos não é licença verificada. Material privado do Master: não publique, patrocine ou distribua ao criador sem checar direitos, aprovação editorial, produto autorizado e acordo comercial.</p>
+  <p className="flex items-start gap-2 text-xs leading-5 text-muted-foreground"><ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-primary"/> O texto copiado leva aviso obrigatório de rascunho interno e não contém notas de mídia ou evidências privadas. Uma declaração de direitos não é licença verificada. Material privado do Master: não publique, patrocine ou distribua ao criador sem checar direitos, aprovação editorial, produto autorizado e acordo comercial.</p>
  </section>;
 }
