@@ -36,7 +36,7 @@ export function RubiCreativeLicenseAdmin({assets}:{assets:Creative[]}){
  const evidence=useMutation({mutationFn:async()=>{
   if(!variantId)throw new Error("Selecione um criativo.");
   return inspect({data:{variantId}});
- },onSuccess:(signed)=>{setEvidenceUrl(signed.url);setInspectedVariant(variantId);},
+ },onSuccess:(signed)=>{setEvidenceUrl(signed.url);setInspectedVariant("");},
    onError:(e:Error)=>toast.error(e.message)});
  const upload=useMutation({mutationFn:async()=>{
   if(!file||!variantId)throw new Error("Selecione um criativo e o documento de licença.");
@@ -103,8 +103,8 @@ export function RubiCreativeLicenseAdmin({assets}:{assets:Creative[]}){
     <Button type="button" variant="outline" disabled={evidence.isPending} onClick={()=>evidence.mutate()}>
      Gerar acesso privado ao comprovante (60 segundos)
     </Button>
-    {evidenceUrl&&inspectedVariant===variantId&&<a href={evidenceUrl} target="_blank" rel="noopener noreferrer"
-     className="block text-sm font-semibold text-primary underline">Abrir documento de licença em nova aba</a>}
+    {evidenceUrl&&<a href={evidenceUrl} target="_blank" rel="noopener noreferrer"
+     onClick={()=>setInspectedVariant(variantId)} className="block text-sm font-semibold text-primary underline">Abrir documento de licença em nova aba</a>}
     <p className="text-xs text-muted-foreground">Acesse e confira autoria, titularidade, canais, território e prazo. O link expira; solicitar o link não comprova validade jurídica do documento.</p>
    </div>}
    {activeLicense?.status==="draft"&&<Button type="button" variant="outline" disabled={transition.isPending||upload.isPending}
