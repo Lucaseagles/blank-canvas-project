@@ -26,3 +26,22 @@ revoke all on function public.rubi_audience_review_immutable() from public,anon,
 drop trigger if exists rubi_audience_review_immutable_trg on public.rubi_audience_evidence_reviews;
 create trigger rubi_audience_review_immutable_trg before update or delete
  on public.rubi_audience_evidence_reviews for each row execute function public.rubi_audience_review_immutable();
+
+-- Prevent a stale evidence snapshot from being reviewed if the movement changes mid-request.
+create or replace function public.rubi_audience_review_snapshot_guard()
+returns trigger language plpgsql set search_path=public as $$
+declare current_revision integer; current_evidence text;
+begin
+ select revision,evidence_notes into current_revision,current_evidence
+  from public.rubi_movements where id=new.movement_id for update;
+ if current_revision is distinct from new.movement_revision
+    or current_evidence is distinct from new.evidence_snapshot then
+  raise exception 'Movement evidence changed; reload before review';
+ end if;
+ return new;
+end;
+$$;
+revoke all on function public.rubi_audience_review_snapshot_guard() from public,anon,authenticated;
+drop trigger if exists rubi_audience_review_snapshot_guard_trg on public.rubi_audience_evidence_reviews;
+create trigger rubi_audience_review_snapshot_guard_trg before insert
+ on public.rubi_audience_evidence_reviews for each row execute function public.rubi_audience_review_snapshot_guard();
