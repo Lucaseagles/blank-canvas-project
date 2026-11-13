@@ -1,0 +1,29 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+import {summarizeRubiAuditIntegrity} from "./rubi-master-audit-integrity.ts";
+const read=path=>readFileSync(new URL(path,import.meta.url),"utf8");
+const a={id:"a",action_type:"UPDATE",entity_type:"story",entity_id:null,actor_user_id:"owner",created_at:"2026-11-12T12:00:00Z"};
+test("audit health makes missing owner and invalid timestamps visible",()=>{
+ const x=summarizeRubiAuditIntegrity([a,{...a,id:"b",actor_user_id:null,created_at:"invalid"}],100);
+ assert.equal(x.total,100);
+ assert.equal(x.missingActor,1);
+ assert.equal(x.invalidTimestamps,1);
+ assert.equal(x.status,"review_required");
+ assert.equal(summarizeRubiAuditIntegrity([],0).status,"empty");
+ assert.equal(summarizeRubiAuditIntegrity([a],1).status,"observed");
+});
+test("audit dashboard is owner-only and samples cannot imply full coverage",()=>{
+ const server=read("./rubi-master-audit-integrity.functions.ts");
+ const panel=read("../admin/audit/RubiMasterAuditIntegrityPanel.tsx");
+ const dashboard=read("../admin/audit/AuditDashboard.tsx");
+ assert.match(server,/requireOwnerRole/);
+ assert.match(server,/limit\(51\)/);
+ assert.match(server,/sampled=raw\.slice\(0,50\)/);
+ assert.match(server,/partial:\(count\?\?0\)>50/);
+ assert.match(server,/actorRecorded:!!e\.actor_user_id/);
+ assert.doesNotMatch(server,/previous_value|new_value|actor_email/);
+ assert.match(panel,/Amostra parcial/);
+ assert.match(panel,/Responsável ausente/);
+ assert.match(dashboard,/RubiMasterAuditIntegrityPanel/);
+});

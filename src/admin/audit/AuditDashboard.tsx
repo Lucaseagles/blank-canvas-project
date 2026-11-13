@@ -1,4 +1,5 @@
 import { AuditChecklist } from "./AuditChecklist";
+import { RubiMasterAuditIntegrityPanel } from "./RubiMasterAuditIntegrityPanel";
 
 export function AuditDashboard() {
   return (
@@ -11,6 +12,7 @@ export function AuditDashboard() {
         </p>
       </header>
       <AuditChecklist />
+      <RubiMasterAuditIntegrityPanel />
     </div>
   );
 }
