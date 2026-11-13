@@ -6,8 +6,8 @@ import {Button} from "@/components/ui/button";
 import {Megaphone,Users,ExternalLink,ShieldCheck} from "lucide-react";
 import {RubiCreatorTeamGrowthAdmin,type GrowthTargetRow} from "./RubiCreatorTeamGrowthAdmin";
 import {listRubiCreatorTeamsAdmin,saveRubiCreatorTeamAdmin,saveRubiCreatorProspectAdmin} from "@/lib/rubi-creator-teams.functions";
-type Team={id:string;name:string;niche:string;objective:string;stage:string};
-type Prospect={id:string;team_id:string;creator_name:string;platform:string;profile_url:string;follower_count:number;tier:string;stage:string;compensation_model:string;proposed_commission_percent:number|null;proposed_fixed_fee:number|null;notes:string};
+type Team={id:string;revision:number;name:string;niche:string;objective:string;stage:string};
+type Prospect={id:string;revision:number;team_id:string;creator_name:string;platform:string;profile_url:string;follower_count:number;tier:string;stage:string;compensation_model:string;proposed_commission_percent:number|null;proposed_fixed_fee:number|null;notes:string};
 const stageLabels:Record<string,string>={identified:"Identificado",contacted:"Contatado",negotiating:"Negociação",approved:"Acordo indicado",declined:"Descartado"};
 const tiers=["nano","micro","mid","macro","mega"];
 export function RubiCreatorTeamsAdmin(){

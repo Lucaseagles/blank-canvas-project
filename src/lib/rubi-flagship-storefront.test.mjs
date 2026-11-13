@@ -287,7 +287,8 @@ test("Influencer teams plan nano-to-mega growth without treating prospects as pa
  assert.match(api,/saveRubiCreatorTeamGrowthTargetsAdmin/);
  assert.match(api,/requireOwnerRole/g);
  assert.match(api,/teamId:uuid/);
- assert.match(api,/onConflict:"team_id"/);
+ assert.match(api,/rpc\("rubi_save_creator_growth_targets_audited"/);
+ assert.match(source("../../supabase/migrations/20261113220000_rubi_creator_crm_atomic_audit.sql"),/p_expected_revision/);
  assert.match(ui,/Grande \/ mega/);
  assert.match(ui,/nano → grandes influenciadores/);
  assert.match(ui,/não criadores ativos/);
