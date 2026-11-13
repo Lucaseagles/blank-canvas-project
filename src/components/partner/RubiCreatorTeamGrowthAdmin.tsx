@@ -7,7 +7,7 @@ import {TrendingUp,ShieldCheck} from "lucide-react";
 import {saveRubiCreatorTeamGrowthTargetsAdmin} from "@/lib/rubi-creator-teams.functions";
 
 export type GrowthTargetRow={
- team_id:string;nano_target:number;micro_target:number;mid_target:number;
+ team_id:string;revision:number;nano_target:number;micro_target:number;mid_target:number;
  macro_target:number;mega_target:number;expansion_evidence:string;approved_budget:number|null;
 };
 type Tier="nano"|"micro"|"mid"|"macro"|"mega";
@@ -33,7 +33,7 @@ export function RubiCreatorTeamGrowthAdmin({teamId,targets,prospectTiers}:{
   setBudget(targets?.approved_budget==null?"":String(targets.approved_budget));
  },[teamId,targets?.nano_target,targets?.micro_target,targets?.mid_target,targets?.macro_target,targets?.mega_target,targets?.expansion_evidence,targets?.approved_budget]);
  const mutation=useMutation({mutationFn:()=>save({data:{
-  teamId,nanoTarget:goals.nano,microTarget:goals.micro,midTarget:goals.mid,
+  teamId,revision:targets?.revision??null,nanoTarget:goals.nano,microTarget:goals.micro,midTarget:goals.mid,
   macroTarget:goals.macro,megaTarget:goals.mega,
   expansionEvidence:evidence,approvedBudget:budget.trim()?Number(budget):null
  }}),onSuccess:(result)=>{toast.success(result.notice);void qc.invalidateQueries({queryKey:["rubi-creator-teams"]});},
