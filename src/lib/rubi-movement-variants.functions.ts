@@ -27,44 +27,35 @@ export const listRubiMovementVariantsAdmin=createServerFn({method:"POST"})
  });
 export const saveRubiMovementVariantAdmin=createServerFn({method:"POST"})
  .middleware([requireOwnerRole]).validator((input:unknown)=>schema.parse(input))
- .handler(async({data})=>{
+ .handler(async({data,context})=>{
   const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
-  const {data:movement,error:movementError}=await (supabaseAdmin as any).from("rubi_movements")
-   .select("id,status").eq("id",data.movement_id).maybeSingle();
+  const {data:movement,error:movementError}=await (supabaseAdmin as any)
+   .from("rubi_movements").select("id,status").eq("id",data.movement_id).maybeSingle();
   if(movementError)throw movementError;
   if(!movement)throw new Error("Movimento inexistente.");
-  if(data.status==="review" && (movement.status!=="review" || !canReviewRubiVariant(data))){
-   throw new Error("Conclua a revisão do movimento, o checklist e os direitos da mídia antes de enviar a variante para revisão.");
-  }
-  const {id,revision,...changes}=data;
-  if(id){
-   const {data:old,error:oldError}=await (supabaseAdmin as any).from("rubi_movement_variants")
-    .select("id,movement_id,revision").eq("id",id).maybeSingle();
-   if(oldError)throw oldError;
-   if(!old || old.movement_id!==data.movement_id)throw new Error("Variante fora do movimento selecionado.");
-   if(old.revision!==revision)throw new Error("Versão antiga. Recarregue antes de salvar.");
-   const {data:updated,error}=await (supabaseAdmin as any).from("rubi_movement_variants")
-    .update({...changes,revision:old.revision+1,updated_at:new Date().toISOString()})
-    .eq("id",id).eq("movement_id",data.movement_id).eq("revision",old.revision)
-    .select("id,revision").maybeSingle();
-   if(error)throw error;
-   if(!updated)throw new Error("Atualização concorrente detectada.");
-   return updated as {id:string;revision:number};
-  }
-  const {data:created,error}=await (supabaseAdmin as any).from("rubi_movement_variants")
-   .insert(changes).select("id,revision").single();
+  if(data.status==="review" && (movement.status!=="review" || !canReviewRubiVariant(data)))
+   throw new Error("Revise o movimento, os textos e os direitos da mídia.");
+  if(data.id&&!data.revision)throw new Error("Informe a versão atual da variante.");
+  const {id,revision,...values}=data;
+  const {data:rows,error}=await (supabaseAdmin as any).rpc("rubi_mutate_variant_audited",{
+   p_action:id?"update":"create",p_id:id??null,p_movement_id:data.movement_id,
+   p_expected_revision:revision??null,p_values:values,p_actor:context.userId
+  });
   if(error)throw error;
-  return created as {id:string;revision:number};
+  const row=rows?.[0];
+  if(!row)throw new Error("Variante não registrada.");
+  return {id:String(row.variant_id),revision:Number(row.new_revision)};
  });
 export const deleteRubiMovementVariantAdmin=createServerFn({method:"POST"})
  .middleware([requireOwnerRole])
  .validator((input:unknown)=>z.object({movementId:uuid,id:uuid,revision:z.number().int().positive()}).parse(input))
- .handler(async({data})=>{
+ .handler(async({data,context})=>{
   const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
-  const {data:deleted,error}=await (supabaseAdmin as any).from("rubi_movement_variants")
-   .delete().eq("id",data.id).eq("movement_id",data.movementId).eq("revision",data.revision)
-   .select("id").maybeSingle();
+  const {data:rows,error}=await (supabaseAdmin as any).rpc("rubi_mutate_variant_audited",{
+   p_action:"delete",p_id:data.id,p_movement_id:data.movementId,
+   p_expected_revision:data.revision,p_values:{},p_actor:context.userId
+  });
   if(error)throw error;
-  if(!deleted)throw new Error("Variante alterada ou pertencente a outro movimento.");
+  if(!rows?.length)throw new Error("Variante não removida.");
   return {success:true};
  });
