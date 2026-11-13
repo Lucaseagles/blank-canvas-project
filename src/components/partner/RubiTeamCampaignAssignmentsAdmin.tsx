@@ -32,7 +32,7 @@ export function RubiTeamCampaignAssignmentsAdmin(){
  const createMutation=useMutation({mutationFn:()=>create({data:{teamId,campaignPlanId:planId,movementId,variantId,notes}}),
   onSuccess:result=>{toast.success(result.notice);setNotes("");refresh();},
   onError:(error:Error)=>toast.error(error.message)});
- const changeMutation=useMutation({mutationFn:({id,status}:{id:string;status:"ready"|"paused"})=>change({data:{id,status}}),
+ const changeMutation=useMutation({mutationFn:({id,status,expectedStatus}:{id:string;status:"ready"|"paused";expectedStatus:"planned"|"ready"|"paused"})=>change({data:{id,status,expectedStatus}}),
   onSuccess:result=>{toast.success(result.notice);refresh();},
   onError:(error:Error)=>toast.error(error.message)});
  return <section aria-label="Campanhas e criativos por time" className="space-y-5 rounded-3xl border border-primary/20 bg-card p-5 sm:p-7">
@@ -59,8 +59,8 @@ export function RubiTeamCampaignAssignmentsAdmin(){
     <p className="text-xs text-muted-foreground">Plano: {plans.find(p=>p.id===a.campaign_plan_id)?.campaign_code??"Fora da amostra"} · Movimento: {movements.find(m=>m.id===a.movement_id)?.name??"Fora da amostra"} · Criativo: {variants.find(v=>v.id===a.variant_id)?.name??"Fora da amostra"}</p>
     {a.editorial_notes&&<p className="text-xs leading-5">{a.editorial_notes}</p>}
     <div className="flex flex-wrap gap-2">
-     {a.status!=="ready"&&<Button type="button" size="sm" variant="outline" disabled={changeMutation.isPending} onClick={()=>changeMutation.mutate({id:a.id,status:"ready"})}>Verificar e marcar pronto</Button>}
-     {a.status!=="paused"&&<Button type="button" size="sm" variant="outline" disabled={changeMutation.isPending} onClick={()=>changeMutation.mutate({id:a.id,status:"paused"})}>Pausar associação</Button>}
+     {a.status!=="ready"&&<Button type="button" size="sm" variant="outline" disabled={changeMutation.isPending} onClick={()=>changeMutation.mutate({id:a.id,status:"ready",expectedStatus:a.status as "planned"|"ready"|"paused"})}>Verificar e marcar pronto</Button>}
+     {a.status!=="paused"&&<Button type="button" size="sm" variant="outline" disabled={changeMutation.isPending} onClick={()=>changeMutation.mutate({id:a.id,status:"paused",expectedStatus:a.status as "planned"|"ready"|"paused"})}>Pausar associação</Button>}
     </div>
    </article>)}
    {query.data.partial&&<p role="status" className="text-xs text-amber-600">Relatório parcial por limites de consulta. Verifique a lista completa antes de qualquer decisão de distribuição.</p>}
