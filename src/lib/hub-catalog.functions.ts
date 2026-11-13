@@ -66,9 +66,9 @@ export const getHubCatalogAdmin = createServerFn({method:"GET"}).middleware([req
  return {products:products.data??[],suppliers:suppliers.data??[],tiers:tiers.data??[]};
 });
 export const saveHubProductAdmin=createServerFn({method:"POST"}).middleware([requireOwnerRole]).validator((input:unknown)=>z.object({
- id:z.string().uuid().optional(),checkout_url:z.union([z.string().url().max(2000),z.literal("")]).optional(),checkout_verified:z.boolean().optional(),supplier_id:z.string().uuid(),title:z.string().trim().min(3).max(180),description:z.string().max(2000).optional(),image_url:z.union([z.string().url(),z.literal("")]).optional(),category:z.string().max(80).optional(),sku:z.string().max(80).optional(),
+ id:z.string().uuid().optional(),revision:z.number().int().positive().optional(),checkout_url:z.union([z.string().url().max(2000),z.literal("")]).optional(),checkout_verified:z.boolean().optional(),supplier_id:z.string().uuid(),title:z.string().trim().min(3).max(180),description:z.string().max(2000).optional(),image_url:z.union([z.string().url(),z.literal("")]).optional(),category:z.string().max(80).optional(),sku:z.string().max(80).optional(),
  retail_price:z.number().finite().nonnegative(),supplier_cost:z.number().finite().nonnegative(),b2b_base_price:z.number().finite().positive().nullable(),min_b2b_quantity:z.number().int().positive().max(10000000),active:z.boolean()
-}).parse(input)).handler(async({data})=>{
+}).parse(input)).handler(async({data,context})=>{
  const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
  if (data.active && data.retail_price <= 0) throw new Error("Informe um preço de varejo maior que zero antes de publicar.");
  if (data.b2b_base_price !== null && data.b2b_base_price <= 0) throw new Error("O preço base B2B deve ser maior que zero.");
@@ -81,6 +81,7 @@ export const saveHubProductAdmin=createServerFn({method:"POST"}).middleware([req
  const checkoutUrl = data.checkout_url?.trim() || null;
  // Existing published offers must be reviewed again whenever their commercial
  // identity, supplier, price, cost or checkout destination changes.
+ if (data.id && !data.revision) throw new Error("Versão do produto ausente; recarregue o catálogo.");
  if (data.id) {
    const { data: existing, error: existingError } = await (supabaseAdmin as any)
      .from("hub_products")
@@ -103,11 +104,15 @@ export const saveHubProductAdmin=createServerFn({method:"POST"}).middleware([req
  if (checkoutUrl && !checkoutValid) throw new Error("Checkout inválido: confirme o domínio oficial exato do fornecedor e utilize HTTPS.");
  if (data.checkout_verified && !checkoutValid) throw new Error("Não é possível validar este checkout sem URL oficial aprovada.");
  if (data.active && (!data.checkout_verified || !checkoutValid)) throw new Error("Para publicar, valide o checkout oficial do produto e o domínio do fornecedor.");
- const {id,...payload}=data;
- (payload as any).checkout_url = checkoutUrl;
- (payload as any).checkout_verified = data.checkout_verified === true && !!checkoutValid;
- const {error}=await (supabaseAdmin as any).from("hub_products").upsert(id?{id,...payload}:{...payload});
- if(error) throw error;return {success:true};
+ const {id,revision,...values}=data;
+ (values as any).checkout_url=checkoutUrl;
+ (values as any).checkout_verified=data.checkout_verified===true&&!!checkoutValid;
+ const {data:rows,error}=await (supabaseAdmin as any).rpc("rubi_save_hub_product_audited",{
+  p_id:id??null,p_expected_revision:revision??null,p_values:values,p_actor:context.userId
+ });
+ if(error)throw error;
+ if(!rows?.length)throw new Error("Produto não salvo.");
+ return {success:true,id:String(rows[0].product_id),revision:Number(rows[0].new_revision)};
 });
 
 export const saveHubSupplierAdmin = createServerFn({ method: "POST" })
