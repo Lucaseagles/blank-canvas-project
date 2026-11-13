@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {correlateMovementTraffic,percentOfIntentToView,summarizeMovementVariants,assessRubiVariantDecisionReadiness,preflightRubiExperimentTraffic} from "./rubi-movement-performance.ts";
+import {correlateMovementTraffic,percentOfIntentToView,summarizeMovementVariants,assessRubiVariantDecisionReadiness,preflightRubiExperimentTraffic,summarizeRubiTrackingCoverage} from "./rubi-movement-performance.ts";
 const product="00000000-0000-4000-8000-000000000001";
 test("never converts absence of traffic into a success rate",()=>{
  assert.equal(percentOfIntentToView(0,0),null);
@@ -87,4 +87,12 @@ test("future A/B traffic preflight rejects ambiguous, partial and implausible ev
  assert.equal(preflightRubiExperimentTraffic([{...clean[0],unobservedCampaigns:1},clean[1]],false).readyForDesign,false);
  assert.equal(preflightRubiExperimentTraffic([{...clean[0],checkoutIntents:999},clean[1]],false).readyForDesign,false);
  assert.equal(preflightRubiExperimentTraffic([clean[0]],false).readyForDesign,false);
+});
+
+test("tracking coverage excludes ambiguous and missing campaigns; partial remains unknown",()=>{
+ const summaries=[{variantId:"a",observedCampaigns:2,ambiguousCampaigns:1,unobservedCampaigns:1,viewEvents:10,checkoutIntents:2,intentPerViewPercent:20}];
+ assert.equal(summarizeRubiTrackingCoverage(summaries,false).coveragePercent,50);
+ assert.equal(summarizeRubiTrackingCoverage(summaries,true).coveragePercent,null);
+ assert.equal(summarizeRubiTrackingCoverage([],false).coveragePercent,null);
+ assert.equal(summarizeRubiTrackingCoverage(summaries,false).status,"needs_attention");
 });
