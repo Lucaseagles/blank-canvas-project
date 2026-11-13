@@ -39,12 +39,14 @@ export const saveRubiDistributionAdmin=createServerFn({method:"POST"}).middlewar
  // Attribution must be unambiguous for the same product. This is an application
  // preflight; database-level transaction protection remains a separate hardening gate.
  const {data:collisions,error:collisionsError}=await (supabaseAdmin as any)
-  .from("rubi_movement_distribution").select("variant_id")
-  .eq("channel",data.channel).eq("campaign",data.campaign)
-  .neq("variant_id",data.variant_id).limit(201);
+  .from("rubi_movement_distribution").select("id,variant_id")
+  .eq("channel",data.channel).eq("campaign",data.campaign).limit(201);
  if(collisionsError)throw collisionsError;
  if((collisions??[]).length>=201)throw new Error("Consulta de campanhas incompleta: revise o identificador.");
- const otherVariantIds=[...new Set((collisions??[]).map((x:{variant_id:string})=>x.variant_id))];
+ const othersOnLabel=(collisions??[]).filter((x:{id:string})=>x.id!==data.id);
+ if(othersOnLabel.some((x:{variant_id:string})=>x.variant_id===data.variant_id))
+  throw new Error("A mesma variante já usa este código neste canal. Informe um identificador diferente.");
+ const otherVariantIds=[...new Set(othersOnLabel.map((x:{variant_id:string})=>x.variant_id))];
  if(otherVariantIds.length){
   const {data:others,error:othersError}=await (supabaseAdmin as any).from("rubi_movement_variants")
    .select("movement_id").in("id",otherVariantIds);
