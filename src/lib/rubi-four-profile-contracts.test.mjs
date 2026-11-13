@@ -25,12 +25,16 @@ test("Partner grants are filtered to verified and approved partner account",()=>
  assert.match(fn,/profile\.status !== "approved"/);
  assert.match(fn,/\.eq\("commercial_profile_id", profile\.id\)/);
 });
-test("Master requires original owner email and owner role server-side",()=>{
+test("Master is authorized server-side by verified database role, not by email",()=>{
  const guard=read("./auth-guards.server.ts");
  const layout=read("../routes/admin.tsx");
- assert.match(guard,/email !== OWNER_EMAIL/);
+ const sidebar=read("../components/admin/AdminSidebar.tsx");
+ assert.doesNotMatch(guard,/OWNER_EMAIL|userEmail/);
  assert.match(guard,/_role: "owner"/);
  assert.match(guard,/requireSupabaseAuth/);
- assert.match(layout,/email !== OWNER_EMAIL/);
+ assert.match(guard,/hasRole !== true/);
+ assert.doesNotMatch(layout,/OWNER_EMAIL/);
+ assert.doesNotMatch(sidebar,/OWNER_EMAIL/);
  assert.match(layout,/_role: "owner"/);
+ assert.match(sidebar,/_role:"owner"/);
 });

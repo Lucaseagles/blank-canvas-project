@@ -6,8 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-const OWNER_EMAIL = "eaglesfr49@gmail.com";
-
 export const Route = createFileRoute("/admin")({
   ssr: false,
   component: AdminLayout,
@@ -26,12 +24,6 @@ function AdminLayout() {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
           if (!cancelled) navigate({ to: "/auth", replace: true });
-          return;
-        }
-
-        const email = session.user.email?.toLowerCase();
-        if (email !== OWNER_EMAIL) {
-          if (!cancelled) navigate({ to: "/", replace: true });
           return;
         }
 

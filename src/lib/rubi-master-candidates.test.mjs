@@ -1,13 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {canProposeMasterCandidate,PRIMARY_MASTER_EMAIL} from "./rubi-master-candidates.ts";
+import {canProposeMasterCandidate} from "./rubi-master-candidates.ts";
 
-test("Only other valid email addresses can be registered as future candidates",()=>{
- assert.equal(canProposeMasterCandidate(PRIMARY_MASTER_EMAIL),false);
- assert.equal(canProposeMasterCandidate("  "+PRIMARY_MASTER_EMAIL.toUpperCase()+" "),false);
+test("Only syntactically valid emails can be registered as future candidates",()=>{
  assert.equal(canProposeMasterCandidate("futuro@example.com"),true);
  assert.equal(canProposeMasterCandidate("not-an-email"),false);
+ const functions=readFileSync(new URL("./rubi-master-candidates.functions.ts",import.meta.url),"utf8");
+ assert.match(functions,/data.email===context.userEmail/);
 });
 
 test("Candidate management never grants an owner role or alters user roles",()=>{

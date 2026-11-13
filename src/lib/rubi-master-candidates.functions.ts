@@ -18,7 +18,7 @@ export const proposeRubiMasterCandidateAdmin=createServerFn({method:"POST"})
  .middleware([requireOwnerRole])
  .validator((input:unknown)=>z.object({email:emailSchema}).parse(input))
  .handler(async({data,context})=>{
-  if(!canProposeMasterCandidate(data.email))throw new Error("E-mail não elegível para pré-cadastro.");
+  if(!canProposeMasterCandidate(data.email)||data.email===context.userEmail?.trim().toLowerCase())throw new Error("E-mail não elegível para pré-cadastro.");
   const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
   const {error}=await (supabaseAdmin as any).from("rubi_master_delegations")
    .upsert({email:data.email,requested_by:context.userId,status:"pending",updated_at:new Date().toISOString()},{onConflict:"email"});
