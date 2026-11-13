@@ -6,6 +6,7 @@ import {Button} from "@/components/ui/button";
 import {RubiMovementVariantsAdmin} from "@/components/store/RubiMovementVariantsAdmin";
 import {RubiMovementPerformanceAdmin} from "@/components/store/RubiMovementPerformanceAdmin";
 import {RubiAudienceEvidenceBuilder} from "@/components/store/RubiAudienceEvidenceBuilder";
+import {assessRubiAudienceEvidenceStatus} from "@/lib/rubi-audience-evidence-status";
 import {emptyRubiMovement,rubiMovementChecklist,rubiMovementEditorialQuality,type RubiMovement} from "@/lib/rubi-movements";
 import {listRubiMovementsAdmin,saveRubiMovementAdmin,archiveRubiMovementAdmin} from "@/lib/rubi-movements.functions";
 
@@ -34,6 +35,7 @@ export function RubiMovementEngineAdmin({products}:{products:Product[]}){
  <label className="block space-y-1 text-sm font-semibold"><span>{label}</span><textarea className="w-full rounded-xl border bg-background p-3 text-sm" rows={rows} value={draft?.[key]??""} placeholder={placeholder} onChange={event=>change(key,event.target.value)} /></label>;
  const check=draft?rubiMovementChecklist(draft):null;
  const editorialQuality=draft?rubiMovementEditorialQuality(draft):null;
+ const evidenceStatus=draft?assessRubiAudienceEvidenceStatus(draft.evidence_notes):null;
  const canSendToReview=check?.missing.length===0&&editorialQuality?.ready===true;
  return <section aria-label="RUBI Movement Engine" className="space-y-5 rounded-3xl border border-primary/30 bg-card p-6">
   <header className="space-y-2"><p className="text-xs font-black uppercase tracking-widest text-primary">RUBI 11× · Movement Engine</p>
@@ -80,6 +82,11 @@ export function RubiMovementEngineAdmin({products}:{products:Product[]}){
    {field("narrative","Qual história conecta tudo?","Gancho → situação → benefício → convite para conhecer",4)}
    {field("evidence_notes","Quais fontes sustentam a mensagem?","Referência à ficha do fornecedor e direitos de uso")}
    <RubiAudienceEvidenceBuilder onApply={notes=>change("evidence_notes",notes)}/>
+   {evidenceStatus&&<aside aria-label="Situação da evidência comercial" className="rounded-xl border border-amber-500/30 p-3 space-y-1">
+    <p className="text-sm font-bold">{evidenceStatus.label}</p>
+    {evidenceStatus.blockers.map((issue,index)=><p key={index} className="text-xs text-muted-foreground">{issue}</p>)}
+    <p className="text-xs text-muted-foreground">A classificação não libera o movimento, a publicidade nem concede validação de mercado.</p>
+   </aside>}
    <div className="rounded-lg bg-muted/40 p-3 text-sm"><strong>Checklist de preparação: {check?.completed}/{check?.total}</strong>
     <p className="mt-1 text-muted-foreground">{check?.missing.length? "Faltam: "+check.missing.join(", "):"Campos completos. A revisão e a comprovação ainda são humanas."}</p>
     {editorialQuality&&!editorialQuality.ready&&<p role="alert" className="mt-2 text-amber-700 dark:text-amber-300">Corrija antes da revisão: {editorialQuality.repeated.join(" · ")}</p>}
