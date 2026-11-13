@@ -24,7 +24,7 @@ function AlgorithmControlPage() {
   const query = useQuery({ queryKey: ["admin-algorithm-control"], queryFn: () => getSettings({ data: undefined }) });
   const auditQuery = useQuery({ queryKey: ["admin-algorithm-control-audit"], queryFn: () => getAudit({ data: { page: 0, pageSize: 8 } }) });
   const mutation = useMutation({
-    mutationFn: (input: { source: string; id: string; patch: Record<string, unknown> }) => update({ data: input }),
+    mutationFn: (input: { source: string; id: string; patch: Record<string, unknown>; expected: Record<string, unknown> }) => update({ data: input }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-algorithm-control"] });
       qc.invalidateQueries({ queryKey: ["admin-settings"] });
@@ -119,7 +119,7 @@ function AlgorithmControlPage() {
                 </CardHeader>
                 <CardContent className="space-y-3 p-6">
                   {!weights?.available ? <Empty icon={<TriangleAlert className="h-5 w-5" />} text={weights?.error ?? "Fonte indisponível."} /> : weightRows.length === 0 ? <Empty icon={<Info className="h-5 w-5" />} text="Nenhum peso configurado." /> : weightRows.map((row) => (
-                    <WeightRow key={String(row["id"])} row={row} maxWeight={maxWeight} pending={mutation.isPending} onSave={(value) => mutation.mutate({ source: "personalization_weights", id: String(row["id"]), patch: { weight: value } })} />
+                    <WeightRow key={String(row["id"])} row={row} maxWeight={maxWeight} pending={mutation.isPending} onSave={(value) => mutation.mutate({ source: "personalization_weights", id: String(row["id"]), patch: { weight: value }, expected: { weight: row["weight"] ?? null } })} />
                   ))}
                 </CardContent>
               </Card>
@@ -146,7 +146,7 @@ function AlgorithmControlPage() {
                         </div>
                       </div>
                       <div className="grid gap-3 sm:grid-cols-3">
-                        {MIX_KEYS.map((key) => <MixRow key={key} label={key.replace("_pct", "")} value={Number(mixRow[key] ?? 0)} pending={mutation.isPending} onSave={(value) => mutation.mutate({ source: "feed_mix_config", id: String(mixRow["id"]), patch: { [key]: value } })} />)}
+                        {MIX_KEYS.map((key) => <MixRow key={key} label={key.replace("_pct", "")} value={Number(mixRow[key] ?? 0)} pending={mutation.isPending} onSave={(value) => mutation.mutate({ source: "feed_mix_config", id: String(mixRow["id"]), patch: { [key]: value }, expected: { [key]: mixRow[key] ?? null } })} />)}
                       </div>
                       <div className={`mt-5 flex gap-3 rounded-2xl border p-4 text-sm ${mixIsBalanced ? "border-emerald-500/20 bg-emerald-500/5" : "border-amber-500/40 bg-amber-500/5"}`}>
                         {mixIsBalanced ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" /> : <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />}
