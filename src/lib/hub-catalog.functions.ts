@@ -119,12 +119,13 @@ export const saveHubSupplierAdmin = createServerFn({ method: "POST" })
   .middleware([requireOwnerRole])
   .validator((input: unknown) => z.object({
     id: z.string().uuid().optional(),
+    revision: z.number().int().positive().optional(),
     name: z.string().trim().min(2).max(160),
     fulfillment_mode: z.enum(["supplier", "hub"]),
     active: z.boolean(),
     checkout_host: z.string().trim().max(253).nullable().optional(),
   }).parse(input))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { id, ...payload } = data;
     if (payload.checkout_host) {
@@ -153,11 +154,15 @@ export const saveHubSupplierAdmin = createServerFn({ method: "POST" })
         }
       }
     }
-    const { error } = await (supabaseAdmin as any)
-      .from("hub_suppliers")
-      .upsert(id ? { id, ...payload } : payload);
-    if (error) throw error;
-    return { success: true };
+    if (id && !data.revision) throw new Error("Versão do fornecedor ausente; recarregue o catálogo.");
+    const {data:rows,error}=await (supabaseAdmin as any).rpc("rubi_save_supplier_audited",{
+      p_id:id??null,p_revision:data.revision??null,p_name:payload.name,
+      p_mode:payload.fulfillment_mode,p_active:payload.active,
+      p_host:payload.checkout_host??null,p_actor:context.userId
+    });
+    if(error)throw error;
+    if(!rows?.length)throw new Error("Fornecedor não salvo.");
+    return {success:true,id:String(rows[0].saved_id),revision:Number(rows[0].saved_revision)};
   });
 
 export const saveHubB2BTierAdmin = createServerFn({ method: "POST" })
@@ -167,7 +172,7 @@ export const saveHubB2BTierAdmin = createServerFn({ method: "POST" })
     min_quantity: z.number().int().positive(),
     unit_price: z.number().finite().positive(),
   }).parse(input))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: product, error: productError } = await (supabaseAdmin as any)
       .from("hub_products")
@@ -181,18 +186,11 @@ export const saveHubB2BTierAdmin = createServerFn({ method: "POST" })
     if (data.min_quantity < product.min_b2b_quantity) {
       throw new Error("A faixa não pode ser inferior ao pedido mínimo do produto.");
     }
-    const { data: existing, error: lookupError } = await (supabaseAdmin as any)
-      .from("hub_b2b_tiers")
-      .select("id")
-      .eq("product_id", data.product_id)
-      .eq("min_quantity", data.min_quantity)
-      .limit(2);
-    if (lookupError) throw lookupError;
-    if ((existing ?? []).length > 1) throw new Error("Existem faixas duplicadas; revise os dados antes de editar.");
-    const query = (existing ?? []).length === 1
-      ? (supabaseAdmin as any).from("hub_b2b_tiers").update({ unit_price: data.unit_price }).eq("id", existing[0].id).eq("product_id", data.product_id)
-      : (supabaseAdmin as any).from("hub_b2b_tiers").insert(data);
-    const { error } = await query;
-    if (error) throw error;
-    return { success: true };
+    const {data:rows,error}=await (supabaseAdmin as any).rpc("rubi_save_b2b_tier_audited",{
+      p_product_id:data.product_id,p_min_quantity:data.min_quantity,
+      p_unit_price:data.unit_price,p_actor:context.userId
+    });
+    if(error)throw error;
+    if(!rows?.length)throw new Error("Faixa de preço não salva.");
+    return {success:true};
   });
