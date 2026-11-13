@@ -20,11 +20,12 @@ test("Only usable HTTPS video files and licensed claims may be approved",()=>{
 
 test("Story cannot remain public after linked movement changes revision or status",()=>{
  const story={movement_id:"m1",approved_movement_revision:4,status:"approved",rights_confirmed:true};
- const movement={id:"m1",product_id:"p1",status:"review",revision:4};
+ const movement={id:"m1",product_id:"p1",status:"review",audience:"consumer",revision:4};
  assert.equal(canServeVersionedRubiStory(story,movement,"p1"),true);
  assert.equal(canServeVersionedRubiStory(story,{...movement,revision:5},"p1"),false);
  assert.equal(canServeVersionedRubiStory(story,{...movement,status:"draft"},"p1"),false);
  assert.equal(canServeVersionedRubiStory(story,movement,"p2"),false);
+ assert.equal(canServeVersionedRubiStory(story,{...movement,audience:"partner"},"p1"),false);
  assert.equal(canServeVersionedRubiStory({...story,rights_confirmed:false},movement,"p1"),false);
  assert.equal(canServeVersionedRubiStory({...story,movement_id:null},movement,"p1"),false);
  assert.equal(canServeVersionedRubiStory({...story,approved_movement_revision:null},movement,"p1"),false);
