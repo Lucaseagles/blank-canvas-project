@@ -4,7 +4,7 @@ import {requireOwnerRole} from "./auth-guards.server";
 import {canRecordPublication,movementCampaignPath, type RubiDistributionPlan} from "./rubi-movement-distribution";
 const uuid=z.string().uuid();
 const schema=z.object({
- id:uuid.optional(),variant_id:uuid,
+ id:uuid.optional(),revision:z.number().int().positive().optional(),variant_id:uuid,
  channel:z.enum(["instagram","tiktok","youtube","facebook","pinterest","whatsapp","telegram"]),
  campaign:z.string().regex(/^[a-z0-9][a-z0-9_-]{0,59}$/),
  status:z.enum(["planned","manually_published"]),
@@ -16,14 +16,14 @@ export const listRubiDistributionAdmin=createServerFn({method:"POST"}).middlewar
 .handler(async({data})=>{
  const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
  const {data:rows,error}=await (supabaseAdmin as any).from("rubi_movement_distribution")
-  .select("id,variant_id,channel,campaign,status,notes,published_reference,page_published_at")
+  .select("id,variant_id,channel,campaign,status,notes,published_reference,page_published_at,revision")
   .eq("variant_id",data.variantId).order("channel").limit(20);
  if(error)throw error;
  return (rows??[]) as RubiDistributionPlan[];
 });
 export const saveRubiDistributionAdmin=createServerFn({method:"POST"}).middleware([requireOwnerRole])
 .validator((value:unknown)=>schema.parse(value))
-.handler(async({data})=>{
+.handler(async({data,context})=>{
  const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
  if(!canRecordPublication(data))throw new Error("Informe uma referência verificável da publicação manual.");
  const {data:variant,error:variantError}=await (supabaseAdmin as any).from("rubi_movement_variants")
@@ -60,19 +60,15 @@ export const saveRubiDistributionAdmin=createServerFn({method:"POST"}).middlewar
     throw new Error("Identificador de campanha já utilizado por outra variante deste produto. Use um código exclusivo para atribuição confiável.");
   }
  }
- // No attribution codes or checkout parameters are created; only UTM marketing labels.
- const {id,...values}=data;
- if(id){
-  const {data:existing,error:existingError}=await (supabaseAdmin as any).from("rubi_movement_distribution")
-    .select("id,variant_id").eq("id",id).maybeSingle();
-  if(existingError)throw existingError;
-  if(!existing || existing.variant_id!==data.variant_id)throw new Error("Plano pertence a outra variante.");
-  const {error}=await (supabaseAdmin as any).from("rubi_movement_distribution")
-    .update({...values,page_published_at:null,published_variant_revision:null,published_movement_revision:null,updated_at:new Date().toISOString()}).eq("id",id).eq("variant_id",data.variant_id);
-  if(error)throw error;
- }else{
-  const {error}=await (supabaseAdmin as any).from("rubi_movement_distribution").insert(values);
-  if(error)throw error;
- }
- return {success:true};
+ // Saving a plan and recording the responsible Master are one database transaction.
+ if(data.id&&!data.revision)throw new Error("Versão do plano ausente. Recarregue antes de salvar.");
+ const {data:changed,error}=await (supabaseAdmin as any).rpc("rubi_save_distribution_audited",{
+  p_id:data.id??null,p_variant_id:data.variant_id,p_expected_revision:data.revision??null,
+  p_channel:data.channel,p_campaign:data.campaign,p_status:data.status,
+  p_notes:data.notes,p_published_reference:data.published_reference,p_actor:context.userId
+ });
+ if(error)throw error;
+ const row=changed?.[0];
+ if(!row)throw new Error("Plano não salvo.");
+ return {success:true,id:String(row.plan_id),revision:Number(row.new_revision)};
 });
