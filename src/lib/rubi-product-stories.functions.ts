@@ -53,7 +53,7 @@ export const saveRubiProductStoryAdmin=createServerFn({method:"POST"})
 export const setRubiProductStoryApprovalAdmin=createServerFn({method:"POST"})
  .middleware([requireOwnerRole])
  .validator((input:unknown)=>z.object({id:uuid,productId:uuid,revision:z.number().int().positive(),approved:z.boolean(),confirmedEvidence:z.boolean()}).parse(input))
- .handler(async({data})=>{
+ .handler(async({data,context})=>{
   const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
   const db=supabaseAdmin as any;
   const {data:story,error}=await db.from("rubi_product_stories").select(storyFields)
@@ -82,11 +82,14 @@ export const setRubiProductStoryApprovalAdmin=createServerFn({method:"POST"})
    :{data:null,error:null};
   if(pinnedError)throw pinnedError;
   if(data.approved&&!pinned)throw new Error("O movimento perdeu a revisão antes da aprovação.");
-  const {data:updated,error:updateError}=await db.from("rubi_product_stories")
-   .update({status:data.approved?"approved":"draft",approved_movement_revision:data.approved?pinned.revision:null,updated_at:new Date().toISOString(),revision:story.revision+1})
-   .eq("id",data.id).eq("product_id",data.productId).eq("revision",data.revision).select("id").maybeSingle();
+  // DB function commits approval and the sanitized Owner audit record atomically.
+  // If the audit insert fails, the Story status is rolled back.
+  const {error:updateError}=await db.rpc("rubi_set_story_approval_audited",{
+   p_story_id:data.id,p_product_id:data.productId,
+   p_expected_revision:data.revision,p_approved:data.approved,
+   p_actor:context.userId
+  });
   if(updateError)throw updateError;
-  if(!updated)throw new Error("Story alterada em outra sessão.");
   return {success:true};
  });
 export const listRubiApprovedProductStories=createServerFn({method:"POST"})
