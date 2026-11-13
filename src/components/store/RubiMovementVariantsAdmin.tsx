@@ -4,6 +4,7 @@ import {useServerFn} from "@tanstack/react-start";
 import {toast} from "sonner";
 import {Button} from "@/components/ui/button";
 import {RubiMovementDistributionAdmin} from "@/components/store/RubiMovementDistributionAdmin";
+import {RubiVariantVideoLinksAdmin} from "@/components/store/RubiVariantVideoLinksAdmin";
 import {emptyRubiMovementVariant,rubiVariantChecklist,type RubiMovementVariant} from "@/lib/rubi-movement-variants";
 import {assessRubiExperimentReadiness} from "@/lib/rubi-experiment-readiness";
 import {listRubiMovementVariantsAdmin,saveRubiMovementVariantAdmin,deleteRubiMovementVariantAdmin} from "@/lib/rubi-movement-variants.functions";
@@ -80,6 +81,7 @@ export function RubiMovementVariantsAdmin({movementId,movementName,movementStatu
     {draft.id&&<Button variant="outline" disabled={deletion.isPending} onClick={()=>{if(window.confirm("Excluir esta variante privada?"))deletion.mutate();}}>Excluir</Button>}
     <Button variant="outline" onClick={()=>{if(dirty&&!window.confirm("Descartar alterações?"))return;setDraft(null);setDirty(false);}}>Fechar</Button>
    </div>
+   {draft.id&&draft.format==="short_video"&&draft.status==="review"&&!dirty&&<RubiVariantVideoLinksAdmin variantId={draft.id}/>}
    {draft.id&&<RubiMovementDistributionAdmin key={draft.id} variantId={draft.id} variantName={draft.name} variantStatus={draft.status} productId={productId}/>}
   </div>}
  </section>;
