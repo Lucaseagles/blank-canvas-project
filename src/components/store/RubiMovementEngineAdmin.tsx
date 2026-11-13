@@ -5,7 +5,7 @@ import {toast} from "sonner";
 import {Button} from "@/components/ui/button";
 import {RubiMovementVariantsAdmin} from "@/components/store/RubiMovementVariantsAdmin";
 import {RubiMovementPerformanceAdmin} from "@/components/store/RubiMovementPerformanceAdmin";
-import {emptyRubiMovement,rubiMovementChecklist,type RubiMovement} from "@/lib/rubi-movements";
+import {emptyRubiMovement,rubiMovementChecklist,rubiMovementEditorialQuality,type RubiMovement} from "@/lib/rubi-movements";
 import {listRubiMovementsAdmin,saveRubiMovementAdmin,archiveRubiMovementAdmin} from "@/lib/rubi-movements.functions";
 
 type Product={id:string;title:string};
@@ -32,6 +32,8 @@ export function RubiMovementEngineAdmin({products}:{products:Product[]}){
  const field=(key:"name"|"buyer_persona"|"problem"|"desired_outcome"|"truthful_promise"|"differentiator"|"narrative"|"evidence_notes",label:string,placeholder:string,rows=2)=>
  <label className="block space-y-1 text-sm font-semibold"><span>{label}</span><textarea className="w-full rounded-xl border bg-background p-3 text-sm" rows={rows} value={draft?.[key]??""} placeholder={placeholder} onChange={event=>change(key,event.target.value)} /></label>;
  const check=draft?rubiMovementChecklist(draft):null;
+ const editorialQuality=draft?rubiMovementEditorialQuality(draft):null;
+ const canSendToReview=check?.missing.length===0&&editorialQuality?.ready===true;
  return <section aria-label="RUBI Movement Engine" className="space-y-5 rounded-3xl border border-primary/30 bg-card p-6">
   <header className="space-y-2"><p className="text-xs font-black uppercase tracking-widest text-primary">RUBI 11× · Movement Engine</p>
    <h2 className="text-2xl font-black">Movimentos comerciais por produto</h2>
@@ -67,7 +69,7 @@ export function RubiMovementEngineAdmin({products}:{products:Product[]}){
     </select></label>
     <label className="space-y-1 text-sm font-semibold">Estado editorial
     <select className="w-full rounded-lg border bg-background p-2" value={draft.status} onChange={e=>change("status",e.target.value as RubiMovement["status"])}>
-      <option value="draft">Rascunho</option><option value="review" disabled={check?.missing.length!==0}>Pronto para revisão humana</option>
+      <option value="draft">Rascunho</option><option value="review" disabled={!canSendToReview}>Pronto para revisão humana</option>
     </select></label></div>
    {field("buyer_persona","Para quem?","Perfil comprador e contexto sem inferir dados privados")}
    {field("problem","Qual problema concreto?","Situação legítima e comprovável")}
@@ -77,7 +79,14 @@ export function RubiMovementEngineAdmin({products}:{products:Product[]}){
    {field("narrative","Qual história conecta tudo?","Gancho → situação → benefício → convite para conhecer",4)}
    {field("evidence_notes","Quais fontes sustentam a mensagem?","Referência à ficha do fornecedor e direitos de uso")}
    <div className="rounded-lg bg-muted/40 p-3 text-sm"><strong>Checklist de preparação: {check?.completed}/{check?.total}</strong>
-    <p className="mt-1 text-muted-foreground">{check?.missing.length? "Faltam: "+check.missing.join(", "):"Campos completos. A revisão e a comprovação ainda são humanas."}</p></div>
+    <p className="mt-1 text-muted-foreground">{check?.missing.length? "Faltam: "+check.missing.join(", "):"Campos completos. A revisão e a comprovação ainda são humanas."}</p>
+    {editorialQuality&&!editorialQuality.ready&&<p role="alert" className="mt-2 text-amber-700 dark:text-amber-300">Corrija antes da revisão: {editorialQuality.repeated.join(" · ")}</p>}
+   </div>
+   <aside className="space-y-2 rounded-xl border bg-muted/20 p-3" aria-label="Plano de validação do público e do ângulo">
+    <h4 className="text-sm font-bold">Validação do público e do ângulo · requisito 08.2</h4>
+    <p className="text-xs text-muted-foreground">No campo de evidências, documente fonte e data da pesquisa, perfil consultado, problema confirmado, hipótese do gancho e resultados verificáveis. Inclua o que contradiz a hipótese. Não registre entrevistas, métricas ou provas que não aconteceram.</p>
+    <p className="text-xs text-muted-foreground">Checklist editorial preenchido não equivale a público validado. O Master deve revisar as evidências antes de usar o movimento comercialmente.</p>
+   </aside>
    <div className="flex flex-wrap gap-2">
     <Button disabled={mutation.isPending||remove.isPending||(!dirty&&!!draft.id)||draft.name.trim().length<3} onClick={()=>mutation.mutate()}>{mutation.isPending?"Salvando...":"Salvar movimento privado"}</Button>
     {draft.id&&<Button variant="outline" disabled={mutation.isPending||remove.isPending} onClick={()=>{
