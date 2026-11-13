@@ -23,9 +23,9 @@ export function canApproveRubiProductStory(story:RubiProductStory):boolean{
 }
 
 /** A Story is visible only while pinned to the currently reviewed revision. */
-export function canServeVersionedRubiStory(story:{movement_id:string|null;approved_movement_revision:number|null;status:string;rights_confirmed:boolean},movement:{id:string;product_id:string;status:string;revision:number}|null,productId:string):boolean{
+export function canServeVersionedRubiStory(story:{movement_id:string|null;approved_movement_revision:number|null;status:string;rights_confirmed:boolean},movement:{id:string;product_id:string;status:string;audience:string;revision:number}|null,productId:string):boolean{
  return story.status==="approved" && story.rights_confirmed && !!story.movement_id &&
    !!movement && movement.id===story.movement_id && movement.product_id===productId &&
-   movement.status==="review" && Number.isInteger(story.approved_movement_revision) &&
+   movement.status==="review" && movement.audience==="consumer" && Number.isInteger(story.approved_movement_revision) &&
    story.approved_movement_revision===movement.revision;
 }
