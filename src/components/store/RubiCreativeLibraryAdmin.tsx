@@ -4,6 +4,7 @@ import {useServerFn} from "@tanstack/react-start";
 import {BookCopy,ClipboardCopy,ShieldAlert} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {listRubiCreativeLibraryAdmin} from "@/lib/rubi-creative-library.functions";
+import {RubiCreativeLicenseAdmin} from "./RubiCreativeLicenseAdmin";
 
 type CreativeAsset={id:string;productId:string;productTitle:string;category:string;movement:string;name:string;format:string;revision:number;hook:string;script:string;pageHeadline:string;pageBody:string;cta:string;mediaNotes:string;proofNotes:string;rightsDeclaration:boolean};
 export function RubiCreativeLibraryAdmin(){
@@ -21,7 +22,7 @@ export function RubiCreativeLibraryAdmin(){
   await navigator.clipboard.writeText(content);
   setCopyNotice("Rascunho interno copiado sem notas de mídia ou evidências privadas. Uso externo continua bloqueado até verificação de licença.");
  };
- return <section aria-label="Biblioteca reutilizável de criativos RUBI" className="space-y-4 rounded-3xl border border-primary/20 bg-card p-5 sm:p-7">
+ return <><section aria-label="Biblioteca reutilizável de criativos RUBI" className="space-y-4 rounded-3xl border border-primary/20 bg-card p-5 sm:p-7">
   <header className="space-y-2">
    <p className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-primary"><BookCopy className="h-4 w-4"/> Offer Engine × Movement Engine</p>
    <h2 className="text-xl font-black">Biblioteca central de criativos e páginas</h2>
@@ -58,5 +59,5 @@ export function RubiCreativeLibraryAdmin(){
    </article>)}
   </div>}
   <p className="flex items-start gap-2 text-xs leading-5 text-muted-foreground"><ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-primary"/> O texto copiado leva aviso obrigatório de rascunho interno e não contém notas de mídia ou evidências privadas. Uma declaração de direitos não é licença verificada. Material privado do Master: não publique, patrocine ou distribua ao criador sem checar direitos, aprovação editorial, produto autorizado e acordo comercial.</p>
- </section>;
+ </section><RubiCreativeLicenseAdmin assets={assets.map(a=>({id:a.id,name:a.name,productTitle:a.productTitle}))}/></>;
 }
