@@ -30,44 +30,33 @@ export const listRubiMovementsAdmin=createServerFn({method:"POST"}).middleware([
  });
 export const saveRubiMovementAdmin=createServerFn({method:"POST"}).middleware([requireOwnerRole])
  .validator((input:unknown)=>schema.parse(input))
- .handler(async({data})=>{
+ .handler(async({data,context})=>{
    const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
-   const {data:product,error:productError}=await (supabaseAdmin as any).from("hub_products").select("id").eq("id",data.product_id).maybeSingle();
-   if(productError)throw productError;
-   if(!product)throw new Error("Produto não encontrado no catálogo.");
+   const {id,revision,...changes}=data;
    if(data.status==="review"&&!canReviewRubiMovement(data)){
      const quality=rubiMovementEditorialQuality(data);
      if(!quality.ready)throw new Error("Revise textos repetidos do movimento: "+quality.repeated.join("; "));
      throw new Error("Complete o checklist antes de enviar para revisão.");
    }
-   const {id,revision,...changes}=data;
-   if(id){
-     const {data:existing,error:existingError}=await (supabaseAdmin as any).from("rubi_movements")
-       .select("id,product_id,revision").eq("id",id).maybeSingle();
-     if(existingError)throw existingError;
-     if(!existing||existing.product_id!==data.product_id)throw new Error("Movimento não pertence ao produto.");
-     if(revision!==existing.revision)throw new Error("Movimento atualizado em outra sessão. Recarregue antes de salvar.");
-     const {data:updated,error}=await (supabaseAdmin as any).from("rubi_movements")
-       .update({...changes,revision:existing.revision+1,updated_at:new Date().toISOString()})
-       .eq("id",id).eq("product_id",data.product_id).eq("revision",existing.revision)
-       .select("id,revision").maybeSingle();
-     if(error)throw error;
-     if(!updated)throw new Error("Atualização concorrente detectada.");
-     return updated as {id:string;revision:number};
-   }
-   const {data:created,error}=await (supabaseAdmin as any).from("rubi_movements")
-     .insert({...changes}).select("id,revision").single();
+   if(id&&!revision)throw new Error("Informe a versão atual para editar o movimento.");
+   const {data:rows,error}=await (supabaseAdmin as any).rpc("rubi_mutate_movement_audited",{
+     p_action:id?"update":"create",p_id:id??null,p_product_id:data.product_id,
+     p_expected_revision:revision??null,p_values:changes,p_actor:context.userId
+   });
    if(error)throw error;
-   return created as {id:string;revision:number};
+   const row=rows?.[0];
+   if(!row)throw new Error("Movimento não registrado.");
+   return {id:String(row.id),revision:Number(row.revision)};
  });
 export const archiveRubiMovementAdmin=createServerFn({method:"POST"}).middleware([requireOwnerRole])
  .validator((input:unknown)=>z.object({productId:uuid,id:uuid,revision:z.number().int().positive()}).parse(input))
- .handler(async({data})=>{
+ .handler(async({data,context})=>{
    const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
-   // No public consumers exist yet. Remove private draft with optimistic lock.
-   const {data:deleted,error}=await (supabaseAdmin as any).from("rubi_movements")
-     .delete().eq("id",data.id).eq("product_id",data.productId).eq("revision",data.revision).select("id").maybeSingle();
+   const {data:rows,error}=await (supabaseAdmin as any).rpc("rubi_mutate_movement_audited",{
+     p_action:"archive",p_id:data.id,p_product_id:data.productId,
+     p_expected_revision:data.revision,p_values:{},p_actor:context.userId
+   });
    if(error)throw error;
-   if(!deleted)throw new Error("Movimento já mudou ou não pertence ao produto.");
+   if(!rows?.length)throw new Error("Movimento não arquivado.");
    return {success:true};
  });
