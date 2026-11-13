@@ -41,13 +41,13 @@ export const Route = createFileRoute("/admin/hub-catalog")({ component: HubCatal
 
 type Supplier = { id: string; name: string; active: boolean; checkout_host: string | null; fulfillment_mode: "supplier" | "hub" };
 type Product = {
-  id: string; title: string; description: string | null; image_url: string | null;
+  id: string; revision: number; title: string; description: string | null; image_url: string | null;
   category: string | null; sku: string | null; supplier_id: string;
   retail_price: number; supplier_cost: number; b2b_base_price: number | null;
   min_b2b_quantity: number; active: boolean; checkout_url: string | null; checkout_verified: boolean;
 };
 type ProductForm = {
-  id?: string; title: string; description: string; image_url: string;
+  id?: string; revision?: number; title: string; description: string; image_url: string;
   category: string; sku: string; supplier_id: string; retail_price: string;
   supplier_cost: string; b2b_base_price: string; min_b2b_quantity: string; active: boolean; checkout_url: string; checkout_verified: boolean;
 };
@@ -112,7 +112,7 @@ function HubCatalogAdmin() {
         throw new Error("Para publicar, informe preços de venda maiores que zero.");
       }
       return save({ data: {
-        ...(form.id ? { id: form.id } : {}),
+        ...(form.id ? { id: form.id, revision: form.revision } : {}),
         supplier_id: form.supplier_id, title: form.title.trim(),
         description: form.description.trim(), image_url: form.image_url.trim(),
         category: form.category.trim(), sku: form.sku.trim(),
@@ -162,7 +162,7 @@ function HubCatalogAdmin() {
 
   const edit = (product: Product) => {
     setForm({
-      id: product.id, title: product.title, description: product.description ?? "",
+      id: product.id, revision: product.revision, title: product.title, description: product.description ?? "",
       image_url: product.image_url ?? "", category: product.category ?? "",
       sku: product.sku ?? "", supplier_id: product.supplier_id,
       retail_price: String(product.retail_price), supplier_cost: String(product.supplier_cost),
