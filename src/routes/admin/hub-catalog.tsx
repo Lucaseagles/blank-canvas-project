@@ -39,7 +39,7 @@ import { approvedRubiCheckout } from "@/lib/rubi-checkout-validation";
 
 export const Route = createFileRoute("/admin/hub-catalog")({ component: HubCatalogAdmin });
 
-type Supplier = { id: string; name: string; active: boolean; checkout_host: string | null; fulfillment_mode: "supplier" | "hub" };
+type Supplier = { id: string; revision: number; name: string; active: boolean; checkout_host: string | null; fulfillment_mode: "supplier" | "hub" };
 type Product = {
   id: string; revision: number; title: string; description: string | null; image_url: string | null;
   category: string | null; sku: string | null; supplier_id: string;
@@ -69,6 +69,7 @@ function HubCatalogAdmin() {
   const [tierPrice, setTierPrice] = useState("");
   const [supplierName, setSupplierName] = useState("");
   const [supplierId, setSupplierId] = useState("");
+  const [supplierRevision,setSupplierRevision] = useState<number | null>(null);
   const [supplierCheckoutHost, setSupplierCheckoutHost] = useState("");
   const [supplierMode, setSupplierMode] = useState<"supplier" | "hub">("supplier");
   const query = useQuery({ queryKey: ["admin-hub-catalog"], queryFn: () => load() });
@@ -130,11 +131,12 @@ function HubCatalogAdmin() {
   });
 
   const supplierMutation = useMutation({
-    mutationFn: () => saveSupplier({ data: { ...(supplierId ? { id: supplierId } : {}), name: supplierName.trim(), fulfillment_mode: supplierMode, active: true, checkout_host: supplierCheckoutHost.trim() || null } }),
+    mutationFn: () => saveSupplier({ data: { ...(supplierId ? { id: supplierId, revision: supplierRevision ?? undefined } : {}), name: supplierName.trim(), fulfillment_mode: supplierMode, active: true, checkout_host: supplierCheckoutHost.trim() || null } }),
     onSuccess: () => {
       toast.success("Fornecedor salvo. Confira a aprovação dos links antes de publicar.");
       setSupplierName("");
       setSupplierId("");
+      setSupplierRevision(null);
       setSupplierCheckoutHost("");
       setSupplierMode("supplier");
       void queryClient.invalidateQueries({ queryKey: ["admin-hub-catalog"] });
@@ -428,7 +430,7 @@ function HubCatalogAdmin() {
             </form>
             {suppliers.length === 0 && <p className="text-sm text-muted-foreground">Nenhum fornecedor cadastrado.</p>}
             <ul className="space-y-2 text-sm">
-              {suppliers.map(supplier => <li key={supplier.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 p-3"><span>{supplier.name} · <span className="text-xs text-muted-foreground">{supplier.checkout_host ?? "Sem domínio aprovado"}</span></span><Button size="sm" variant="outline" onClick={() => { setSupplierId(supplier.id); setSupplierName(supplier.name); setSupplierCheckoutHost(supplier.checkout_host ?? ""); setSupplierMode(supplier.fulfillment_mode); }}>Configurar checkout</Button></li>)}
+              {suppliers.map(supplier => <li key={supplier.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 p-3"><span>{supplier.name} · <span className="text-xs text-muted-foreground">{supplier.checkout_host ?? "Sem domínio aprovado"}</span></span><Button size="sm" variant="outline" onClick={() => { setSupplierId(supplier.id); setSupplierRevision(supplier.revision); setSupplierName(supplier.name); setSupplierCheckoutHost(supplier.checkout_host ?? ""); setSupplierMode(supplier.fulfillment_mode); }}>Configurar checkout</Button></li>)}
             </ul>
           </section>
           <form onSubmit={event => { event.preventDefault(); mutation.mutate(); }} className="grid gap-5 rounded-3xl border border-white/10 bg-card/80 p-6 md:grid-cols-2">
