@@ -691,3 +691,22 @@ test("Movement campaign labels cannot silently overlap different variants of the
  assert.match(server,/Consulta de campanhas incompleta/);
  assert.doesNotMatch(server,/publishAd|confirmPaidOrder|payCommission/);
 });
+
+test("video to creative linkage remains Master-only and never fabricates paid attribution",()=>{
+ const migration=source("../../supabase/migrations/20261113024000_rubi_variant_video_links.sql");
+ const server=source("./rubi-variant-video-links.functions.ts");
+ const manager=source("../components/store/RubiMovementVariantsAdmin.tsx");
+ assert.match(migration,/video_id uuid primary key references public\.videos/);
+ assert.match(migration,/variant_id uuid not null references public\.rubi_movement_variants/);
+ assert.match(migration,/enable row level security/);
+ assert.match(migration,/revoke all on public\.rubi_variant_video_links from public,anon,authenticated/);
+ assert.match(server,/requireOwnerRole/g);
+ assert.match(server,/variant\.format!=="short_video"/);
+ assert.match(server,/variant\.status!=="review"/);
+ assert.match(server,/video\.status!=="published"/);
+ assert.match(server,/Vídeo já associado a outra variante/);
+ assert.match(server,/\.insert\(\{video_id:data\.videoId,variant_id:data\.variantId\}\)/);
+ assert.doesNotMatch(server,/\.upsert\(/);
+ assert.match(manager,/draft\.format==="short_video"&&draft\.status==="review"&&!dirty/);
+ assert.doesNotMatch(server,/paid_order|confirmPayment|payCommission|attributedSale/);
+});
