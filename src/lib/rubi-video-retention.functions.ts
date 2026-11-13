@@ -1,15 +1,12 @@
 import {createServerFn} from "@tanstack/react-start";
 import {z} from "zod";
 import {requireOwnerRole} from "./auth-guards.server";
+import {rubiVideoCompletionPercent} from "./rubi-video-retention";
 
 export type RubiVideoRetentionRow={
  variantId:string;videoId:string;videoTitle:string;
  startUsers:number;completeUsers:number;completionPercent:number|null;
 };
-export function rubiVideoCompletionPercent(starts:number,completes:number):number|null{
- if(!Number.isInteger(starts)||!Number.isInteger(completes)||starts<=0||completes<0||completes>starts)return null;
- return Math.round(completes/starts*1000)/10;
-}
 export const getRubiVariantVideoRetentionAdmin=createServerFn({method:"POST"})
  .middleware([requireOwnerRole])
  .validator((input:unknown)=>z.object({movementId:z.string().uuid()}).parse(input))
