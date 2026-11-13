@@ -3,6 +3,7 @@ import { Play, Pause, Volume2, VolumeX, Maximize } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
+import {newRubiVideoWatchCoverage,markRubiVideoSeek,observeRubiVideoWatch} from "@/lib/rubi-video-watch-coverage";
 
 interface VideoPlayerProps {
   src: string;
@@ -37,6 +38,13 @@ export function VideoPlayer({
   const [isVisible, setIsVisible] = useState(false);
   const [started, setStarted] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const watchCoverageRef = useRef(newRubiVideoWatchCoverage(0));
+
+  useEffect(() => {
+    watchCoverageRef.current=newRubiVideoWatchCoverage(0);
+    setStarted(false);
+    setCompleted(false);
+  },[src]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !containerRef.current) return;
@@ -98,14 +106,13 @@ export function VideoPlayer({
       if (typeof duration === 'number' && !isNaN(duration) && duration > 0) {
         setProgress((currentTime / duration) * 100);
         
-        // Tracking: Start
-        if (!started && currentTime > 0) {
+        // Track unique timeline coverage; manual seeking never counts as viewing.
+        const watched=observeRubiVideoWatch(watchCoverageRef.current,currentTime,duration);
+        if(!started&&watched.started){
           setStarted(true);
           onStart?.();
         }
-
-        // Tracking: Complete (90%+)
-        if (!completed && (currentTime / duration) >= 0.9) {
+        if(!completed&&watched.completed){
           setCompleted(true);
           onComplete?.();
         }
@@ -145,6 +152,7 @@ export function VideoPlayer({
         loop={loop}
         playsInline
         onTimeUpdate={handleTimeUpdate}
+        onSeeking={()=>markRubiVideoSeek(watchCoverageRef.current)}
         onEnded={onEnded}
         onClick={togglePlay}
       />
