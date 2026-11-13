@@ -1,0 +1,32 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+const source=path=>readFileSync(new URL(path,import.meta.url),"utf8");
+const sql=source("../../supabase/migrations/20261113062000_rubi_movement_atomic_audit.sql");
+const server=source("./rubi-movements.functions.ts");
+test("movement creation, update and archival share atomic audit transaction",()=>{
+ assert.match(sql,/p_action not in \('create','update','archive'\)/);
+ assert.match(sql,/insert into public\.rubi_movements/);
+ assert.match(sql,/update public\.rubi_movements/);
+ assert.match(sql,/delete from public\.rubi_movements/);
+ assert.match(sql,/insert into public\.admin_audit_log/g);
+ assert.match(sql,/RUBI_MOVEMENT_CREATED/);
+ assert.match(sql,/RUBI_MOVEMENT_UPDATED/);
+ assert.match(sql,/RUBI_MOVEMENT_ARCHIVED/);
+ assert.match(sql,/for update/);
+ assert.match(sql,/revision is distinct from p_expected_revision/);
+});
+test("audit access controlled without client supplied actor or private editorial payload",()=>{
+ assert.match(server,/requireOwnerRole/g);
+ assert.match(server,/p_actor:context\.userId/g);
+ assert.match(server,/canReviewRubiMovement\(data\)/);
+ assert.match(server,/rpc\("rubi_mutate_movement_audited"/g);
+ assert.doesNotMatch(server,/\.from\("rubi_movements"\)\s*\.update/);
+ assert.doesNotMatch(server,/\.from\("rubi_movements"\)\s*\.delete/);
+ assert.match(sql,/role='owner'/);
+ assert.match(sql,/revoke all on function public\.rubi_mutate_movement_audited/);
+ assert.match(sql,/to service_role/);
+ assert.doesNotMatch(sql,/security definer/);
+ const audit=sql.slice(sql.indexOf("insert into public.admin_audit_log"));
+ assert.doesNotMatch(audit,/old_row\.narrative|old_row\.evidence_notes|p_values->>'narrative'/);
+});
