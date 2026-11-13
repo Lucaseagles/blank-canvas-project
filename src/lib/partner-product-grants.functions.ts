@@ -19,7 +19,7 @@ export const getPartnerProductGrantsAdmin = createServerFn({ method: "GET" })
         .order("id", { ascending: true })),
       fetchAllFinancialRows(() => (supabaseAdmin as any)
         .from("hub_partner_product_grants")
-        .select("id,commercial_profile_id,product_id,active")
+        .select("id,commercial_profile_id,product_id,active,revision")
         .order("id", { ascending: true })),
     ]);
     return { profiles, products, grants };
@@ -31,23 +31,17 @@ export const setPartnerProductGrantAdmin = createServerFn({ method: "POST" })
     commercial_profile_id: z.string().uuid(),
     product_id: z.string().uuid(),
     active: z.boolean(),
+    expectedRevision: z.number().int().positive().nullable(),
   }).parse(input))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const [profileResult, productResult] = await Promise.all([
-      (supabaseAdmin as any).from("commercial_profiles").select("id,status").eq("id", data.commercial_profile_id).eq("audience", "partner").maybeSingle(),
-      (supabaseAdmin as any).from("hub_products").select("id,active,retail_price,hub_suppliers(active)").eq("id", data.product_id).maybeSingle(),
-    ]);
-    if (profileResult.error) throw profileResult.error;
-    if (productResult.error) throw productResult.error;
-    if (!profileResult.data) throw new Error("Parceiro não encontrado.");
-    if (data.active && profileResult.data.status !== "approved") throw new Error("Apenas parceiros aprovados podem receber produtos.");
-    if (!productResult.data) throw new Error("Produto não encontrado.");
-    if (data.active && !productResult.data.active) throw new Error("Não é possível autorizar produto não publicado.");
-    if (data.active && !(Number(productResult.data.retail_price) > 0)) throw new Error("Configure preço de varejo válido antes de autorizar o produto.");
-    if (data.active && !productResult.data.hub_suppliers?.active) throw new Error("Fornecedor inativo. Ative-o antes de autorizar o produto.");
-    const { error } = await (supabaseAdmin as any).from("hub_partner_product_grants")
-      .upsert(data, { onConflict: "commercial_profile_id,product_id" });
+    const { data: rows, error } = await (supabaseAdmin as any)
+      .rpc("rubi_set_partner_product_grant_audited", {
+        p_actor: context.userId, p_profile_id: data.commercial_profile_id,
+        p_product_id: data.product_id, p_active: data.active,
+        p_expected_revision: data.expectedRevision
+      });
     if (error) throw error;
+    if (!rows?.length) throw new Error("Autorização não registrada.");
     return { success: true };
   });

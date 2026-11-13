@@ -10,7 +10,7 @@ export const Route = createFileRoute("/admin/partner-products")({ component: Par
 
 type Partner = { id: string; display_name: string; partner_type: string | null; status: string };
 type Product = { id: string; title: string; active: boolean; retail_price: number; hub_suppliers: { active: boolean } | null };
-type Grant = { id: string; commercial_profile_id: string; product_id: string; active: boolean };
+type Grant = { id: string; commercial_profile_id: string; product_id: string; active: boolean; revision: number };
 
 function PartnerProductsAdmin() {
   const load = useServerFn(getPartnerProductGrantsAdmin);
@@ -30,7 +30,7 @@ function PartnerProductsAdmin() {
   const canAuthorize = !!selectedProduct?.active && Number(selectedProduct.retail_price) > 0 && selectedProduct.hub_suppliers?.active === true;
   const approvedPartnerCount = partners.filter(partner => partner.status === "approved").length;
   const mutation = useMutation({
-    mutationFn: (active: boolean) => save({ data: { commercial_profile_id: partnerId, product_id: productId, active } }),
+    mutationFn: (active: boolean) => save({ data: { commercial_profile_id: partnerId, product_id: productId, active, expectedRevision: selected?.revision ?? null } }),
     onSuccess: () => {
       toast.success("Autorização atualizada");
       void client.invalidateQueries({ queryKey: ["admin-partner-product-grants"] });
