@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {rubiVideoCompletionPercent} from "./rubi-video-retention.functions.ts";
+import {rubiVideoCompletionPercent} from "./rubi-video-retention.ts";
 const sql=readFileSync(new URL("../../supabase/migrations/20261113030000_rubi_variant_video_retention.sql",import.meta.url),"utf8");
 const server=readFileSync(new URL("./rubi-video-retention.functions.ts",import.meta.url),"utf8");
 test("completion cohort rate rejects absent and impossible denominators",()=>{
