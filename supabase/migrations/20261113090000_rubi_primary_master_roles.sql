@@ -1,7 +1,8 @@
 -- Sprint 167: one immutable founding Master controls the delegation of owner access.
 -- No email is used to authorize Master access.
 create table if not exists public.rubi_primary_master (
- user_id uuid primary key references auth.users(id) on delete restrict,
+ singleton integer primary key default 1 check (singleton=1),
+ user_id uuid not null unique references auth.users(id) on delete restrict,
  created_at timestamptz not null default now()
 );
 alter table public.rubi_primary_master enable row level security;
@@ -10,8 +11,8 @@ revoke all on public.rubi_primary_master from public,anon,authenticated;
 do $bootstrap$
 declare owner_count integer; founding_owner uuid;
 begin
- select count(*),min(user_id) into owner_count,founding_owner
-  from public.user_roles where role='owner';
+ select count(*) into owner_count from public.user_roles where role='owner';
+ select user_id into founding_owner from public.user_roles where role='owner' limit 1;
  if owner_count <> 1 then
   raise exception 'Founding Master bootstrap requires exactly one existing owner role';
  end if;
