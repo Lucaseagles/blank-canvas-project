@@ -682,7 +682,8 @@ test("Movement campaign labels cannot silently overlap different variants of the
  const generator=source("./rubi-movement-distribution.ts");
  assert.match(generator,/variantId\.replaceAll\("-", ""\)\.slice\(0,12\)/);
  assert.match(server,/\.eq\("channel",data\.channel\)\.eq\("campaign",data\.campaign\)/);
- assert.match(server,/\.neq\("variant_id",data\.variant_id\)/);
+ assert.match(server,/othersOnLabel/);
+ assert.match(server,/x\.id!==data\.id/);
  assert.match(server,/\.from\("rubi_movement_variants"\)/);
  assert.match(server,/\.from\("rubi_movements"\)/);
  assert.match(server,/x\.product_id===movement\.product_id/);
