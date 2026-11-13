@@ -74,3 +74,20 @@ export const reviewRubiCreativeLicenseAdmin=createServerFn({method:"POST"})
   if(error)throw error;
   return {success:true};
  });
+
+/** Only the authenticated Master may inspect the proof. The 60-second URL is never cached. */
+export const inspectRubiCreativeLicenseEvidenceAdmin=createServerFn({method:"POST"})
+ .middleware([requireOwnerRole])
+ .validator((input:unknown)=>z.object({variantId:uuid}).parse(input))
+ .handler(async({data})=>{
+  const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
+  const db=supabaseAdmin as any;
+  const {data:license,error:readError}=await db.from("rubi_creative_licenses")
+   .select("evidence_path").eq("variant_id",data.variantId).maybeSingle();
+  if(readError)throw readError;
+  if(!license)throw new Error("Documento de licença não cadastrado.");
+  const {data:signed,error:signError}=await db.storage.from(bucket)
+   .createSignedUrl(license.evidence_path,60);
+  if(signError||!signed?.signedUrl)throw signError??new Error("Documento indisponível.");
+  return {url:String(signed.signedUrl),expiresInSeconds:60};
+ });
