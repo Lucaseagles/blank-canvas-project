@@ -28,6 +28,12 @@ begin
  if coalesce((p_values->>'active')::boolean,false) and not supplier.active then
   raise exception 'Supplier inactive';
  end if;
+ if coalesce((p_values->>'checkout_verified')::boolean,false) and (
+    lower(left(coalesce(p_values->>'checkout_url',''),8)) <> 'https://' or
+    lower(split_part(split_part(p_values->>'checkout_url','/',3),':',1))
+      is distinct from lower(supplier.checkout_host)
+  ) then raise exception 'Verified checkout must match active supplier HTTPS host';
+ end if;
  if (p_values->>'retail_price')::numeric < 0 or (p_values->>'supplier_cost')::numeric < 0 or
     nullif(p_values->>'b2b_base_price','')::numeric < 0 or
     (p_values->>'min_b2b_quantity')::integer < 1 then
@@ -50,10 +56,10 @@ begin
    'checkout_url',old_product.checkout_url);
   if (changes->>'supplier_id') is distinct from p_values->>'supplier_id' or
      (changes->>'title') is distinct from p_values->>'title' or
-     (changes->>'sku') is distinct from p_values->>'sku' or
+     coalesce(changes->>'sku','') is distinct from coalesce(p_values->>'sku','') or
      old_product.retail_price is distinct from (p_values->>'retail_price')::numeric or
      old_product.supplier_cost is distinct from (p_values->>'supplier_cost')::numeric or
-     (changes->>'checkout_url') is distinct from (p_values->>'checkout_url') then
+     coalesce(changes->>'checkout_url','') is distinct from coalesce(p_values->>'checkout_url','') then
     if coalesce((p_values->>'active')::boolean,false) then
       raise exception 'Unpublish commercial changes before saving';
     end if;
