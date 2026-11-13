@@ -641,3 +641,16 @@ test("Consent-first category personalization reaches marketplace and approved St
  assert.match(profile,/preferred_categories: selectedCategories/);
  assert.match(ranking,/seen\.has\(item\.offer\.productId\)/);
 });
+
+test("Movement Master editor exposes evidence validation and respects server editorial blockers",()=>{
+ const ui=source("../components/store/RubiMovementEngineAdmin.tsx");
+ const server=source("./rubi-movements.functions.ts");
+ assert.match(ui,/rubiMovementEditorialQuality\(draft\)/);
+ assert.match(ui,/disabled=\{!canSendToReview\}/);
+ assert.match(ui,/Corrija antes da revisão:/);
+ assert.match(ui,/fonte e data da pesquisa/);
+ assert.match(ui,/o que contradiz a hipótese/);
+ assert.match(ui,/Não registre entrevistas, métricas ou provas que não aconteceram/);
+ assert.match(server,/rubiMovementEditorialQuality\(data\)/);
+ assert.match(server,/if\(data.status==="review"&&!canReviewRubiMovement\(data\)\)/);
+});
