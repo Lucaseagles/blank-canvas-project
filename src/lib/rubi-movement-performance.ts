@@ -123,3 +123,18 @@ export function preflightRubiExperimentTraffic(
   !summaries.some(s=>s.ambiguousCampaigns>0||s.unobservedCampaigns>0||s.checkoutIntents>s.viewEvents),
   blockers,observedVariants:observed.length};
 }
+
+/** Operational attribution coverage, never a rate of paid purchases or a statistical test. */
+export function summarizeRubiTrackingCoverage(
+ summaries:RubiVariantTrafficSummary[],reportPartial:boolean
+){
+ const observed=summaries.reduce((n,s)=>n+s.observedCampaigns,0);
+ const ambiguous=summaries.reduce((n,s)=>n+s.ambiguousCampaigns,0);
+ const unobserved=summaries.reduce((n,s)=>n+s.unobservedCampaigns,0);
+ const total=observed+ambiguous+unobserved;
+ return {
+  observed,ambiguous,unobserved,total,
+  coveragePercent:reportPartial||total===0?null:Math.round(observed/total*1000)/10,
+  status:reportPartial?"partial":total===0?"empty":ambiguous+unobserved===0?"complete":"needs_attention"
+ } as const;
+}
