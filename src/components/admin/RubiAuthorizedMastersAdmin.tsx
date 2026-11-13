@@ -27,7 +27,7 @@ export function RubiAuthorizedMastersAdmin(){
   {query.isLoading&&<p role="status">Consultando permissões...</p>}
   {query.isError&&<p role="alert" className="text-destructive">Falha ao consultar permissões.</p>}
   {query.data?.partial&&<p role="alert" className="text-xs">Listagem limitada aos 100 primeiros Masters. Revise antes de alterar permissões.</p>}
-  {query.data?.masters.map(item=><div key={item.userId} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border p-3">
+  {query.data?.masters.map((item:{userId:string;isFoundingMaster:boolean})=><div key={item.userId} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border p-3">
    <div className="min-w-0"><p className="text-sm font-semibold">{item.isFoundingMaster?"Master fundador":"Master autorizado"}</p><p className="break-all font-mono text-xs text-muted-foreground">{item.userId}</p></div>
    {query.data?.isFoundingMaster&&!item.isFoundingMaster&&<Button type="button" variant="outline" disabled={mutation.isPending} onClick={()=>manage(item.userId,false)}>Revogar acesso</Button>}
   </div>)}
@@ -35,7 +35,7 @@ export function RubiAuthorizedMastersAdmin(){
    <label className="block space-y-1 text-sm font-semibold">ID de uma conta já cadastrada
     <input className="block w-full rounded-lg border bg-background p-2 font-mono text-xs" value={targetId} onChange={e=>setTargetId(e.target.value.trim())} placeholder="UUID do usuário"/>
    </label>
-   <Button type="button" disabled={mutation.isPending||!validId||!!query.data?.masters.some(m=>m.userId===targetId)} onClick={()=>manage(targetId,true)}>Autorizar novo Master</Button>
+   <Button type="button" disabled={mutation.isPending||!validId||!!query.data?.masters.some((m:{userId:string})=>m.userId===targetId)} onClick={()=>manage(targetId,true)}>Autorizar novo Master</Button>
   </div>}
  </section>;
 }
