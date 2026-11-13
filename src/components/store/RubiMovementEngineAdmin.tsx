@@ -5,6 +5,7 @@ import {toast} from "sonner";
 import {Button} from "@/components/ui/button";
 import {RubiMovementVariantsAdmin} from "@/components/store/RubiMovementVariantsAdmin";
 import {RubiMovementPerformanceAdmin} from "@/components/store/RubiMovementPerformanceAdmin";
+import {RubiAudienceEvidenceBuilder} from "@/components/store/RubiAudienceEvidenceBuilder";
 import {emptyRubiMovement,rubiMovementChecklist,rubiMovementEditorialQuality,type RubiMovement} from "@/lib/rubi-movements";
 import {listRubiMovementsAdmin,saveRubiMovementAdmin,archiveRubiMovementAdmin} from "@/lib/rubi-movements.functions";
 
@@ -78,6 +79,7 @@ export function RubiMovementEngineAdmin({products}:{products:Product[]}){
    {field("differentiator","Qual é a diferença da narrativa?","Por que esse enfoque interessa ao público?")}
    {field("narrative","Qual história conecta tudo?","Gancho → situação → benefício → convite para conhecer",4)}
    {field("evidence_notes","Quais fontes sustentam a mensagem?","Referência à ficha do fornecedor e direitos de uso")}
+   <RubiAudienceEvidenceBuilder onApply={notes=>change("evidence_notes",notes)}/>
    <div className="rounded-lg bg-muted/40 p-3 text-sm"><strong>Checklist de preparação: {check?.completed}/{check?.total}</strong>
     <p className="mt-1 text-muted-foreground">{check?.missing.length? "Faltam: "+check.missing.join(", "):"Campos completos. A revisão e a comprovação ainda são humanas."}</p>
     {editorialQuality&&!editorialQuality.ready&&<p role="alert" className="mt-2 text-amber-700 dark:text-amber-300">Corrija antes da revisão: {editorialQuality.repeated.join(" · ")}</p>}
