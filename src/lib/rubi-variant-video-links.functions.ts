@@ -44,9 +44,11 @@ export const saveRubiVariantVideoLinkAdmin=createServerFn({method:"POST"})
   if(existingError)throw existingError;
   if(existing&&existing.variant_id!==data.variantId)
    throw new Error("Vídeo já associado a outra variante. Desvincule antes de reutilizar.");
-  const {error}=await db.from("rubi_variant_video_links")
-   .upsert({video_id:data.videoId,variant_id:data.variantId},{onConflict:"video_id"});
-  if(error)throw error;
+  if(!existing){
+   const {error}=await db.from("rubi_variant_video_links")
+    .insert({video_id:data.videoId,variant_id:data.variantId});
+   if(error)throw error;
+  }
   return {success:true,note:"Vínculo editorial, sem atribuição automática de vendas ou retenção."};
  });
 export const deleteRubiVariantVideoLinkAdmin=createServerFn({method:"POST"})
