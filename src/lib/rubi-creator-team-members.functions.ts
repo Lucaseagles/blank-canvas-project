@@ -5,7 +5,7 @@ import {requireOwnerRole} from "./auth-guards.server";
 const uuid=z.string().uuid();
 const assignmentSchema=z.object({
  teamId:uuid,commercialProfileId:uuid,
- status:z.enum(["active","paused"])
+ status:z.enum(["active","paused"]),expectedStatus:z.enum(["active","paused"]).nullable()
 });
 
 /** Master-only membership directory. An assigned member is not a confirmed sale or authorized product. */
@@ -35,24 +35,14 @@ export const listRubiCreatorTeamMembersAdmin=createServerFn({method:"GET"})
 export const assignRubiCreatorTeamMemberAdmin=createServerFn({method:"POST"})
  .middleware([requireOwnerRole])
  .validator((input:unknown)=>assignmentSchema.parse(input))
- .handler(async({data})=>{
+ .handler(async({data,context})=>{
   const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
-  const db=supabaseAdmin as any;
-  const [teamResult,profileResult]=await Promise.all([
-   db.from("rubi_creator_teams").select("id").eq("id",data.teamId).maybeSingle(),
-   db.from("commercial_profiles").select("id,audience,status")
-    .eq("id",data.commercialProfileId).maybeSingle()
-  ]);
-  if(teamResult.error)throw teamResult.error;
-  if(profileResult.error)throw profileResult.error;
-  if(!teamResult.data)throw new Error("Time não encontrado.");
-  const profile=profileResult.data;
-  if(!profile||profile.audience!=="partner"||profile.status!=="approved")
-   throw new Error("Somente parceiros comerciais aprovados podem integrar um time.");
-  const {data:row,error}=await db.from("rubi_creator_team_members").upsert({
-   team_id:data.teamId,commercial_profile_id:data.commercialProfileId,status:data.status,
-   updated_at:new Date().toISOString()
-  },{onConflict:"team_id,commercial_profile_id"}).select("id").single();
+  const {data:rows,error}=await (supabaseAdmin as any).rpc("rubi_set_team_membership_audited",{
+   p_actor:context.userId,p_team:data.teamId,p_profile:data.commercialProfileId,
+   p_status:data.status,p_expected_status:data.expectedStatus
+  });
   if(error)throw error;
-  return {id:String(row.id),notice:"Vínculo de time salvo. Produtos e remuneração permanecem inalterados."};
+  const row=rows?.[0];
+  if(!row)throw new Error("Vínculo e auditoria não registrados.");
+  return {id:String(row.saved_id),notice:"Vínculo de time auditado. Produtos e remuneração permanecem inalterados."};
  });

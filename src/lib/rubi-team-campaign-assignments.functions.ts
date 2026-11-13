@@ -6,7 +6,7 @@ const newAssignment=z.object({
  teamId:uuid,campaignPlanId:uuid,movementId:uuid,variantId:uuid,
  notes:z.string().trim().max(1000)
 });
-const changeStatus=z.object({id:uuid,status:z.enum(["ready","paused"])});
+const changeStatus=z.object({id:uuid,status:z.enum(["ready","paused"]),expectedStatus:z.enum(["planned","ready","paused"])});
 
 /** Plans and candidate lists are visible only to the Shadow Master. */
 export const listRubiTeamCampaignAssignmentsAdmin=createServerFn({method:"GET"})
@@ -30,59 +30,29 @@ export const listRubiTeamCampaignAssignmentsAdmin=createServerFn({method:"GET"})
     (assignments.data??[]).length===200};
  });
 
-async function verifyAssignment(db:any,input:{teamId:string;campaignPlanId:string;movementId:string;variantId:string}){
- const [teamResult,planResult,movementResult,variantResult]=await Promise.all([
-  db.from("rubi_creator_teams").select("id,stage").eq("id",input.teamId).maybeSingle(),
-  db.from("rubi_master_campaign_plans").select("id,product_id,mode,status").eq("id",input.campaignPlanId).maybeSingle(),
-  db.from("rubi_movements").select("id,product_id,status").eq("id",input.movementId).maybeSingle(),
-  db.from("rubi_movement_variants").select("id,movement_id,status,media_rights_confirmed").eq("id",input.variantId).maybeSingle()
- ]);
- for(const result of [teamResult,planResult,movementResult,variantResult])if(result.error)throw result.error;
- const team=teamResult.data,plan=planResult.data,movement=movementResult.data,variant=variantResult.data;
- if(!team||!plan||!movement||!variant)throw new Error("Time, plano, movimento ou variante não encontrado.");
- if(plan.mode!=="creator_team")throw new Error("Somente campanhas do tipo time de criadores podem ser associadas.");
- if(plan.product_id!==movement.product_id||variant.movement_id!==movement.id)
-  throw new Error("O movimento e a variante precisam pertencer ao mesmo produto do plano.");
- return {team,plan,movement,variant};
-}
-/** Draft assignments do not mean publication. Only a reviewed campaign+movement+variant can become ready. */
+/** All planning decisions are committed with a named Owner audit in a single transaction. */
 export const createRubiTeamCampaignAssignmentAdmin=createServerFn({method:"POST"})
  .middleware([requireOwnerRole]).validator((input:unknown)=>newAssignment.parse(input))
- .handler(async({data})=>{
+ .handler(async({data,context})=>{
   const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
-  const db=supabaseAdmin as any;
-  await verifyAssignment(db,data);
-  const {data:result,error}=await db.from("rubi_creator_team_campaign_assignments").insert({
-   team_id:data.teamId,campaign_plan_id:data.campaignPlanId,movement_id:data.movementId,
-   variant_id:data.variantId,editorial_notes:data.notes,status:"planned"
-  }).select("id").single();
+  const {data:rows,error}=await (supabaseAdmin as any).rpc("rubi_create_team_campaign_assignment_audited",{
+   p_actor:context.userId,p_team:data.teamId,p_plan:data.campaignPlanId,
+   p_movement:data.movementId,p_variant:data.variantId,p_notes:data.notes
+  });
   if(error)throw error;
-  return {id:String(result.id),notice:"Associação planejada. Ainda não há anúncio ou divulgação ativa."};
+  const row=rows?.[0];
+  if(!row)throw new Error("Associação planejada não registrada.");
+  return {id:String(row.saved_id),notice:"Associação planejada e auditada. Nenhuma publicação ou venda foi registrada."};
  });
 export const changeRubiTeamCampaignAssignmentStatusAdmin=createServerFn({method:"POST"})
  .middleware([requireOwnerRole]).validator((input:unknown)=>changeStatus.parse(input))
- .handler(async({data})=>{
+ .handler(async({data,context})=>{
   const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
-  const db=supabaseAdmin as any;
-  const {data:existing,error:readError}=await db.from("rubi_creator_team_campaign_assignments")
-   .select("id,team_id,campaign_plan_id,movement_id,variant_id,status").eq("id",data.id).maybeSingle();
-  if(readError)throw readError;
-  if(!existing)throw new Error("Associação não localizada.");
-  if(existing.status===data.status)throw new Error("Esta associação já está neste estado.");
-  if(data.status==="ready"){
-   const checked=await verifyAssignment(db,{
-    teamId:existing.team_id,campaignPlanId:existing.campaign_plan_id,
-    movementId:existing.movement_id,variantId:existing.variant_id
-   });
-   if(checked.team.stage==="paused"||checked.plan.status!=="approved"||
-      checked.movement.status!=="review"||checked.variant.status!=="review"||
-      checked.variant.media_rights_confirmed!==true)
-    throw new Error("Revise o time, aprove o plano e valide movimento, criativo e direitos de mídia antes de marcar como pronto.");
-  }
-  const {data:updated,error}=await db.from("rubi_creator_team_campaign_assignments")
-   .update({status:data.status,updated_at:new Date().toISOString()})
-   .eq("id",data.id).eq("status",existing.status).select("id").maybeSingle();
+  const {data:rows,error}=await (supabaseAdmin as any).rpc("rubi_transition_team_campaign_assignment_audited",{
+   p_actor:context.userId,p_id:data.id,p_status:data.status,p_expected_status:data.expectedStatus
+  });
   if(error)throw error;
-  if(!updated)throw new Error("Associação alterada em outra sessão. Atualize antes de tentar novamente.");
-  return {id:String(updated.id),notice:"Estado atualizado. Pronto não significa publicação, venda ou verba gasta."};
+  const row=rows?.[0];
+  if(!row)throw new Error("Decisão não registrada.");
+  return {id:String(row.saved_id),notice:"Estado auditado. Pronto não significa publicação, venda ou verba gasta."};
  });
