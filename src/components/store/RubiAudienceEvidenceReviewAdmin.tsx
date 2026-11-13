@@ -48,7 +48,7 @@ export function RubiAudienceEvidenceReviewAdmin({movementId,movementRevision,evi
   {query.isLoading&&<p role="status" className="text-xs">Consultando histórico...</p>}
   {query.isError&&<p role="alert" className="text-xs text-destructive">Histórico indisponível. Confira migração e permissão Master.</p>}
   {query.data?.partial&&<p role="alert" className="text-xs">Histórico parcial: exibidas somente as 50 decisões mais recentes.</p>}
-  {query.data?.rows?.map(row=><article key={row.id} className="space-y-1 rounded-lg border bg-muted/20 p-3">
+  {query.data?.rows?.map((row:{id:string;outcome:string;movement_revision:number;created_at:string;source_reference:string;reviewer_note:string})=><article key={row.id} className="space-y-1 rounded-lg border bg-muted/20 p-3">
    <p className="text-xs font-semibold">{row.outcome==="document_reviewed"?"Documento examinado (sem validar mercado)":"Mais evidências necessárias"}</p>
    <p className="text-xs text-muted-foreground">Versão {row.movement_revision} · {new Date(row.created_at).toLocaleString("pt-BR")}</p>
    <p className="text-xs break-words">Fonte: {row.source_reference}</p>
