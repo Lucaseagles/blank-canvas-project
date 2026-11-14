@@ -32,3 +32,14 @@ test("reject invalid prices, fractional units and extreme quantities", () => {
     assert.throws(() => calculateRubiBusinessLine({ ...valid, basePrice }));
   }
 });
+
+test("quantity breakpoint remains correct for adversarially unordered tiers", () => {
+ const original={title:"Fone",minQuantity:5,basePrice:60,tiers:[
+  {min_quantity:20,unit_price:45},{min_quantity:5,unit_price:57},
+  {min_quantity:10,unit_price:52}]};
+ for(const [quantity,unitCents] of [[5,5700],[8,5700],[10,5200],[19,5200],[20,4500],[30,4500]]){
+  const result=calculateRubiBusinessLine({...original,quantity});
+  assert.equal(result.unitCents,unitCents);
+  assert.equal(result.totalCents,unitCents*quantity);
+ }
+});
