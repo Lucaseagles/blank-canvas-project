@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireOwnerRole } from "./auth-guards.server";
 import { approvedRubiCheckout, normalizeRubiCheckoutHost, verifyRubiCheckoutUrl } from "./rubi-checkout-validation";
 import { requiresSupplierCheckoutReverification } from "./rubi-supplier-host-safety";
+import {rankRubiAudienceCatalog} from "./rubi-audience-catalog-ranking";
 
 export const getRetailHubCatalog = createServerFn({method:"GET"}).handler(async()=>{
  const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
@@ -49,13 +50,14 @@ export const getMerchantHubCatalog = createServerFn({method:"POST"})
  const {data:authResult,error:authError}=await supabaseAdmin.auth.getUser(data.accessToken);
  const userId=authResult.user?.id;
  if(authError || !userId) throw new Error("Sessão inválida. Entre novamente para consultar o atacado.");
- const {data:profile,error:profileError}=await (supabaseAdmin as any).from("commercial_profiles").select("id").eq("user_id",userId).eq("audience","merchant").eq("status","approved").maybeSingle();
+ const {data:profile,error:profileError}=await (supabaseAdmin as any).from("commercial_profiles").select("id,qualification_answers").eq("user_id",userId).eq("audience","merchant").eq("status","approved").maybeSingle();
  if(profileError) throw profileError;
  if(!profile) throw new Error("Acesso exclusivo para lojistas aprovados.");
  const {data:products,error}=await (supabaseAdmin as any).from("hub_products").select("id,title,description,image_url,category,b2b_base_price,min_b2b_quantity,hub_b2b_tiers(min_quantity,unit_price),hub_suppliers!inner(active,checkout_host)").eq("hub_suppliers.active",true).eq("active",true).gt("b2b_base_price",0).order("created_at",{ascending:false}).limit(60);
  if(error) throw error;
  const safeProducts=(products??[]).filter((product:any)=>Number.isSafeInteger(product.min_b2b_quantity) && product.min_b2b_quantity > 0 && product.min_b2b_quantity <= 10000000 && Number.isFinite(Number(product.b2b_base_price)) && Number(product.b2b_base_price)>0);
- return safeProducts.map(({hub_suppliers: _supplier,...product}:any)=>({...product,hub_b2b_tiers:(product.hub_b2b_tiers??[]).filter((tier:any)=>Number.isSafeInteger(tier.min_quantity) && tier.min_quantity >= product.min_b2b_quantity && tier.min_quantity <= 10000000 && Number.isFinite(Number(tier.unit_price)) && Number(tier.unit_price)>0)}));
+ const eligible=safeProducts.map(({hub_suppliers: _supplier,...product}:any)=>({...product,hub_b2b_tiers:(product.hub_b2b_tiers??[]).filter((tier:any)=>Number.isSafeInteger(tier.min_quantity) && tier.min_quantity >= product.min_b2b_quantity && tier.min_quantity <= 10000000 && Number.isFinite(Number(tier.unit_price)) && Number(tier.unit_price)>0)}));
+ return rankRubiAudienceCatalog(eligible,"merchant",profile.qualification_answers);
 });
 export const getHubCatalogAdmin = createServerFn({method:"GET"}).middleware([requireOwnerRole]).handler(async()=>{
  const {supabaseAdmin}=await import("@/integrations/supabase/client.server");

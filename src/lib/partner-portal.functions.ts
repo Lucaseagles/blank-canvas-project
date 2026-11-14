@@ -1,6 +1,7 @@
 import { fetchAllFinancialRows, fetchFinancialRowsByIds } from "./financial-pagination.server";
 import { createServerFn } from "@tanstack/react-start";
 import { approvedRubiCheckout } from "./rubi-checkout-validation";
+import {rankRubiAudienceCatalog} from "./rubi-audience-catalog-ranking";
 import { z } from "zod";
 
 export const getMyPartnerPortal = createServerFn({ method: "POST" })
@@ -12,18 +13,20 @@ export const getMyPartnerPortal = createServerFn({ method: "POST" })
     const userId = verified.user?.id;
     if (authError || !userId) throw new Error("Sessão expirada. Entre novamente.");
     const { data: profile, error: profileError } = await (supabaseAdmin as any)
-      .from("commercial_profiles").select("id,display_name,partner_type,status")
+      .from("commercial_profiles").select("id,display_name,partner_type,status,qualification_answers")
       .eq("user_id", userId).eq("audience", "partner").maybeSingle();
     if (profileError) throw profileError;
     if (!profile) return { profile: null, products: [] };
-    if (profile.status !== "approved") return { profile, products: [] };
+    const {qualification_answers: quiz, ...safeProfile}=profile;
+    if (profile.status !== "approved") return { profile:safeProfile, products: [] };
     const grants = await fetchAllFinancialRows(() => (supabaseAdmin as any)
       .from("hub_partner_product_grants").select("product_id")
       .eq("commercial_profile_id", profile.id).eq("active", true).order("product_id", { ascending: true }));
     const ids = (grants ?? []).map((grant: { product_id: string }) => grant.product_id);
-    if (!ids.length) return { profile, products: [] };
+    if (!ids.length) return { profile:safeProfile, products: [] };
     const products = await fetchFinancialRowsByIds(ids, (batchIds) => (supabaseAdmin as any)
       .from("hub_products").select("id,title,description,image_url,category,retail_price,checkout_url,checkout_verified,hub_suppliers!inner(active,checkout_host)")
       .in("id", batchIds).eq("hub_suppliers.active", true).eq("active", true).gt("retail_price", 0).order("id", { ascending: true }));
-    return { profile, products: (products ?? []).filter((product: any) => approvedRubiCheckout(product)).map(({ hub_suppliers: _supplier, checkout_url: _url, checkout_verified: _verified, ...product }: any) => product) };
+    const eligible=(products ?? []).filter((product: any) => approvedRubiCheckout(product)).map(({ hub_suppliers: _supplier, checkout_url: _url, checkout_verified: _verified, ...product }: any) => product);
+    return { profile:safeProfile, products:rankRubiAudienceCatalog(eligible,"partner",quiz) };
   });
