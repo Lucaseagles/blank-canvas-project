@@ -5,6 +5,7 @@ import {toast} from "sonner";
 import {Button} from "@/components/ui/button";
 import {Megaphone,Users,ExternalLink,ShieldCheck} from "lucide-react";
 import {RubiCreatorTeamGrowthAdmin,type GrowthTargetRow} from "./RubiCreatorTeamGrowthAdmin";
+import {RubiCreatorFitReviewAdmin,type FitReview} from "./RubiCreatorFitReviewAdmin";
 import {listRubiCreatorTeamsAdmin,saveRubiCreatorTeamAdmin,saveRubiCreatorProspectAdmin} from "@/lib/rubi-creator-teams.functions";
 type Team={id:string;revision:number;name:string;niche:string;objective:string;stage:string};
 type Prospect={id:string;revision:number;team_id:string;creator_name:string;platform:string;profile_url:string;follower_count:number;tier:string;stage:string;compensation_model:string;proposed_commission_percent:number|null;proposed_fixed_fee:number|null;notes:string};
@@ -16,6 +17,7 @@ export function RubiCreatorTeamsAdmin(){
  const query=useQuery({queryKey:["rubi-creator-teams"],queryFn:()=>get(),retry:false});
  const teams=(query.data?.teams??[]) as Team[],prospects=(query.data?.prospects??[]) as Prospect[];
  const targets=(query.data?.targets??[]) as GrowthTargetRow[];
+ const fitReviews=(query.data?.fitReviews??[]) as FitReview[];
  const [selectedTeam,setSelectedTeam]=useState("");
  const [teamName,setTeamName]=useState(""),[niche,setNiche]=useState(""),[objective,setObjective]=useState("");
  const [creatorName,setCreatorName]=useState(""),[platform,setPlatform]=useState<"instagram"|"tiktok"|"youtube"|"other">("instagram"),[profileUrl,setProfileUrl]=useState("");
@@ -84,6 +86,7 @@ export function RubiCreatorTeamsAdmin(){
      <p className="text-xs text-muted-foreground">{p.platform} · {p.tier} · {p.follower_count.toLocaleString("pt-BR")} seguidores informados</p>
      <p className="text-xs">Proposta: {p.compensation_model} · {p.proposed_commission_percent??"—"}% comissão · {p.proposed_fixed_fee===null?"—":p.proposed_fixed_fee.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})} fixo</p>
      <label className="block space-y-1 text-xs font-semibold">Etapa<select aria-label={"Etapa de "+p.creator_name} value={p.stage} disabled={changeStage.isPending} onChange={e=>changeStage.mutate({p,stage:e.target.value})} className="block w-full rounded-lg border bg-background p-2">{Object.entries(stageLabels).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
+     <RubiCreatorFitReviewAdmin key={p.id+":"+(fitReviews.find(r=>r.prospect_id===p.id)?.revision??0)} prospectId={p.id} review={fitReviews.find(r=>r.prospect_id===p.id)}/>
      {p.notes&&<p className="whitespace-pre-wrap text-xs text-muted-foreground">{p.notes}</p>}
     </div>)}</div>
    </article>})}

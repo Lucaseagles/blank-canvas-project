@@ -8,11 +8,15 @@ export const getCommercialProfilesAdmin = createServerFn({ method: "GET" }).midd
  if(error) throw error;
  return data ?? [];
 });
+/** Legacy admin route uses same audited decision as the canonical approval panel. */
 export const decideCommercialProfile = createServerFn({ method: "POST" }).middleware([requireOwnerRole])
  .validator((input:unknown)=>z.object({id:z.string().uuid(),status:z.enum(["approved","rejected"])}).parse(input))
- .handler(async ({data})=>{
- const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
- const {error}=await (supabaseAdmin as any).from("commercial_profiles").update({status:data.status,updated_at:new Date().toISOString()}).eq("id",data.id).eq("status","pending");
- if(error) throw error;
- return {success:true};
+ .handler(async({data,context})=>{
+  const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
+  const {data:rows,error}=await (supabaseAdmin as any).rpc("rubi_decide_commercial_profile_audited",{
+   p_actor:context.userId,p_profile_id:data.id,p_decision:data.status
+  });
+  if(error)throw error;
+  if(!rows?.length)throw new Error("Decisão não registrada.");
+  return {success:true};
  });
