@@ -21,7 +21,9 @@ export function calculateRubiBusinessLine(input: BusinessPriceInput): { unitCent
   };
   let unitCents = toCents(input.basePrice);
   let threshold = input.minQuantity - 1;
-  for (const tier of input.tiers) {
+  // Database relation order is unspecified. Highest eligible minimum wins.
+  const ordered = [...input.tiers].sort((a,b) => a.min_quantity - b.min_quantity);
+  for (const tier of ordered) {
     if (!Number.isSafeInteger(tier.min_quantity) || tier.min_quantity < input.minQuantity
       || tier.min_quantity > input.quantity || tier.min_quantity <= threshold) continue;
     threshold = tier.min_quantity;
