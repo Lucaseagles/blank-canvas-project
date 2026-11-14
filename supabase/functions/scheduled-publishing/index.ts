@@ -5,6 +5,8 @@ const REPO = "Lucaseagles/blank-canvas-project";
 const ISSUER = "https://token.actions.githubusercontent.com";
 const JWKS_URL = `${ISSUER}/.well-known/jwks`;
 const EXPECTED_AUDIENCE = "scheduled-publishing";
+const EXPECTED_REF = "refs/heads/main";
+const EXPECTED_WORKFLOW_REF = `${REPO}/.github/workflows/scheduled-publishing.yml@${EXPECTED_REF}`;
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -12,7 +14,7 @@ const supabase = createClient(
   { auth: { persistSession: false, autoRefreshToken: false } },
 );
 
-type Claims = { iss?: string; aud?: string; repository?: string; exp?: number; nbf?: number };
+type Claims = { iss?: string; aud?: string | string[]; repository?: string; ref?: string; workflow_ref?: string; event_name?: string; exp?: number; nbf?: number; iat?: number };
 type Jwk = JsonWebKey & { kid?: string; alg?: string; use?: string };
 let jwksCache: { keys: Jwk[]; expiresAt: number } | null = null;
 
@@ -42,8 +44,11 @@ async function verifyGitHubOidc(request: Request): Promise<void> {
   const claims = decodeJson<Claims>(parts[1]);
   if (header.alg !== "RS256" || !header.kid) throw new Error("Unauthorized");
   if (claims.iss !== ISSUER || claims.aud !== EXPECTED_AUDIENCE || claims.repository !== REPO) throw new Error("Unauthorized");
+  // A repository-wide OIDC token is insufficient: restrict the caller to the trusted main workflow.
+  if (claims.ref !== EXPECTED_REF || claims.workflow_ref !== EXPECTED_WORKFLOW_REF) throw new Error("Unauthorized");
+  if (claims.event_name !== "schedule" && claims.event_name !== "workflow_dispatch") throw new Error("Unauthorized");
   const now = Math.floor(Date.now() / 1000);
-  if (!claims.exp || claims.exp < now || (claims.nbf && claims.nbf > now + 30)) throw new Error("Unauthorized");
+  if (!claims.exp || claims.exp <= now || (claims.nbf && claims.nbf > now + 30) || (claims.iat && claims.iat > now + 30)) throw new Error("Unauthorized");
   const jwk = (await getJwks()).find((key) => key.kid === header.kid);
   if (!jwk) throw new Error("Unauthorized");
   const publicKey = await crypto.subtle.importKey("jwk", jwk, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["verify"]);
