@@ -19,3 +19,12 @@ test("worker OIDC is restricted to main scheduled-publishing workflow, not any r
   assert.match(workflow, /workflow_dispatch:/);
   assert.match(workflow, /id-token: write/);
 });
+
+test("malformed OIDC credentials are rejected as 401 rather than leaking a server error", () => {
+  assert.ok(worker.includes("token.length > 16384"));
+  assert.ok(worker.includes("parts.some((part) => !part"));
+  assert.ok(worker.includes("header = decodeJson"));
+  assert.ok(worker.includes("claims = decodeJson"));
+  assert.ok(worker.includes('throw new Error("Unauthorized");'));
+  assert.ok(worker.includes("status: unauthorized ? 401 : 500"));
+});
