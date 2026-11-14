@@ -1,0 +1,20 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+const read=p=>readFileSync(new URL(p,import.meta.url),"utf8");
+test("Publishing schema drift repair restores exactly the existing code's necessary tables and columns",()=>{
+ const migration=read("../../supabase/migrations/20261114050000_rubi_publishing_schema_drift_repair.sql");
+ const publisher=read("./admin-publishing.functions.ts");
+ const orchestrator=read("./strategy-orchestrator.functions.ts");
+ assert.match(migration,/create table if not exists public\.strategy_orchestration_videos/);
+ assert.match(migration,/alter table public\.strategy_orchestration_videos enable row level security/);
+ assert.match(migration,/revoke all on public\.strategy_orchestration_videos from public,anon,authenticated/);
+ assert.match(migration,/grant select,insert,update,delete on public\.strategy_orchestration_videos to service_role/);
+ assert.match(migration,/add column if not exists campaign_id uuid references public\.campaigns/);
+ assert.match(migration,/add column if not exists orchestration_id uuid references public\.strategy_orchestrations/);
+ assert.match(publisher,/from\("strategy_orchestration_videos"\)/);
+ assert.match(publisher,/campaign_id: video\.campaign_id/);
+ assert.match(publisher,/orchestration_id: data\.orchestration_id/);
+ assert.match(orchestrator,/create_strategy_orchestration/);
+ assert.doesNotMatch(migration,/insert into public\.scheduled_posts|insert into public\.strategy_orchestrations/);
+});
