@@ -1,7 +1,10 @@
 import {createFileRoute,Link} from "@tanstack/react-router";
 import {useQuery} from "@tanstack/react-query";
 import {useServerFn} from "@tanstack/react-start";
-import {useMemo,useState} from "react";
+import {useEffect,useMemo,useState} from "react";
+import {supabase} from "@/integrations/supabase/client";
+import {getRubiStoreInterestCategories} from "@/lib/rubi-store-interest.functions";
+import {rankRubiStoreCatalog} from "@/lib/rubi-store-category-ranking";
 import {getRetailHubCatalog} from "@/lib/hub-catalog.functions";
 import {RubiStorefrontStories} from "@/components/store/RubiStorefrontStories";
 import {RubiStorefrontSections} from "@/components/store/RubiStorefrontSections";
@@ -13,7 +16,7 @@ export const Route=createFileRoute("/hub-shop")({
  component:Catalog
 });
 type Product={id:string;title:string;description:string|null;image_url:string|null;category:string|null;retail_price:number};
-type SortOrder="recent"|"price-asc"|"price-desc"|"title";
+type SortOrder="recommended"|"recent"|"price-asc"|"price-desc"|"title";
 const money=(v:number)=>Number(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 const link="/hub-product/$productId" as const;
 function ProductTile({product,index=0}:{product:Product;index?:number}){
@@ -36,22 +39,35 @@ function ProductTile({product,index=0}:{product:Product;index?:number}){
 }
 function Catalog(){
  const load=useServerFn(getRetailHubCatalog);
+ const loadInterests=useServerFn(getRubiStoreInterestCategories);
+ const [identity,setIdentity]=useState<{userId:string;accessToken:string}|null>(null);
+ useEffect(()=>{let mounted=true;const refresh=()=>{void supabase.auth.getSession().then(({data})=>{
+  if(!mounted)return;
+  const session=data.session;
+  setIdentity(session?{userId:session.user.id,accessToken:session.access_token}:null);
+ }).catch(()=>{if(mounted)setIdentity(null);});};
+ refresh();const {data:listener}=supabase.auth.onAuthStateChange(()=>refresh());
+ return()=>{mounted=false;listener.subscription.unsubscribe();};},[]);
+ const interests=useQuery({queryKey:["rubi-store-interests",identity?.userId??"anonymous"],
+  queryFn:()=>loadInterests({data:{accessToken:identity!.accessToken}}),
+  enabled:identity!==null,retry:false,staleTime:60000});
  const {data=[],isLoading,error,refetch}=useQuery({queryKey:["hub-catalog","retail"],queryFn:()=>load(),retry:false});
  const products=data as Product[];
  const [search,setSearch]=useState("");
  const [category,setCategory]=useState("");
- const [sort,setSort]=useState<SortOrder>("recent");
+ const [sort,setSort]=useState<SortOrder>("recommended");
+ const ranked=useMemo(()=>rankRubiStoreCatalog(products,interests.data??[]),[products,interests.data]);
  const categories=useMemo(()=>[...new Set(products.map(p=>p.category?.trim()).filter((x):x is string=>!!x))].sort((a,b)=>a.localeCompare(b,"pt-BR")),[products]);
  const filtered=useMemo(()=>{
   const term=search.trim().toLocaleLowerCase("pt-BR");
-  const matching=products.filter(p=>(!term||[p.title,p.description??"",p.category??""].some(v=>v.toLocaleLowerCase("pt-BR").includes(term)))&&(!category||p.category?.trim()===category));
+  const matching=(sort==="recommended"?ranked:products).filter(p=>(!term||[p.title,p.description??"",p.category??""].some(v=>v.toLocaleLowerCase("pt-BR").includes(term)))&&(!category||p.category?.trim()===category));
   if(sort==="price-asc")matching.sort((a,b)=>Number(a.retail_price)-Number(b.retail_price));
   if(sort==="price-desc")matching.sort((a,b)=>Number(b.retail_price)-Number(a.retail_price));
   if(sort==="title")matching.sort((a,b)=>a.title.localeCompare(b.title,"pt-BR"));
   return matching;
- },[products,search,category,sort]);
- const featured=products[0];
- const clear=()=>{setSearch("");setCategory("");setSort("recent");};
+ },[products,ranked,search,category,sort]);
+ const featured=ranked[0];
+ const clear=()=>{setSearch("");setCategory("");setSort("recommended");};
  return <main className="min-h-screen bg-background pb-28 pt-24 sm:pt-28">
   <div className="mx-auto max-w-7xl space-y-8 px-4 sm:px-6 lg:px-8">
    <nav aria-label="Trilha de navegação" className="flex items-center gap-2 text-xs text-muted-foreground"><Link to="/" className="hover:text-primary">RUBI Eagles</Link><ChevronRight className="h-3.5 w-3.5"/><span className="font-semibold text-foreground">Loja oficial</span></nav>
@@ -89,7 +105,7 @@ function Catalog(){
    <RubiStorefrontStories />
    <section id="rubi-products" className="scroll-mt-28 space-y-6" aria-label="Vitrine de produtos RUBI">
     <div className="flex flex-wrap items-end justify-between gap-3">
-     <div><p className="text-[10px] font-black uppercase tracking-[.22em] text-primary">RUBI EDIT · SUA VITRINE</p><h2 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">Explore a coleção</h2><p className="mt-2 text-sm text-muted-foreground">Produtos com fornecedor ativo, preço cadastrado e checkout oficial validado.</p></div>
+     <div><p className="text-[10px] font-black uppercase tracking-[.22em] text-primary">RUBI EDIT · SUA VITRINE</p><h2 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">Explore a coleção</h2><p className="mt-2 text-sm text-muted-foreground">Produtos com fornecedor ativo, preço cadastrado e checkout oficial validado. Quem escolheu categorias no perfil vê primeiro opções relacionadas, com espaço para descobrir novidades.</p></div>
      <span className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold text-muted-foreground"><CheckCircle2 className="h-4 w-4 text-primary"/> Conferência de disponibilidade por produto</span>
     </div>
     {isLoading&&<div role="status" className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">{[0,1,2,3,4,5,6,7].map(i=><div key={i} className="animate-pulse overflow-hidden rounded-3xl border bg-card"><div className="aspect-[4/4.3] bg-muted"/><div className="space-y-3 p-4"><div className="h-5 w-4/5 rounded bg-muted"/><div className="h-4 w-1/2 rounded bg-muted"/></div></div>)}</div>}
@@ -100,7 +116,7 @@ function Catalog(){
       <div className="flex flex-wrap items-center gap-2"><SlidersHorizontal className="h-4 w-4 text-primary"/><span className="text-sm font-extrabold">Encontre o seu produto</span><span className="ml-auto text-xs text-muted-foreground">{filtered.length} de {products.length} produtos carregados</span></div>
       <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px]">
        <label className="relative block"><span className="sr-only">Buscar produtos</span><Search className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground"/><input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Busque por nome, descrição ou categoria" className="h-11 w-full rounded-xl border bg-background pl-10 pr-3 text-sm"/></label>
-       <label><span className="sr-only">Ordenar produtos</span><select value={sort} onChange={e=>setSort(e.target.value as SortOrder)} className="h-11 w-full rounded-xl border bg-background px-3 text-sm"><option value="recent">Mais recentes</option><option value="price-asc">Menor preço</option><option value="price-desc">Maior preço</option><option value="title">Nome A–Z</option></select></label>
+       <label><span className="sr-only">Ordenar produtos</span><select value={sort} onChange={e=>setSort(e.target.value as SortOrder)} className="h-11 w-full rounded-xl border bg-background px-3 text-sm"><option value="recommended">Para você</option><option value="recent">Mais recentes</option><option value="price-asc">Menor preço</option><option value="price-desc">Maior preço</option><option value="title">Nome A–Z</option></select></label>
       </div>
       {categories.length>0&&<div className="flex gap-2 overflow-x-auto pb-1" aria-label="Filtrar por categoria">
        <button type="button" aria-pressed={!category} onClick={()=>setCategory("")} className={`shrink-0 rounded-full border px-4 py-2 text-xs font-bold transition ${!category?"border-primary bg-primary text-primary-foreground":"bg-background hover:border-primary/50"}`}>Tudo</button>
