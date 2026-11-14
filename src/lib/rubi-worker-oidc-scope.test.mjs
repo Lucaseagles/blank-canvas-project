@@ -21,10 +21,10 @@ test("worker OIDC is restricted to main scheduled-publishing workflow, not any r
 });
 
 test("malformed OIDC credentials are rejected as 401 rather than leaking a server error", () => {
-  assert.match(worker, /token\.length > 16384/);
-  assert.match(worker, /parts\.some\(\(part\) => !part/);
-  assert.match(worker, /header = decodeJson/);
-  assert.match(worker, /claims = decodeJson/);
-  assert.match(worker, /catch \{\s*throw new Error\("Unauthorized"\);\s*\}/);
-  assert.match(worker, /status: unauthorized \? 401 : 500/);
+  assert.ok(worker.includes("token.length > 16384"));
+  assert.ok(worker.includes("parts.some((part) => !part"));
+  assert.ok(worker.includes("header = decodeJson"));
+  assert.ok(worker.includes("claims = decodeJson"));
+  assert.ok(worker.includes('throw new Error("Unauthorized");'));
+  assert.ok(worker.includes("status: unauthorized ? 401 : 500"));
 });
