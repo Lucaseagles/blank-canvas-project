@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { ShoppingBag, Store, Megaphone, ArrowRight, ShieldCheck } from "lucide-react";
 
-export const Route = createFileRoute("/onboarding")({ validateSearch: (search: Record<string, unknown>) => ({ audience: search['audience'] === "merchant" || search['audience'] === "partner" || search['audience'] === "consumer" ? search['audience'] : undefined, returnTo: typeof search['returnTo'] === "string" ? search['returnTo'] : undefined, partnerType: search["partnerType"] === "affiliate" ? "affiliate" as const : undefined }), component: CommercialOnboarding });
+export const Route = createFileRoute("/onboarding")({ validateSearch: (search: Record<string, unknown>) => ({ audience: search['audience'] === "merchant" || search['audience'] === "partner" || search['audience'] === "consumer" ? search['audience'] : undefined, returnTo: typeof search['returnTo'] === "string" ? search['returnTo'] : undefined, ...(search["partnerType"] === "affiliate" ? { partnerType: "affiliate" as const } : {}) }), component: CommercialOnboarding });
 
 type Audience = "consumer" | "merchant" | "partner";
 type PartnerType = "micro_influencer" | "influencer" | "affiliate" | "expert";
