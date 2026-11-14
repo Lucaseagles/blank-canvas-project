@@ -1,0 +1,20 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+const read=p=>readFileSync(new URL(p,import.meta.url),"utf8");
+test("inline product edits and audit are atomic and private",()=>{
+ const sql=read("../../supabase/migrations/20261114070000_rubi_product_inline_atomic_audit.sql");
+ const server=read("./admin-product-operations.functions.ts");
+ assert.match(sql,/create or replace function public\.rubi_update_product_inline_audited/);
+ assert.match(sql,/from public\.products p where p\.id=p_product_id for update/);
+ assert.match(sql,/insert into public\.admin_audit_log/);
+ assert.match(sql,/p_field not in \('current_price','category_id'\)/);
+ assert.match(sql,/c\.is_active=true/);
+ assert.match(sql,/r\.role='owner'/);
+ assert.match(sql,/security invoker/);
+ assert.match(sql,/revoke all on function/);
+ assert.match(sql,/to service_role/);
+ assert.match(server,/rpc\("rubi_update_product_inline_audited"/);
+ assert.match(server,/p_actor: context\.userId/);
+ assert.doesNotMatch(server,/\.from\("products"\)\s*\.update\(\{ \[data\.field\]/);
+});
