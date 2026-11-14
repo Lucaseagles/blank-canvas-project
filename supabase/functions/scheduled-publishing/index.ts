@@ -38,10 +38,19 @@ async function verifyGitHubOidc(request: Request): Promise<void> {
   const authorization = request.headers.get("authorization") ?? "";
   if (!authorization.startsWith("Bearer ")) throw new Error("Unauthorized");
   const token = authorization.slice(7).trim();
+  // Reject oversized or malformed credentials as authentication failures, never as server faults.
+  if (!token || token.length > 16384) throw new Error("Unauthorized");
   const parts = token.split(".");
-  if (parts.length !== 3) throw new Error("Unauthorized");
-  const header = decodeJson<{ alg?: string; kid?: string }>(parts[0]);
-  const claims = decodeJson<Claims>(parts[1]);
+  if (parts.length !== 3 || parts.some((part) => !part || !/^[A-Za-z0-9_-]+$/.test(part))) throw new Error("Unauthorized");
+  let header: { alg?: string; kid?: string };
+  let claims: Claims;
+  try {
+    header = decodeJson<{ alg?: string; kid?: string }>(parts[0]);
+    claims = decodeJson<Claims>(parts[1]);
+  } catch {
+    throw new Error("Unauthorized");
+  }
+  if (!header || typeof header !== "object" || !claims || typeof claims !== "object") throw new Error("Unauthorized");
   if (header.alg !== "RS256" || !header.kid) throw new Error("Unauthorized");
   if (claims.iss !== ISSUER || claims.aud !== EXPECTED_AUDIENCE || claims.repository !== REPO) throw new Error("Unauthorized");
   // A repository-wide OIDC token is insufficient: restrict the caller to the trusted main workflow.
