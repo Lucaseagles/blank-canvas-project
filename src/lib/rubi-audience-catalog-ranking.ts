@@ -68,7 +68,7 @@ export function rankRubiAudienceCatalog<T extends RubiAudienceProduct>(
   const correctCategory=audience==="merchant"?
    matchesCategory(p.category,segment):matchesNiche(p.category,niche);
   const lotCompatible=audience!=="merchant"||
-   (Number.isSafeInteger(p.min_b2b_quantity)&&p.min_b2b_quantity!>0&&p.min_b2b_quantity!<=ceiling);
+   (Number.isSafeInteger(p.min_b2b_quantity)&&(p.min_b2b_quantity??0)>0&&(p.min_b2b_quantity??0)<=ceiling);
   const suggestion=correctCategory&&lotCompatible;
   (suggestion?relevant:discovery).push({...p,suggestedForAudience:suggestion});
  }
