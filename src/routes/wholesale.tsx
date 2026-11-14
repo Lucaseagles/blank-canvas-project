@@ -22,6 +22,7 @@ type HubProduct = {
   b2b_base_price: number;
   min_b2b_quantity: number;
   hub_b2b_tiers: Tier[] | null;
+  suggestedForAudience?: boolean;
 };
 
 const brl = (value: number) =>
@@ -155,6 +156,7 @@ function Catalog() {
                         {product.category || "Seleção RUBI"}
                       </p>
                       <h2 className="text-xl font-bold">{product.title}</h2>
+                      {product.suggestedForAudience && <p className="text-xs font-semibold text-primary">Sugestão por segmento e quantidade informados no seu cadastro</p>}
                       {product.description && <p className="line-clamp-2 text-sm text-muted-foreground">{product.description}</p>}
                       <div className="rounded-xl bg-primary/5 p-4">
                         <p className="text-xs text-muted-foreground">Preço base por unidade</p>
