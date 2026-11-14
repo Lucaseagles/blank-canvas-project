@@ -9,7 +9,7 @@ const idSchema = z.string().uuid();
 const db = async () => (await import("@/integrations/supabase/client.server")).supabaseAdmin as any;
 
 export const getAdminHomeModules = createServerFn({ method: "GET" }).middleware([requireOwnerRole]).handler(async () => {
-  const client = await db(); const { data, error } = await client.from("home_modules_config").select("id,module_key,module_name,is_enabled,display_order,config,updated_at").order("display_order", { ascending: true });
+  const client = await db(); const { data, error } = await client.from("home_modules_config").select("id,module_key,module_name,is_enabled,display_order,config,updated_at").order("display_order", { ascending: true }).order("id", { ascending: true });
   if (error) throw new Error(error.message); return (data ?? []) as HomeModule[];
 });
 
