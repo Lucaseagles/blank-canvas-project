@@ -5,6 +5,7 @@ import {toast} from "sonner";
 import {Button} from "@/components/ui/button";
 import {RubiMovementDistributionAdmin} from "@/components/store/RubiMovementDistributionAdmin";
 import {RubiVariantVideoLinksAdmin} from "@/components/store/RubiVariantVideoLinksAdmin";
+import {RubiMovementABAdmin} from "@/components/store/RubiMovementABAdmin";
 import {emptyRubiMovementVariant,rubiVariantChecklist,type RubiMovementVariant} from "@/lib/rubi-movement-variants";
 import {assessRubiExperimentReadiness} from "@/lib/rubi-experiment-readiness";
 import {listRubiMovementVariantsAdmin,saveRubiMovementVariantAdmin,deleteRubiMovementVariantAdmin} from "@/lib/rubi-movement-variants.functions";
@@ -42,6 +43,7 @@ export function RubiMovementVariantsAdmin({movementId,movementName,movementStatu
    <span className="block font-semibold">{v.name}</span><span className="text-xs text-muted-foreground">{v.format} · {v.status==="review"?"Pronta para revisão":"Rascunho"} · revisão {v.revision}</span>
   </button>)}</div>
   {query.data?.length===0&&<p className="text-xs text-muted-foreground">Nenhuma variante cadastrada.</p>}
+  {query.data&&<RubiMovementABAdmin movementId={movementId} movementStatus={movementStatus} variants={query.data}/>}
   {query.data&&<aside className="space-y-2 rounded-xl border bg-muted/20 p-3" aria-label="Preparação para experimento A/B">
    <h5 className="font-bold text-sm">Preparação editorial para experimento A/B</h5>
    <p className="text-xs text-muted-foreground">{experiment.eligible?"Par de variantes com pré-requisitos editoriais básicos; ainda falta definir alocação controlada, evento de sucesso e amostra.":experiment.reasons.join(" · ")}</p>

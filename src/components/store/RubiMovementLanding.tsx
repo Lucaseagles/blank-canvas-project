@@ -3,6 +3,7 @@ import {useQuery} from "@tanstack/react-query";
 import {useServerFn} from "@tanstack/react-start";
 import {Button} from "@/components/ui/button";
 import {RubiPublishedOffer} from "@/components/store/RubiPublishedOffer";
+import {RubiMovementABOffer} from "@/components/store/RubiMovementABOffer";
 import {readRubiOrganicAttribution,type RubiOrganicAttribution} from "@/lib/rubi-organic-campaigns";
 import {getRubiMovementPublishedPage} from "@/lib/rubi-movement-publishing.functions";
 
@@ -25,7 +26,8 @@ export function RubiMovementLanding({productId}:{productId:string}){
   refetchOnWindowFocus:true,
  });
  // A campaign without an approved version never exposes a private draft.
- if(!campaign||!query.data)return <RubiPublishedOffer productId={productId}/>;
+ if(!campaign)return <RubiMovementABOffer productId={productId}/>;
+ if(!query.data)return <RubiPublishedOffer productId={productId}/>;
  const page=query.data;
  return <section aria-label="Página da oferta por movimento" className="space-y-6 rounded-3xl border border-primary/30 bg-card p-6 md:p-10">
   <div className="space-y-3">
