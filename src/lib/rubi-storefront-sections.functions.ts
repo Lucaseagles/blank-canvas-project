@@ -28,29 +28,22 @@ export const listRubiStorefrontSectionsAdmin=createServerFn({method:"GET"}).midd
 });
 export const saveRubiStorefrontSectionAdmin=createServerFn({method:"POST"}).middleware([requireOwnerRole])
  .validator((input:unknown)=>form.parse(input))
- .handler(async({data})=>{
+ .handler(async({data,context})=>{
   const admin=await db();
-  // Publication is denied unless all referenced products already have authorized retail checkouts.
+  // The DB repeats eligibility checks within the authoritative transaction.
   if(data.status==="published"){
    const validated=await authorizedProducts(admin,data.product_ids);
-   if(validated.length!==data.product_ids.length)throw new Error("Todos os produtos da seção precisam estar publicados e com checkout oficial verificado.");
+   if(validated.length!==data.product_ids.length)throw new Error("Todos os produtos precisam de checkout oficial verificado.");
   }
-  const {id,revision,...changes}=data;
-  if(id){
-   const {data:old,error:readError}=await admin.from("rubi_storefront_sections").select("id,revision").eq("id",id).maybeSingle();
-   if(readError)throw readError;
-   if(!old||old.revision!==revision)throw new Error("Seção alterada em outra sessão. Recarregue.");
-   const {data:updated,error}=await admin.from("rubi_storefront_sections")
-    .update({...changes,revision:old.revision+1,updated_at:new Date().toISOString()})
-    .eq("id",id).eq("revision",old.revision).select("id,revision").maybeSingle();
-   if(error)throw error;
-   if(!updated)throw new Error("Conflito de edição.");
-   return updated as {id:string;revision:number};
-  }
-  const {data:created,error}=await admin.from("rubi_storefront_sections")
-   .insert(changes).select("id,revision").single();
+  if(data.id&&!data.revision)throw new Error("Revisão da seção obrigatória.");
+  const {data:rows,error}=await admin.rpc("rubi_save_storefront_section_audited",{
+   p_actor:context.userId,p_id:data.id??null,p_expected_revision:data.revision??null,
+   p_kind:data.kind,p_title:data.title,p_subtitle:data.subtitle,p_products:data.product_ids,
+   p_status:data.status,p_starts_at:data.starts_at,p_ends_at:data.ends_at,p_position:data.position
+  });
   if(error)throw error;
-  return created as {id:string;revision:number};
+  if(!rows?.[0]?.saved_id)throw new Error("Seção e auditoria não registradas.");
+  return {id:String(rows[0].saved_id),revision:Number(rows[0].new_revision)};
  });
 export const getRubiStorefrontPublishedSections=createServerFn({method:"GET"}).handler(async()=>{
  const admin=await db();
