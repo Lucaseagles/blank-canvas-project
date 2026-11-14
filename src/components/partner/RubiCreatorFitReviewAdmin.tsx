@@ -23,7 +23,7 @@ const labels:Record<string,string>={
  review_required:"Revisão obrigatória",low_fit:"Baixa aderência",
  needs_validation:"Validar em piloto",pilot_candidate:"Candidato a piloto"
 };
-export function RubiCreatorFitReviewAdmin({prospectId,review}:{prospectId:string;review?:FitReview}){
+export function RubiCreatorFitReviewAdmin({prospectId,review}:{prospectId:string;review?:FitReview|undefined}){
  const save=useServerFn(reviewRubiCreatorFitAdmin);
  const qc=useQueryClient();
  const [ratings,setRatings]=useState<ScoreValues>({
