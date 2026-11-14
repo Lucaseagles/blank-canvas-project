@@ -34,7 +34,8 @@ export function RubiMovementDistributionAdmin({variantId,variantName,variantStat
   if(publish&&!window.confirm("Confirmo revisão das afirmações, direitos das mídias e condições reais do produto. Publicar esta página?"))return;
   setPublishing(true);
   try{
-   await setPublished({data:{planId:draft.id,publish,confirmedEvidence:publish}});
+   if(!draft.revision)throw new Error("Versão do plano ausente. Recarregue.");
+   await setPublished({data:{planId:draft.id,publish,confirmedEvidence:publish,expectedRevision:draft.revision}});
    toast.success(publish?"Página do movimento publicada.":"Página retirada do público.");
    setDraft(null);setDirty(false);
    await qc.invalidateQueries({queryKey:["rubi-distribution",variantId]});

@@ -25,38 +25,23 @@ export const listRubiVariantVideoLinksAdmin=createServerFn({method:"POST"})
  });
 export const saveRubiVariantVideoLinkAdmin=createServerFn({method:"POST"})
  .middleware([requireOwnerRole]).validator((input:unknown)=>pair.parse(input))
- .handler(async({data})=>{
+ .handler(async({data,context})=>{
   const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
-  const db=supabaseAdmin as any;
-  const {data:variant,error:variantError}=await db.from("rubi_movement_variants")
-   .select("id,format,status").eq("id",data.variantId).maybeSingle();
-  if(variantError)throw variantError;
-  if(!variant || variant.format!=="short_video" || variant.status!=="review")
-   throw new Error("Selecione uma variante de vídeo revisada.");
-  const {data:video,error:videoError}=await db.from("videos").select(videoFields).eq("id",data.videoId).maybeSingle();
-  if(videoError)throw videoError;
-  if(!video||video.status!=="published"||
-   (video.scheduled_for&&new Date(video.scheduled_for).getTime()>Date.now()))
-   throw new Error("Selecione um vídeo publicado e disponível.");
-  // Reject competing links; never silently overwrite another variant's association.
-  const {data:existing,error:existingError}=await db.from("rubi_variant_video_links")
-   .select("variant_id").eq("video_id",data.videoId).maybeSingle();
-  if(existingError)throw existingError;
-  if(existing&&existing.variant_id!==data.variantId)
-   throw new Error("Vídeo já associado a outra variante. Desvincule antes de reutilizar.");
-  if(!existing){
-   const {error}=await db.from("rubi_variant_video_links")
-    .insert({video_id:data.videoId,variant_id:data.variantId});
-   if(error)throw error;
-  }
-  return {success:true,note:"Vínculo editorial, sem atribuição automática de vendas ou retenção."};
+  const {data:rows,error}=await (supabaseAdmin as any).rpc("rubi_set_variant_video_link_audited",{
+   p_actor:context.userId,p_variant:data.variantId,p_video:data.videoId,p_link:true
+  });
+  if(error)throw error;
+  if(!rows?.[0]?.saved_video_id)throw new Error("Vínculo e auditoria não registrados.");
+  return {success:true,note:"Vínculo editorial auditado, sem atribuição automática de vendas ou retenção."};
  });
 export const deleteRubiVariantVideoLinkAdmin=createServerFn({method:"POST"})
  .middleware([requireOwnerRole]).validator((input:unknown)=>pair.parse(input))
- .handler(async({data})=>{
+ .handler(async({data,context})=>{
   const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
-  const {error}=await (supabaseAdmin as any).from("rubi_variant_video_links")
-   .delete().eq("video_id",data.videoId).eq("variant_id",data.variantId);
+  const {data:rows,error}=await (supabaseAdmin as any).rpc("rubi_set_variant_video_link_audited",{
+   p_actor:context.userId,p_variant:data.variantId,p_video:data.videoId,p_link:false
+  });
   if(error)throw error;
+  if(!rows?.[0]?.saved_video_id)throw new Error("Desvinculação e auditoria não registradas.");
   return {success:true};
  });

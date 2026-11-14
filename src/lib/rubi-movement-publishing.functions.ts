@@ -8,23 +8,25 @@ import {canServeApprovedMovementPage} from "./rubi-movement-publication";
 
 const uuid=z.string().uuid();
 const origin=z.object({productId:uuid,channel:z.enum(["instagram","tiktok","youtube","facebook","pinterest","whatsapp","telegram"]),campaign:z.string().regex(/^[a-z0-9][a-z0-9_-]{0,59}$/)});
-const publication=z.object({planId:uuid,publish:z.boolean(),confirmedEvidence:z.boolean()});
+const publication=z.object({planId:uuid,publish:z.boolean(),confirmedEvidence:z.boolean(),expectedRevision:z.number().int().positive()});
 const db=async()=>{const {supabaseAdmin}=await import("@/integrations/supabase/client.server");return supabaseAdmin as any;};
 const productFields="id,active,retail_price,checkout_url,checkout_verified,hub_suppliers!inner(active,checkout_host)";
 
 /** Require current source content, explicit evidence and supplier checkout. Never publish draft claims. */
 export const setRubiMovementPagePublishedAdmin=createServerFn({method:"POST"})
 .middleware([requireOwnerRole]).validator((input:unknown)=>publication.parse(input))
-.handler(async({data})=>{
+.handler(async({data,context})=>{
  const admin=await db();
  const {data:plan,error:planError}=await admin.from("rubi_movement_distribution")
- .select("id,variant_id,page_published_at").eq("id",data.planId).maybeSingle();
+ .select("id,variant_id,page_published_at,revision").eq("id",data.planId).maybeSingle();
  if(planError)throw planError;
  if(!plan)throw new Error("Plano de campanha não encontrado.");
+ if(plan.revision!==data.expectedRevision)throw new Error("Plano alterado. Recarregue.");
  if(!data.publish){
-  const {error}=await admin.from("rubi_movement_distribution")
-   .update({page_published_at:null,published_variant_revision:null,published_movement_revision:null,updated_at:new Date().toISOString()})
-   .eq("id",plan.id);
+  const {error}=await admin.rpc("rubi_set_movement_page_publication_audited",{
+   p_actor:context.userId,p_plan_id:plan.id,p_publish:false,
+   p_confirmed_evidence:false,p_expected_revision:data.expectedRevision
+  });
   if(error)throw error;
   return {success:true};
  }
@@ -44,13 +46,11 @@ export const setRubiMovementPagePublishedAdmin=createServerFn({method:"POST"})
  if(productError)throw productError;
  if(!product?.active||Number(product.retail_price)<=0||!approvedRubiCheckout(product))
   throw new Error("O produto precisa estar ativo e com checkout oficial validado.");
- // A unique partial index blocks conflicting published paths from different creatives.
- const {error}=await admin.from("rubi_movement_distribution").update({
-  page_published_at:new Date().toISOString(),
-  published_variant_revision:variant.revision,
-  published_movement_revision:movement.revision,
-  updated_at:new Date().toISOString(),
- }).eq("id",plan.id).eq("variant_id",variant.id);
+ // The RPC rechecks content/checkout, locks the plan and commits audit atomically.
+ const {error}=await admin.rpc("rubi_set_movement_page_publication_audited",{
+  p_actor:context.userId,p_plan_id:plan.id,p_publish:true,
+  p_confirmed_evidence:data.confirmedEvidence,p_expected_revision:data.expectedRevision
+ });
  if(error)throw error;
  return {success:true};
 });
