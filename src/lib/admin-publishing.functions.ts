@@ -47,28 +47,30 @@ export const createScheduledPost = createServerFn({ method: "POST" })
 export const cancelScheduledPost = createServerFn({ method: "POST" })
   .middleware([requireOwnerRole])
   .validator((value: unknown) => z.object({ id: z.string().uuid() }).parse(value))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const client = await db();
-    const { data: post, error: readError } = await client.from("scheduled_posts").select("status").eq("id", data.id).single();
-    if (readError) throw new Error(`Publicação não encontrada: ${readError.message}`);
-    if (post.status !== "pending") throw new Error("Somente publicações pendentes podem ser canceladas.");
-    const { error } = await client.from("scheduled_posts").update({ status: "failed", error_message: "Cancelada pelo Owner" }).eq("id", data.id).eq("status", "pending");
-    if (error) throw new Error(`Não foi possível cancelar: ${error.message}`);
+    const { error } = await client.rpc("rubi_decide_scheduled_post_audited", {
+      p_post_id: data.id, p_action: "cancel", p_actor: context.userId,
+    });
+    if (error) throw new Error(error.message);
     return { success: true };
   });
 
 export const retryScheduledPost = createServerFn({ method: "POST" })
   .middleware([requireOwnerRole])
   .validator((value: unknown) => z.object({ id: z.string().uuid() }).parse(value))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const client = await db();
-    const { data: post, error: readError } = await client.from("scheduled_posts").select("id,status,content_type,content_id").eq("id", data.id).maybeSingle();
+    const { data: post, error: readError } = await client.from("scheduled_posts")
+      .select("id,status,content_type,content_id").eq("id", data.id).maybeSingle();
     if (readError) throw new Error(`Não foi possível localizar a publicação: ${readError.message}`);
     if (!post) throw new Error("Publicação não encontrada.");
     if (post.status !== "failed") throw new Error("Somente publicações com falha podem ser reprocessadas.");
     await assertContentExists(client, post.content_type, post.content_id);
-    const { error } = await client.from("scheduled_posts").update({ status: "pending", scheduled_for: new Date().toISOString(), error_message: null }).eq("id", data.id).eq("status", "failed");
-    if (error) throw new Error(`Não foi possível reprocessar: ${error.message}`);
+    const { error } = await client.rpc("rubi_decide_scheduled_post_audited", {
+      p_post_id: data.id, p_action: "retry", p_actor: context.userId,
+    });
+    if (error) throw new Error(error.message);
     return { success: true };
   });
 
