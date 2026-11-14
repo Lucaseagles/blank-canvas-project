@@ -21,15 +21,15 @@ begin
  or pg_catalog.octet_length(p_answers::text)>3000
  then raise exception 'Invalid onboarding fields'; end if;
  if p_audience='merchant' and (char_length(btrim(coalesce(p_business_name,'')))<2
-  or p_answers->>'merchant_segment' not in ('fashion','beauty','home','electronics','other')
-  or p_answers->>'restock_frequency' not in ('weekly','monthly','quarterly','unsure')
-  or p_answers->>'batch_size' not in ('1_4','5_9','10_29','30_plus','unsure'))
+  or coalesce(p_answers->>'merchant_segment','') not in ('fashion','beauty','home','electronics','other')
+  or coalesce(p_answers->>'restock_frequency','') not in ('weekly','monthly','quarterly','unsure')
+  or coalesce(p_answers->>'batch_size','') not in ('1_4','5_9','10_29','30_plus','unsure'))
  then raise exception 'Complete merchant qualification'; end if;
- if p_audience='partner' and (p_partner_type not in ('micro_influencer','influencer','affiliate','expert')
-  or p_answers->>'niche' is null or char_length(p_answers->>'niche')>80
-  or p_answers->>'creator_background' not in ('professional','creator','both','unspecified')
-  or p_answers->>'audience_range' not in ('under_1000','1000_10000','10000_100000','over_100000','unspecified')
-  or p_answers->>'channel' not in ('instagram','tiktok','youtube','whatsapp','other','unspecified'))
+ if p_audience='partner' and (coalesce(p_partner_type,'') not in ('micro_influencer','influencer','affiliate','expert')
+  or coalesce(char_length(p_answers->>'niche'),0)>80
+  or coalesce(p_answers->>'creator_background','') not in ('professional','creator','both','unspecified')
+  or coalesce(p_answers->>'audience_range','') not in ('under_1000','1000_10000','10000_100000','over_100000','unspecified')
+  or coalesce(p_answers->>'channel','') not in ('instagram','tiktok','youtube','whatsapp','other','unspecified'))
  then raise exception 'Complete partner qualification'; end if;
  if p_audience='consumer' then
   if p_partner_type is not null or p_categories is null
