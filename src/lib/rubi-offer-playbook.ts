@@ -14,6 +14,7 @@ export type RubiOfferPlaybook = {
   channels: RubiOfferChannel[];
   stage: "draft" | "ready_for_review";
   published_at?: string | null;
+  revision?:number | null;
 };
 export const RUBI_OFFER_CHANNELS: { value: RubiOfferChannel; label: string }[] = [
   { value: "instagram", label: "Instagram" },
