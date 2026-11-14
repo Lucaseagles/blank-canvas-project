@@ -31,25 +31,14 @@ const bulkSchema = z.object({
 export const bulkSetProductStatus = createServerFn({ method: "POST" })
   .middleware([requireOwnerRole])
   .inputValidator((input) => bulkSchema.parse(input))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: existing, error: readError } = await supabaseAdmin.from("products")
-      .select("id,status,title,current_price,category_id,marketplace_id,description,images")
-      .in("id", data.ids);
-    if (readError) throw readError;
-    if ((existing?.length ?? 0) !== data.ids.length) throw new Error("Alguns produtos não foram encontrados. Nenhuma alteração foi feita.");
-    if (data.status === "published") {
-      const incomplete = (existing ?? []).filter((p) =>
-        !p.title?.trim() || p.current_price == null || !Number.isFinite(p.current_price) || p.current_price <= 0 ||
-        !p.category_id || !p.marketplace_id || !p.description?.trim() ||
-        !Array.isArray(p.images) || p.images.length === 0
-      );
-      if (incomplete.length) throw new Error(`Existem ${incomplete.length} produtos sem informações obrigatórias. Corrija-os antes de publicar.`);
-    }
-    const { data: changed, error } = await supabaseAdmin.from("products")
-      .update({ status: data.status, updated_at: new Date().toISOString() })
-      .in("id", data.ids).select("id");
-    if (error) throw error;
-    if (changed?.length !== data.ids.length) throw new Error("A atualização não alcançou todos os produtos. Verifique a lista.");
-    return { success: true, count: changed.length, status: data.status };
+    const { data: updatedCount, error } = await (supabaseAdmin as any).rpc("rubi_bulk_product_status_audited", {
+      p_product_ids: data.ids,
+      p_status: data.status,
+      p_actor: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    if (Number(updatedCount) !== data.ids.length) throw new Error("A alteração em lote não foi concluída integralmente.");
+    return { success: true, count: Number(updatedCount), status: data.status };
   });
