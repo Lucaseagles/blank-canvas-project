@@ -29,8 +29,14 @@ export const reconcilePartnerSaleAdmin = createServerFn({ method: "POST" })
     external_order_id: z.string().trim().min(3).max(150),
     gross_amount: z.number().positive().max(10000000),
     confirmed_by_admin: z.literal(true),
+    provider_name: z.string().trim().min(2).max(100),
+    payment_evidence_reference: z.string().trim().min(8).max(500),
+    payment_verified_at: z.string().datetime({ offset: true }),
   }).parse(input))
   .handler(async ({ data }) => {
+    const verifiedAt = new Date(data.payment_verified_at);
+    if (!Number.isFinite(verifiedAt.getTime()) || verifiedAt.getTime() > Date.now() || verifiedAt.getTime() < Date.now() - 366 * 86400000)
+      throw new Error("A conferência deve ter ocorrido nos últimos 366 dias e não pode estar no futuro.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: link, error: linkError } = await (supabaseAdmin as any)
       .from("hub_partner_referral_links").select("id,commercial_profile_id,product_id,active")
@@ -57,6 +63,9 @@ export const reconcilePartnerSaleAdmin = createServerFn({ method: "POST" })
         referral_link_id: link.id,
         external_order_id: data.external_order_id,
         source: "admin_reconciliation",
+        provider_name: data.provider_name,
+        payment_evidence_reference: data.payment_evidence_reference,
+        payment_verified_at: verifiedAt.toISOString(),
         gross_amount: data.gross_amount,
         commission_percent: Number(agreementResult.data.commission_percent),
       }).select("id").single();
