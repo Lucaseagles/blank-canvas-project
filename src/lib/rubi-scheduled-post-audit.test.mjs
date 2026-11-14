@@ -1,0 +1,21 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+const read=p=>readFileSync(new URL(p,import.meta.url),"utf8");
+test("scheduled publication decisions share transaction with owner audit",()=>{
+ const sql=read("../../supabase/migrations/20261114090000_rubi_scheduled_post_decision_atomic.sql");
+ const server=read("./admin-publishing.functions.ts");
+ assert.match(sql,/create or replace function public\.rubi_decide_scheduled_post_audited/);
+ assert.match(sql,/for update/);
+ assert.match(sql,/insert into public\.admin_audit_log/);
+ assert.match(sql,/security invoker/);
+ assert.match(sql,/revoke all on function/);
+ assert.match(sql,/to service_role/);
+ assert.match(sql,/r\.role='owner'/);
+ assert.match(server,/p_action: "cancel"/);
+ assert.match(server,/p_action: "retry"/);
+ assert.match(server,/p_actor: context\.userId/);
+ assert.match(server,/assertContentExists\(client, post\.content_type, post\.content_id\)/);
+ const section=server.slice(server.indexOf("export const cancelScheduledPost"),server.indexOf("export const processScheduledPosts"));
+ assert.doesNotMatch(section,/\.update\(\{ status:/);
+});
