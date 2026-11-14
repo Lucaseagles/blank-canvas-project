@@ -14,6 +14,7 @@ import { PartnerCreativeKit } from "@/components/partner/PartnerCreativeKit";
 import { RubiLicensedPartnerCreatives } from "@/components/partner/RubiLicensedPartnerCreatives";
 import { RubiStorefrontEntry } from "@/components/store/RubiStorefrontEntry";
 import { RubiConversionGuide } from "@/components/growth/RubiConversionGuide";
+import { rubiAffiliateMilestoneFromConfirmedSales } from "@/lib/rubi-affiliate-commission-policy";
 
 export const Route = createFileRoute("/partner/portal")({ component: PartnerPortal });
 
@@ -117,6 +118,19 @@ function PartnerPortal() {
         </div>}
         <p className="text-xs text-muted-foreground">Os indicadores de links e visitas incluem apenas ofertas atualmente disponíveis e autorizadas. Visitas históricas de ofertas revogadas permanecem registradas, mas não entram nesses indicadores. Visitas não representam compradores únicos, pedidos pagos ou comissões.</p>
       </section>
+      {profile.partner_type==="affiliate"&&salesQuery.data&&(()=>{
+        const goal=rubiAffiliateMilestoneFromConfirmedSales(salesQuery.data.sales);
+        return <section aria-label="Metas do afiliado" className="space-y-3 rounded-2xl border border-primary/25 bg-primary/5 p-5">
+          <p className="text-xs font-black uppercase tracking-widest text-primary">RUBI Indica · Evolução</p>
+          <h2 className="text-xl font-black">Seu progresso por vendas confirmadas</h2>
+          <p className="text-sm">Faixa ilustrativa: {goal.tier} · {goal.confirmedSales} vendas confirmadas
+            {goal.nextGoal!==null?` · faltam ${goal.remaining} para a próxima meta`:" · última meta ilustrativa alcançada"}.</p>
+          <p className="text-sm">Bônus potencial da faixa: +{goal.bonusPercent} pontos percentuais,
+            sujeito às condições do produto e à aprovação do Master.</p>
+          <p className="text-xs text-muted-foreground">Acordos vigentes continuam valendo: metas não alteram automaticamente comissões.
+            A política financeira precisa de autorização, avaliação da margem e conciliação de pedidos e estornos.</p>
+        </section>;
+      })()}
       <section aria-label="Vendas confirmadas" className="space-y-3">
         <h2 className="text-2xl font-bold">Vendas e comissões confirmadas</h2>
         {salesQuery.isLoading && <p role="status">Carregando vendas confirmadas...</p>}
