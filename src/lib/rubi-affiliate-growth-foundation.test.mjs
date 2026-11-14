@@ -5,7 +5,7 @@ import {quoteRubiAffiliateCommission,rubiAffiliateMilestoneFromConfirmedSales} f
 const read=p=>readFileSync(new URL(p,import.meta.url),"utf8");
 test("sales milestones are 0, 5, 15, 40 and 100 with 20% ceiling",()=>{
  const cases=[[0,0,5],[4,0,5],[5,2,15],[14,2,15],[15,5,40],[39,5,40],
-  [40,10,100],[99,10,100],[100,15,null]] as const;
+  [40,10,100],[99,10,100],[100,15,null]];
  for(const [n,bonus,goal] of cases){
   const r=rubiAffiliateMilestoneFromConfirmedSales(n);
   assert.equal(r.bonusPercent,bonus);
