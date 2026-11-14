@@ -28,7 +28,7 @@ create or replace function public.rubi_review_creator_fit_audited(
 language plpgsql security invoker set search_path=''
 as $$
 declare old_row public.rubi_creator_fit_reviews%rowtype;
- s smallint; recommendation text; rid uuid; rev integer; profile_stage text;
+ s smallint; next_recommendation text; rid uuid; rev integer; profile_stage text;
 begin
  if p_actor is null or not exists(select 1 from public.user_roles r
    where r.user_id=p_actor and r.role='owner') then raise exception 'Owner required'; end if;
@@ -47,7 +47,7 @@ begin
  select * into old_row from public.rubi_creator_fit_reviews r
   where r.prospect_id=p_prospect for update;
  s := (p_niche*10 + p_audience*10 + p_engagement*10 + p_content*5 + p_compliance*15)::smallint;
- recommendation:=case
+ next_recommendation:=case
   when p_compliance<2 or p_niche=0 or p_audience=0 then 'review_required'
   when s>=75 then 'pilot_candidate'
   when s>=50 then 'needs_validation'
@@ -58,12 +58,12 @@ begin
    engagement_quality,content_quality,compliance_readiness,evidence_notes,
    fit_score,recommendation,reviewer_id)
   values(p_prospect,p_niche,p_audience,p_engagement,p_content,p_compliance,btrim(p_evidence),
-   s,recommendation,p_actor) returning id,revision into rid,rev;
+   s,next_recommendation,p_actor) returning id,revision into rid,rev;
  else
   if old_row.revision is distinct from p_expected_revision then raise exception 'Assessment changed; reload'; end if;
   update public.rubi_creator_fit_reviews r set niche_fit=p_niche,audience_overlap=p_audience,
    engagement_quality=p_engagement,content_quality=p_content,compliance_readiness=p_compliance,
-   evidence_notes=btrim(p_evidence),fit_score=s,recommendation=recommendation,
+   evidence_notes=btrim(p_evidence),fit_score=s,recommendation=next_recommendation,
    reviewer_id=p_actor,reviewed_at=now(),revision=old_row.revision+1
   where r.id=old_row.id returning id,revision into rid,rev;
  end if;
@@ -72,8 +72,8 @@ begin
  values(p_actor,null,'RUBI_CREATOR_FIT_REVIEWED','rubi_creator_fit_review',rid,
   case when old_row.id is null then '{}'::jsonb else
    jsonb_build_object('score',old_row.fit_score,'recommendation',old_row.recommendation,'revision',old_row.revision) end,
-  jsonb_build_object('prospect_id',p_prospect,'score',s,'recommendation',recommendation,'revision',rev));
- return query select rid,rev,s,recommendation;
+  jsonb_build_object('prospect_id',p_prospect,'score',s,'recommendation',next_recommendation,'revision',rev));
+ return query select rid,rev,s,next_recommendation;
 end;
 $$;
 revoke all on function public.rubi_review_creator_fit_audited(uuid,uuid,integer,smallint,smallint,smallint,smallint,smallint,text)
