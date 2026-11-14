@@ -20,14 +20,17 @@ function PartnerSalesAdmin() {
   const [orderId, setOrderId] = useState("");
   const [amount, setAmount] = useState("");
   const [verified, setVerified] = useState(false);
+  const [provider, setProvider] = useState("");
+  const [evidence, setEvidence] = useState("");
+  const [verifiedAt, setVerifiedAt] = useState("");
   const profiles = (query.data?.profiles ?? []) as Profile[];
   const links = (query.data?.links ?? []) as Referral[];
   const sales = (query.data?.sales ?? []) as Sale[];
   const value = Number(amount);
-  const valid = !!linkId && orderId.trim().length >= 3 && amount.trim() !== "" && Number.isFinite(value) && value > 0 && verified;
+  const valid = !!linkId && orderId.trim().length >= 3 && amount.trim() !== "" && Number.isFinite(value) && value > 0 && provider.trim().length >= 2 && evidence.trim().length >= 8 && verifiedAt !== "" && !Number.isNaN(Date.parse(verifiedAt)) && new Date(verifiedAt).getTime() <= Date.now() && verified;
   const mutation = useMutation({
-    mutationFn: () => save({ data: { referral_link_id: linkId, external_order_id: orderId.trim(), gross_amount: value, confirmed_by_admin: true } }),
-    onSuccess: () => { toast.success("Venda confirmada."); setOrderId(""); setAmount(""); setVerified(false); void cache.invalidateQueries({ queryKey: ["admin-partner-sales"] }); },
+    mutationFn: () => save({ data: { referral_link_id: linkId, external_order_id: orderId.trim(), gross_amount: value, confirmed_by_admin: true, provider_name: provider.trim(), payment_evidence_reference: evidence.trim(), payment_verified_at: new Date(verifiedAt).toISOString() } }),
+    onSuccess: () => { toast.success("Venda confirmada."); setOrderId(""); setAmount(""); setVerified(false); setProvider(""); setEvidence(""); setVerifiedAt(""); void cache.invalidateQueries({ queryKey: ["admin-partner-sales"] }); },
     onError: (error: Error) => toast.error(error.message),
   });
   return <main className="mx-auto max-w-5xl space-y-6 px-4 py-28">
@@ -42,6 +45,10 @@ function PartnerSalesAdmin() {
       </select></label>
       <label className="block space-y-1">ID do pedido confirmado<input className="block w-full rounded-md border bg-background p-2" value={orderId} onChange={event => setOrderId(event.target.value)} /></label>
       <label className="block space-y-1">Valor pago (R$)<input type="number" min="0.01" step="0.01" className="block w-full rounded-md border bg-background p-2" value={amount} onChange={event => setAmount(event.target.value)} /></label>
+      <label className="block space-y-1">Fornecedor / checkout<input className="block w-full rounded-md border bg-background p-2" value={provider} onChange={event => setProvider(event.target.value)} placeholder="Ex.: Kairos" /></label>
+      <label className="block space-y-1">Referência verificável do comprovante ou relatório<input className="block w-full rounded-md border bg-background p-2" value={evidence} onChange={event => setEvidence(event.target.value)} placeholder="ID de transação ou referência de relatório do fornecedor" /></label>
+      <label className="block space-y-1">Data e hora da conferência<input type="datetime-local" className="block w-full rounded-md border bg-background p-2" value={verifiedAt} onChange={event => setVerifiedAt(event.target.value)} /></label>
+      <p className="text-xs text-muted-foreground">A referência deve permitir conferir o pagamento no fornecedor. O campo não constitui confirmação automática e não substitui documentação financeira.</p>
       <label className="flex gap-2"><input type="checkbox" checked={verified} onChange={event => setVerified(event.target.checked)} />Confirmei o pagamento diretamente no checkout.</label>
       <Button disabled={!valid || mutation.isPending} onClick={() => mutation.mutate()}>Registrar venda confirmada</Button>
     </section>}
