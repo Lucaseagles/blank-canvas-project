@@ -39,7 +39,14 @@ export const createScheduledPost = createServerFn({ method: "POST" })
     if (scheduledFor.getTime() <= Date.now()) throw new Error("A data de publicação precisa estar no futuro.");
     const client = await db();
     await assertContentExists(client, data.content_type, data.content_id);
-    const { data: created, error } = await client.from("scheduled_posts").insert({ ...data, scheduled_for: scheduledFor.toISOString(), status: "pending", created_by: context.userId }).select("*").single();
+    const { data: created, error } = await client.rpc("rubi_create_scheduled_post_audited", {
+      p_content_type: data.content_type,
+      p_content_id: data.content_id,
+      p_channels: data.channels,
+      p_scheduled_for: scheduledFor.toISOString(),
+      p_message_template: data.message_template,
+      p_actor: context.userId,
+    });
     if (error) throw new Error(`Não foi possível agendar: ${error.message}`);
     return created as ScheduledPost;
   });
