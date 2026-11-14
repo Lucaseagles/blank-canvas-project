@@ -36,11 +36,12 @@ export function RubiOfferEngineAdmin({products}:{products:Product[]}) {
   });
   const changePublication = async (shouldPublish:boolean) => {
     if(!draft || dirty || publishing) return;
+    if(!draft.revision){toast.error("Ficha sem versão atual. Recarregue.");return;}
     if(shouldPublish && !window.confirm("Você confirma que conferiu todas as afirmações, evidências, condições e permissão de uso das mídias? A publicação ficará visível ao público.")) return;
     setPublishing(true);
     try{
-      if(shouldPublish) await publish({data:{productId:draft.product_id,confirmedEvidence:true}});
-      else await unpublish({data:{productId:draft.product_id}});
+      if(shouldPublish) await publish({data:{productId:draft.product_id,confirmedEvidence:true,expectedRevision:draft.revision}});
+      else await unpublish({data:{productId:draft.product_id,expectedRevision:draft.revision}});
       await client.invalidateQueries({queryKey:["rubi-offer-playbook",productId]});
       toast.success(shouldPublish?"Texto da oferta publicado.":"Oferta editorial retirada do público.");
     }catch(e){toast.error(e instanceof Error?e.message:"Falha na alteração da publicação.");}
