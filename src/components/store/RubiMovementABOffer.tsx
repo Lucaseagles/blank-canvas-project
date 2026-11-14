@@ -4,6 +4,7 @@ import {useServerFn} from "@tanstack/react-start";
 import {getRubiActiveMovementAB} from "@/lib/rubi-movement-ab.functions";
 import {assignRubiABArm} from "@/lib/rubi-movement-ab-allocation";
 import {trackEvent} from "@/lib/analytics";
+import {RubiPublishedOffer} from "@/components/store/RubiPublishedOffer";
 
 const KEY="rubi_ab_random_visitor_v1";
 function visitorId():string|null {
@@ -38,7 +39,7 @@ export function RubiMovementABOffer({productId}:{productId:string}){
    variant_id:variant.id,arm,product_id:productId,outcome:"view_only"
   },{productId,source:"rubi_ab"});
  },[experiment?.experimentId,experiment?.revision,variant?.id,arm,productId]);
- if(!variant||!experiment||!arm)return null;
+ if(!variant||!experiment||!arm)return <RubiPublishedOffer productId={productId}/>;
  const onCTA=()=>{void trackEvent("RUBI_AB_CTA",{
   experiment_id:experiment.experimentId,experiment_revision:experiment.revision,
   variant_id:variant.id,arm,product_id:productId,outcome:"intent_only"
