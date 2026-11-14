@@ -49,6 +49,24 @@ export const saveComplianceRule = createServerFn({ method: "POST" })
     return { success: true };
   });
 
+/** Validate the actual parsed hostname; substring matching accepts spoofed domains. */
+export function validateExternalAffiliateDestination(raw: string): { valid: boolean; violations: string[] } {
+  const violations: string[] = [];
+  let destination: URL;
+  try { destination = new URL(raw); }
+  catch { return { valid: false, violations: ["Invalid affiliate URL"] }; }
+  if (destination.protocol !== "https:" || destination.username || destination.password ||
+      destination.port || !destination.hostname.includes(".")) {
+    violations.push("Affiliate destination must be standard HTTPS without embedded credentials");
+  }
+  const hostname = destination.hostname.toLowerCase().replace(/\\.$/, "");
+  const forbiddenDomains = ["bit.ly", "tinyurl.com", "t.co", "goo.gl"];
+  if (forbiddenDomains.some(domain => hostname === domain || hostname.endsWith("." + domain))) {
+    violations.push("Unauthorized link shortener detected");
+  }
+  return { valid: violations.length === 0, violations };
+}
+
 export const validateAffiliateLink = createServerFn({ method: "POST" })
   .validator((data: { url: string; marketplaceId: string }) => 
     z.object({ 
@@ -60,19 +78,16 @@ export const validateAffiliateLink = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
     
     // Fetch rules for this marketplace
-    const { data: rules } = await supabaseAdmin
+    const { data: _rules } = await supabaseAdmin
       .from("compliance_rules" as any)
       .select("*")
       .eq("marketplace_id", marketplaceId)
       .eq("is_enforced", true);
+    // Marketplace-specific compliance rules remain available for future provider contracts.
 
     const violations: string[] = [];
 
-    // Rule: No unknown shorteners (simple heuristic for this sprint)
-    const forbiddenDomains = ['bit.ly', 'tinyurl.com', 't.co', 'goo.gl'];
-    if (forbiddenDomains.some(domain => url.includes(domain))) {
-      violations.push("Unauthorized link shortener detected");
-    }
+    violations.push(...validateExternalAffiliateDestination(url).violations);
 
     if (violations.length > 0) {
       // Log violations
