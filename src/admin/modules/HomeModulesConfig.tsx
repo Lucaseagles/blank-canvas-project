@@ -12,8 +12,8 @@ export function HomeModulesConfig() {
   const [modules, setModules] = useState<HomeModule[]>([]);
   const [dragged, setDragged] = useState<string | null>(null);
   useEffect(() => { if (query.data) setModules(query.data); }, [query.data]);
-  const toggle = useMutation({ mutationFn: (m: HomeModule) => setHomeModuleEnabled({ data: { id: m.id, enabled: !m.is_enabled } }), onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-home-modules"] }) });
-  const saveOrder = useMutation({ mutationFn: () => reorderHomeModules({ data: { ids: modules.map(m => m.id) } }), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["admin-home-modules"] }); } });
+  const toggle = useMutation({ mutationFn: (m: HomeModule) => setHomeModuleEnabled({ data: { id: m.id, expected:m.is_enabled, enabled: !m.is_enabled } }), onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-home-modules"] }) });
+  const saveOrder = useMutation({ mutationFn: () => reorderHomeModules({ data: { ids: modules.map(m => m.id),expectedIds:(query.data??[]).map(m=>m.id) } }), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["admin-home-modules"] }); } });
   const move = (from: number, to: number) => { if (to < 0 || to >= modules.length) return; const next = [...modules]; const [item] = next.splice(from, 1); if (!item) return; next.splice(to, 0, item); setModules(next.map((m, i) => ({ ...m, display_order: i + 1 }))); };
   if (query.isLoading) return <div className="py-12 text-center text-muted-foreground">Carregando módulos...</div>;
   if (query.isError) return <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-6 text-destructive">Não foi possível carregar os módulos.</div>;
