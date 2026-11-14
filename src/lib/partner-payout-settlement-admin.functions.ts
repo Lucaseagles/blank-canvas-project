@@ -1,3 +1,4 @@
+import { fetchAllFinancialRows, fetchFinancialRowsByIds } from "./financial-pagination.server";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireOwnerRole } from "./auth-guards.server";
@@ -7,19 +8,16 @@ export const getUnpaidPartnerCommissionsAdmin = createServerFn({ method: "POST" 
   .validator((input: unknown) => z.object({ commercial_profile_id: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: links, error: linksError } = await (supabaseAdmin as any).from("hub_partner_referral_links")
-      .select("id").eq("commercial_profile_id", data.commercial_profile_id).limit(500);
-    if (linksError) throw linksError;
+    const links = await fetchAllFinancialRows(() => (supabaseAdmin as any).from("hub_partner_referral_links")
+      .select("id").eq("commercial_profile_id", data.commercial_profile_id).order("id", { ascending: true }));
     if (!links?.length) return [];
-    const { data: sales, error: salesError } = await (supabaseAdmin as any)
+    const sales = await fetchFinancialRowsByIds(links.map((link: { id: string }) => link.id), (ids) => (supabaseAdmin as any)
       .from("hub_partner_confirmed_sales").select("id,external_order_id,commission_amount,confirmed_at")
-      .in("referral_link_id", links.map((link: { id: string }) => link.id)).order("confirmed_at", { ascending: false }).limit(500);
-    if (salesError) throw salesError;
+      .in("referral_link_id", ids).order("id", { ascending: true }));
     if (!sales?.length) return [];
-    const { data: paid, error: paidError } = await (supabaseAdmin as any)
-      .from("hub_partner_commission_payout_items").select("sale_id")
-      .in("sale_id", sales.map((sale: { id: string }) => sale.id));
-    if (paidError) throw paidError;
+    const paid = await fetchFinancialRowsByIds(sales.map((sale: { id: string }) => sale.id), (ids) => (supabaseAdmin as any)
+      .from("hub_partner_commission_payout_items").select("id,sale_id")
+      .in("sale_id", ids).order("id", { ascending: true }));
     const paidIds = new Set((paid ?? []).map((item: { sale_id: string }) => item.sale_id));
     return sales.filter((sale: { id: string; commission_amount: number }) => !paidIds.has(sale.id) && Number(sale.commission_amount) > 0);
   });
