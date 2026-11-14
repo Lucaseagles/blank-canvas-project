@@ -1,0 +1,20 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+const read=p=>readFileSync(new URL(p,import.meta.url),"utf8");
+test("tier changes enforce descending unit prices, supplier cost and atomic audit",()=>{
+ const sql=read("../../supabase/migrations/20261114070000_rubi_b2b_tier_integrity.sql");
+ assert.match(sql,/rubi_save_b2b_tier_audited/);
+ assert.match(sql,/p_unit_price<=current_product.supplier_cost/);
+ assert.match(sql,/p_unit_price>=coalesce\(lower_price,current_product.b2b_base_price\)/);
+ assert.match(sql,/p_unit_price<=upper_price/);
+ assert.match(sql,/p_unit_price<>round\(p_unit_price,2\)/);
+ assert.match(sql,/from public.hub_products p[\s\S]*for update/);
+ assert.match(sql,/insert into public.admin_audit_log/);
+ assert.match(sql,/revoke all on function public.rubi_save_b2b_tier_audited/);
+ assert.match(sql,/grant execute on function public.rubi_save_b2b_tier_audited/);
+ assert.match(sql,/rubi_verify_product_b2b_tiers/);
+ assert.match(sql,/before update of supplier_cost,b2b_base_price,min_b2b_quantity/);
+ assert.match(sql,/lag\(t.unit_price,1,new.b2b_base_price\)/);
+ assert.doesNotMatch(sql,/security definer/i);
+});
