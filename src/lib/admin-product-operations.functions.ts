@@ -11,21 +11,16 @@ const inlineSchema = z.discriminatedUnion("field", [
 export const updateProductInline = createServerFn({ method: "POST" })
   .middleware([requireOwnerRole])
   .inputValidator((input) => inlineSchema.parse(input))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    if (data.field === "category_id") {
-      const { data: category, error } = await supabaseAdmin.from("categories").select("id,is_active").eq("id", data.value).maybeSingle();
-      if (error) throw error;
-      if (!category?.is_active) throw new Error("Selecione uma categoria ativa.");
-    }
-    const { data: product, error: readError } = await supabaseAdmin.from("products").select("id,status").eq("id", data.id).maybeSingle();
-    if (readError) throw readError;
-    if (!product) throw new Error("Produto não encontrado.");
-    const { data: updated, error } = await supabaseAdmin.from("products")
-      .update({ [data.field]: data.value, updated_at: new Date().toISOString() } as never)
-      .eq("id", data.id).select("id,current_price,category_id").single();
-    if (error) throw error;
-    return updated;
+    const { data: updated, error } = await (supabaseAdmin as any).rpc("rubi_update_product_inline_audited", {
+      p_product_id: data.id,
+      p_field: data.field,
+      p_value: data.field === "current_price" ? String(data.value) : data.value,
+      p_actor: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    return updated as { id: string; current_price: number; category_id: string | null };
   });
 
 const bulkSchema = z.object({
