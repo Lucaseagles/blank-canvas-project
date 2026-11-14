@@ -1,0 +1,21 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+const read=p=>readFileSync(new URL(p, import.meta.url),"utf8");
+test("owner manual scheduled-post creation is inseparable from sanitized audit",()=>{
+ const sql=read("../../supabase/migrations/20261114100000_rubi_scheduled_post_create_audited.sql");
+ const src=read("./admin-publishing.functions.ts");
+ assert.match(sql,/create or replace function public\.rubi_create_scheduled_post_audited/);
+ assert.match(sql,/security invoker/);
+ assert.match(sql,/p_channels\[1\]<>'telegram'/);
+ assert.match(sql,/p_scheduled_for<=now\(\)/);
+ assert.match(sql,/insert into public\.scheduled_posts/);
+ assert.match(sql,/insert into public\.admin_audit_log/);
+ assert.match(sql,/RUBI_SCHEDULED_POST_CREATED/);
+ assert.match(sql,/grant execute on function[\s\S]*to service_role/);
+ assert.doesNotMatch(sql,/jsonb_build_object\([^;]*message_template/);
+ const section=src.slice(src.indexOf("export const createScheduledPost"),src.indexOf("export const cancelScheduledPost"));
+ assert.match(section,/rpc\("rubi_create_scheduled_post_audited"/);
+ assert.match(section,/p_actor: context\.userId/);
+ assert.doesNotMatch(section,/\.from\("scheduled_posts"\)\.insert\(/);
+});
