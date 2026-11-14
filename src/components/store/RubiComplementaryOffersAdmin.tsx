@@ -6,7 +6,7 @@ import {Button} from "@/components/ui/button";
 import {listRubiComplementaryAdmin,saveRubiComplementaryAdmin} from "@/lib/rubi-complementary-offers.functions";
 import {RUBI_COMPLEMENTARY_LABELS,canSuggestComplementary,type RubiComplementaryKind} from "@/lib/rubi-complementary-offers";
 type Product={id:string;title:string;retail_price:number;active:boolean;checkout_url:string|null;checkout_verified:boolean};
-type Item={id:string;primary_product_id:string;suggested_product_id:string;kind:RubiComplementaryKind;headline:string;explanation:string;position:number;active:boolean};
+type Item={id:string;revision:number;primary_product_id:string;suggested_product_id:string;kind:RubiComplementaryKind;headline:string;explanation:string;position:number;active:boolean};
 export function RubiComplementaryOffersAdmin({products}:{products:Product[]}) {
  const [primary,setPrimary]=useState("");
  const [suggested,setSuggested]=useState("");
@@ -14,6 +14,7 @@ export function RubiComplementaryOffersAdmin({products}:{products:Product[]}) {
  const [headline,setHeadline]=useState("");
  const [explanation,setExplanation]=useState("");
  const [editingId,setEditingId]=useState<string|undefined>();
+ const [editingRevision,setEditingRevision]=useState<number|undefined>();
  const [active,setActive]=useState(false);
  const list=useServerFn(listRubiComplementaryAdmin);
  const save=useServerFn(saveRubiComplementaryAdmin);
@@ -21,13 +22,13 @@ export function RubiComplementaryOffersAdmin({products}:{products:Product[]}) {
  const query=useQuery({queryKey:["rubi-complementary-admin",primary],queryFn:()=>list({data:{productId:primary}}),enabled:!!primary,retry:false});
  const main=products.find(x=>x.id===primary);
  const candidates=products.filter(x=>x.id!==primary && (kind!=="downsell"||Number(x.retail_price)<Number(main?.retail_price??0)));
- const reset=()=>{setSuggested("");setKind("cross_sell");setHeadline("");setExplanation("");setEditingId(undefined);setActive(false);};
+ const reset=()=>{setSuggested("");setKind("cross_sell");setHeadline("");setExplanation("");setEditingId(undefined);setEditingRevision(undefined);setActive(false);};
  const mutation=useMutation({
-  mutationFn:()=>save({data:{...(editingId?{id:editingId}:{}),primary_product_id:primary,suggested_product_id:suggested,kind,headline,explanation,position:0,active}}),
+  mutationFn:()=>save({data:{...(editingId?{id:editingId,revision:editingRevision}:{}),primary_product_id:primary,suggested_product_id:suggested,kind,headline,explanation,position:0,active}}),
   onSuccess:()=>{toast.success("Sugestão comercial salva.");reset();void qc.invalidateQueries({queryKey:["rubi-complementary-admin",primary]});},
   onError:(e:Error)=>toast.error(e.message),
  });
- const edit=(item:Item)=>{setEditingId(item.id);setSuggested(item.suggested_product_id);setKind(item.kind);setHeadline(item.headline);setExplanation(item.explanation);setActive(item.active);};
+ const edit=(item:Item)=>{setEditingId(item.id);setEditingRevision(item.revision);setSuggested(item.suggested_product_id);setKind(item.kind);setHeadline(item.headline);setExplanation(item.explanation);setActive(item.active);};
  return <section aria-label="Ofertas complementares" className="space-y-4 rounded-3xl border border-primary/30 bg-card p-6">
   <div><p className="text-xs font-black uppercase tracking-widest text-primary">RUBI · Engenharia de ticket médio</p>
    <h2 className="text-2xl font-black">Produtos complementares por oferta</h2>
