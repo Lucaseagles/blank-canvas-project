@@ -13,17 +13,19 @@ test("audit health makes missing owner and invalid timestamps visible",()=>{
  assert.equal(summarizeRubiAuditIntegrity([],0).status,"empty");
  assert.equal(summarizeRubiAuditIntegrity([a],1).status,"observed");
 });
-test("audit dashboard is owner-only and samples cannot imply full coverage",()=>{
+test("audit dashboard is owner-only and exhaustively paginated, without claiming mutation coverage",()=>{
  const server=read("./rubi-master-audit-integrity.functions.ts");
  const panel=read("../admin/audit/RubiMasterAuditIntegrityPanel.tsx");
  const dashboard=read("../admin/audit/AuditDashboard.tsx");
  assert.match(server,/requireOwnerRole/);
- assert.match(server,/limit\(51\)/);
- assert.match(server,/sampled=raw\.slice\(0,50\)/);
- assert.match(server,/partial:\(count\?\?0\)>50/);
+ assert.match(server,/fetchAllFinancialRows/);
+ assert.match(server,/\.order\("id",\{ascending:true\}\)/);
+ assert.match(server,/summarizeRubiAuditIntegrity\(events,events\.length\)/);
+ assert.match(server,/partial:false/);
+ assert.doesNotMatch(server,/limit\(51\)/);
  assert.match(server,/actorRecorded:!!e\.actor_user_id/);
  assert.doesNotMatch(server,/previous_value|new_value|actor_email/);
- assert.match(panel,/Amostra parcial/);
+ assert.match(panel,/Conferência integral dos registros existentes/);
  assert.match(panel,/Responsável ausente/);
  assert.match(dashboard,/RubiMasterAuditIntegrityPanel/);
 });
