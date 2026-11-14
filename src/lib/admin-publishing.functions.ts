@@ -131,35 +131,24 @@ export const prepareStrategyPublishing = createServerFn({ method: "POST" })
         continue;
       }
 
-      const { data: existing, error: existingError } = await client
-        .from("scheduled_posts")
-        .select("id")
-        .eq("orchestration_id", data.orchestration_id)
-        .eq("content_id", video.id)
-        .contains("channels", ["telegram"])
-        .in("status", ["pending", "processing", "published"])
-        .limit(1)
-        .maybeSingle();
-      if (existingError) throw new Error(`Não foi possível verificar a fila existente: ${existingError.message}`);
-      if (existing) { results.push({ video_id: video.id, status: "already_queued" }); continue; }
-
       const scheduledFor = video.scheduled_for && new Date(video.scheduled_for).getTime() > Date.now()
         ? new Date(video.scheduled_for).toISOString()
         : fallbackSchedule;
-      const message = video.title ? `Novo vídeo: ${video.title}` : "Novo vídeo disponível.";
-      const { error: insertError } = await client.from("scheduled_posts").insert({
-        content_type: "video",
-        content_id: video.id,
-        channels: ["telegram"],
-        scheduled_for: scheduledFor,
-        status: "pending",
-        message_template: message,
-        created_by: context.userId,
-        campaign_id: video.campaign_id,
-        orchestration_id: data.orchestration_id,
+      const { data: outcome, error: queueError } = await client.rpc("rubi_queue_orchestration_video_audited", {
+        p_orchestration_id: data.orchestration_id,
+        p_video_id: video.id,
+        p_scheduled_for: scheduledFor,
+        p_actor: context.userId,
       });
-      if (insertError) throw new Error(`Não foi possível preparar a publicação: ${insertError.message}`);
-      results.push({ video_id: video.id, status: "queued", ...(unsupportedChannels.length ? { reason: `Telegram preparado; sem adapter para: ${unsupportedChannels.join(", ")}.` } : {}) });
+      if (queueError) throw new Error(`Não foi possível preparar a publicação: ${queueError.message}`);
+      if (outcome !== "queued" && outcome !== "already_queued") throw new Error("Resultado inesperado ao preparar publicação.");
+      results.push({
+        video_id: video.id,
+        status: outcome,
+        ...(outcome === "queued" && unsupportedChannels.length
+          ? { reason: `Telegram preparado; sem adapter para: ${unsupportedChannels.join(", ")}.` }
+          : {}),
+      });
     }
 
     return {
