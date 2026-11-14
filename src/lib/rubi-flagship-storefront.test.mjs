@@ -325,7 +325,7 @@ test("Creator team analytics are owner-only and never infer paid outcomes from v
  assert.match(api,/rubi_creator_team_members/);
  assert.match(api,/hub_partner_referral_visits/);
  assert.match(api,/hub_partner_confirmed_sales/);
- assert.match(api,/\.eq\("status","approved"\)/);
+ assert.match(source("../../supabase/migrations/20261113230000_rubi_publication_evidence_atomic_audit.sql"),/profile_status<>'approved'/);
  assert.match(api,/partial/);
  assert.match(panel,/Vendas confirmadas não significam pagamentos liquidados/);
  assert.match(panel,/Não foi possível confirmar os indicadores/);
@@ -384,12 +384,12 @@ test("Creator publication evidence requires an active approved partner and manua
  assert.match(migration,/revoke all on public\.rubi_creator_team_publication_evidence from public,anon,authenticated/);
  assert.match(migration,/review_status in \('submitted','reviewed','rejected'\)/);
  assert.match(api,/requireOwnerRole/g);
- assert.match(api,/assignment\.status!=="ready"/);
- assert.match(api,/member\.team_id!==assignment\.team_id/);
- assert.match(api,/member\.status!=="active"/);
+ assert.match(api,/rpc\("rubi_register_team_publication_audited"/);
+ assert.match(source("../../supabase/migrations/20261113230000_rubi_publication_evidence_atomic_audit.sql"),/m.team_id<>a.team_id/);
+ assert.match(source("../../supabase/migrations/20261113230000_rubi_publication_evidence_atomic_audit.sql"),/m.status<>'active'/);
  assert.match(api,/\.eq\("status","approved"\)/);
- assert.match(api,/\.eq\("review_status","submitted"\)/);
- assert.match(api,/at<Date\.parse\(member\.joined_at\)/);
+ assert.match(api,/rpc\("rubi_review_team_publication_audited"/);
+ assert.match(source("../../supabase/migrations/20261113230000_rubi_publication_evidence_atomic_audit.sql"),/p_published_at<m.joined_at/);
  assert.match(ui,/Registrar referência para revisão/);
  assert.match(ui,/não certifica visualizações, pagamentos ou vendas atribuídas/);
  assert.match(admin,/<RubiTeamPublicationsAdmin \/>/);

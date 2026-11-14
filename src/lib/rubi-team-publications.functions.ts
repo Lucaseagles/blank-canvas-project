@@ -36,54 +36,25 @@ export const listRubiTeamPublicationsAdmin=createServerFn({method:"GET"})
 
 export const registerRubiTeamPublicationAdmin=createServerFn({method:"POST"})
  .middleware([requireOwnerRole]).validator((input:unknown)=>evidenceSchema.parse(input))
- .handler(async({data})=>{
+ .handler(async({data,context})=>{
   const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
-  const db=supabaseAdmin as any;
-  const [assignmentResult,memberResult]=await Promise.all([
-   db.from("rubi_creator_team_campaign_assignments")
-    .select("id,team_id,status").eq("id",data.assignmentId).maybeSingle(),
-   db.from("rubi_creator_team_members")
-    .select("id,team_id,commercial_profile_id,status,joined_at").eq("id",data.membershipId).maybeSingle()
-  ]);
-  if(assignmentResult.error)throw assignmentResult.error;
-  if(memberResult.error)throw memberResult.error;
-  const assignment=assignmentResult.data,member=memberResult.data;
-  if(!assignment||assignment.status!=="ready")throw new Error("A associação precisa estar pronta para revisão.");
-  if(!member||member.team_id!==assignment.team_id||member.status!=="active")
-   throw new Error("Selecione um integrante ativo do mesmo time.");
-  const {data:profile,error:profileError}=await db.from("commercial_profiles").select("id")
-   .eq("id",member.commercial_profile_id).eq("audience","partner").eq("status","approved").maybeSingle();
-  if(profileError)throw profileError;
-  if(!profile)throw new Error("O parceiro não está mais aprovado.");
-  const at=Date.parse(data.publishedAt);
-  if(!Number.isFinite(at)||at<Date.parse(member.joined_at)||at>Date.now()+300000)
-   throw new Error("A data de publicação deve estar após a entrada no time e não pode estar no futuro.");
-  // A member who is active today may have been paused on the publication date.
-  const {data:membershipState,error:historyError}=await db.from("rubi_creator_team_membership_events")
-   .select("status,effective_at").eq("membership_id",member.id)
-   .lte("effective_at",data.publishedAt).order("effective_at",{ascending:false})
-   .order("id",{ascending:false}).limit(1).maybeSingle();
-  if(historyError)throw historyError;
-  if(!membershipState||membershipState.status!=="active")
-   throw new Error("Não há vínculo ativo comprovado na data informada da publicação.");
-  const {data:row,error}=await db.from("rubi_creator_team_publication_evidence").insert({
-   assignment_id:data.assignmentId,membership_id:data.membershipId,channel:data.channel,
-   publication_url:data.publicationUrl,published_at:data.publishedAt
-  }).select("id").single();
+  const {data:rows,error}=await (supabaseAdmin as any).rpc("rubi_register_team_publication_audited",{
+   p_actor:context.userId,p_assignment:data.assignmentId,p_membership:data.membershipId,
+   p_channel:data.channel,p_url:data.publicationUrl,p_published_at:data.publishedAt
+  });
   if(error)throw error;
-  return {id:String(row.id),notice:"Referência registrada como enviada; ainda requer revisão humana."};
+  if(!rows?.[0]?.saved_id)throw new Error("Publicação e auditoria não registradas.");
+  return {id:String(rows[0].saved_id),notice:"Referência registrada como enviada; ainda requer revisão humana."};
  });
 
 export const reviewRubiTeamPublicationAdmin=createServerFn({method:"POST"})
  .middleware([requireOwnerRole]).validator((input:unknown)=>reviewSchema.parse(input))
- .handler(async({data})=>{
+ .handler(async({data,context})=>{
   const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
-  const db=supabaseAdmin as any;
-  const {data:row,error}=await db.from("rubi_creator_team_publication_evidence").update({
-   review_status:data.status,review_notes:data.notes,reviewed_at:new Date().toISOString(),
-   updated_at:new Date().toISOString()
-  }).eq("id",data.id).eq("review_status","submitted").select("id").maybeSingle();
+  const {data:rows,error}=await (supabaseAdmin as any).rpc("rubi_review_team_publication_audited",{
+   p_actor:context.userId,p_id:data.id,p_decision:data.status,p_notes:data.notes
+  });
   if(error)throw error;
-  if(!row)throw new Error("Referência não localizada ou já revisada.");
-  return {id:String(row.id),notice:"Revisão editorial registrada. Não certifica impressões ou pagamentos."};
+  if(!rows?.[0]?.saved_id)throw new Error("Revisão e auditoria não registradas.");
+  return {id:String(rows[0].saved_id),notice:"Revisão editorial registrada. Não certifica impressões ou pagamentos."};
  });
