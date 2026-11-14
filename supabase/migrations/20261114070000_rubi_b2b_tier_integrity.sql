@@ -66,3 +66,36 @@ revoke all on function public.rubi_save_b2b_tier_audited(uuid,integer,numeric,uu
  from public,anon,authenticated;
 grant execute on function public.rubi_save_b2b_tier_audited(uuid,integer,numeric,uuid)
  to service_role;
+
+-- Product identity, supplier cost, base price and minimum changes must not
+-- invalidate previously approved volume prices. This is a database safeguard
+-- for all writes, including the existing product RPC.
+create or replace function public.rubi_verify_product_b2b_tiers()
+returns trigger language plpgsql security invoker set search_path=''
+as $$
+declare invalid_count integer;
+begin
+ if new.b2b_base_price is distinct from old.b2b_base_price
+   or new.supplier_cost is distinct from old.supplier_cost
+   or new.min_b2b_quantity is distinct from old.min_b2b_quantity then
+  if new.b2b_base_price is not null and new.b2b_base_price<=new.supplier_cost then
+   raise exception 'B2B base must exceed supplier cost'; end if;
+  select count(*) into invalid_count
+   from (
+    select t.unit_price,t.min_quantity,
+      lag(t.unit_price,1,new.b2b_base_price) over(order by t.min_quantity) as previous_price
+    from public.hub_b2b_tiers t where t.product_id=new.id
+   ) x
+   where x.min_quantity<new.min_b2b_quantity or new.b2b_base_price is null
+    or x.unit_price>=x.previous_price or x.unit_price<=new.supplier_cost
+    or x.unit_price<>round(x.unit_price,2);
+  if invalid_count>0 then
+   raise exception 'Existing tier prices conflict with updated cost, minimum or base'; end if;
+ end if;
+ return new;
+end;
+$$;
+drop trigger if exists rubi_verify_product_b2b_tiers on public.hub_products;
+create trigger rubi_verify_product_b2b_tiers before update of supplier_cost,b2b_base_price,min_b2b_quantity
+on public.hub_products for each row execute function public.rubi_verify_product_b2b_tiers();
+revoke all on function public.rubi_verify_product_b2b_tiers() from public,anon,authenticated;
