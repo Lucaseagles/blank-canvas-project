@@ -1,0 +1,20 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+const read=p=>readFileSync(new URL(p,import.meta.url),"utf8");
+test("product bulk status commits each change and audit in one transaction",()=>{
+ const sql=read("../../supabase/migrations/20261114080000_rubi_bulk_product_status_atomic.sql");
+ const server=read("./admin-product-operations.functions.ts");
+ assert.match(sql,/create or replace function public\.rubi_bulk_product_status_audited/);
+ assert.match(sql,/for update/);
+ assert.match(sql,/count\(distinct x\)/);
+ assert.match(sql,/p_status='published'/);
+ assert.match(sql,/insert into public\.admin_audit_log/);
+ assert.match(sql,/security invoker/);
+ assert.match(sql,/revoke all on function/);
+ assert.match(sql,/to service_role/);
+ assert.match(server,/rpc\("rubi_bulk_product_status_audited"/);
+ assert.match(server,/p_actor: context\.userId/);
+ const bulk=server.slice(server.indexOf("export const bulkSetProductStatus"));
+ assert.doesNotMatch(bulk,/\.from\("products"\)\s*\.update\(/);
+});
