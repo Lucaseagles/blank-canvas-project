@@ -17,7 +17,7 @@ import { RubiConversionGuide } from "@/components/growth/RubiConversionGuide";
 
 export const Route = createFileRoute("/partner/portal")({ component: PartnerPortal });
 
-type Product = { id: string; title: string; description: string | null; image_url: string | null; category: string | null; retail_price: number };
+type Product = { id: string; title: string; description: string | null; image_url: string | null; category: string | null; retail_price: number; suggestedForAudience?: boolean };
 function PartnerPortal() {
   const load = useServerFn(getMyPartnerPortal);
   const loadUnread = useServerFn(getMyPartnerUnreadFinancialNotificationCount);
@@ -148,6 +148,7 @@ function PartnerPortal() {
           <div className="space-y-3 p-5">
             <p className="text-xs uppercase text-primary">{product.category ?? "RUBI"}</p>
             <h2 className="text-xl font-bold">{product.title}</h2>
+            {product.suggestedForAudience&&<p className="text-xs font-semibold text-primary">Categoria relacionada ao nicho informado no cadastro</p>}
             {product.description && <p className="text-sm text-muted-foreground">{product.description}</p>}
             <p className="text-lg font-semibold">{Number(product.retail_price).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p>
             {(() => { const link = (linksQuery.data ?? []).find((item: { product_id: string; code: string }) => item.product_id === product.id); return link ? <div className="space-y-2"><p className="text-xs text-muted-foreground">Seu link individual de divulgação:</p><code className="block break-all text-xs">{typeof window !== "undefined" ? `${window.location.origin}/r/${link.code}` : `/r/${link.code}`}</code><Button variant="outline" size="sm" onClick={() => void navigator.clipboard.writeText(`${window.location.origin}/r/${link.code}`).then(() => toast.success("Link copiado."))}>Copiar link</Button></div> : <Button size="sm" disabled={generate.isPending || linksQuery.isLoading} onClick={() => generate.mutate(product.id)}>Gerar meu link</Button>; })()}
