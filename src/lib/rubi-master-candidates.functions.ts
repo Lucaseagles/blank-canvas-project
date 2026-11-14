@@ -18,20 +18,25 @@ export const proposeRubiMasterCandidateAdmin=createServerFn({method:"POST"})
  .middleware([requireOwnerRole])
  .validator((input:unknown)=>z.object({email:emailSchema}).parse(input))
  .handler(async({data,context})=>{
-  if(!canProposeMasterCandidate(data.email)||data.email===context.userEmail?.trim().toLowerCase())throw new Error("E-mail não elegível para pré-cadastro.");
+  if(!canProposeMasterCandidate(data.email)||data.email===context.userEmail?.trim().toLowerCase())
+    throw new Error("E-mail não elegível para pré-cadastro.");
   const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
-  const {error}=await (supabaseAdmin as any).from("rubi_master_delegations")
-   .upsert({email:data.email,requested_by:context.userId,status:"pending",updated_at:new Date().toISOString()},{onConflict:"email"});
+  const {data:rows,error}=await (supabaseAdmin as any).rpc("rubi_decide_master_candidate_audited",{
+   p_actor:context.userId,p_email:data.email,p_action:"propose"
+  });
   if(error)throw error;
+  if(rows?.[0]?.saved_status!=="pending")throw new Error("Candidato não registrado.");
   return {saved:true,accessGranted:false};
  });
 export const cancelRubiMasterCandidateAdmin=createServerFn({method:"POST"})
  .middleware([requireOwnerRole])
  .validator((input:unknown)=>z.object({email:emailSchema}).parse(input))
- .handler(async({data})=>{
+ .handler(async({data,context})=>{
   const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
-  const {error}=await (supabaseAdmin as any).from("rubi_master_delegations")
-   .update({status:"cancelled",updated_at:new Date().toISOString()}).eq("email",data.email);
+  const {data:rows,error}=await (supabaseAdmin as any).rpc("rubi_decide_master_candidate_audited",{
+   p_actor:context.userId,p_email:data.email,p_action:"cancel"
+  });
   if(error)throw error;
+  if(rows?.[0]?.saved_status!=="cancelled")throw new Error("Cancelamento não registrado.");
   return {cancelled:true};
  });
