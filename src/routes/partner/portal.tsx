@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getMyPartnerPortal } from "@/lib/partner-portal.functions";
 import { Button } from "@/components/ui/button";
 import { PartnerCreativeKit } from "@/components/partner/PartnerCreativeKit";
+import { RubiPartnerFinanceDashboard } from "@/components/partner/RubiPartnerFinanceDashboard";
 import { RubiLicensedPartnerCreatives } from "@/components/partner/RubiLicensedPartnerCreatives";
 import { RubiStorefrontEntry } from "@/components/store/RubiStorefrontEntry";
 import { RubiConversionGuide } from "@/components/growth/RubiConversionGuide";
@@ -108,6 +109,10 @@ function PartnerPortal() {
         </div>
         <p className="text-xs text-muted-foreground">A formação e gestão dos times é, nesta fase, exclusiva do Shadow Master. Participar de um time não libera novos produtos, comissões adicionais nem acesso aos dados de outros criadores.</p>
       </section>
+      {salesQuery.data && commissionsQuery.data && statsQuery.data &&
+       <RubiPartnerFinanceDashboard
+        partnerType={profile.partner_type??"partner"} displayName={profile.display_name}
+        summary={salesQuery.data} commission={commissionsQuery.data} visits={statsQuery.data}/>}
       <section aria-label="Resumo das visitas" className="space-y-3">
         <h2 className="text-2xl font-bold">Seu desempenho</h2>
         {statsQuery.isLoading && <p role="status">Carregando indicadores...</p>}
