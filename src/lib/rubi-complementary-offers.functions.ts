@@ -5,6 +5,7 @@ import { approvedRubiCheckout } from "./rubi-checkout-validation";
 import { canSuggestComplementary } from "./rubi-complementary-offers";
 const schema = z.object({
   id:z.string().uuid().optional(),
+  revision:z.number().int().positive().optional(),
   primary_product_id:z.string().uuid(),
   suggested_product_id:z.string().uuid(),
   kind:z.enum(["order_bump","upsell","cross_sell","downsell"]),
@@ -19,36 +20,35 @@ export const listRubiComplementaryAdmin=createServerFn({method:"POST"}).middlewa
  .handler(async({data})=>{
   const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
   const {data:rows,error}=await (supabaseAdmin as any).from("rubi_complementary_offers")
-   .select("id,primary_product_id,suggested_product_id,kind,headline,explanation,position,active")
+   .select("id,revision,primary_product_id,suggested_product_id,kind,headline,explanation,position,active")
    .eq("primary_product_id",data.productId).order("position").limit(100);
   if(error) throw error;
   return rows??[];
  });
 export const saveRubiComplementaryAdmin=createServerFn({method:"POST"}).middleware([requireOwnerRole])
- .validator((input:unknown)=>schema.parse(input)).handler(async({data})=>{
+ .validator((input:unknown)=>schema.parse(input)).handler(async({data,context})=>{
   const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
-  if(data.primary_product_id===data.suggested_product_id) throw new Error("Escolha um complemento diferente do produto principal.");
-  const {data:products,error:catalogError}=await (supabaseAdmin as any).from("hub_products")
-    .select(catalogFields).in("id",[data.primary_product_id,data.suggested_product_id]);
-  if(catalogError) throw catalogError;
+  const db=supabaseAdmin as any;
+  if(data.primary_product_id===data.suggested_product_id)throw new Error("Selecione outro produto.");
+  const {data:products,error:catalogError}=await db.from("hub_products")
+   .select(catalogFields).in("id",[data.primary_product_id,data.suggested_product_id]);
+  if(catalogError)throw catalogError;
   const primary=products?.find((p:any)=>p.id===data.primary_product_id);
   const suggested=products?.find((p:any)=>p.id===data.suggested_product_id);
-  if(!primary || !suggested || !canSuggestComplementary(primary.id,suggested.id,data.kind,Number(primary.retail_price),Number(suggested.retail_price))) {
-    throw new Error("Produtos inválidos ou downsell sem preço inferior ao principal.");
-  }
-  if(data.active && (!primary.active || !suggested.active || !approvedRubiCheckout(primary) || !approvedRubiCheckout(suggested))) {
-    throw new Error("Para ativar, os dois produtos precisam ter checkout oficial próprio e aprovado.");
-  }
-  if(data.id) {
-    const {data:old,error:oldError}=await (supabaseAdmin as any).from("rubi_complementary_offers")
-      .select("id,primary_product_id").eq("id",data.id).maybeSingle();
-    if(oldError) throw oldError;
-    if(!old||old.primary_product_id!==data.primary_product_id) throw new Error("Associação não encontrada para este produto.");
-  }
-  const {error}=await (supabaseAdmin as any).from("rubi_complementary_offers")
-    .upsert({...data,updated_at:new Date().toISOString()});
-  if(error) throw error;
-  return {success:true};
+  if(!primary||!suggested||!canSuggestComplementary(primary.id,suggested.id,data.kind,Number(primary.retail_price),Number(suggested.retail_price)))
+   throw new Error("Combinação de produtos ou preço inválida.");
+  if(data.active&&(!primary.active||!suggested.active||!approvedRubiCheckout(primary)||!approvedRubiCheckout(suggested)))
+   throw new Error("Ambos os produtos exigem checkout oficial ativo.");
+  if(data.id&&!data.revision)throw new Error("Revisão atual da estratégia obrigatória.");
+  const {data:rows,error}=await db.rpc("rubi_save_complementary_offer_audited",{
+   p_actor:context.userId,p_id:data.id??null,p_expected_revision:data.revision??null,
+   p_primary:data.primary_product_id,p_suggested:data.suggested_product_id,
+   p_kind:data.kind,p_headline:data.headline,p_explanation:data.explanation,
+   p_position:data.position,p_active:data.active
+  });
+  if(error)throw error;
+  if(!rows?.[0]?.saved_id)throw new Error("Estratégia e auditoria não registradas.");
+  return {success:true,revision:Number(rows[0].saved_revision)};
  });
 /** Public editorial suggestions: individual product links, NOT cart additions or external checkout upsells. */
 export const listRubiComplementaryPublic=createServerFn({method:"POST"})
