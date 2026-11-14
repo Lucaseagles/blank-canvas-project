@@ -6,6 +6,7 @@ import { CommandCenterPulse } from "@/components/admin/CommandCenterPulse";
 import { RubiAudienceConversionPulse } from "@/components/admin/RubiAudienceConversionPulse";
 import { RubiThreeFunnelPulseAdmin } from "@/components/admin/RubiThreeFunnelPulseAdmin";
 import { RubiMasterGrowthPlaybooksAdmin } from "@/components/admin/RubiMasterGrowthPlaybooksAdmin";
+import { RubiEcosystemFlywheelAdmin } from "@/components/admin/RubiEcosystemFlywheelAdmin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users, ShoppingBag, Play, Heart, MousePointer2, TrendingUp, AlertCircle, Calendar, ArrowUpRight, ArrowDownRight, UserPlus } from "lucide-react";
@@ -43,6 +44,7 @@ function AdminDashboard() {
       <CommandCenterPulse />
       <RubiAudienceConversionPulse />
       <RubiThreeFunnelPulseAdmin />
+      <RubiEcosystemFlywheelAdmin />
       <RubiMasterGrowthPlaybooksAdmin />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
