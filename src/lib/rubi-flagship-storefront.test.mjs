@@ -707,11 +707,11 @@ test("video to creative linkage remains Master-only and never fabricates paid at
  assert.match(migration,/enable row level security/);
  assert.match(migration,/revoke all on public\.rubi_variant_video_links from public,anon,authenticated/);
  assert.match(server,/requireOwnerRole/g);
- assert.match(server,/variant\.format!=="short_video"/);
- assert.match(server,/variant\.status!=="review"/);
- assert.match(server,/video\.status!=="published"/);
- assert.match(server,/Vídeo já associado a outra variante/);
- assert.match(server,/\.insert\(\{video_id:data\.videoId,variant_id:data\.variantId\}\)/);
+ assert.match(source("../../supabase/migrations/20261114010000_rubi_publication_video_atomic_audit.sql"),/variant_row.format<>'short_video'/);
+ assert.match(source("../../supabase/migrations/20261114010000_rubi_publication_video_atomic_audit.sql"),/variant_row.status<>'review'/);
+ assert.match(source("../../supabase/migrations/20261114010000_rubi_publication_video_atomic_audit.sql"),/video_row.status<>'published'/);
+ assert.match(source("../../supabase/migrations/20261114010000_rubi_publication_video_atomic_audit.sql"),/Video already linked/);
+ assert.match(server,/rpc\("rubi_set_variant_video_link_audited"/);
  assert.doesNotMatch(server,/\.upsert\(/);
  assert.match(manager,/draft\.format==="short_video"&&draft\.status==="review"&&!dirty/);
  assert.doesNotMatch(server,/paid_order|confirmPayment|payCommission|attributedSale/);
