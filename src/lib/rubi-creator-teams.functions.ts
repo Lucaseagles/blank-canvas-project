@@ -38,7 +38,16 @@ export const listRubiCreatorTeamsAdmin=createServerFn({method:"GET"})
    if(response.error)throw response.error;
    targets=response.data??[];
   }
-  return {teams:teams??[],prospects:prospects??[],targets,partial:(teams??[]).length===100||(prospects??[]).length===500};
+  const prospectIds=(prospects??[]).map((p:{id:string})=>p.id);
+  let fitReviews:any[]=[];
+  if(prospectIds.length){
+   const result=await db.from("rubi_creator_fit_reviews")
+    .select("id,prospect_id,revision,niche_fit,audience_overlap,engagement_quality,content_quality,compliance_readiness,evidence_notes,fit_score,recommendation,reviewed_at")
+    .in("prospect_id",prospectIds);
+   if(result.error)throw result.error;
+   fitReviews=result.data??[];
+  }
+  return {teams:teams??[],prospects:prospects??[],targets,fitReviews,partial:(teams??[]).length===100||(prospects??[]).length===500};
  });
 export const saveRubiCreatorTeamAdmin=createServerFn({method:"POST"})
  .middleware([requireOwnerRole]).validator((input:unknown)=>teamSchema.parse(input))
