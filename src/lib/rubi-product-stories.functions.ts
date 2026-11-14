@@ -25,30 +25,20 @@ export const listRubiProductStoriesAdmin=createServerFn({method:"POST"})
  });
 export const saveRubiProductStoryAdmin=createServerFn({method:"POST"})
  .middleware([requireOwnerRole]).validator((input:unknown)=>schema.parse(input))
- .handler(async({data})=>{
+ .handler(async({data,context})=>{
   if(!validRubiStoryMediaUrl(data.video_url,"video"))throw new Error("Informe URL HTTPS direta de vídeo .mp4 ou .webm.");
   if(data.poster_url&&!validRubiStoryMediaUrl(data.poster_url,"poster"))throw new Error("Imagem de capa deve ser HTTPS .jpg, .png ou .webp.");
+  if(data.id&&!data.revision)throw new Error("Revisão atual do Story obrigatória.");
   const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
-  const db=supabaseAdmin as any;
-  const {data:product,error:productError}=await db.from("hub_products").select("id").eq("id",data.product_id).maybeSingle();
-  if(productError)throw productError;
-  if(!product)throw new Error("Produto inexistente.");
-  const {id,revision,...values}=data;
-  if(id){
-   const {data:old,error:oldError}=await db.from("rubi_product_stories").select("id,product_id,revision").eq("id",id).maybeSingle();
-   if(oldError)throw oldError;
-   if(!old||old.product_id!==data.product_id||old.revision!==revision)throw new Error("Story não pertence ao produto ou versão foi alterada.");
-   const {data:updated,error}=await db.from("rubi_product_stories")
-    .update({...values,status:"draft",approved_movement_revision:null,revision:old.revision+1,updated_at:new Date().toISOString()})
-    .eq("id",id).eq("product_id",data.product_id).eq("revision",old.revision).select("id,revision").maybeSingle();
-   if(error)throw error;
-   if(!updated)throw new Error("Conflito de edição.");
-   return updated as {id:string;revision:number};
-  }
-  const {data:created,error}=await db.from("rubi_product_stories")
-   .insert({...values,status:"draft"}).select("id,revision").single();
+  const {data:rows,error}=await (supabaseAdmin as any).rpc("rubi_save_story_draft_audited",{
+   p_actor:context.userId,p_id:data.id??null,p_expected_revision:data.revision??null,
+   p_product:data.product_id,p_movement:data.movement_id,p_title:data.title,
+   p_description:data.description,p_video_url:data.video_url,p_poster_url:data.poster_url,
+   p_evidence:data.evidence_notes,p_rights:data.rights_confirmed,p_position:data.position
+  });
   if(error)throw error;
-  return created as {id:string;revision:number};
+  if(!rows?.[0]?.saved_id)throw new Error("Story e auditoria não registrados.");
+  return {id:String(rows[0].saved_id),revision:Number(rows[0].new_revision)};
  });
 export const setRubiProductStoryApprovalAdmin=createServerFn({method:"POST"})
  .middleware([requireOwnerRole])
