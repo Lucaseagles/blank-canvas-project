@@ -1,0 +1,27 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+const read=p=>readFileSync(new URL(p,import.meta.url),"utf8");
+test("Owner-only manual reconciliation writes the sale and sanitized audit atomically",()=>{
+ const sql=read("../../supabase/migrations/20261115010000_rubi_partner_sale_reconciliation_atomic.sql");
+ const server=read("./partner-sales-reconciliation-admin.functions.ts");
+ assert.match(sql,/create or replace function public\.rubi_reconcile_partner_sale_audited/);
+ assert.match(sql,/security invoker/);
+ assert.match(sql,/for share/);
+ assert.match(sql,/p\.audience='partner' and p\.status='approved'/);
+ assert.match(sql,/g\.active=true/);
+ assert.match(sql,/a\.active=true for share/);
+ assert.match(sql,/p_gross_amount<>round\(p_gross_amount,2\)/);
+ assert.match(sql,/insert into public\.hub_partner_confirmed_sales/);
+ assert.match(sql,/insert into public\.admin_audit_log/);
+ assert.match(sql,/RUBI_PARTNER_SALE_MANUALLY_RECONCILED/);
+ assert.match(sql,/from public,anon,authenticated/);
+ assert.match(sql,/to service_role/);
+ assert.match(sql,/UNIQUE\(source, external_order_id\)/);
+ assert.match(server,/requireOwnerRole/);
+ assert.match(server,/rpc\("rubi_reconcile_partner_sale_audited"/);
+ assert.match(server,/p_actor: context\.userId/);
+ assert.doesNotMatch(server,/\.from\("hub_partner_confirmed_sales"\)\.insert/);
+ const audit=sql.slice(sql.indexOf("insert into public.admin_audit_log"));
+ assert.doesNotMatch(audit,/jsonb_build_object\([^;]*payment_evidence_reference/);
+});
