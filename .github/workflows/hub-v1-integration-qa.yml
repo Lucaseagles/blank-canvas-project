@@ -117,6 +117,8 @@ jobs:
         run: npm run test:rubi-inventory-truth
       - name: RUBI atomic partner sale reconciliation tests
         run: node --test src/lib/rubi-partner-sale-reconciliation-atomic.test.mjs
+      - name: RUBI licensed creative access and revocation regression
+        run: node --test src/lib/rubi-creative-license-access.test.mjs
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint
