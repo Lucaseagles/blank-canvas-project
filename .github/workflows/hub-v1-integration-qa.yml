@@ -115,6 +115,8 @@ jobs:
         run: npm run test:rubi-browser-evidence
       - name: RUBI inventory truth tests
         run: npm run test:rubi-inventory-truth
+      - name: RUBI atomic partner sale reconciliation tests
+        run: node --test src/lib/rubi-partner-sale-reconciliation-atomic.test.mjs
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint
