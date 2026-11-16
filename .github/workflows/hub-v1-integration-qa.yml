@@ -123,6 +123,8 @@ jobs:
         run: node --test src/lib/rubi-legacy-campaign-atomic-audit.test.mjs
       - name: RUBI launch QA atomic audit test
         run: node --test src/lib/rubi-launch-qa-atomic-audit.test.mjs
+      - name: RUBI offer-group atomic audit regression
+        run: node --test src/lib/rubi-offer-group-atomic-audit.test.mjs
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint
