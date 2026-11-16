@@ -21,7 +21,7 @@ begin
     select 1 from public.user_roles r where r.user_id=p_actor and r.role='owner'
   ) then raise exception 'Owner authorization required'; end if;
 
-  if p_action not in ('save','status','delete') then raise exception 'Invalid video action'; end if;
+  if p_action is null or p_action not in ('save','status','delete') then raise exception 'Invalid video action'; end if;
 
   if p_action='delete' then
     if p_id is null then raise exception 'Video ID required'; end if;
@@ -39,7 +39,7 @@ begin
     select * into old_row from public.videos where id=p_id for update;
     if not found then raise exception 'Video not found'; end if;
     v_status := p_payload->>'status';
-    if v_status not in ('published','draft','archived') then raise exception 'Invalid video status'; end if;
+    if v_status is null or v_status not in ('published','draft','archived') then raise exception 'Invalid video status'; end if;
     if v_status='published' and old_row.scheduled_for is not null and old_row.scheduled_for>now() then
       raise exception 'Scheduled video cannot be published before its scheduled time';
     end if;
@@ -58,7 +58,7 @@ begin
   if p_product_ids is not null then
     if jsonb_typeof(p_product_ids) is distinct from 'array' or jsonb_array_length(p_product_ids)>100 then raise exception 'Invalid video product list'; end if;
     select coalesce(array_agg(value::uuid),array[]::uuid[]) into v_product_ids
-      from jsonb_array_elements_text(p_product_ids) as values(value);
+      from jsonb_array_elements_text(p_product_ids) as item_rows(value);
     if cardinality(v_product_ids)<>(select count(distinct x) from unnest(v_product_ids) x) then raise exception 'Duplicate product association'; end if;
     select count(*) into v_product_count from public.products where id=any(v_product_ids);
     if v_product_count<>cardinality(v_product_ids) then raise exception 'One or more products do not exist'; end if;
@@ -69,7 +69,7 @@ begin
       duration_seconds,category_id,campaign_id,scheduled_for,caption,subtitle_url,subtitle_text)
     values(
       btrim(p_payload->>'title'),
-      coalesce(nullif(p_payload->>'external_url',''),case when nullif(p_payload->>'storage_path','') is not null then 'storage://'||p_payload->>'storage_path' end,''),
+      coalesce(nullif(p_payload->>'external_url',''),case when nullif(p_payload->>'storage_path','') is not null then ('storage://' || (p_payload->>'storage_path')) end,''),
       null,null,nullif(p_payload->>'status','draft'),
       nullif(p_payload->>'storage_path',''),nullif(p_payload->>'external_url',''),
       nullif(p_payload->>'duration_seconds','')::integer,nullif(p_payload->>'category_id','')::uuid,
@@ -137,7 +137,7 @@ begin
   if p_actor is null or not exists (
     select 1 from public.user_roles r where r.user_id=p_actor and r.role='owner'
   ) then raise exception 'Owner authorization required'; end if;
-  if p_action not in ('save','delete') then raise exception 'Invalid bridge video action'; end if;
+  if p_action is null or p_action not in ('save','delete') then raise exception 'Invalid bridge video action'; end if;
 
   if p_action='delete' then
     if p_id is null then raise exception 'Bridge video ID required'; end if;
