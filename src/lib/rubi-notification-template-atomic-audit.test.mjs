@@ -5,8 +5,12 @@ const read=p=>readFileSync(new URL(p,import.meta.url),"utf8");
 test("notification template edits are Owner-only and audited in one transaction",()=>{
  const server=read("./notification-intelligence.functions.ts");
  const client=read("./supabase/notifications.ts");
+ const ui=read("../admin/notifications/NotificationTemplates.tsx");
  const sql=read("../../supabase/migrations/20261115210000_rubi_notification_template_atomic_audit.sql");
  assert.match(server,/requireOwnerRole/);
+ assert.match(ui,/useServerFn\(updateNotificationTemplateAdmin\)/);
+ assert.equal((ui.match(/await updateTemplate\(\{data:/g)??[]).length,2);
+ assert.doesNotMatch(ui,/await updateNotificationTemplate\(/);
  assert.match(server,/rpc\("rubi_update_notification_template_audited"/);
  assert.match(server,/p_actor: context\.userId/);
  assert.doesNotMatch(server,/\.from\("notification_templates"\)\.update/);
