@@ -59,12 +59,12 @@ begin
   end if;
   delete from public.campaign_channels c where c.campaign_id=new_id;
   insert into public.campaign_channels(campaign_id,channel,is_enabled,config)
-   select new_id,ch,true,case when ch='SOCIAL_FOLLOW' then
+   select new_id,c.ch,true,case when c.ch='SOCIAL_FOLLOW' then
     jsonb_build_object('social_channel_id',p_social_channel_id) else '{}'::jsonb end
-   from unnest(p_channels) as ch;
+   from unnest(p_channels) as c(ch);
   delete from public.campaign_products p where p.campaign_id=new_id;
   insert into public.campaign_products(campaign_id,product_id)
-   select new_id,product_id from unnest(p_product_ids) as product_id;
+   select new_id,p.id from unnest(p_product_ids) as p(id);
   insert into public.admin_audit_log(
    actor_user_id,actor_email,action_type,entity_type,entity_id,previous_value,new_value
   ) values(p_actor,null,action_name,'campaign',new_id,
