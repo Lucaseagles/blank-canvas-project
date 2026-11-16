@@ -44,6 +44,8 @@ test("SQL enforces Owner, row locks, atomic associations and audit writes", () =
   assert.match(sql, /insert into public\.video_products/);
   for (const event of ["RUBI_VIDEO_CREATED","RUBI_VIDEO_UPDATED","RUBI_VIDEO_STATUS_CHANGED","RUBI_VIDEO_DELETED","RUBI_BRIDGE_VIDEO_CREATED","RUBI_BRIDGE_VIDEO_UPDATED","RUBI_BRIDGE_VIDEO_DELETED"]) assert.match(sql, new RegExp(event));
   assert.equal((sql.match(/insert into public\.admin_audit_log/g) || []).length, 5);
+  assert.match(sql, /coalesce\(nullif\(p_payload->>'status',''\),'draft'\)/);
+  assert.doesNotMatch(sql, /nullif\(p_payload->>'status','draft'\)/);
   assert.match(sql, /revoke all on function public\.rubi_manage_video_audited/);
   assert.match(sql, /revoke all on function public\.rubi_manage_bridge_video_audited/);
   assert.match(sql, /to service_role/);
