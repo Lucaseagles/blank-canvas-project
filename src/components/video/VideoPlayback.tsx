@@ -24,7 +24,15 @@ export function VideoPlayback({ src, poster, title, className, autoPlay = false,
   const playback = resolveRubiVideoPlayback(src);
 
   if (playback.kind === "native") {
-    return <VideoPlayer src={playback.src} poster={poster ?? undefined} className={className} autoPlay={autoPlay} loop={loop} onStart={onStart} onComplete={onComplete} />;
+    return <VideoPlayer
+      src={playback.src}
+      autoPlay={autoPlay}
+      loop={loop}
+      {...(poster !== undefined ? { poster } : {})}
+      {...(className !== undefined ? { className } : {})}
+      {...(onStart !== undefined ? { onStart } : {})}
+      {...(onComplete !== undefined ? { onComplete } : {})}
+    />;
   }
   if (playback.kind === "embed") {
     return (
