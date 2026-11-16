@@ -10,6 +10,7 @@ test("native video upload is Owner-gated, MIME/size validated and uses a private
   assert.match(upload, /middleware\(\[requireOwnerRole\]\)/);
   assert.match(upload, /z\.enum\(VIDEO_MIME_TYPES\)/);
   assert.match(upload, /max\(VIDEO_MAX_BYTES\)/);
+  assert.match(api, /VIDEO_MAX_BYTES = 50 \* 1024 \* 1024/);
   assert.match(upload, /createBucket\(VIDEO_BUCKET/);
   assert.match(upload, /public: false/);
   assert.match(upload, /createSignedUploadUrl\(path\)/);
@@ -31,7 +32,7 @@ test("published native videos use expiring signed URLs and do not expose raw sto
 test("admin upload uses a signed token and enforces the browser-side file contract", () => {
   const page = read("../routes/admin/videos.tsx");
   assert.match(page, /accept="video\/mp4,video\/webm"/);
-  assert.match(page, /100 \* 1024 \* 1024/);
+  assert.match(page, /50 \* 1024 \* 1024/);
   assert.match(page, /createVideoUploadFn/);
   assert.match(page, /uploadToSignedUrl\(signed\.path, signed\.token/);
   assert.match(page, /discardVideoUploadFn\(\{ data: \{ path: uploadedPath \} \}\)/);
