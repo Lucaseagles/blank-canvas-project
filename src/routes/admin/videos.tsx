@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { trackEvent } from "@/lib/analytics";
 import { toast } from "sonner";
-import { getAdminVideos, getAdminVideoFormOptions, createVideoUploadUrl, saveVideo, deleteVideo, setVideoStatus } from "@/lib/video.functions";
+import { getAdminVideos, getAdminVideoFormOptions, createVideoUploadUrl, discardVideoUpload, saveVideo, deleteVideo, setVideoStatus } from "@/lib/video.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -38,6 +38,7 @@ function AdminVideosContent() {
   const fetchVideosFn = useServerFn(getAdminVideos);
   const fetchOptionsFn = useServerFn(getAdminVideoFormOptions);
   const createVideoUploadFn = useServerFn(createVideoUploadUrl);
+  const discardVideoUploadFn = useServerFn(discardVideoUpload);
   const saveVideoFn = useServerFn(saveVideo);
   const deleteVideoFn = useServerFn(deleteVideo);
   const setVideoStatusFn = useServerFn(setVideoStatus);
@@ -146,8 +147,11 @@ function AdminVideosContent() {
       queryClient.invalidateQueries({ queryKey: ["admin-videos"] });
     } catch (error) {
       if (uploadedPath) {
-        const { error: cleanupError } = await supabase.storage.from("videos").remove([uploadedPath]);
-        if (cleanupError) console.error("Video upload cleanup pending:", cleanupError);
+        try {
+          await discardVideoUploadFn({ data: { path: uploadedPath } });
+        } catch (cleanupError) {
+          console.error("Video upload cleanup pending:", cleanupError);
+        }
       }
       toast.error(error instanceof Error ? error.message : "Não foi possível salvar o vídeo.");
     }
