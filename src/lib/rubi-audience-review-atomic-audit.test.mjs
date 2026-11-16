@@ -1,0 +1,24 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+const read=p=>readFileSync(new URL(p,import.meta.url),"utf8");
+test("audience evidence review requires Owner, revision and audit in one transaction",()=>{
+ const sql=read("../../supabase/migrations/20261115183000_rubi_audience_review_atomic_audit.sql");
+ const source=read("./rubi-audience-review.functions.ts");
+ const original=read("../../supabase/migrations/20261112210000_rubi_audience_evidence_reviews.sql");
+ assert.match(sql,/security invoker set search_path=''/);
+ assert.match(sql,/u\.role='owner'/);
+ assert.match(sql,/for update/);
+ assert.match(sql,/movement\.revision<>p_expected_revision/);
+ assert.match(sql,/insert into public\.rubi_audience_evidence_reviews/);
+ assert.match(sql,/insert into public\.admin_audit_log/);
+ assert.match(sql,/to service_role/);
+ assert.match(original,/enable row level security/);
+ assert.match(original,/before update or delete/);
+ assert.match(original,/before insert/);
+ assert.match(source,/assessRubiAudienceEvidenceStatus\(evidence\)/);
+ assert.match(source,/rpc\("rubi_record_audience_review_audited"/);
+ assert.match(source,/p_actor:context\.userId/);
+ assert.doesNotMatch(source,/\.from\("rubi_audience_evidence_reviews"\)\.insert/);
+ assert.doesNotMatch(sql.slice(sql.indexOf("insert into public.admin_audit_log")),/source_reference|reviewer_note|evidence_snapshot/);
+});
