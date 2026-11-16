@@ -28,8 +28,6 @@ function assertPlatformLink(platform: string, link: string) {
   }
 }
 
-const productIdInput = z.object({ product_id: z.string().uuid() });
-
 export const getAdminBridgeVideos = createServerFn({ method: 'GET' })
   .middleware([requireOwnerRole])
   .handler(async () => {
@@ -58,58 +56,42 @@ export const getAdminBridgeProducts = createServerFn({ method: 'GET' })
 export const saveBridgeVideo = createServerFn({ method: 'POST' })
   .middleware([requireOwnerRole])
   .validator((data: unknown) => bridgeVideoInput.parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     assertPlatformLink(data.platform, data.link);
     const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
-
-    const { data: product, error: productError } = await supabaseAdmin
-      .from('products')
-      .select('id')
-      .eq('id', data.product_id)
-      .neq('status', 'deleted')
-      .maybeSingle();
-
-    if (productError) throw productError;
-    if (!product) {
-      throw new Error('O produto selecionado não existe ou está excluído.');
-    }
-
-    const payload = {
-      product_id: data.product_id,
-      title: data.title,
-      subtitle: data.subtitle || null,
-      thumbnail: data.thumbnail || null,
-      platform: data.platform,
-      link: data.link,
-      is_active: data.is_active,
-    };
-
-    if (data.id) {
-      const { data: row, error } = await supabaseAdmin
-        .from('bridge_videos')
-        .update(payload)
-        .eq('id', data.id)
-        .select('*')
-        .single();
-      if (error) throw error;
-      return row;
-    }
-
-    const { data: row, error } = await supabaseAdmin
-      .from('bridge_videos')
-      .insert(payload)
-      .select('*')
-      .single();
-    if (error) throw error;
-    return row;
+    const { data: result, error } = await supabaseAdmin.rpc('rubi_manage_bridge_video_audited', {
+      p_action: 'save',
+      p_id: data.id ?? null,
+      p_payload: {
+        product_id: data.product_id,
+        title: data.title,
+        subtitle: data.subtitle ?? null,
+        thumbnail: data.thumbnail ?? null,
+        platform: data.platform,
+        link: data.link,
+        is_active: data.is_active,
+      },
+      p_actor: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    const saved = result as unknown as { id?: string } | null;
+    if (!saved?.id) throw new Error('Vídeo de ponte e auditoria não foram registrados.');
+    return saved;
   });
 
 export const deleteBridgeVideo = createServerFn({ method: 'POST' })
   .middleware([requireOwnerRole])
   .validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
-    const { error } = await supabaseAdmin.from('bridge_videos').delete().eq('id', data.id);
-    if (error) throw error;
+    const { data: result, error } = await supabaseAdmin.rpc('rubi_manage_bridge_video_audited', {
+      p_action: 'delete',
+      p_id: data.id,
+      p_payload: null,
+      p_actor: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    const deleted = result as unknown as { id?: string } | null;
+    if (deleted?.id !== data.id) throw new Error('Exclusão e auditoria não foram registradas.');
     return { success: true };
   });
