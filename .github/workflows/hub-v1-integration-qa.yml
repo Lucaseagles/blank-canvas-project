@@ -121,6 +121,8 @@ jobs:
         run: node --test src/lib/rubi-creative-license-access.test.mjs
       - name: RUBI legacy campaign atomic audit regression
         run: node --test src/lib/rubi-legacy-campaign-atomic-audit.test.mjs
+      - name: RUBI launch QA atomic audit test
+        run: node --test src/lib/rubi-launch-qa-atomic-audit.test.mjs
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint

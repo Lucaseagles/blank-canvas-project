@@ -20,19 +20,19 @@ export const getRubiLaunchQaAdmin=createServerFn({method:"POST"})
 });
 export const saveRubiLaunchQaAdmin=createServerFn({method:"POST"})
 .middleware([requireOwnerRole]).validator((value:unknown)=>schema.parse(value))
-.handler(async({data})=>{
+.handler(async({data,context})=>{
  const review=rubiQaReview(data);
  if(review.invalid.length)throw new Error("Informe evidência para: "+review.invalid.join(", "));
  const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
  const {data:product,error:productError}=await (supabaseAdmin as any).from("hub_products").select("id,active,retail_price,checkout_url,checkout_verified,supplier_id,hub_suppliers!inner(active,checkout_host)").eq("id",data.product_id).maybeSingle();
  if(productError)throw productError;
  if(!product)throw new Error("Produto não encontrado no catálogo.");
- const values:Record<string,unknown>={product_id:data.product_id,commercial_snapshot:rubiQaCommercialSnapshot(product),updated_at:new Date().toISOString()};
- for(const item of RUBI_LAUNCH_QA_ITEMS){
-  values[`${item.key}_status`]=data[item.key].status;
-  values[`${item.key}_evidence`]=data[item.key].evidence;
- }
- const {error}=await (supabaseAdmin as any).from("rubi_launch_qa_checklists").upsert(values,{onConflict:"product_id"});
- if(error)throw error;
+ const checklist=Object.fromEntries(RUBI_LAUNCH_QA_ITEMS.map(item=>[item.key,data[item.key]]));
+ const {data: savedId,error}=await (supabaseAdmin as any).rpc("rubi_save_launch_qa_audited",{
+  p_product_id:data.product_id,p_checklist:checklist,
+  p_commercial_snapshot:rubiQaCommercialSnapshot(product),p_actor:context.userId
+ });
+ if(error)throw new Error(error.message);
+ if(savedId!==data.product_id)throw new Error("Checklist e auditoria não registrados.");
  return {saved:true,review};
 });
