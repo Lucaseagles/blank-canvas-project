@@ -5,7 +5,7 @@ const read=p=>readFileSync(new URL(p,import.meta.url),"utf8");
 
 test("social strategy mutations are Owner-checked and audited atomically",()=>{
  const api=read("./social-strategy.functions.ts");
- const sql=read("../supabase/migrations/20261116190000_rubi_social_strategy_atomic_audit.sql");
+ const sql=read("../../supabase/migrations/20261116190000_rubi_social_strategy_atomic_audit.sql");
  const section=api.slice(api.indexOf("export const saveSocialStrategy"),api.length);
  assert.equal((section.match(/rpc\("rubi_manage_social_strategy_audited"/g)||[]).length,2);
  assert.equal((section.match(/p_actor: context\.userId/g)||[]).length,2);
