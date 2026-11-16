@@ -81,8 +81,9 @@ export const saveVideo = createServerFn({ method: "POST" })
       p_actor: context.userId,
     });
     if (error) throw new Error(error.message);
-    if (!result?.id) throw new Error("Vídeo, associações e auditoria não foram registrados.");
-    return { success: true, id: String(result.id) };
+    const saved = result as unknown as { id?: string } | null;
+    if (!saved?.id) throw new Error("Vídeo, associações e auditoria não foram registrados.");
+    return { success: true, id: saved.id };
   });
 
 export const setVideoStatus = createServerFn({ method: "POST" })
@@ -98,7 +99,8 @@ export const setVideoStatus = createServerFn({ method: "POST" })
       p_actor: context.userId,
     });
     if (error) throw new Error(error.message);
-    if (result?.id !== data.id || result?.status !== data.status) throw new Error("Status e auditoria não foram registrados.");
+    const saved = result as unknown as { id?: string; status?: string } | null;
+    if (saved?.id !== data.id || saved?.status !== data.status) throw new Error("Status e auditoria não foram registrados.");
     return { success: true, id: data.id, status: data.status };
   });
 
@@ -115,6 +117,7 @@ export const deleteVideo = createServerFn({ method: "POST" })
       p_actor: context.userId,
     });
     if (error) throw new Error(error.message);
-    if (result?.id !== id) throw new Error("Exclusão e auditoria não foram registradas.");
+    const deleted = result as unknown as { id?: string } | null;
+    if (deleted?.id !== id) throw new Error("Exclusão e auditoria não foram registradas.");
     return { success: true };
   });
