@@ -26,7 +26,7 @@ export const listRubiAudienceEvidenceReviewsAdmin=createServerFn({method:"POST"}
 export const recordRubiAudienceEvidenceReviewAdmin=createServerFn({method:"POST"})
  .middleware([requireOwnerRole])
  .validator((input:unknown)=>decision.parse(input))
- .handler(async({data})=>{
+ .handler(async({data,context})=>{
   const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
   const db=supabaseAdmin as any;
   const {data:movement,error:movementError}=await db.from("rubi_movements")
@@ -39,11 +39,12 @@ export const recordRubiAudienceEvidenceReviewAdmin=createServerFn({method:"POST"
   const state=assessRubiAudienceEvidenceStatus(evidence);
   if(state.kind!=="declared_pending_review"||state.blockers.length!==1)
    throw new Error("Registre evidência estruturada e completa antes de revisar.");
-  const {data:row,error}=await db.from("rubi_audience_evidence_reviews").insert({
-   movement_id:data.movementId,movement_revision:data.movementRevision,
-   evidence_snapshot:evidence,outcome:data.outcome,reviewer_note:data.reviewerNote,
-   source_reference:data.sourceReference
-  }).select("id").single();
+  const {data:reviewId,error}=await db.rpc("rubi_record_audience_review_audited",{
+   p_movement_id:data.movementId,p_expected_revision:data.movementRevision,
+   p_outcome:data.outcome,p_reviewer_note:data.reviewerNote,
+   p_source_reference:data.sourceReference,p_actor:context.userId
+  });
   if(error)throw error;
-  return {id:String(row.id),disclaimer:"Decisão documental interna; não comprova aceitação do público nem libera publicidade."};
+  if(typeof reviewId!=="string")throw new Error("Revisão e auditoria não registradas.");
+  return {id:reviewId,disclaimer:"Decisão documental interna; não comprova aceitação do público nem libera publicidade."};
  });
