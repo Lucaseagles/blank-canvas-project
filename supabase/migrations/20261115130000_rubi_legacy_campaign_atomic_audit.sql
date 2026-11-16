@@ -129,3 +129,8 @@ revoke all on function public.rubi_mutate_legacy_campaign_audited(text,uuid,json
  from public,anon,authenticated;
 grant execute on function public.rubi_mutate_legacy_campaign_audited(text,uuid,jsonb,text[],uuid[],uuid,uuid)
  to service_role;
+
+-- RLS owner/admin policies alone do not guarantee audit: disallow direct client DML.
+-- Read policies remain intact; only the Owner-checked server RPC can write.
+revoke insert,update,delete on public.campaigns,public.campaign_channels,public.campaign_products
+ from public,anon,authenticated;
