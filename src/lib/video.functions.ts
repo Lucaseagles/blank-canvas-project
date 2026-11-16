@@ -10,7 +10,7 @@ const videoInput = z.object({
 });
 
 const VIDEO_BUCKET = "videos";
-const VIDEO_MAX_BYTES = 100 * 1024 * 1024;
+const VIDEO_MAX_BYTES = 50 * 1024 * 1024;
 const VIDEO_SIGNED_URL_SECONDS = 60 * 60 * 6;
 const VIDEO_MIME_TYPES = ["video/mp4", "video/webm"] as const;
 
