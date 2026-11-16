@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { trackEvent } from "@/lib/analytics";
 import { toast } from "sonner";
-import { getAdminVideos, getAdminVideoFormOptions, saveVideo, deleteVideo, setVideoStatus } from "@/lib/video.functions";
+import { getAdminVideos, getAdminVideoFormOptions, createVideoUploadUrl, saveVideo, deleteVideo, setVideoStatus } from "@/lib/video.functions";
+import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -30,11 +31,13 @@ function AdminVideosContent() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingVideo, setEditingVideo] = useState<any>(null);
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [selectedVideoFile, setSelectedVideoFile] = useState<File | null>(null);
   const [productSearchTerm, setProductSearchTerm] = useState("");
   
   const queryClient = useQueryClient();
   const fetchVideosFn = useServerFn(getAdminVideos);
   const fetchOptionsFn = useServerFn(getAdminVideoFormOptions);
+  const createVideoUploadFn = useServerFn(createVideoUploadUrl);
   const saveVideoFn = useServerFn(saveVideo);
   const deleteVideoFn = useServerFn(deleteVideo);
   const setVideoStatusFn = useServerFn(setVideoStatus);
@@ -81,9 +84,10 @@ function AdminVideosContent() {
       await deleteVideoFn({ data: { id } });
       void trackEvent('ADMIN_VIDEO_DELETED', { video_id: id }).catch(console.error);
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["admin-videos"] });
-      toast.success("Video deleted");
+      if (result.storageCleanupPending) toast.warning("Vídeo excluído; o arquivo ficou pendente de limpeza no Storage.");
+      else toast.success("Video deleted");
     },
     onError: (error) => toast.error(error instanceof Error ? error.message : "Não foi possível excluir o vídeo."),
   });
@@ -95,25 +99,55 @@ function AdminVideosContent() {
   const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const data = {
-      id: editingVideo?.id,
-      title: formData.get("title") as string,
-      external_url: (String(formData.get("external_url") ?? "").trim() || null),
-      category_id: String(formData.get("category_id") ?? "").trim() || null,
-      status: (formData.get("status") as any) || 'draft',
-      productIds: selectedProductIds,
-      scheduled_for: String(formData.get("scheduled_for") ?? "").trim() ? new Date(String(formData.get("scheduled_for"))).toISOString() : null,
-      campaign_id: String(formData.get("campaign_id") ?? "").trim() && formData.get("campaign_id") !== "none" ? String(formData.get("campaign_id")) : null,
-    };
+    const externalUrl = String(formData.get("external_url") ?? "").trim() || null;
+    let uploadedPath: string | null = null;
 
     try {
-      await saveVideoFn({ data });
-      toast.success(editingVideo ? "Video updated" : "Video created");
+      if (selectedVideoFile && externalUrl) throw new Error("Escolha um arquivo enviado ou uma URL externa, não os dois.");
+      if (selectedVideoFile) {
+        const allowedTypes = ["video/mp4", "video/webm"];
+        if (!allowedTypes.includes(selectedVideoFile.type) || selectedVideoFile.size <= 0 || selectedVideoFile.size > 100 * 1024 * 1024) {
+          throw new Error("Envie um vídeo MP4 ou WebM com até 100 MB.");
+        }
+        const signed = await createVideoUploadFn({ data: {
+          fileName: selectedVideoFile.name,
+          contentType: selectedVideoFile.type as "video/mp4" | "video/webm",
+          size: selectedVideoFile.size,
+        } });
+        const { error: uploadError } = await supabase.storage.from("videos")
+          .uploadToSignedUrl(signed.path, signed.token, selectedVideoFile, {
+            contentType: selectedVideoFile.type,
+            upsert: false,
+          });
+        if (uploadError) throw uploadError;
+        uploadedPath = signed.path;
+      }
+
+      const data = {
+        id: editingVideo?.id,
+        title: formData.get("title") as string,
+        external_url: selectedVideoFile ? null : externalUrl,
+        storage_path: selectedVideoFile ? uploadedPath : externalUrl ? null : editingVideo?.storage_path ?? null,
+        category_id: String(formData.get("category_id") ?? "").trim() || null,
+        status: (formData.get("status") as any) || 'draft',
+        productIds: selectedProductIds,
+        scheduled_for: String(formData.get("scheduled_for") ?? "").trim() ? new Date(String(formData.get("scheduled_for"))).toISOString() : null,
+        campaign_id: String(formData.get("campaign_id") ?? "").trim() && formData.get("campaign_id") !== "none" ? String(formData.get("campaign_id")) : null,
+      };
+
+      const saved = await saveVideoFn({ data });
+      if (saved.storageCleanupPending) toast.warning("Vídeo salvo; o arquivo anterior ficou pendente de limpeza.");
+      else toast.success(editingVideo ? "Video updated" : "Video created");
       setIsDialogOpen(false);
       setEditingVideo(null);
       setSelectedProductIds([]);
+      setSelectedVideoFile(null);
       queryClient.invalidateQueries({ queryKey: ["admin-videos"] });
     } catch (error) {
+      if (uploadedPath) {
+        const { error: cleanupError } = await supabase.storage.from("videos").remove([uploadedPath]);
+        if (cleanupError) console.error("Video upload cleanup pending:", cleanupError);
+      }
       toast.error(error instanceof Error ? error.message : "Não foi possível salvar o vídeo.");
     }
   };
@@ -165,6 +199,12 @@ function AdminVideosContent() {
                     <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
                     <Input id="external_url" name="external_url" defaultValue={editingVideo?.external_url} placeholder="https://..." className="pl-9 bg-white/5 border-glass-border rounded-xl h-12" />
                   </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="video_file" className="text-xs font-black uppercase tracking-widest text-muted-foreground">Upload nativo (MP4/WebM · até 100 MB)</Label>
+                  <Input id="video_file" type="file" accept="video/mp4,video/webm" onChange={(event) => setSelectedVideoFile(event.target.files?.[0] ?? null)} className="bg-white/5 border-glass-border rounded-xl min-h-12 pt-2" />
+                  {selectedVideoFile && <p className="text-xs text-primary">{selectedVideoFile.name} · {(selectedVideoFile.size / (1024 * 1024)).toFixed(1)} MB</p>}
+                  <p className="text-[11px] text-muted-foreground">O upload usa URL temporária emitida exclusivamente para o Owner. Arquivos ficam em bucket privado.</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
