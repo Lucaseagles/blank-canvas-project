@@ -141,6 +141,8 @@ jobs:
         run: node --test src/lib/rubi-video-atomic-audit.test.mjs
       - name: RUBI video playback resolver regression
         run: node --test src/lib/rubi-video-playback.test.mjs
+      - name: RUBI private video upload and signed playback regression
+        run: node --test src/lib/rubi-video-storage-sprint222.test.mjs
       - name: RUBI social strategy atomic audit regression
         run: node --test src/lib/rubi-social-strategy-atomic-audit.test.mjs
       - name: TypeScript
