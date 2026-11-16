@@ -1,0 +1,6 @@
+# RUBI Sprint 208 — campanha administrativa e auditoria transacional
+- **Falha:** save/status/terminate/duplicate em `src/lib/campaigns.functions.ts` modificavam tabelas separadamente sem auditoria obrigatória; falha na inclusão de canais ou SKUs deixava campanha parcialmente modificada.
+- **Correção:** RPC Owner-only `rubi_mutate_legacy_campaign_audited`, com `security invoker`, bloqueio de registros por linha, verificação de canais/IDs duplicados, produtos existentes e restrições de ativação. Campanha, canais, produtos e auditoria são gravados em uma transação, com rollback integral em erro. Integração preserva formatos atuais do front-end e não dispara PUSH, Telegram ou gastos de anúncios.
+- **Gates:** dois workflows verdes, teste da RPC explícito no QA, migração no Supabase `heartful-helper-box`, conferência de RLS/grants, teste negativo sem Owner e teste funcional real apenas com dados autorizados. SQL deve ser revisado antes de deploy.
+- **Cobertura:** critério 11.3 segue **0,5/1**. Base após 207: **36,5/48 = 76,0%**; não há +0,5 até cobrir também as demais mutações (categorias, offer groups, notificação, importação CSV, checklist QA e outras), verificar no banco e reauditar integralmente.
+- **Arquitetura comercial:** nenhuma mudança em checkouts externos Kairos/fornecedores ou links afiliados de marketplaces.
