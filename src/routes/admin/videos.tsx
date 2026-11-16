@@ -81,8 +81,9 @@ function AdminVideosContent() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await deleteVideoFn({ data: { id } });
+      const result = await deleteVideoFn({ data: { id } });
       void trackEvent('ADMIN_VIDEO_DELETED', { video_id: id }).catch(console.error);
+      return result;
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["admin-videos"] });
