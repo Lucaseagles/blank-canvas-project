@@ -40,7 +40,7 @@ begin
    or v_price is null or v_price<=0 or v_price>1000000
    or v_price<>round(v_price,2)
    or length(v_url) not between 10 and 2048
-   or v_url !~* '^https://[a-z0-9][a-z0-9.-]+(/|$|\\?)'
+   or v_url !~* '^https://[a-z0-9][a-z0-9.-]+(:[0-9]{1,5})?([/?#]|$)'
   then raise exception 'Invalid marketplace draft values'; end if;
   if v_old_price is not null and (v_old_price<v_price or v_old_price>1000000
    or v_old_price<>round(v_old_price,2))
