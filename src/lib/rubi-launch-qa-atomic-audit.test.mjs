@@ -1,0 +1,26 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+const read=p=>readFileSync(new URL(p,import.meta.url),"utf8");
+test("launch checklist save is Owner-only, evidence validated, auditable and atomic",()=>{
+ const api=read("./rubi-launch-qa.functions.ts");
+ const sql=read("../../supabase/migrations/20261115153000_rubi_launch_qa_atomic_audit.sql");
+ assert.match(api,/requireOwnerRole/);
+ assert.match(api,/rubiQaReview\(data\)/);
+ assert.match(api,/rubiQaCommercialSnapshot\(product\)/);
+ assert.match(api,/rpc\("rubi_save_launch_qa_audited"/);
+ assert.match(api,/p_actor:context\.userId/);
+ assert.doesNotMatch(api,/\.upsert\(/);
+ assert.match(sql,/security invoker set search_path=''/);
+ assert.match(sql,/r\.role='owner'|u\.role='owner'/);
+ assert.match(sql,/for share/);
+ assert.match(sql,/for update/);
+ assert.match(sql,/and length\(evidence\)<8/);
+ assert.match(sql,/on conflict\(product_id\) do update/);
+ assert.match(sql,/insert into public\.admin_audit_log/);
+ assert.match(sql,/from public,anon,authenticated/);
+ assert.match(sql,/to service_role/);
+ const part=sql.slice(sql.indexOf("insert into public.admin_audit_log"));
+ assert.doesNotMatch(part,/domain_evidence|terms_evidence|commercial_snapshot/);
+ assert.doesNotMatch(sql,/security definer/i);
+});
