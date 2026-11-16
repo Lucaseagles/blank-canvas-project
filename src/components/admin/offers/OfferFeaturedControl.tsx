@@ -17,6 +17,8 @@ type Offer = {
   featured_ends_at: string | null;
 };
 
+type FeaturePatch = Partial<Pick<Offer,'is_featured_on_hub'|'featured_priority'|'featured_starts_at'|'featured_ends_at'>>;
+
 export function OfferFeaturedControl() {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,7 +39,7 @@ export function OfferFeaturedControl() {
 
   useEffect(() => { void loadOffers(); }, []);
 
-  const updateOffer = async (id: string, patch: Record<string, unknown>, successMessage: string) => {
+  const updateOffer = async (id: string, patch: FeaturePatch, successMessage: string) => {
     setSavingId(id);
     try {
       await updateFeatured({data:{id,patch}});
