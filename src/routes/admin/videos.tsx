@@ -310,7 +310,7 @@ function AdminVideosContent() {
                   <Upload className="w-6 h-6 text-primary" />
                   <div>
                     <p className="text-sm font-bold">Storage Upload</p>
-                    <p className="text-xs text-muted-foreground">Upload nativo será habilitado após configurar o bucket de mídia e suas políticas. Por enquanto, use uma URL de arquivo de vídeo compatível ou o cadastro de vídeo-ponte.</p>
+                    <p className="text-xs text-muted-foreground">O bucket privado é provisionado automaticamente no primeiro upload autorizado do Owner. Aceita MP4/WebM até 50 MB; a reprodução usa URLs temporárias e não expõe o arquivo publicamente.</p>
                   </div>
                 </div>
 
