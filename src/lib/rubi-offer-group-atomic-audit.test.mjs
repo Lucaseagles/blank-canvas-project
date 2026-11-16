@@ -22,4 +22,10 @@ test("offer lifecycle, product links and featured controls require Owner and ato
  assert.doesNotMatch(ui,/\.from\('offer_groups'\)\.update/);
  assert.match(ui,/useServerFn\(setOfferGroupFeaturedAdmin\)/);
  assert.match(ui,/updateFeatured\(\{data:\{id,patch\}\}\)/);
+ const lastHandler=api.slice(api.indexOf("export const setOfferGroupFeaturedAdmin"));
+ assert.equal((lastHandler.match(/createServerFn\(/g)??[]).length,1,
+  "No orphan server function may bypass the audited offer-group RPC");
+ assert.doesNotMatch(lastHandler,/\.from\("products"\)\.update\(/);
+ assert.doesNotMatch(lastHandler,/\.from\("admin_audit_log"\)\.insert\(/);
+
 });
