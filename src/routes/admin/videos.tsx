@@ -206,7 +206,7 @@ function AdminVideosContent() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="video_file" className="text-xs font-black uppercase tracking-widest text-muted-foreground">Upload nativo (MP4/WebM · até 100 MB)</Label>
+                  <Label htmlFor="video_file" className="text-xs font-black uppercase tracking-widest text-muted-foreground">Upload nativo (MP4/WebM · até 50 MB)</Label>
                   <Input id="video_file" type="file" accept="video/mp4,video/webm" onChange={(event) => setSelectedVideoFile(event.target.files?.[0] ?? null)} className="bg-white/5 border-glass-border rounded-xl min-h-12 pt-2" />
                   {selectedVideoFile && <p className="text-xs text-primary">{selectedVideoFile.name} · {(selectedVideoFile.size / (1024 * 1024)).toFixed(1)} MB</p>}
                   <p className="text-[11px] text-muted-foreground">O upload usa URL temporária emitida exclusivamente para o Owner. Arquivos ficam em bucket privado.</p>
