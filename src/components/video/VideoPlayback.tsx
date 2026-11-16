@@ -28,7 +28,7 @@ export function VideoPlayback({ src, poster, title, className, autoPlay = false,
       src={playback.src}
       autoPlay={autoPlay}
       loop={loop}
-      {...(poster !== undefined ? { poster } : {})}
+      {...(typeof poster === "string" ? { poster } : {})}
       {...(className !== undefined ? { className } : {})}
       {...(onStart !== undefined ? { onStart } : {})}
       {...(onComplete !== undefined ? { onComplete } : {})}
