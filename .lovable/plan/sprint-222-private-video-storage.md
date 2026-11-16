@@ -2,7 +2,7 @@
 
 ## Escopo implementado
 - Provisionar o bucket `videos` pela Storage API no primeiro upload autorizado, sem escrever diretamente em `storage.buckets`.
-- Bucket privado, MP4/WebM, limite de 100 MB.
+- Bucket privado, MP4/WebM, limite de 50 MB.
 - Upload por URL assinada de uso temporário, emitida apenas por Server Function protegida por `requireOwnerRole`.
 - Caminhos isolados por `owner/{userId}/`.
 - Feed público recebe URL assinada temporária somente para registros publicados; o caminho interno do Storage não é enviado ao consumidor.
@@ -11,7 +11,7 @@
 - URLs externas e reprodução universal do Sprint 221 permanecem compatíveis.
 
 ## Limites explícitos
-- Não há transcodificação, geração automática de miniaturas, HLS/DASH, moderação de conteúdo ou upload resumível nesta entrega.
+- Não há transcodificação, geração automática de miniaturas, HLS/DASH ou moderação de conteúdo nesta entrega. O upload padrão respeita o teto de 50 MB do plano Free; para arquivos acima de 6 MB, a documentação Supabase recomenda TUS resumível, que fica como melhoria futura sem adicionar dependência sem validação.
 - A URL assinada de reprodução expira em seis horas; a próxima carga do feed gera uma URL nova.
 - A migração de política precisa ser aplicada no Supabase depois da aprovação da CI e antes de habilitar operações diretas do Owner no Storage. O bucket é criado via Storage API no primeiro upload.
 - Nenhuma migration ou alteração de dados foi aplicada ao banco de produção durante a implementação deste PR.
