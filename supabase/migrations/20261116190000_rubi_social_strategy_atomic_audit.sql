@@ -68,6 +68,10 @@ begin
   v_campaign_id := nullif(p_payload->>'campaign_id','')::uuid;
   v_segment := nullif(btrim(coalesce(p_payload->>'audience_segment','')),'');
   v_objective := p_payload->>'objective';
+  if jsonb_typeof(coalesce(p_payload->'content_pillars','[]'::jsonb)) <> 'array'
+    or jsonb_typeof(coalesce(p_payload->'preferred_formats','[]'::jsonb)) <> 'array' then
+    raise exception 'Strategy lists must be arrays';
+  end if;
   select coalesce(array_agg(item),array[]::text[]) into v_pillars
     from jsonb_array_elements_text(coalesce(p_payload->'content_pillars','[]'::jsonb)) as items(item);
   select coalesce(array_agg(item),array[]::text[]) into v_formats
@@ -78,13 +82,13 @@ begin
   v_active := (p_payload->>'is_active')::boolean;
 
   if v_channel_id is null or length(v_name) not between 2 and 120
-    or v_objective not in ('traffic','engagement','followers','conversion','awareness')
-    or v_frequency not between 1 and 50
-    or v_priority not between 0 and 100
+    or v_objective is null or v_objective not in ('traffic','engagement','followers','conversion','awareness')
+    or v_frequency is null or v_frequency not between 1 and 50
+    or v_priority is null or v_priority not between 0 and 100
     or v_active is null
     or cardinality(v_pillars)>10 or cardinality(v_formats)>10
-    or exists(select 1 from unnest(v_pillars) x where length(btrim(x)) not between 1 and 80)
-    or exists(select 1 from unnest(v_formats) x where length(btrim(x)) not between 1 and 40)
+    or exists(select 1 from unnest(v_pillars) x where x is null or length(btrim(x)) not between 1 and 80)
+    or exists(select 1 from unnest(v_formats) x where x is null or length(btrim(x)) not between 1 and 40)
     or length(coalesce(v_segment,''))>120 or length(coalesce(v_cta,''))>160
   then
     raise exception 'Invalid social strategy attributes';
