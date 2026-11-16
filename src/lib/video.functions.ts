@@ -112,6 +112,17 @@ export const createVideoUploadUrl = createServerFn({ method: "POST" })
     return { path, token: String(signed.token), expiresInSeconds: 7200, maxBytes: VIDEO_MAX_BYTES };
   });
 
+export const discardVideoUpload = createServerFn({ method: "POST" })
+  .middleware([requireOwnerRole])
+  .validator((input: unknown) => z.object({ path: z.string().trim().min(1).max(2000) }).parse(input))
+  .handler(async ({ data, context }) => {
+    if (!data.path.startsWith(`owner/${context.userId}/`)) throw new Error("O arquivo não pertence ao upload autorizado deste Owner.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.storage.from(VIDEO_BUCKET).remove([data.path]);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
 export const saveVideo = createServerFn({ method: "POST" })
   .middleware([requireOwnerRole])
   .validator((data: unknown) => videoInput.parse(data))
