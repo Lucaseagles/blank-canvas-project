@@ -22,6 +22,7 @@ test("legacy campaign lifecycle is atomic, restricted and records Owner audit",(
  assert.match(sql,/count\(distinct x\)/);
  assert.match(sql,/from public,anon,authenticated/);
  assert.match(sql,/to service_role/);
+ assert.match(sql,/revoke insert,update,delete on public\.campaigns,public\.campaign_channels,public\.campaign_products/);
  assert.doesNotMatch(sql,/security definer/i);
  assert.doesNotMatch(api,/\.insert\(|\.update\(|\.delete\(/);
 });
