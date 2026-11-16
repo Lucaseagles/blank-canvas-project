@@ -133,6 +133,8 @@ jobs:
         run: node --test src/lib/rubi-category-highlights-atomic-audit.test.mjs
       - name: RUBI affiliate CSV secure atomic import tests
         run: node --test src/lib/rubi-affiliate-csv-atomic-audit.test.mjs
+      - name: RUBI notification templates atomic audit regression
+        run: node --test src/lib/rubi-notification-template-atomic-audit.test.mjs
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint
