@@ -56,35 +56,68 @@ export const getAdminVideoFormOptions = createServerFn({ method: "GET" })
 export const saveVideo = createServerFn({ method: "POST" })
   .middleware([requireOwnerRole])
   .validator((data: unknown) => videoInput.parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { productIds, ...videoData } = data;
     if (!videoData.external_url && !videoData.storage_path) throw new Error("A video URL or storage path is required");
-    const payload = { title: videoData.title, status: videoData.status, storage_path: videoData.storage_path || null, external_url: videoData.external_url || null, video_url: videoData.external_url || (videoData.storage_path ? `storage://${videoData.storage_path}` : ""), duration_seconds: videoData.duration_seconds ?? null, category_id: videoData.category_id || null, scheduled_for: videoData.scheduled_for || null, campaign_id: videoData.campaign_id || null, caption: videoData.caption || null, subtitle_url: videoData.subtitle_url || null, subtitle_text: videoData.subtitle_text || null };
-    let videoId = videoData.id;
-    if (videoId) { const { error } = await supabaseAdmin.from("videos").update(payload).eq("id", videoId); if (error) throw error; }
-    else { const { data: newVideo, error } = await supabaseAdmin.from("videos").insert(payload).select("id").single(); if (error) throw error; videoId = newVideo.id; }
-    if (productIds) { const { error: de } = await supabaseAdmin.from("video_products").delete().eq("video_id", videoId); if (de) throw de; if (productIds.length) { const { error: ie } = await supabaseAdmin.from("video_products").insert(productIds.map((productId, position) => ({ video_id: videoId, product_id: productId, position }))); if (ie) throw ie; } }
-    return { success: true, id: videoId };
+    const payload = {
+      title: videoData.title,
+      status: videoData.status,
+      storage_path: videoData.storage_path || null,
+      external_url: videoData.external_url || null,
+      duration_seconds: videoData.duration_seconds ?? null,
+      category_id: videoData.category_id || null,
+      scheduled_for: videoData.scheduled_for || null,
+      campaign_id: videoData.campaign_id || null,
+      caption: videoData.caption || null,
+      subtitle_url: videoData.subtitle_url || null,
+      subtitle_text: videoData.subtitle_text || null,
+    };
+    const { data: result, error } = await supabaseAdmin.rpc("rubi_manage_video_audited", {
+      p_action: "save",
+      p_id: videoData.id ?? null,
+      p_payload: payload,
+      p_product_ids: productIds ?? null,
+      p_actor: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    const saved = result as unknown as { id?: string } | null;
+    if (!saved?.id) throw new Error("Vídeo, associações e auditoria não foram registrados.");
+    return { success: true, id: saved.id };
   });
 
 export const setVideoStatus = createServerFn({ method: "POST" })
   .middleware([requireOwnerRole])
   .validator((data: unknown) => z.object({ id: z.string().uuid(), status: z.enum(["published", "draft", "archived"]) }).parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: existing, error: readError } = await supabaseAdmin.from("videos").select("id,scheduled_for").eq("id", data.id).maybeSingle();
-    if (readError) throw readError;
-    if (!existing) throw new Error("Vídeo não encontrado.");
-    if (data.status === "published" && existing.scheduled_for && new Date(existing.scheduled_for).getTime() > Date.now()) {
-      throw new Error("Este vídeo está agendado para o futuro e não pode ser publicado agora.");
-    }
-    const { error } = await supabaseAdmin.from("videos").update({ status: data.status }).eq("id", data.id);
-    if (error) throw error;
+    const { data: result, error } = await supabaseAdmin.rpc("rubi_manage_video_audited", {
+      p_action: "status",
+      p_id: data.id,
+      p_payload: { status: data.status },
+      p_product_ids: null,
+      p_actor: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    const saved = result as unknown as { id?: string; status?: string } | null;
+    if (saved?.id !== data.id || saved?.status !== data.status) throw new Error("Status e auditoria não foram registrados.");
     return { success: true, id: data.id, status: data.status };
   });
 
 export const deleteVideo = createServerFn({ method: "POST" })
   .middleware([requireOwnerRole])
   .validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
-  .handler(async ({ data: { id } }) => { const { supabaseAdmin } = await import("@/integrations/supabase/client.server"); const { error } = await supabaseAdmin.from("videos").delete().eq("id", id); if (error) throw error; return { success: true }; });
+  .handler(async ({ data: { id }, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: result, error } = await supabaseAdmin.rpc("rubi_manage_video_audited", {
+      p_action: "delete",
+      p_id: id,
+      p_payload: null,
+      p_product_ids: null,
+      p_actor: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    const deleted = result as unknown as { id?: string } | null;
+    if (deleted?.id !== id) throw new Error("Exclusão e auditoria não foram registradas.");
+    return { success: true };
+  });
