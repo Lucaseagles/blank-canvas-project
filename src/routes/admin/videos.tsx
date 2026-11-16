@@ -108,8 +108,8 @@ function AdminVideosContent() {
       if (selectedVideoFile && externalUrl) throw new Error("Escolha um arquivo enviado ou uma URL externa, não os dois.");
       if (selectedVideoFile) {
         const allowedTypes = ["video/mp4", "video/webm"];
-        if (!allowedTypes.includes(selectedVideoFile.type) || selectedVideoFile.size <= 0 || selectedVideoFile.size > 100 * 1024 * 1024) {
-          throw new Error("Envie um vídeo MP4 ou WebM com até 100 MB.");
+        if (!allowedTypes.includes(selectedVideoFile.type) || selectedVideoFile.size <= 0 || selectedVideoFile.size > 50 * 1024 * 1024) {
+          throw new Error("Envie um vídeo MP4 ou WebM com até 50 MB.");
         }
         const signed = await createVideoUploadFn({ data: {
           fileName: selectedVideoFile.name,
