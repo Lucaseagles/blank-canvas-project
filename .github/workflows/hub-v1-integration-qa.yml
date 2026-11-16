@@ -137,6 +137,8 @@ jobs:
         run: node --test src/lib/rubi-notification-template-atomic-audit.test.mjs
       - name: RUBI supplier CSV transactional audit tests
         run: node --test src/lib/rubi-supplier-csv-atomic-audit.test.mjs
+      - name: RUBI video and bridge-video atomic audit regression
+        run: node --test src/lib/rubi-video-atomic-audit.test.mjs
       - name: RUBI social strategy atomic audit regression
         run: node --test src/lib/rubi-social-strategy-atomic-audit.test.mjs
       - name: TypeScript
