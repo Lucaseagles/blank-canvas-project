@@ -81,7 +81,7 @@ begin
     if not found then raise exception 'Video not found'; end if;
     update public.videos set
       title=btrim(p_payload->>'title'),
-      video_url=coalesce(nullif(p_payload->>'external_url',''),case when nullif(p_payload->>'storage_path','') is not null then 'storage://'||p_payload->>'storage_path' end,''),
+      video_url=coalesce(nullif(p_payload->>'external_url',''),case when nullif(p_payload->>'storage_path','') is not null then ('storage://' || (p_payload->>'storage_path')) end,''),
       status=p_payload->>'status',
       storage_path=nullif(p_payload->>'storage_path',''),
       external_url=nullif(p_payload->>'external_url',''),
