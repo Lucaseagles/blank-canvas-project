@@ -17,7 +17,7 @@
 - Nenhuma migration ou alteração de dados foi aplicada ao banco de produção durante a implementação deste PR.
 
 ## Critérios de aceite
-- [ ] Upload Owner-only MP4/WebM até 100 MB.
+- [ ] Upload Owner-only MP4/WebM até 50 MB.
 - [ ] Bucket privado criado/configurado pela Storage API.
 - [ ] Upload assinado sem expor service-role.
 - [ ] RLS de Storage sem leitura anônima.
