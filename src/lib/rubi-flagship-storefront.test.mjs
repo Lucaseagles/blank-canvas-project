@@ -675,8 +675,13 @@ test("Master evidence review ledger is private, immutable, version-pinned and no
  assert.match(server,/requireOwnerRole/g);
  assert.match(server,/movement\.revision!==data\.movementRevision/);
  assert.match(server,/assessRubiAudienceEvidenceStatus\(evidence\)/);
- assert.match(server,/movement_revision:data\.movementRevision/);
- assert.match(server,/evidence_snapshot:evidence/);
+ const audited=source("../../supabase/migrations/20261115183000_rubi_audience_review_atomic_audit.sql");
+ assert.match(server,/rpc\("rubi_record_audience_review_audited"/);
+ assert.match(server,/p_expected_revision:data\.movementRevision/);
+ assert.match(server,/p_actor:context\.userId/);
+ assert.match(audited,/insert into public\.rubi_audience_evidence_reviews/);
+ assert.match(audited,/insert into public\.admin_audit_log/);
+ assert.match(audited,/movement\.evidence_notes/);
  assert.match(panel,/Registro documental não|Revisão documental não significa/);
  assert.match(panel,/Histórico parcial/);
  assert.match(editor,/draft\?\.id&&draft\.revision&&!dirty&&<RubiAudienceEvidenceReviewAdmin/);
