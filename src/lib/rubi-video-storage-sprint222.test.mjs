@@ -6,7 +6,7 @@ const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 
 test("native video upload is Owner-gated, MIME/size validated and uses a private bucket", () => {
   const api = read("./video.functions.ts");
-  const upload = api.slice(api.indexOf("export const createVideoUploadUrl"), api.indexOf("export const saveVideo"));
+  const upload = api.slice(api.indexOf("export const createVideoUploadUrl"), api.indexOf("export const discardVideoUpload"));
   assert.match(upload, /middleware\(\[requireOwnerRole\]\)/);
   assert.match(upload, /z\.enum\(VIDEO_MIME_TYPES\)/);
   assert.match(upload, /max\(VIDEO_MAX_BYTES\)/);
@@ -34,7 +34,11 @@ test("admin upload uses a signed token and enforces the browser-side file contra
   assert.match(page, /100 \* 1024 \* 1024/);
   assert.match(page, /createVideoUploadFn/);
   assert.match(page, /uploadToSignedUrl\(signed\.path, signed\.token/);
-  assert.match(page, /discardVideoUploadFn\(\{ data: \{ path: uploadedPath \} \}\)/);\n  const api = read("./video.functions.ts");\n  const cleanup = api.slice(api.indexOf("export const discardVideoUpload"), api.indexOf("export const saveVideo"));\n  assert.match(cleanup, /middleware\(\[requireOwnerRole\]\)/);\n  assert.match(cleanup, /storage\.from\(VIDEO_BUCKET\)\.remove\(\[data\.path\]\)/);
+  assert.match(page, /discardVideoUploadFn\(\{ data: \{ path: uploadedPath \} \}\)/);
+  const api = read("./video.functions.ts");
+  const cleanup = api.slice(api.indexOf("export const discardVideoUpload"), api.indexOf("export const saveVideo"));
+  assert.match(cleanup, /middleware\(\[requireOwnerRole\]\)/);
+  assert.match(cleanup, /storage\.from\(VIDEO_BUCKET\)\.remove\(\[data\.path\]\)/);
 });
 
 test("video Storage RLS is restricted to the Owner path and never grants anonymous reads", () => {
