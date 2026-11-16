@@ -1,0 +1,23 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+const read=p=>readFileSync(new URL(p,import.meta.url),"utf8");
+test("category writes and reorder are Owner-audited and hierarchy safe",()=>{
+ const api=read("./admin_intel.functions.ts");
+ const sql=read("../../supabase/migrations/20261115170000_rubi_category_atomic_audit.sql");
+ const section=api.slice(api.indexOf("export const saveCategory"),api.indexOf("export const getOfferGroups"));
+ assert.equal((section.match(/rpc\("rubi_manage_category_audited"/g)||[]).length,3);
+ assert.equal((section.match(/p_actor:context\.userId/g)||[]).length,3);
+ assert.doesNotMatch(section,/\.insert\(|\.delete\(|\.update\(/);
+ assert.match(sql,/security invoker set search_path=''/);
+ assert.match(sql,/pg_advisory_xact_lock/);
+ assert.match(sql,/Category parent cycle/);
+ assert.match(sql,/Active subcategory must be deactivated first/);
+ assert.match(sql,/Category has linked products/);
+ assert.match(sql,/count\(distinct v\)/);
+ assert.match(sql,/for update/);
+ assert.equal((sql.match(/insert into public\.admin_audit_log/g)||[]).length,3);
+ assert.match(sql,/revoke insert,update,delete on public\.categories/);
+ assert.match(sql,/to service_role/);
+ assert.doesNotMatch(sql,/security definer/i);
+});
