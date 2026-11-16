@@ -89,7 +89,7 @@ export const getSocialStrategyOverview = createServerFn({ method: "GET" })
 export const saveSocialStrategy = createServerFn({ method: "POST" })
   .middleware([requireOwnerRole])
   .validator((data: unknown) => StrategyInput.parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const supabase = await db();
     const payload = {
       channel_id: data.channel_id,
@@ -105,31 +105,30 @@ export const saveSocialStrategy = createServerFn({ method: "POST" })
       cta: data.cta || null,
       priority: data.priority,
       is_active: data.is_active,
-      updated_at: new Date().toISOString(),
     };
-    const query = data.id
-      ? supabase.from("social_channel_strategies").update(payload).eq("id", data.id)
-      : supabase.from("social_channel_strategies").insert(payload);
-    const { data: saved, error } = await query.select("*").single();
-    if (error) throw error;
-
-    const { error: auditError } = await supabase.rpc("append_admin_audit", {
-      p_action_type: data.id ? "UPDATE" : "CREATE",
-      p_entity_type: "social_channel_strategies",
-      p_entity_id: saved.id,
-      p_previous_value: null,
-      p_new_value: saved,
+    const { data: result, error } = await supabase.rpc("rubi_manage_social_strategy_audited", {
+      p_action: "save",
+      p_id: data.id ?? null,
+      p_payload: payload,
+      p_actor: context.userId,
     });
-    if (auditError) throw auditError;
-    return { success: true };
+    if (error) throw new Error(error.message);
+    if (!result?.id) throw new Error("Estratégia e auditoria não foram registradas.");
+    return { success: true, id: String(result.id) };
   });
 
 export const deleteSocialStrategy = createServerFn({ method: "POST" })
   .middleware([requireOwnerRole])
   .validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const supabase = await db();
-    const { error } = await supabase.from("social_channel_strategies").delete().eq("id", data.id);
-    if (error) throw error;
+    const { data: result, error } = await supabase.rpc("rubi_manage_social_strategy_audited", {
+      p_action: "delete",
+      p_id: data.id,
+      p_payload: null,
+      p_actor: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    if (result?.id !== data.id) throw new Error("Exclusão e auditoria não foram registradas.");
     return { success: true };
   });
