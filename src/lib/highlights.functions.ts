@@ -18,63 +18,49 @@ export const getCategoryHighlightsAdmin = createServerFn({ method: "GET" })
     return { categories: categories ?? [], highlights: highlights ?? [], products: products ?? [] };
   });
 
+/** Owner-only writes use a single database transaction with mandatory audit. */
 export const saveManualHighlight = createServerFn({ method: "POST" })
   .middleware([requireOwnerRole])
   .validator((data: unknown) => z.object({ categoryId: id, productId: id, rank: adminRank }).parse(data))
-  .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
-    const [{ data: category, error: ce }, { data: product, error: pe }] = await Promise.all([
-      supabaseAdmin.from("categories").select("id").eq("id", data.categoryId).maybeSingle(),
-      supabaseAdmin.from("products").select("id,category_id,offer_score,status").eq("id", data.productId).maybeSingle()
-    ]);
-    if (ce) throw ce; if (pe) throw pe;
-    if (!category) throw new Error("Categoria não encontrada");
-    if (!product) throw new Error("Produto não encontrado");
-    if (product.category_id !== data.categoryId) throw new Error("O produto não pertence à categoria selecionada");
-    if (!product.status || !['active','published'].includes(product.status)) throw new Error("Somente produtos ativos podem ser recomendados");
-    const { error } = await supabaseAdmin.from("category_highlights" as any).upsert({ category_id: data.categoryId, product_id: data.productId, rank: data.rank, offer_score: Number(product.offer_score ?? 0), is_manual_override: true, calculated_at: new Date().toISOString() }, { onConflict: 'category_id,rank' } as any);
-    if (error) throw error;
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: outcome, error } = await (supabaseAdmin as any).rpc("rubi_manage_category_highlights_audited", {
+      p_action: "manual", p_category_id: data.categoryId,
+      p_product_id: data.productId, p_rank: data.rank,
+      p_highlight_id: null, p_actor: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    if (Number(outcome?.changed) !== 1) throw new Error("O destaque e sua auditoria não foram concluídos.");
     return { success: true };
   });
 
 export const deleteHighlight = createServerFn({ method: "POST" })
   .middleware([requireOwnerRole])
   .validator((data: unknown) => z.object({ id }).parse(data))
-  .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
-    const { error } = await supabaseAdmin.from("category_highlights" as any).delete().eq("id", data.id);
-    if (error) throw error;
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: outcome, error } = await (supabaseAdmin as any).rpc("rubi_manage_category_highlights_audited", {
+      p_action: "delete", p_category_id: null,
+      p_product_id: null, p_rank: null,
+      p_highlight_id: data.id, p_actor: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    if (Number(outcome?.changed) !== 1) throw new Error("A remoção e sua auditoria não foram concluídas.");
     return { success: true };
   });
 
 export const recalculateCategoryHighlights = createServerFn({ method: "POST" })
   .middleware([requireOwnerRole])
-  .handler(async () => {
-    const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
-    const { data: categories, error: ce } = await supabaseAdmin.from("categories").select("id");
-    if (ce) throw ce;
-    let processed = 0;
-    for (const cat of categories ?? []) {
-      const { data: manual, error: me } = await supabaseAdmin.from("category_highlights" as any).select("rank,product_id").eq("category_id", cat.id).eq("is_manual_override", true);
-      if (me) throw me;
-      const manualRanks = new Set((manual ?? []).map((h: any) => h.rank));
-      const manualProducts = new Set((manual ?? []).map((h: any) => h.product_id));
-      const ranks = [1,2,3].filter(r => !manualRanks.has(r));
-      if (ranks.length) {
-        const { data: candidates, error: pe } = await supabaseAdmin.from("products").select("id,offer_score").eq("category_id", cat.id).in("status", ["active", "published"]).order("offer_score", { ascending: false, nullsFirst: false }).limit(20);
-        if (pe) throw pe;
-        const selected = (candidates ?? []).filter((p: any) => !manualProducts.has(p.id)).slice(0, ranks.length);
-        for (let i=0;i<selected.length;i++) {
-          const product = selected[i];
-          const rank = ranks[i];
-          if (!product || rank === undefined) continue;
-          const { error } = await supabaseAdmin.from("category_highlights" as any).upsert({ category_id: cat.id, product_id: product.id, rank, offer_score: Number(product.offer_score ?? 0), is_manual_override: false, calculated_at: new Date().toISOString() }, { onConflict: 'category_id,rank' } as any);
-          if (error) throw error;
-        }
-      }
-      processed++;
-    }
-    return { success: true, processed };
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: outcome, error } = await (supabaseAdmin as any).rpc("rubi_manage_category_highlights_audited", {
+      p_action: "recalculate", p_category_id: null,
+      p_product_id: null, p_rank: null,
+      p_highlight_id: null, p_actor: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    if (typeof outcome?.processed !== "number") throw new Error("O recálculo e sua auditoria não foram concluídos.");
+    return { success: true, processed: Number(outcome.processed) };
   });
 
 export const getCategoryHighlights = createServerFn({ method: "GET" })

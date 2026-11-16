@@ -1,0 +1,24 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+const read=p=>readFileSync(new URL(p,import.meta.url),"utf8");
+test("manual, delete and recalc of highlights use one Owner audited transaction",()=>{
+ const api=read("./highlights.functions.ts");
+ const sql=read("../../supabase/migrations/20261115191500_rubi_category_highlights_atomic_audit.sql");
+ const section=api.slice(api.indexOf("export const saveManualHighlight"),api.indexOf("export const getCategoryHighlights ="));
+ assert.equal((section.match(/rpc\("rubi_manage_category_highlights_audited"/g)||[]).length,3);
+ assert.equal((section.match(/p_actor: context\.userId/g)||[]).length,3);
+ assert.doesNotMatch(section,/\.upsert\(|\.delete\(|\.update\(/);
+ assert.match(sql,/security invoker set search_path=''/);
+ assert.match(sql,/u\.role = 'owner'/);
+ assert.match(sql,/pg_advisory_xact_lock/);
+ assert.match(sql,/Product already featured at another rank/);
+ assert.match(sql,/p\.status in \('active','published'\)/);
+ assert.match(sql,/is_manual_override=true/);
+ assert.match(sql,/for update/);
+ assert.match(sql,/insert into public\.admin_audit_log/);
+ assert.match(sql,/revoke insert,update,delete on public\.category_highlights/);
+ assert.match(sql,/from public,anon,authenticated/);
+ assert.match(sql,/to service_role/);
+ assert.doesNotMatch(sql,/security definer/i);
+});
