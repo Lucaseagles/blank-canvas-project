@@ -22,7 +22,11 @@ test("notification template edits are Owner-only and audited in one transaction"
  assert.match(sql,/revoke insert,update,delete on public\.notification_templates/);
  assert.match(sql,/from public,anon,authenticated/);
  assert.match(sql,/to service_role/);
- const audit=sql.slice(sql.indexOf("insert into public.admin_audit_log"));
- assert.doesNotMatch(audit,/jsonb_build_object\([^;]*new_row\.template[,)]/);
+ const audit=sql.slice(
+  sql.indexOf("insert into public.admin_audit_log"),
+  sql.indexOf(" return jsonb_build_object",sql.indexOf("insert into public.admin_audit_log"))
+ );
+ assert.match(audit,/length\(new_row\.template\)/);
+ assert.doesNotMatch(audit,/'template'\s*,\s*new_row\.template/);
  assert.doesNotMatch(sql,/security definer/i);
 });
