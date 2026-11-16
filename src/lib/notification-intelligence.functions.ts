@@ -14,9 +14,13 @@ export const getNotificationIntelligence = createServerFn({ method: "GET" })
 export const updateNotificationTemplateAdmin = createServerFn({ method: "POST" })
   .middleware([requireOwnerRole])
   .inputValidator((data: unknown) => z.object({ id: z.string().uuid(), template: z.string().trim().min(1).max(5000), is_active: z.boolean() }).parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: row, error } = await (supabaseAdmin as any).from("notification_templates").update({ template: data.template, is_active: data.is_active, updated_at: new Date().toISOString() }).eq("id", data.id).select("id,type,template,is_active,updated_at").single();
-    if (error) throw error;
-    return row;
+    const { data: changed, error } = await (supabaseAdmin as any).rpc("rubi_update_notification_template_audited", {
+      p_template_id: data.id, p_template: data.template,
+      p_active: data.is_active, p_actor: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    if (!changed?.id) throw new Error("Template e auditoria não registrados.");
+    return changed as { id: string; type: string; template: string; is_active: boolean; updated_at: string };
   });
