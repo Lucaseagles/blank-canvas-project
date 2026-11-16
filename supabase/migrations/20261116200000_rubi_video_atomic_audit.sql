@@ -70,7 +70,7 @@ begin
     values(
       btrim(p_payload->>'title'),
       coalesce(nullif(p_payload->>'external_url',''),case when nullif(p_payload->>'storage_path','') is not null then ('storage://' || (p_payload->>'storage_path')) end,''),
-      null,null,nullif(p_payload->>'status','draft'),
+      null,null,coalesce(nullif(p_payload->>'status',''),'draft'),
       nullif(p_payload->>'storage_path',''),nullif(p_payload->>'external_url',''),
       nullif(p_payload->>'duration_seconds','')::integer,nullif(p_payload->>'category_id','')::uuid,
       nullif(p_payload->>'campaign_id','')::uuid,nullif(p_payload->>'scheduled_for','')::timestamptz,
