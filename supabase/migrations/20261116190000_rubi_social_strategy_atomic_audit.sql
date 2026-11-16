@@ -68,10 +68,10 @@ begin
   v_campaign_id := nullif(p_payload->>'campaign_id','')::uuid;
   v_segment := nullif(btrim(coalesce(p_payload->>'audience_segment','')),'');
   v_objective := p_payload->>'objective';
-  select coalesce(array_agg(value),array[]::text[]) into v_pillars
-    from jsonb_array_elements_text(coalesce(p_payload->'content_pillars','[]'::jsonb)) value;
-  select coalesce(array_agg(value),array[]::text[]) into v_formats
-    from jsonb_array_elements_text(coalesce(p_payload->'preferred_formats','[]'::jsonb)) value;
+  select coalesce(array_agg(item),array[]::text[]) into v_pillars
+    from jsonb_array_elements_text(coalesce(p_payload->'content_pillars','[]'::jsonb)) as items(item);
+  select coalesce(array_agg(item),array[]::text[]) into v_formats
+    from jsonb_array_elements_text(coalesce(p_payload->'preferred_formats','[]'::jsonb)) as items(item);
   v_frequency := (p_payload->>'posting_frequency_per_week')::integer;
   v_cta := nullif(btrim(coalesce(p_payload->>'cta','')),'');
   v_priority := (p_payload->>'priority')::integer;
