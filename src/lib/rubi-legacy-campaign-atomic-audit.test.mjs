@@ -1,0 +1,28 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+const read=p=>readFileSync(new URL(p,import.meta.url),"utf8");
+test("legacy campaign lifecycle is atomic, restricted and records Owner audit",()=>{
+ const api=read("./campaigns.functions.ts");
+ const sql=read("../../supabase/migrations/20261115130000_rubi_legacy_campaign_atomic_audit.sql");
+ assert.equal((api.match(/rpc\("rubi_mutate_legacy_campaign_audited"/g)??[]).length,4);
+ assert.equal((api.match(/p_actor: context\.userId/g)??[]).length,4);
+ assert.match(api,/requireOwnerRole/);
+ assert.match(sql,/security invoker set search_path=''/);
+ assert.match(sql,/r\.role='owner'/);
+ assert.match(sql,/for update/);
+ assert.match(sql,/insert into public\.campaigns/);
+ assert.match(sql,/delete from public\.campaign_channels/);
+ assert.match(sql,/insert into public\.campaign_channels/);
+ assert.match(sql,/delete from public\.campaign_products/);
+ assert.match(sql,/insert into public\.campaign_products/);
+ assert.equal((sql.match(/insert into public\.admin_audit_log/g)??[]).length,2);
+ assert.match(sql,/Cannot activate expired campaign/);
+ assert.match(sql,/count\(distinct ch\)/);
+ assert.match(sql,/count\(distinct x\)/);
+ assert.match(sql,/from public,anon,authenticated/);
+ assert.match(sql,/to service_role/);
+ assert.match(sql,/revoke insert,update,delete on public\.campaigns,public\.campaign_channels,public\.campaign_products/);
+ assert.doesNotMatch(sql,/security definer/i);
+ assert.doesNotMatch(api,/\.insert\(|\.update\(|\.delete\(/);
+});
