@@ -74,8 +74,9 @@ export const saveBridgeVideo = createServerFn({ method: 'POST' })
       p_actor: context.userId,
     });
     if (error) throw new Error(error.message);
-    if (!result?.id) throw new Error('Vídeo de ponte e auditoria não foram registrados.');
-    return result;
+    const saved = result as unknown as { id?: string } | null;
+    if (!saved?.id) throw new Error('Vídeo de ponte e auditoria não foram registrados.');
+    return saved;
   });
 
 export const deleteBridgeVideo = createServerFn({ method: 'POST' })
@@ -90,6 +91,7 @@ export const deleteBridgeVideo = createServerFn({ method: 'POST' })
       p_actor: context.userId,
     });
     if (error) throw new Error(error.message);
-    if (result?.id !== data.id) throw new Error('Exclusão e auditoria não foram registradas.');
+    const deleted = result as unknown as { id?: string } | null;
+    if (deleted?.id !== data.id) throw new Error('Exclusão e auditoria não foram registradas.');
     return { success: true };
   });
