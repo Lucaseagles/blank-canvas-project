@@ -3287,6 +3287,25 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      rubi_manage_video_audited: {
+        Args: {
+          p_action: string
+          p_actor: string
+          p_id: string | null
+          p_payload: Json | null
+          p_product_ids: Json | null
+        }
+        Returns: Json
+      }
+      rubi_manage_bridge_video_audited: {
+        Args: {
+          p_action: string
+          p_actor: string
+          p_id: string | null
+          p_payload: Json | null
+        }
+        Returns: Json
+      }
       _generate_collection_candidates_internal: {
         Args: { p_collection_id: string }
         Returns: Json
