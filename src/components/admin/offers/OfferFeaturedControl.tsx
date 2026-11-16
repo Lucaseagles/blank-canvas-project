@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Calendar, Star, Zap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useServerFn } from '@tanstack/react-start';
+import { setOfferGroupFeaturedAdmin } from '@/lib/admin_intel.functions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,11 +17,14 @@ type Offer = {
   featured_ends_at: string | null;
 };
 
+type FeaturePatch = Partial<Pick<Offer,'is_featured_on_hub'|'featured_priority'|'featured_starts_at'|'featured_ends_at'>>;
+
 export function OfferFeaturedControl() {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
   const client = supabase as any;
+  const updateFeatured = useServerFn(setOfferGroupFeaturedAdmin);
 
   const loadOffers = async () => {
     setLoading(true);
@@ -34,15 +39,17 @@ export function OfferFeaturedControl() {
 
   useEffect(() => { void loadOffers(); }, []);
 
-  const updateOffer = async (id: string, patch: Record<string, unknown>, successMessage: string) => {
+  const updateOffer = async (id: string, patch: FeaturePatch, successMessage: string) => {
     setSavingId(id);
-    const { error } = await client.from('offer_groups').update(patch).eq('id', id);
-    if (error) toast.error(`Erro: ${error.message}`);
-    else {
+    try {
+      await updateFeatured({data:{id,patch}});
       toast.success(successMessage);
       await loadOffers();
+    } catch(error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível atualizar o destaque.");
+    } finally {
+      setSavingId(null);
     }
-    setSavingId(null);
   };
 
   const toggleFeatured = (offer: Offer) => updateOffer(

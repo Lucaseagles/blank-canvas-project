@@ -31,6 +31,65 @@ export const deleteCategory = createServerFn({ method:"POST" }).middleware([requ
 
 export const getOfferGroups = createServerFn({ method:"GET" }).middleware([requireOwnerRole]).handler(async()=>{ const {supabaseAdmin}=await import('@/integrations/supabase/client.server'); const {data,error}=await supabaseAdmin.from("offer_groups" as any).select("*").order("canonical_title"); if(error)throw error; return data||[]; });
 export const getOfferGroupDetails = createServerFn({ method:"GET" }).middleware([requireOwnerRole]).validator((data:unknown)=>z.object({id:z.string().uuid()}).parse(data)).handler(async({data:{id}})=>{ const {supabaseAdmin}=await import('@/integrations/supabase/client.server'); const [{data:group,error:groupError},{data:products,error:productsError}]=await Promise.all([supabaseAdmin.from("offer_groups" as any).select("*").eq("id",id).maybeSingle(),supabaseAdmin.from("products").select("id,title,current_price,status,offer_group_id").eq("offer_group_id",id).order("title")]); if(groupError)throw groupError; if(productsError)throw productsError; if(!group)throw new Error("Oferta não encontrada."); return {group,products:products||[]}; });
-export const saveOfferGroup = createServerFn({ method:"POST" }).middleware([requireOwnerRole]).validator((data:unknown)=>z.object({id:z.string().uuid().optional(),canonical_title:z.string().trim().min(1).max(200)}).parse(data)).handler(async({data,context})=>{ const {supabaseAdmin}=await import('@/integrations/supabase/client.server'); const result=data.id?await supabaseAdmin.from("offer_groups" as any).update({canonical_title:data.canonical_title,updated_at:new Date().toISOString()} as any).eq("id",data.id):await supabaseAdmin.from("offer_groups" as any).insert({canonical_title:data.canonical_title} as any).select("id").single(); if(result.error)throw result.error; const id=data.id??(result.data as any)?.id; await (supabaseAdmin as any).from("admin_audit_log").insert({actor_user_id:context.userId,actor_email:context.userEmail??null,action_type:data.id?"OFFER_GROUP_UPDATED":"OFFER_GROUP_CREATED",entity_type:"offer_groups",entity_id:id,previous_value:null,new_value:{canonical_title:data.canonical_title}}); return {success:true,id}; });
-export const deleteOfferGroup = createServerFn({ method:"POST" }).middleware([requireOwnerRole]).validator((data:unknown)=>z.object({id:z.string().uuid()}).parse(data)).handler(async({data:{id},context})=>{ const {supabaseAdmin}=await import('@/integrations/supabase/client.server'); const {data:existing,error:readError}=await supabaseAdmin.from("offer_groups" as any).select("*").eq("id",id).maybeSingle(); if(readError)throw readError; if(!existing)throw new Error("Oferta não encontrada."); const {data:linked,error:linkedError}=await supabaseAdmin.from("products").select("id").eq("offer_group_id",id).limit(1); if(linkedError)throw linkedError; if((linked?.length??0)>0)throw new Error("Não é possível excluir: existem produtos vinculados. Remova o vínculo antes."); const {error}=await supabaseAdmin.from("offer_groups" as any).delete().eq("id",id); if(error)throw error; await (supabaseAdmin as any).from("admin_audit_log").insert({actor_user_id:context.userId,actor_email:context.userEmail??null,action_type:"OFFER_GROUP_DELETED",entity_type:"offer_groups",entity_id:id,previous_value:existing,new_value:null}); return {success:true}; });
-export const updateProductOfferGroup = createServerFn({ method:"POST" }).middleware([requireOwnerRole]).validator((data:unknown)=>z.object({productId:z.string().uuid(),offerGroupId:z.string().uuid().nullable()}).parse(data)).handler(async({data,context})=>{ const {supabaseAdmin}=await import('@/integrations/supabase/client.server'); const {data:product,error:productError}=await supabaseAdmin.from("products").select("id,offer_group_id").eq("id",data.productId).maybeSingle(); if(productError)throw productError; if(!product)throw new Error("Produto não encontrado."); const {error}=await supabaseAdmin.from("products").update({offer_group_id:data.offerGroupId} as any).eq("id",data.productId); if(error)throw error; await (supabaseAdmin as any).from("admin_audit_log").insert({actor_user_id:context.userId,actor_email:context.userEmail??null,action_type:"PRODUCT_OFFER_GROUP_CHANGED",entity_type:"products",entity_id:data.productId,previous_value:{offer_group_id:product.offer_group_id},new_value:{offer_group_id:data.offerGroupId}}); return {success:true}; });
+export const saveOfferGroup = createServerFn({method:"POST"})
+.middleware([requireOwnerRole])
+.validator((data:unknown)=>z.object({id:z.string().uuid().optional(),canonical_title:z.string().trim().min(1).max(200)}).parse(data))
+.handler(async({data,context})=>{
+ const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
+ const {data:changed,error}=await (supabaseAdmin as any).rpc("rubi_manage_offer_group_audited",{
+  p_action:"save",p_id:data.id??null,p_title:data.canonical_title,p_product_id:null,
+  p_group_id:null,p_feature:null,p_actor:context.userId
+ });
+ if(error)throw new Error(error.message);
+ if(!changed?.id)throw new Error("Oferta e auditoria não registradas.");
+ return {success:true,id:String(changed.id)};
+});
+export const deleteOfferGroup = createServerFn({method:"POST"})
+.middleware([requireOwnerRole])
+.validator((data:unknown)=>z.object({id:z.string().uuid()}).parse(data))
+.handler(async({data,context})=>{
+ const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
+ const {data:changed,error}=await (supabaseAdmin as any).rpc("rubi_manage_offer_group_audited",{
+  p_action:"delete",p_id:data.id,p_title:null,p_product_id:null,p_group_id:null,
+  p_feature:null,p_actor:context.userId
+ });
+ if(error)throw new Error(error.message);
+ if(!changed?.id)throw new Error("Exclusão e auditoria não registradas.");
+ return {success:true};
+});
+export const updateProductOfferGroup = createServerFn({method:"POST"})
+.middleware([requireOwnerRole])
+.validator((data:unknown)=>z.object({productId:z.string().uuid(),offerGroupId:z.string().uuid().nullable()}).parse(data))
+.handler(async({data,context})=>{
+ const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
+ const {data:changed,error}=await (supabaseAdmin as any).rpc("rubi_manage_offer_group_audited",{
+  p_action:"assign",p_id:null,p_title:null,p_product_id:data.productId,
+  p_group_id:data.offerGroupId,p_feature:null,p_actor:context.userId
+ });
+ if(error)throw new Error(error.message);
+ if(!changed?.id)throw new Error("Vínculo e auditoria não registrados.");
+ return {success:true};
+});
+
+export const setOfferGroupFeaturedAdmin = createServerFn({method:"POST"})
+.middleware([requireOwnerRole])
+.validator((data:unknown)=>z.object({
+ id:z.string().uuid(),
+ patch:z.object({
+  is_featured_on_hub:z.boolean().optional(),
+  featured_priority:z.number().int().min(0).max(100).optional(),
+  featured_starts_at:z.string().datetime({offset:true}).nullable().optional(),
+  featured_ends_at:z.string().datetime({offset:true}).nullable().optional()
+ }).strict().refine(p=>Object.keys(p).length>0,"Escolha uma alteração.")
+}).parse(data))
+.handler(async({data,context})=>{
+ const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
+ const {data:changed,error}=await (supabaseAdmin as any).rpc("rubi_manage_offer_group_audited",{
+  p_action:"feature",p_id:data.id,p_title:null,p_product_id:null,p_group_id:null,
+  p_feature:data.patch,p_actor:context.userId
+ });
+ if(error)throw new Error(error.message);
+ if(!changed?.id)throw new Error("Destaque e auditoria não registrados.");
+ return {success:true};
+});
+ createServerFn({ method:"POST" }).middleware([requireOwnerRole]).validator((data:unknown)=>z.object({productId:z.string().uuid(),offerGroupId:z.string().uuid().nullable()}).parse(data)).handler(async({data,context})=>{ const {supabaseAdmin}=await import('@/integrations/supabase/client.server'); const {data:product,error:productError}=await supabaseAdmin.from("products").select("id,offer_group_id").eq("id",data.productId).maybeSingle(); if(productError)throw productError; if(!product)throw new Error("Produto não encontrado."); const {error}=await supabaseAdmin.from("products").update({offer_group_id:data.offerGroupId} as any).eq("id",data.productId); if(error)throw error; await (supabaseAdmin as any).from("admin_audit_log").insert({actor_user_id:context.userId,actor_email:context.userEmail??null,action_type:"PRODUCT_OFFER_GROUP_CHANGED",entity_type:"products",entity_id:data.productId,previous_value:{offer_group_id:product.offer_group_id},new_value:{offer_group_id:data.offerGroupId}}); return {success:true}; });
