@@ -22,12 +22,48 @@ export const getCategoriesAdmin = createServerFn({ method:"GET" }).middleware([r
 
 const CategorySchema = z.object({ id:z.string().uuid().optional(), name:z.string().trim().min(2).max(120), slug:z.string().trim().min(2).max(120).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/), description:z.string().trim().max(1000).optional().nullable(), icon:z.string().trim().max(100).optional().nullable(), image_url:z.string().url().optional().nullable().or(z.literal("")), color:z.string().trim().max(80).optional().nullable(), parent_id:z.string().uuid().nullable().optional(), display_order:z.number().int().min(0).max(100000).optional(), is_active:z.boolean().optional() });
 type CategoryWrite = { id?: string; name: string; slug: string; description?: string | null; icon?: string | null; image_url?: string | null; color?: string | null; parent_id?: string | null; display_order?: number; is_active?: boolean };
-const categoriesTable = (supabaseAdmin: any) => supabaseAdmin.from("categories");
-export const saveCategory = createServerFn({ method:"POST" }).middleware([requireOwnerRole]).validator((data:unknown)=>CategorySchema.parse(data) as CategoryWrite).handler(async({data})=>{ const {supabaseAdmin}=await import('@/integrations/supabase/client.server'); const {id,...raw}=data; if(id && raw.parent_id===id) throw new Error("Uma categoria não pode ser pai dela mesma."); if(raw.parent_id){ const {data:parent,error:parentError}=await supabaseAdmin.from("categories").select("id,parent_id").eq("id",raw.parent_id).maybeSingle(); if(parentError)throw parentError; if(!parent)throw new Error("Categoria pai não encontrada."); const seen=new Set<string>(); let current:string|null=raw.parent_id; while(current){ if(current===id) throw new Error("A hierarquia escolhida criaria um ciclo entre categorias."); if(seen.has(current)) throw new Error("A hierarquia atual contém um ciclo inválido."); seen.add(current); const {data:ancestor,error:ancestorError}:( {data:{parent_id:string|null}|null;error:unknown} )=await supabaseAdmin.from("categories").select("parent_id").eq("id",current).maybeSingle(); if(ancestorError)throw ancestorError; current=ancestor?.parent_id??null; } }
- if(raw.parent_id && raw.is_active!==false){ const {data:parentState,error:parentStateError}=await supabaseAdmin.from("categories").select("is_active").eq("id",raw.parent_id).maybeSingle(); if(parentStateError)throw parentStateError; if(!parentState?.is_active)throw new Error("Uma categoria ativa não pode ter pai inativo."); } if(id && raw.is_active===false){ const {data:activeChildren,error:childError}=await supabaseAdmin.from("categories").select("id").eq("parent_id",id).eq("is_active",true).limit(1); if(childError)throw childError; if(activeChildren?.length)throw new Error("Desative ou mova as subcategorias ativas antes de ocultar esta categoria."); }
- const payload={...raw,image_url:raw.image_url||null,icon:raw.icon||null,color:raw.color||null,description:raw.description?.trim()||null,parent_id:raw.parent_id||null,display_order:raw.display_order??0,is_active:raw.is_active??true}; const table=categoriesTable(supabaseAdmin); const result=id?await table.update(payload).eq("id",id):await table.insert(payload); if(result.error)throw result.error; return {success:true}; });
-export const reorderCategories = createServerFn({ method:"POST" }).middleware([requireOwnerRole]).validator((data:unknown)=>z.object({ids:z.array(z.string().uuid()).min(1)}).parse(data)).handler(async({data})=>{ const {supabaseAdmin}=await import('@/integrations/supabase/client.server'); const {data:existing,error:readError}=await supabaseAdmin.from("categories").select("id").in("id",data.ids); if(readError)throw readError; if((existing?.length??0)!==data.ids.length)throw new Error("Lista de categorias inválida."); const table=categoriesTable(supabaseAdmin); for(const [index,id] of data.ids.entries()){ const {error}=await table.update({display_order:index}).eq("id",id); if(error)throw error; } return {success:true}; });
-export const deleteCategory = createServerFn({ method:"POST" }).middleware([requireOwnerRole]).validator((data:unknown)=>z.object({id:z.string().uuid()}).parse(data)).handler(async({data:{id}})=>{ const {supabaseAdmin}=await import('@/integrations/supabase/client.server'); const {data:children,error:childrenError}=await supabaseAdmin.from("categories").select("id").eq("parent_id",id).limit(1); if(childrenError)throw childrenError; if((children?.length??0)>0)throw new Error("Não é possível excluir: existem subcategorias vinculadas."); const {data:products,error:productsError}=await supabaseAdmin.from("products").select("id").eq("category_id",id).limit(1); if(productsError)throw productsError; if((products?.length??0)>0)throw new Error("Não é possível excluir: existem produtos vinculados. Reatribua-os antes."); const {error}=await supabaseAdmin.from("categories").delete().eq("id",id); if(error)throw error; return {success:true}; });
+export const saveCategory = createServerFn({method:"POST"})
+.middleware([requireOwnerRole])
+.validator((data:unknown)=>CategorySchema.parse(data) as CategoryWrite)
+.handler(async({data,context})=>{
+ const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
+ const {id,...raw}=data;
+ const payload={...raw,
+  image_url:raw.image_url||null,icon:raw.icon||null,color:raw.color||null,
+  description:raw.description?.trim()||null,parent_id:raw.parent_id||null,
+  display_order:raw.display_order??0,is_active:raw.is_active??true
+ };
+ const {data:result,error}=await (supabaseAdmin as any).rpc("rubi_manage_category_audited",{
+  p_action:"save",p_id:id??null,p_payload:payload,p_ids:null,p_actor:context.userId
+ });
+ if(error)throw new Error(error.message);
+ if(!result?.id)throw new Error("Categoria e auditoria não registradas.");
+ return {success:true};
+});
+export const reorderCategories = createServerFn({method:"POST"})
+.middleware([requireOwnerRole])
+.validator((data:unknown)=>z.object({ids:z.array(z.string().uuid()).min(1).max(500)}).parse(data))
+.handler(async({data,context})=>{
+ const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
+ const {data:result,error}=await (supabaseAdmin as any).rpc("rubi_manage_category_audited",{
+  p_action:"reorder",p_id:null,p_payload:null,p_ids:data.ids,p_actor:context.userId
+ });
+ if(error)throw new Error(error.message);
+ if(Number(result?.count)!==data.ids.length)throw new Error("Reordenação não concluída.");
+ return {success:true};
+});
+export const deleteCategory = createServerFn({method:"POST"})
+.middleware([requireOwnerRole])
+.validator((data:unknown)=>z.object({id:z.string().uuid()}).parse(data))
+.handler(async({data,context})=>{
+ const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
+ const {data:result,error}=await (supabaseAdmin as any).rpc("rubi_manage_category_audited",{
+  p_action:"delete",p_id:data.id,p_payload:null,p_ids:null,p_actor:context.userId
+ });
+ if(error)throw new Error(error.message);
+ if(result?.id!==data.id)throw new Error("Exclusão de categoria não registrada.");
+ return {success:true};
+});
 
 export const getOfferGroups = createServerFn({ method:"GET" }).middleware([requireOwnerRole]).handler(async()=>{ const {supabaseAdmin}=await import('@/integrations/supabase/client.server'); const {data,error}=await supabaseAdmin.from("offer_groups" as any).select("*").order("canonical_title"); if(error)throw error; return data||[]; });
 export const getOfferGroupDetails = createServerFn({ method:"GET" }).middleware([requireOwnerRole]).validator((data:unknown)=>z.object({id:z.string().uuid()}).parse(data)).handler(async({data:{id}})=>{ const {supabaseAdmin}=await import('@/integrations/supabase/client.server'); const [{data:group,error:groupError},{data:products,error:productsError}]=await Promise.all([supabaseAdmin.from("offer_groups" as any).select("*").eq("id",id).maybeSingle(),supabaseAdmin.from("products").select("id,title,current_price,status,offer_group_id").eq("offer_group_id",id).order("title")]); if(groupError)throw groupError; if(productsError)throw productsError; if(!group)throw new Error("Oferta não encontrada."); return {group,products:products||[]}; });
