@@ -13,7 +13,7 @@ const marketplaceSchema = z.object({
 function validateAffiliateStructure(value: string | null | undefined) {
   if (!value) return;
   let url: URL;
-  try { url = new URL(value.replace(/\\{[^{}]+\\}/g, "sample")); }
+  try { url = new URL(value.replace(/\{[^{}]+\}/g, "sample")); }
   catch { throw new Error("Informe uma estrutura de afiliado com URL HTTPS válida."); }
   if (url.protocol !== "https:" || !url.hostname || url.username || url.password) {
     throw new Error("A estrutura de afiliado deve usar HTTPS e não pode conter credenciais.");
