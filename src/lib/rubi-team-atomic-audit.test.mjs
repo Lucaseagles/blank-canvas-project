@@ -46,3 +46,9 @@ test("Sprint 224 creator-team assignment enforces partner audience in the databa
  assert.match(sql,/revoke all on function public\.rubi_transition_team_campaign_assignment_audited/);
  assert.match(sql,/grant execute on function public\.rubi_transition_team_campaign_assignment_audited/);
 });
+
+test("Sprint 225 Master candidate lists exclude non-consumer plans and movements",()=>{
+ const functions=source("./rubi-team-campaign-assignments.functions.ts");
+ assert.match(functions,/from\("rubi_master_campaign_plans"\)[\s\S]*?\.eq\("mode","creator_team"\)\.eq\("audience","consumer"\)/);
+ assert.match(functions,/from\("rubi_movements"\)[\s\S]*?\.eq\("audience","consumer"\)/);
+});
