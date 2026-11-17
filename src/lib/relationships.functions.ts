@@ -11,7 +11,7 @@ export const getBundleDetails = createServerFn({ method: "GET" })
   .inputValidator((data) => z.string().trim().min(1).max(200).parse(data))
   .handler(async ({ data: slug }) => getBundleBySlug(slug));
 
-export const listBundles = createServerFn({ method: "GET" }).handler(async () => getBundles());
+export const listBundles = createServerFn({ method: "GET" }).middleware([requireOwnerRole]).handler(async () => getBundles());
 
 export const getStrategicPopup = createServerFn({ method: "GET" }).handler(async () => {
   const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
