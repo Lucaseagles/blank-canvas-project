@@ -68,10 +68,15 @@ export const collectTelegramMetric = createServerFn({ method: "POST" })
       .eq("is_active", true)
       .eq("platform", "telegram")
       .order("created_at", { ascending: true })
-      .limit(20);
+      .limit(2);
     if (channelError) throw new Error(`Não foi possível localizar o canal Telegram: ${channelError.message}`);
-    const channel = (channels ?? [])[0];
-    if (!channel) throw new Error("Nenhum canal Telegram ativo está cadastrado em social_channels.");
+    if ((channels ?? []).length === 0) {
+      throw new Error("Nenhum canal Telegram ativo está cadastrado em social_channels.");
+    }
+    if (channels.length !== 1) {
+      throw new Error("Há mais de um canal Telegram ativo. Defina o canal de coleta antes de continuar, para evitar atribuir métricas ao canal errado.");
+    }
+    const channel = channels[0];
 
     const token = await getIntegrationSecretServer("telegram", "bot_token");
     const configuredChannelId = await getIntegrationSecretServer("telegram", "channel_id");
@@ -89,23 +94,12 @@ export const collectTelegramMetric = createServerFn({ method: "POST" })
       throw new Error(result.description ?? "O Telegram não retornou uma quantidade de membros válida.");
     }
 
-    const { data: metric, error: metricError } = await db
-      .from("external_channel_metrics")
-      .insert({ channel_id: channel.id, metric_type: "member_count", value: result.result })
-      .select("id,channel_id,metric_type,value,collected_at")
-      .single();
-    if (metricError) throw new Error(`Não foi possível armazenar a métrica: ${metricError.message}`);
-
-    const { error: auditError } = await db.from("admin_audit_log").insert({
-      actor_user_id: context.userId ?? null,
-      actor_email: context.userEmail ?? null,
-      action_type: "TELEGRAM_METRIC_COLLECTED",
-      entity_type: "external_channel_metric",
-      entity_id: metric.id,
-      previous_value: {},
-      new_value: { channel_id: channel.id, metric_type: "member_count", value: result.result },
+    const { data: metric, error: metricError } = await db.rpc("rubi_record_telegram_metric_audited", {
+      p_channel_id: channel.id,
+      p_value: result.result,
+      p_actor: context.userId,
     });
-    if (auditError) console.warn("Métrica coletada, mas a auditoria não foi registrada:", auditError.message);
+    if (metricError) throw new Error(`Não foi possível armazenar e auditar a métrica em uma única operação: ${metricError.message}`);
 
     return {
       ...metric,
