@@ -15,8 +15,8 @@ export const listRubiTeamCampaignAssignmentsAdmin=createServerFn({method:"GET"})
   const db=supabaseAdmin as any;
   const [teams,plans,movements,variants,assignments]=await Promise.all([
    db.from("rubi_creator_teams").select("id,name,niche,stage").order("created_at",{ascending:false}).limit(100),
-   db.from("rubi_master_campaign_plans").select("id,product_id,campaign_code,mode,audience,status").eq("mode","creator_team").order("created_at",{ascending:false}).limit(100),
-   db.from("rubi_movements").select("id,product_id,name,status").order("updated_at",{ascending:false}).limit(200),
+   db.from("rubi_master_campaign_plans").select("id,product_id,campaign_code,mode,audience,status").eq("mode","creator_team").eq("audience","consumer").order("created_at",{ascending:false}).limit(100),
+   db.from("rubi_movements").select("id,product_id,name,status").eq("audience","consumer").order("updated_at",{ascending:false}).limit(200),
    db.from("rubi_movement_variants").select("id,movement_id,name,status,media_rights_confirmed").order("updated_at",{ascending:false}).limit(300),
    db.from("rubi_creator_team_campaign_assignments")
     .select("id,team_id,campaign_plan_id,movement_id,variant_id,status,editorial_notes,created_at")
