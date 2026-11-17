@@ -1,35 +1,111 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireOwnerRole } from "./auth-guards.server";
+import { getIntegrationSecretServer } from "@/integrations/secrets.server";
 
+export type ExternalMetric = {
+  id: string; channel_id: string | null; metric_type: string; value: number;
+  collected_at: string; channel_name?: string; platform?: string;
+};
+export type ExternalChannel = {
+  id: string; platform: string; channel_name: string; channel_url: string;
+  icon: string | null; is_active: boolean;
+};
+const getDb = async () => (await import("@/integrations/supabase/client.server")).supabaseAdmin as any;
 const marketplaceInput = z.object({ marketplaceId: z.string().uuid() });
 
-/** Stores marketplace integration configuration server-side. Never expose credentials to the client. */
 export const updateMarketplaceCredentials = createServerFn({ method: "POST" })
   .middleware([requireOwnerRole])
   .inputValidator((data) => z.object({ marketplaceId: z.string().uuid(), credentials: z.record(z.unknown()) }).parse(data))
-  .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.from("marketplaces").update({ api_config: data.credentials as any, status: "pending", api_status: "pending", updated_at: new Date().toISOString() }).eq("id", data.marketplaceId);
+  .handler(async ({ data, context }) => {
+    const db = await getDb();
+    const { error } = await db.rpc("rubi_manage_marketplace_audited", {
+      p_action: "credentials", p_id: data.marketplaceId, p_payload: data.credentials, p_actor: context.userId,
+    });
     if (error) throw new Error(`Não foi possível salvar as credenciais: ${error.message}`);
     return { success: true };
   });
 
-/**
- * Does not claim a marketplace sync succeeded when there is no provider-specific connector.
- * Provider APIs must be implemented and configured before products can be imported automatically.
- */
 export const syncMarketplace = createServerFn({ method: "POST" })
   .middleware([requireOwnerRole])
   .inputValidator((data) => marketplaceInput.parse(data))
-  .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: marketplace, error } = await supabaseAdmin.from("marketplaces").select("id,name,slug,api_config").eq("id", data.marketplaceId).single();
+  .handler(async ({ data, context }) => {
+    const db = await getDb();
+    const { data: marketplace, error } = await db.from("marketplaces")
+      .select("id,name,slug,api_config").eq("id", data.marketplaceId).single();
     if (error) throw new Error(`Não foi possível carregar o marketplace: ${error.message}`);
-    if (!marketplace?.api_config) {
-      await supabaseAdmin.from("marketplaces").update({ api_status: "not_configured", updated_at: new Date().toISOString() }).eq("id", data.marketplaceId);
-      return { success: false, syncedCount: 0, message: `${marketplace.name}: API não configurada. O cadastro manual de produtos continua disponível.` };
+    const apiStatus = !marketplace?.api_config ? "not_configured" : "connector_not_implemented";
+    const { error: statusError } = await db.rpc("rubi_manage_marketplace_audited", {
+      p_action: "api_status", p_id: data.marketplaceId, p_payload: { api_status: apiStatus }, p_actor: context.userId,
+    });
+    if (statusError) throw new Error(`Não foi possível registrar o status da integração: ${statusError.message}`);
+    return {
+      success: false, syncedCount: 0,
+      message: !marketplace?.api_config
+        ? `${marketplace.name}: API não configurada. O cadastro manual de produtos continua disponível.`
+        : `${marketplace.name}: credenciais encontradas, mas o conector específico ainda não está implementado. Nenhum produto foi alterado.`,
+    };
+  });
+
+export const getExternalMetrics = createServerFn({ method: "GET" })
+  .middleware([requireOwnerRole])
+  .handler(async () => {
+    const db = await getDb();
+    const { data, error } = await db.from("external_channel_metrics")
+      .select("id,channel_id,metric_type,value,collected_at,social_channels:channel_id(channel_name,platform)")
+      .order("collected_at", { ascending: false }).limit(250);
+    if (error) throw new Error(`Não foi possível carregar as métricas: ${error.message}`);
+    return (data ?? []).map((row: any) => ({
+      id: row.id, channel_id: row.channel_id, metric_type: row.metric_type, value: Number(row.value),
+      collected_at: row.collected_at,
+      channel_name: Array.isArray(row.social_channels) ? row.social_channels[0]?.channel_name ?? "Canal" : row.social_channels?.channel_name ?? "Canal",
+      platform: Array.isArray(row.social_channels) ? row.social_channels[0]?.platform ?? "unknown" : row.social_channels?.platform ?? "unknown",
+    })) as ExternalMetric[];
+  });
+
+export const getExternalChannels = createServerFn({ method: "GET" })
+  .middleware([requireOwnerRole])
+  .handler(async () => {
+    const db = await getDb();
+    const { data, error } = await db.from("social_channels")
+      .select("id,platform,channel_name,channel_url,icon,is_active")
+      .eq("is_active", true).order("channel_name");
+    if (error) throw new Error(`Não foi possível carregar os canais: ${error.message}`);
+    return (data ?? []) as ExternalChannel[];
+  });
+
+export const collectTelegramMetric = createServerFn({ method: "POST" })
+  .middleware([requireOwnerRole])
+  .handler(async ({ context }) => {
+    const db = await getDb();
+    const { data: channels, error: channelError } = await db.from("social_channels")
+      .select("id,platform,channel_name,channel_url").eq("is_active", true)
+      .eq("platform", "telegram").order("created_at", { ascending: true }).limit(20);
+    if (channelError) throw new Error(`Não foi possível localizar o canal Telegram: ${channelError.message}`);
+    const channel = (channels ?? [])[0];
+    if (!channel) throw new Error("Nenhum canal Telegram ativo está cadastrado em social_channels.");
+    const token = await getIntegrationSecretServer("telegram", "bot_token");
+    const configuredChannelId = await getIntegrationSecretServer("telegram", "channel_id");
+    if (!token) throw new Error("Bot Token do Telegram não está configurado no Secure Hub.");
+    if (!configuredChannelId?.trim()) throw new Error("Channel ID do Telegram não está configurado no Secure Hub.");
+    const telegramResponse = await fetch(
+      `https://api.telegram.org/bot${encodeURIComponent(token)}/getChatMemberCount?chat_id=${encodeURIComponent(configuredChannelId.trim())}`,
+      { method: "GET", headers: { accept: "application/json" }, signal: AbortSignal.timeout(10000) },
+    );
+    if (!telegramResponse.ok) throw new Error(`Telegram respondeu HTTP ${telegramResponse.status}.`);
+    const result = (await telegramResponse.json()) as { ok?: boolean; result?: number; description?: string };
+    if (!result.ok || typeof result.result !== "number" || !Number.isInteger(result.result) || result.result < 0) {
+      throw new Error(result.description ?? "O Telegram não retornou uma quantidade de membros válida.");
     }
-    await supabaseAdmin.from("marketplaces").update({ api_status: "connector_not_implemented", updated_at: new Date().toISOString() }).eq("id", data.marketplaceId);
-    return { success: false, syncedCount: 0, message: `${marketplace.name}: credenciais encontradas, mas o conector específico ainda não está implementado. Nenhum produto foi alterado.` };
+    const { data: metric, error: metricError } = await db.from("external_channel_metrics")
+      .insert({ channel_id: channel.id, metric_type: "member_count", value: result.result })
+      .select("id,channel_id,metric_type,value,collected_at").single();
+    if (metricError) throw new Error(`Não foi possível armazenar a métrica: ${metricError.message}`);
+    const { error: auditError } = await db.from("admin_audit_log").insert({
+      actor_user_id: context.userId ?? null, actor_email: context.userEmail ?? null,
+      action_type: "TELEGRAM_METRIC_COLLECTED", entity_type: "external_channel_metric", entity_id: metric.id,
+      previous_value: {}, new_value: { channel_id: channel.id, metric_type: "member_count", value: result.result },
+    });
+    if (auditError) console.warn("Métrica coletada, mas a auditoria não foi registrada:", auditError.message);
+    return { ...metric, value: Number(metric.value), channel_name: channel.channel_name, platform: channel.platform } as ExternalMetric;
   });
