@@ -76,7 +76,7 @@ begin
   where platform_id = p_platform_id
   for update;
 
-  existing_ref := pg_catalog.coalesce(refs, '{}'::jsonb) ->> p_field_key;
+  existing_ref := coalesce(refs, '{}'::jsonb) ->> p_field_key;
 
   if existing_ref is not null and existing_ref <> '' then
     secret_id := existing_ref::uuid;
@@ -93,7 +93,7 @@ begin
     'pending', pg_catalog.now()
   )
   on conflict (platform_id) do update
-    set secret_refs = pg_catalog.coalesce(public.integration_credentials.secret_refs, '{}'::jsonb)
+    set secret_refs = coalesce(public.integration_credentials.secret_refs, '{}'::jsonb)
       || pg_catalog.jsonb_build_object(p_field_key, secret_id::text),
         status = 'pending',
         last_error = null,
