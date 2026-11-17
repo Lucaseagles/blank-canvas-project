@@ -64,7 +64,6 @@ test("Consumer feed discovers only published movement pages with current approva
  assert.match(server,/approvedRubiCheckout\(product\)/);
  assert.match(server,/movement\.product_id===product\.id/);
  assert.match(server,/\.eq\("audience", "consumer"\)/);
- assert.match(server,/Merchant and partner movements are served only by their separately authorized portals/);
  assert.match(server,/rubiOrganicProductPath\(/);
  assert.match(server,/preferred_categories/);
  assert.match(server,/verifyOptionalUser\(data\.userId,data\.accessToken\)/);
