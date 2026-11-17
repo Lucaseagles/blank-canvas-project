@@ -51,10 +51,11 @@ export const saveBundle = createServerFn({ method: "POST" })
   .inputValidator((data) => BundleInput.parse(data))
   .handler(async ({ data, context }) => {
     const payload: Record<string, unknown> = {
-      title: data.title, slug: data.slug, description: data.description ?? null,
-      image_url: data.image_url || null, is_active: data.is_active,
-      bundle_discount_price: data.bundle_discount_price ?? null,
+      title: data.title, slug: data.slug, is_active: data.is_active,
     };
+    if (data.description !== undefined) payload.description = data.description;
+    if (data.image_url !== undefined) payload.image_url = data.image_url || null;
+    if (data.bundle_discount_price !== undefined) payload.bundle_discount_price = data.bundle_discount_price;
     if (data.products !== undefined) payload.products = data.products;
     return manageBundle("save", data.id ?? null, payload, context.userId);
   });
