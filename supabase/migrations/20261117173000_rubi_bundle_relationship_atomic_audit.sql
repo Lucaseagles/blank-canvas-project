@@ -52,7 +52,10 @@ begin
    if exists(
     select 1 from jsonb_array_elements(p_payload->'products') as items(item)
     where jsonb_typeof(item) is distinct from 'object'
-     or coalesce(item->>'id','') !~ '^[0-9a-fA-F-]{36}
+     or coalesce(item->>'id','') !~ '^[0-9a-fA-F-]{36}$'
+     or coalesce(item->>'position','') !~ '^[0-9]+$'
+   ) then raise exception 'Invalid bundle product entry'; end if;
+   v_product_ids:=array(select (item->>'id')::uuid from jsonb_array_elements(p_payload->'products') as items(item));
    select count(*),count(distinct product_id) into v_product_count,v_unique_count from unnest(v_product_ids) as ids(product_id);
    if v_product_count<>v_unique_count then raise exception 'Duplicate product in bundle'; end if;
    select count(*) into v_existing_count from public.products where id=any(v_product_ids);
