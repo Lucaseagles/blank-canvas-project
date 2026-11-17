@@ -50,7 +50,8 @@ export const saveAdminMarketplace = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     validateAffiliateStructure(data.affiliate_link_structure);
-    const { data: result, error } = await supabaseAdmin.rpc("rubi_manage_marketplace_audited", {
+    const db = supabaseAdmin as any;
+    const { data: result, error } = await db.rpc("rubi_manage_marketplace_audited", {
       p_action: "save",
       p_id: data.id ?? null,
       p_payload: {
@@ -70,7 +71,8 @@ export const deleteAdminMarketplace = createServerFn({ method: "POST" })
   .validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.rpc("rubi_manage_marketplace_audited", {
+    const db = supabaseAdmin as any;
+    const { error } = await db.rpc("rubi_manage_marketplace_audited", {
       p_action: "delete",
       p_id: data.id,
       p_payload: {},
