@@ -67,9 +67,10 @@ begin
     nullif(p_payload->>'bundle_discount_price','')::numeric) returning * into new_bundle;
   else
    update public.bundles set title=btrim(p_payload->>'title'),slug=btrim(p_payload->>'slug'),
-    description=nullif(p_payload->>'description',''),image_url=nullif(p_payload->>'image_url',''),
+    description=case when p_payload ? 'description' then nullif(p_payload->>'description','') else old_bundle.description end,
+    image_url=case when p_payload ? 'image_url' then nullif(p_payload->>'image_url','') else old_bundle.image_url end,
     is_active=coalesce((p_payload->>'is_active')::boolean,true),
-    bundle_discount_price=nullif(p_payload->>'bundle_discount_price','')::numeric
+    bundle_discount_price=case when p_payload ? 'bundle_discount_price' then nullif(p_payload->>'bundle_discount_price','')::numeric else old_bundle.bundle_discount_price end
    where id=p_id returning * into new_bundle;
   end if;
   v_bundle_id:=new_bundle.id;
