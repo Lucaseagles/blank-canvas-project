@@ -79,15 +79,22 @@ export const collectTelegramMetric = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const db = await getDb();
     const { data: channels, error: channelError } = await db.from("social_channels")
-      .select("id,platform,channel_name,channel_url").eq("is_active", true)
-      .eq("platform", "telegram").order("created_at", { ascending: true }).limit(20);
+      .select("id,platform,channel_name,channel_url")
+      .eq("is_active", true).eq("platform", "telegram")
+      .order("created_at", { ascending: true }).limit(2);
     if (channelError) throw new Error(`Não foi possível localizar o canal Telegram: ${channelError.message}`);
-    const channel = (channels ?? [])[0];
-    if (!channel) throw new Error("Nenhum canal Telegram ativo está cadastrado em social_channels.");
+    if ((channels ?? []).length === 0) {
+      throw new Error("Nenhum canal Telegram ativo está cadastrado em social_channels.");
+    }
+    if (channels.length !== 1) {
+      throw new Error("Há mais de um canal Telegram ativo. Defina o canal de coleta antes de continuar, para evitar atribuir métricas ao canal errado.");
+    }
+    const channel = channels[0];
     const token = await getIntegrationSecretServer("telegram", "bot_token");
     const configuredChannelId = await getIntegrationSecretServer("telegram", "channel_id");
     if (!token) throw new Error("Bot Token do Telegram não está configurado no Secure Hub.");
     if (!configuredChannelId?.trim()) throw new Error("Channel ID do Telegram não está configurado no Secure Hub.");
+
     const telegramResponse = await fetch(
       `https://api.telegram.org/bot${encodeURIComponent(token)}/getChatMemberCount?chat_id=${encodeURIComponent(configuredChannelId.trim())}`,
       { method: "GET", headers: { accept: "application/json" }, signal: AbortSignal.timeout(10000) },
@@ -97,15 +104,17 @@ export const collectTelegramMetric = createServerFn({ method: "POST" })
     if (!result.ok || typeof result.result !== "number" || !Number.isInteger(result.result) || result.result < 0) {
       throw new Error(result.description ?? "O Telegram não retornou uma quantidade de membros válida.");
     }
-    const { data: metric, error: metricError } = await db.from("external_channel_metrics")
-      .insert({ channel_id: channel.id, metric_type: "member_count", value: result.result })
-      .select("id,channel_id,metric_type,value,collected_at").single();
-    if (metricError) throw new Error(`Não foi possível armazenar a métrica: ${metricError.message}`);
-    const { error: auditError } = await db.from("admin_audit_log").insert({
-      actor_user_id: context.userId ?? null, actor_email: context.userEmail ?? null,
-      action_type: "TELEGRAM_METRIC_COLLECTED", entity_type: "external_channel_metric", entity_id: metric.id,
-      previous_value: {}, new_value: { channel_id: channel.id, metric_type: "member_count", value: result.result },
+
+    const { data: metric, error: metricError } = await db.rpc("rubi_record_telegram_metric_audited", {
+      p_channel_id: channel.id,
+      p_value: result.result,
+      p_actor: context.userId,
     });
-    if (auditError) console.warn("Métrica coletada, mas a auditoria não foi registrada:", auditError.message);
-    return { ...metric, value: Number(metric.value), channel_name: channel.channel_name, platform: channel.platform } as ExternalMetric;
+    if (metricError) throw new Error(`Não foi possível armazenar e auditar a métrica em uma única operação: ${metricError.message}`);
+    return {
+      ...metric,
+      value: Number(metric.value),
+      channel_name: channel.channel_name,
+      platform: channel.platform,
+    } as ExternalMetric;
   });
