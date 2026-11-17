@@ -25,7 +25,8 @@ begin
   if jsonb_typeof(p_payload) is distinct from 'object'
    or length(btrim(coalesce(p_payload->>'name',''))) not between 2 and 120
    or length(btrim(coalesce(p_payload->>'slug',''))) not between 2 and 120
-   or coalesce(p_payload->>'slug','') !~ '^[a-z0-9]+(?:-[a-z0-9]+)*
+   or coalesce(p_payload->>'slug','') !~ '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+   or coalesce(p_payload->>'status','') not in ('active','pending','disabled') then
    raise exception 'Invalid marketplace data';
   end if;
   if p_id is null then
