@@ -48,8 +48,7 @@ export const getRubiApprovedMovementFeed = createServerFn({ method: "POST" })
  const { data: movements, error: movementsError } = await db.from("rubi_movements")
   .select("id,product_id,revision,status,audience,truthful_promise")
   .in("id", movementIds)
-  // The public Store shelf is the consumer surface. Merchant and partner
-  // movements are served only by their separately authorized portals.
+  // Public Store shelf is consumer-only; merchant and partner movements use separately authorized portals.
   .eq("audience", "consumer");
  if (movementsError) throw movementsError;
  if (!movements?.length) return [];
