@@ -145,6 +145,8 @@ jobs:
         run: node --test src/lib/rubi-video-storage-sprint222.test.mjs
       - name: RUBI social strategy atomic audit regression
         run: node --test src/lib/rubi-social-strategy-atomic-audit.test.mjs
+      - name: RUBI Secure Hub Vault search-path hardening regression
+        run: node --test src/lib/rubi-secure-hub-vault-search-path.test.mjs
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint
