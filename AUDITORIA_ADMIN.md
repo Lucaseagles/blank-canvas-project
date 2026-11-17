@@ -199,3 +199,15 @@ Continuar a matriz de catálogo público a partir de **Products → Categories �
 - `src/lib/social-cross-promo.functions.ts`: cadastro/edição exige URL pública HTTPS sem credenciais embutidas; CRUD administrativo protegido por `requireOwnerRole`, leitura pública limitada a canais ativos.
 - Commits: `a9f5b3596a877b24d7c9ed67e6de187973988071`, `6b8cf0eaa481b1415463915adee716cc9efe7ff2`.
 - **Pendente:** verificar políticas RLS, exposição dos canais nas superfícies públicas, eventos de intenção com usuário real, TypeScript/ESLint/build/E2E. Analytics mede intenção, não seguidores efetivamente conquistados.
+
+
+### Secure Hub — Sprint 232: endurecimento das funções Vault
+
+- As tabelas `integration_platforms`, `integration_credentials` e `integration_credential_fields` permanecem com RLS habilitado e sem policies genéricas; os privilégios diretos de `anon` e `authenticated` seguem revogados.
+- As funções privilegiadas `mark_integration_check`, `set_integration_secret` e `get_integration_secret` agora usam `SECURITY DEFINER` com `search_path = ''` e referências qualificadas para `public`/`vault`.
+- EXECUTE explicitamente revogado de `PUBLIC`, `anon` e `authenticated`; mantido apenas para `service_role`. O acesso de aplicação continua passando pelas server functions com `requireOwnerRole`.
+- Migração aplicada ao projeto Supabase correto: `20261117233500_rubi_secure_hub_vault_search_path`.
+- Consulta pós-aplicação confirmou, para as três funções: search_path vazio; anon=false; authenticated=false; service_role=true.
+- Teste de contrato: `src/lib/rubi-secure-hub-vault-search-path.test.mjs`.
+- Classificação: upgrade de segurança; não altera a pontuação da matriz v1.
+- Pendente: CI completo do commit final, revisão de connectors reais e teste E2E com credenciais de teste rotacionáveis; não usar nem registrar segredos reais em testes.
