@@ -13,7 +13,7 @@ const marketplaceSchema = z.object({
 function validateAffiliateStructure(value: string | null | undefined) {
   if (!value) return;
   let url: URL;
-  try { url = new URL(value.replace(/\\{[^{}]+\\}/g, 'sample')); }
+  try { url = new URL(value.replace(/\\{[^{}]+\\}/g, "sample")); }
   catch { throw new Error("Informe uma estrutura de afiliado com URL HTTPS válida."); }
   if (url.protocol !== "https:" || !url.hostname || url.username || url.password) {
     throw new Error("A estrutura de afiliado deve usar HTTPS e não pode conter credenciais.");
@@ -24,8 +24,7 @@ export const listAdminMarketplaces = createServerFn({ method: "GET" })
   .middleware([requireOwnerRole])
   .handler(async () => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
-      .from("marketplaces")
+    const { data, error } = await supabaseAdmin.from("marketplaces")
       .select("id,name,slug,status,api_status,created_at,updated_at,affiliate_link_structure")
       .order("name");
     if (error) throw error;
@@ -37,11 +36,9 @@ export const getAdminMarketplace = createServerFn({ method: "GET" })
   .validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: row, error } = await supabaseAdmin
-      .from("marketplaces")
+    const { data: row, error } = await supabaseAdmin.from("marketplaces")
       .select("id,name,slug,status,api_status,created_at,updated_at,affiliate_link_structure")
-      .eq("id", data.id)
-      .maybeSingle();
+      .eq("id", data.id).maybeSingle();
     if (error) throw error;
     if (!row) throw new Error("Marketplace não encontrado.");
     return row;
@@ -53,50 +50,19 @@ export const saveAdminMarketplace = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     validateAffiliateStructure(data.affiliate_link_structure);
-    const payload = {
-      name: data.name,
-      slug: data.slug,
-      status: data.status,
-      affiliate_link_structure: data.affiliate_link_structure || null,
-      updated_at: new Date().toISOString(),
-    };
-
-    let rowId = data.id;
-    let previous: unknown = null;
-
-    if (data.id) {
-      const { data: existing, error: readError } = await supabaseAdmin
-        .from("marketplaces")
-        .select("*")
-        .eq("id", data.id)
-        .maybeSingle();
-      if (readError) throw readError;
-      if (!existing) throw new Error("Marketplace não encontrado.");
-      previous = existing;
-
-      const { error } = await supabaseAdmin.from("marketplaces").update(payload).eq("id", data.id);
-      if (error) throw error;
-    } else {
-      const { data: created, error } = await supabaseAdmin
-        .from("marketplaces")
-        .insert(payload)
-        .select("id")
-        .single();
-      if (error) throw error;
-      rowId = created.id;
-    }
-
-    await (supabaseAdmin as any).from("admin_audit_log").insert({
-      actor_user_id: context.userId,
-      actor_email: context.userEmail ?? null,
-      action_type: data.id ? "MARKETPLACE_UPDATED" : "MARKETPLACE_CREATED",
-      entity_type: "marketplaces",
-      entity_id: rowId,
-      previous_value: previous,
-      new_value: payload,
+    const { data: result, error } = await supabaseAdmin.rpc("rubi_manage_marketplace_audited", {
+      p_action: "save",
+      p_id: data.id ?? null,
+      p_payload: {
+        name: data.name,
+        slug: data.slug,
+        status: data.status,
+        affiliate_link_structure: data.affiliate_link_structure || null,
+      },
+      p_actor: context.userId,
     });
-
-    return { success: true, id: rowId };
+    if (error) throw new Error(`Não foi possível salvar o marketplace: ${error.message}`);
+    return { success: true, id: result?.id as string };
   });
 
 export const deleteAdminMarketplace = createServerFn({ method: "POST" })
@@ -104,36 +70,14 @@ export const deleteAdminMarketplace = createServerFn({ method: "POST" })
   .validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: existing, error: readError } = await supabaseAdmin
-      .from("marketplaces")
-      .select("*")
-      .eq("id", data.id)
-      .maybeSingle();
-    if (readError) throw readError;
-    if (!existing) throw new Error("Marketplace não encontrado.");
-
-    const { data: linked, error: linkedError } = await supabaseAdmin
-      .from("products")
-      .select("id")
-      .eq("marketplace_id", data.id)
-      .limit(1);
-    if (linkedError) throw linkedError;
-    if ((linked?.length ?? 0) > 0) {
-      throw new Error("Não é possível excluir: existem produtos vinculados. Desative o marketplace ou reatribua os produtos antes.");
-    }
-
-    const { error } = await supabaseAdmin.from("marketplaces").delete().eq("id", data.id);
-    if (error) throw error;
-
-    await (supabaseAdmin as any).from("admin_audit_log").insert({
-      actor_user_id: context.userId,
-      actor_email: context.userEmail ?? null,
-      action_type: "MARKETPLACE_DELETED",
-      entity_type: "marketplaces",
-      entity_id: data.id,
-      previous_value: existing,
-      new_value: null,
+    const { error } = await supabaseAdmin.rpc("rubi_manage_marketplace_audited", {
+      p_action: "delete",
+      p_id: data.id,
+      p_payload: {},
+      p_actor: context.userId,
     });
-
+    if (error) throw new Error(error.message.includes("linked products")
+      ? "Não é possível excluir: existem produtos vinculados. Desative o marketplace ou reatribua os produtos antes."
+      : `Não foi possível excluir o marketplace: ${error.message}`);
     return { success: true };
   });
