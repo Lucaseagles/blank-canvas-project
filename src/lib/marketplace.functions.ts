@@ -5,7 +5,7 @@ import { requireOwnerRole } from "./auth-guards.server";
 const marketplaceSchema = z.object({
   id: z.string().uuid().optional(),
   name: z.string().trim().min(2).max(120),
-  slug: z.string().trim().min(2).max(120).regex(/^[a-z0-9]+(?:-[a-z0-9-]*[a-z0-9])?$/),
+  slug: z.string().trim().min(2).max(120).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   status: z.enum(["active", "pending", "disabled"]),
   affiliate_link_structure: z.string().trim().max(2000).optional().nullable(),
 });
