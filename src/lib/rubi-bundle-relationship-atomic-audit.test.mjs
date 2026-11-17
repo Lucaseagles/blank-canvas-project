@@ -34,3 +34,12 @@ test("bundle RPC validates Owner, locks records, updates links and audits atomic
     "revoke insert,update,delete on public.product_relationships from authenticated",
   ]) assert.ok(sql.includes(token), token);
 });
+
+test("bundle admin list is Owner-gated and public reads filter inactive products", () => {
+  const api = read("./relationships.functions.ts");
+  const server = read("./relationships.server.ts");
+  assert.match(api,/listBundles = createServerFn\(\{ method: "GET" \}\)\.middleware\(\[requireOwnerRole\]\)/);
+  assert.ok(server.includes("PUBLIC_PRODUCT_STATUSES"));
+  assert.ok(server.includes("if (!source || !PUBLIC_PRODUCT_STATUSES.includes"));
+  assert.ok(server.includes("item.product.status"));
+});
