@@ -27,3 +27,10 @@ test("Telegram metric RPC is owner-gated and rolls back metric if audit insert f
     "to service_role",
   ]) assert.ok(sql.includes(token), token);
 });
+
+test("legacy connector module cannot bypass atomic Telegram metric persistence", () => {
+  const legacy = read("./connectors.functions.ts");
+  assert.ok(!legacy.includes("export const collectTelegramMetric"));
+  assert.ok(!legacy.includes('.from("external_channel_metrics").insert'));
+  assert.ok(!legacy.includes('.from("admin_audit_log").insert'));
+});
