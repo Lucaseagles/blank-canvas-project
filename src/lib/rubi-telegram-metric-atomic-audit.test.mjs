@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 
 test("Telegram metric collection writes metric and audit through one atomic RPC", () => {
-  const api = read("./connectors.functions.ts");
+  const api = read("./admin-metrics.functions.ts");
   const start = api.indexOf("export const collectTelegramMetric");
   const section = api.slice(start);
   assert.ok(section.includes('rpc("rubi_record_telegram_metric_audited"'));
