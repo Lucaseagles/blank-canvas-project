@@ -147,6 +147,8 @@ jobs:
         run: node --test src/lib/rubi-social-strategy-atomic-audit.test.mjs
       - name: RUBI Secure Hub Vault search-path hardening regression
         run: node --test src/lib/rubi-secure-hub-vault-search-path.test.mjs
+      - name: RUBI partner grants server-only regression
+        run: node --test src/lib/rubi-partner-grants-server-only.test.mjs
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint
