@@ -32,3 +32,17 @@ test("Master server and UI never bypass audited team mutation procedures",()=>{
  assert.doesNotMatch(member,/\.upsert\(/);
  assert.doesNotMatch(campaigns,/\.update\(\{/);
 });
+
+test("Sprint 224 creator-team assignment enforces partner audience in the database transaction",()=>{
+ const sql=source("../../supabase/migrations/20261117190000_rubi_team_partner_audience_guard.sql");
+ assert.match(sql,/plan_row\.audience is distinct from 'consumer'/);
+ assert.match(sql,/movement_row\.audience is distinct from 'consumer'/);
+ assert.match(sql,/plan_row\.mode<>'creator_team'/);
+ assert.match(sql,/variant_row\.movement_id<>movement_row\.id/);
+ assert.match(sql,/movement_row\.status<>'review'/);
+ assert.match(sql,/variant_row\.media_rights_confirmed is distinct from true/);
+ assert.match(sql,/revoke all on function public\.rubi_create_team_campaign_assignment_audited/);
+ assert.match(sql,/grant execute on function public\.rubi_create_team_campaign_assignment_audited/);
+ assert.match(sql,/revoke all on function public\.rubi_transition_team_campaign_assignment_audited/);
+ assert.match(sql,/grant execute on function public\.rubi_transition_team_campaign_assignment_audited/);
+});
