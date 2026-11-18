@@ -85,22 +85,24 @@ async function runScheduledPublishing(limit: number) {
   if (error) throw new Error(`Não foi possível localizar publicações vencidas: ${error.message}`);
   const results: Array<{ id: string; status: "published" | "failed"; error?: string }> = [];
   for (const post of duePosts ?? []) {
-    const { data: claimed, error: claimError } = await supabase.from("scheduled_posts").update({ status: "processing", error_message: null }).eq("id", post.id).eq("status", "pending").select("id").maybeSingle();
-    if (claimError || !claimed) continue;
+    const { data: claimed, error: claimError } = await supabase.rpc("rubi_claim_scheduled_post_audited", { p_post_id: post.id });
+    if (claimError) throw new Error(`Não foi possível registrar o início da publicação: ${claimError.message}`);
+    if (!claimed) continue;
+    const claimedPost = claimed as typeof post;
     try {
-      const channels = Array.isArray(post.channels) ? post.channels : [];
+      const channels = Array.isArray(claimedPost.channels) ? claimedPost.channels : [];
       if (!channels.length) throw new Error("Nenhum canal configurado.");
       const unsupported = channels.filter((channel: string) => channel !== "telegram");
       if (unsupported.length) throw new Error(`Canal não suportado pelo publicador: ${unsupported.join(", ")}.`);
-      if (!post.message_template?.trim()) throw new Error("Mensagem da publicação está vazia.");
-      for (const channel of channels) if (channel === "telegram") await sendTelegram(post.message_template.trim());
-      const { error: publishError } = await supabase.from("scheduled_posts").update({ status: "published", published_at: new Date().toISOString(), error_message: null }).eq("id", post.id).eq("status", "processing");
-      if (publishError) throw new Error(`Publicação enviada, mas não foi possível atualizar o status: ${publishError.message}`);
+      if (!claimedPost.message_template?.trim()) throw new Error("Mensagem da publicação está vazia.");
+      for (const channel of channels) if (channel === "telegram") await sendTelegram(claimedPost.message_template.trim());
+      const { error: publishError } = await supabase.rpc("rubi_finish_scheduled_post_audited", { p_post_id: post.id, p_status: "published", p_error_message: null });
+      if (publishError) throw new Error(`Publicação enviada, mas não foi possível registrar o resultado: ${publishError.message}`);
       results.push({ id: post.id, status: "published" });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Erro desconhecido ao publicar.";
-      await supabase.from("scheduled_posts").update({ status: "failed", error_message: message }).eq("id", post.id).eq("status", "processing");
-      results.push({ id: post.id, status: "failed", error: message });
+      const { error: failureAuditError } = await supabase.rpc("rubi_finish_scheduled_post_audited", { p_post_id: post.id, p_status: "failed", p_error_message: message });
+      results.push({ id: post.id, status: "failed", error: failureAuditError ? `${message} (falha ao registrar estado/auditoria: ${failureAuditError.message})` : message });
     }
   }
   return { processed: results.length, results };
