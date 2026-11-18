@@ -19,7 +19,7 @@ export function verifyRubiCheckoutUrl(
   // WHATWG URL parsing treats backslashes as slashes for special schemes.
   // Reject them before parsing so authority/path boundaries cannot be rewritten.
   // Also reject embedded ASCII controls/whitespace that the parser may silently strip.
-  if (candidate.includes("\\\\") || /[\\u0000-\\u0020\\u007f]/.test(candidate)) return null;
+  if (candidate.includes("\\") || /[\u0000-\u0020\u007f]/.test(candidate)) return null;
   try {
     const url = new URL(candidate);
     if (url.protocol !== "https:" || url.username || url.password ||
