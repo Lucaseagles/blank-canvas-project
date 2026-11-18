@@ -46,7 +46,8 @@
     "test:rubi-creator-tagged-visits": "node --experimental-strip-types --test src/lib/rubi-creator-tagged-visits.test.mjs",
     "test:rubi-finance-schema": "node --test src/lib/rubi-finance-domain-schema-sprint252.test.mjs",
     "test:rubi-finance-operations": "node --test src/lib/rubi-finance-operations-sprint253.test.mjs",
-    "test:rubi-migration-versions": "node --test src/lib/rubi-migration-version-uniqueness.test.mjs"
+    "test:rubi-migration-versions": "node --test src/lib/rubi-migration-version-uniqueness.test.mjs",
+    "test:rubi-commerce-journey": "node --test src/lib/rubi-commerce-journey-observability.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
