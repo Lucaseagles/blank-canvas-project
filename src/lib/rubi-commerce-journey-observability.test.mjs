@@ -56,3 +56,13 @@ test("outbound analytics stores destination host, never affiliate query tokens",
   assert.doesNotMatch(analytics, /url: affiliateUrl/);
   assert.match(analytics, /new URL\(affiliateUrl\)\.hostname/);
 });
+
+
+test("marketplace acquisition CTA cannot appear actionable without a validated destination", () => {
+  const productCard = read("../components/product/ProductCard.tsx");
+  assert.match(productCard, /disabled=\{!affiliateUrl\}/);
+  assert.match(productCard, /if \(!affiliateUrl\) return/);
+  assert.match(productCard, /Link indisponível/);
+  assert.match(productCard, /validateLink\(/);
+  assert.match(productCard, /trackOutboundClick\(/);
+});
