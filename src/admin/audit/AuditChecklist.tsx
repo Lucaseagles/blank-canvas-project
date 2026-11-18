@@ -42,7 +42,7 @@ function Item({ item }: { item: AuditItem }) {
 
 export function AuditChecklist() {
   const audit = useServerFn(runAdminAudit);
-  const { data, isLoading, isFetching, refetch } = useQuery({
+  const { data, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ["admin-system-audit"],
     queryFn: () => audit({ data: { includeOptional: true } }),
     staleTime: 0,
@@ -87,7 +87,15 @@ export function AuditChecklist() {
         </div>
       )}
 
-      {isLoading && <div className="rounded-2xl border border-border/60 p-8 text-center text-sm text-muted-foreground">Executando auditoria segura…</div>}
+      {data?.auditLogWritten && (
+        <div role="status" className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 text-sm">
+          <p className="font-bold text-emerald-700 dark:text-emerald-300">Execução registrada no histórico administrativo.</p>
+          <p className="mt-1 text-muted-foreground">A gravação do evento foi confirmada. Isso comprova o registro desta execução, não a cobertura auditável de todas as operações do sistema.</p>
+        </div>
+      )}
+
+      {isLoading && <div role="status" className="rounded-2xl border border-border/60 p-8 text-center text-sm text-muted-foreground">Executando auditoria segura…</div>}
+      {isError && <div role="alert" className="rounded-2xl border border-destructive/40 p-4 text-sm text-destructive">Não foi possível executar a auditoria. Nenhum resultado novo foi confirmado; tente novamente ou verifique os registros do servidor.</div>}
 
       {!isLoading && Object.entries(grouped).map(([category, categoryItems]) => (
         <section key={category} className="space-y-3">
