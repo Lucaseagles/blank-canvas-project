@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 
 test("scheduled worker claims and completes posts only through atomic audited RPCs", () => {
-  const sql = read("../../supabase/migrations/20261118020000_rubi_scheduled_post_worker_atomic_audit.sql");
+  const sql = read("../../supabase/migrations/20261118020200_rubi_scheduled_post_worker_atomic_audit.sql");
   const server = read("./scheduled-publishing.server.ts");
   const edge = read("../../supabase/functions/scheduled-publishing/index.ts");
   for (const source of [server, edge]) {
