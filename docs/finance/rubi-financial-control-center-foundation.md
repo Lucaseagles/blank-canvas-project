@@ -201,3 +201,7 @@ The Sprint 253 migration adds an atomic allocation RPC that locks the financial 
 - Runtime verified: access controls and behavior have been tested against the deployed database.
 
 These states must never be conflated in sprint reports.
+
+## Sprint 259 — production schema drift
+
+The live database audit and exact release blockers are documented in [Sprint 259 production schema drift audit](./sprint-259-production-schema-drift-audit.md). The repository contains seven migrations after the production history head, and current runtime RPC signatures do not fully match production. No finance or partner payout flow should be marked live until the migration-history reconciliation and controlled deployment gates in that audit are complete.
