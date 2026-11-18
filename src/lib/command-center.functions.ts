@@ -47,16 +47,25 @@ export const getCommandCenterPulse = createServerFn({ method: "GET" })
 export const setCommandCenterFeatureFlag = createServerFn({ method: "POST" })
   .middleware([requireOwnerRole])
   .validator((data: unknown) => ToggleFeatureSchema.parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: updated, error } = await supabaseAdmin
+    const { data: current, error: readError } = await supabaseAdmin
       .from("feature_flags")
-      .update({ is_enabled: data.is_enabled, updated_at: new Date().toISOString() })
-      .eq("id", data.id)
       .select("id,key,is_enabled")
+      .eq("id", data.id)
       .maybeSingle();
 
+    if (readError) throw new Error(`Feature flag lookup failed: ${readError.message}`);
+    if (!current) throw new Error("Feature flag não encontrada.");
+    const { data: updated, error } = await (supabaseAdmin as any).rpc("rubi_update_admin_setting_audited", {
+      p_source: "feature_flags",
+      p_id: data.id,
+      p_patch: { is_enabled: data.is_enabled },
+      p_expected: { is_enabled: current.is_enabled },
+      p_actor: context.userId,
+    });
+
     if (error) throw new Error(`Feature flag update failed: ${error.message}`);
-    if (!updated) throw new Error("Feature flag não encontrada.");
-    return updated;
+    if (!updated) throw new Error("Feature flag e auditoria não foram registradas.");
+    return { id: String(updated.id), key: String(updated.key), is_enabled: Boolean(updated.is_enabled) };
   });
