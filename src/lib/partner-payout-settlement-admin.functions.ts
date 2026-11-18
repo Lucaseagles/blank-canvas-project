@@ -32,7 +32,7 @@ export const settlePartnerCommissionsAdmin = createServerFn({ method: "POST" })
     note: z.string().max(500).optional(),
     payment_verified: z.literal(true),
   }).parse(input))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: payoutId, error } = await (supabaseAdmin as any).rpc("hub_settle_partner_commissions", {
       p_profile_id: data.commercial_profile_id,
@@ -40,6 +40,7 @@ export const settlePartnerCommissionsAdmin = createServerFn({ method: "POST" })
       p_payment_reference: data.payment_reference,
       p_paid_at: data.paid_at,
       p_note: data.note ?? null,
+      p_actor: context.userId,
     });
     if (error) throw error;
     return { payoutId: payoutId as string };
