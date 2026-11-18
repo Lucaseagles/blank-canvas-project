@@ -32,7 +32,7 @@ test("successful exposure is deduplicated for the same session and experiment re
  assert.equal(calls,1);
 });
 
-test("concurrent effects cannot duplicate the same exposure insert",async()=>{
+test("concurrent effects cannot duplicate or release another call's in-flight claim",async()=>{
  const session=storage();
  let calls=0,release;
  const first=recordRubiABExposureOnce(session,"exp-3","variant-c",()=>{
@@ -41,7 +41,9 @@ test("concurrent effects cannot duplicate the same exposure insert",async()=>{
  });
  await Promise.resolve();
  const second=await recordRubiABExposureOnce(session,"exp-3","variant-c",async()=>{calls++;return true;});
+ const third=await recordRubiABExposureOnce(session,"exp-3","variant-c",async()=>{calls++;return true;});
  assert.equal(second,false);
+ assert.equal(third,false);
  assert.equal(calls,1);
  release(true);
  assert.equal(await first,true);
