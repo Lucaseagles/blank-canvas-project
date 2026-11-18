@@ -79,6 +79,14 @@ export function AuditChecklist() {
         </div>
       )}
 
+      {data && !data.auditLogWritten && (
+        <div role="alert" className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
+          <p className="font-black text-amber-700 dark:text-amber-300">Relatório gerado, mas o registro de auditoria não foi confirmado.</p>
+          <p className="mt-1 text-muted-foreground">Os resultados abaixo não devem ser tratados como uma execução auditada. Corrija a persistência e execute novamente.</p>
+          {data.auditLogError && <p className="mt-2 break-words font-mono text-xs text-muted-foreground">Detalhe: {data.auditLogError}</p>}
+        </div>
+      )}
+
       {isLoading && <div className="rounded-2xl border border-border/60 p-8 text-center text-sm text-muted-foreground">Executando auditoria segura…</div>}
 
       {!isLoading && Object.entries(grouped).map(([category, categoryItems]) => (
