@@ -158,3 +158,19 @@ Acceptance: no production migration before review; no invented provider integrat
 - It does not overwrite historical agreement terms or financial entries.
 - It does not assume every provider exposes real-time webhooks or settlement data.
 
+## 12. Commerce journey observability — Sprint 256 contract
+
+The detailed journey and external purchase evidence contract is maintained in `docs/commerce/rubi-commerce-journey-observability.md`. It extends, but does not weaken, the financial rules above.
+
+Verified current-state boundary:
+- `analytics_events` records views, intents and outbound behavior; client events are observations, not payment evidence.
+- RUBI's current `RubiPreCheckout` revalidates and redirects to an approved external HTTPS checkout. `RUBI_PRECHECKOUT_CONTINUE` means external checkout intent only.
+- Existing product catalogs and partner referral visits support discovery and attribution context.
+- No persistent first-party cart, canonical universal order or purchase table was found in the inspected public schema. Do not describe the current pre-checkout as an in-app payment processor or completed order system.
+
+Target integration:
+- Build a first-party persistent cart and immutable order/item snapshots for the RUBI-owned journey.
+- Track marketplace/supplier exits with source-specific redirect references, but mark post-exit outcomes unknown until a report, independently verifiable external reference, customer evidence reviewed by an authorized operator, or official provider integration confirms them.
+- Keep behavior events, commercial orders, payment evidence and settled financial entries as separate domains.
+- Link existing partner confirmed sales and payout records to canonical order/finance references only where reliable identifiers exist; do not duplicate or double count.
+- The algorithm can score intent and forecast demand, but cannot promote intent into a confirmed sale or cash receipt.
