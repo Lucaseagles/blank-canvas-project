@@ -8,7 +8,7 @@ const server = read("./rubi-finance-operations-admin.functions.ts");
 
 test("allocation reversal metadata is append-only and uniquely linked", () => {
   assert.match(sql, /allocation_kind text not null default 'settlement'/);
-  assert.match(sql, /reverses_allocation_id uuid references public\.rubi_finance_allocations/);
+  assert.match(sql, /reverses_allocation_id uuid\\s+references public\\.rubi_finance_allocations/);
   assert.match(sql, /rubi_finance_allocations_single_reversal_uidx/);
   assert.match(sql, /rubi_finance_allocations_reversal_shape_check/);
 });
