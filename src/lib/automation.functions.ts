@@ -27,11 +27,21 @@ export const getAutomationRules = createServerFn({ method: "GET" }).middleware([
   return data ?? [];
 });
 
-export const toggleRuleStatus = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ id: UUID, isActive: z.boolean() }).parse(data)).handler(async ({ data }) => {
+export const toggleRuleStatus = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ id: UUID, isActive: z.boolean() }).parse(data)).handler(async ({ data, context }) => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data: updated, error } = await supabaseAdmin.from("automation_rules").update({ is_active: data.isActive, updated_at: new Date().toISOString() }).eq("id", data.id).select("id,is_active").single();
+  const { data: current, error: readError } = await supabaseAdmin.from("automation_rules").select("id,is_active").eq("id", data.id).maybeSingle();
+  if (readError) throw readError;
+  if (!current) throw new Error("Regra de automação não encontrada.");
+  const { data: updated, error } = await (supabaseAdmin as any).rpc("rubi_update_admin_setting_audited", {
+    p_source: "automation_rules",
+    p_id: data.id,
+    p_patch: { is_active: data.isActive },
+    p_expected: { is_active: current.is_active },
+    p_actor: context.userId,
+  });
   if (error) throw error;
-  return { success: true, ...updated };
+  if (!updated) throw new Error("Status e auditoria da regra não foram registrados.");
+  return { success: true, id: String(updated.id), is_active: Boolean(updated.is_active) };
 });
 
 export const getAutomationLogs = createServerFn({ method: "GET" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ limit: z.coerce.number().int().min(1).max(200).default(50) }).parse(data ?? {})).handler(async ({ data }) => {
