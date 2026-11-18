@@ -84,69 +84,70 @@ export const runRetentionCheck = createServerFn({ method: "POST" }).middleware([
   return { success: true, notifications_queued: notificationsQueued };
 });
 
-export const processVideoLaunches = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).handler(async () => {
+export const processVideoLaunches = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).handler(async ({ context }) => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const now = new Date().toISOString();
   const { data: rule, error: ruleError } = await supabaseAdmin.from("automation_rules").select("id,is_active").eq("action_type", "PUBLISH_SCHEDULED_POSTS").maybeSingle();
   if (ruleError) throw ruleError;
-  if (!rule) return { success: false, processed: 0, queued: 0, unsupported: 0, error: "Scheduled publishing rule not found" };
-  if (!rule.is_active) return { success: false, processed: 0, queued: 0, unsupported: 0, error: "Scheduled publishing rule is disabled" };
+  if (!rule) return { success: false, processed: 0, queued: 0, already_queued: 0, unsupported: 0, error: "Scheduled publishing rule not found" };
+  if (!rule.is_active) return { success: false, processed: 0, queued: 0, already_queued: 0, unsupported: 0, error: "Scheduled publishing rule is disabled" };
 
-  const { data: scheduledVideos, error } = await supabaseAdmin.from("videos").select("id,title,campaign_id,scheduled_for").eq("status", "draft").not("scheduled_for", "is", null).lte("scheduled_for", now);
+  const { data: scheduledVideos, error } = await supabaseAdmin.from("videos")
+    .select("id,title,campaign_id,scheduled_for")
+    .eq("status", "draft")
+    .not("scheduled_for", "is", null)
+    .lte("scheduled_for", now);
   if (error) throw error;
 
   let processed = 0;
   let queued = 0;
+  let alreadyQueued = 0;
   let unsupported = 0;
 
   for (const video of scheduledVideos ?? []) {
-    const { data: publishedVideo, error: publishError } = await supabaseAdmin.from("videos").update({ status: "published" }).eq("id", video.id).eq("status", "draft").select("id,title").maybeSingle();
-    if (publishError) throw publishError;
-    if (!publishedVideo) continue;
+    const { data: outcome, error: launchError } = await (supabaseAdmin as any).rpc("rubi_process_due_video_launch_audited", {
+      p_video_id: video.id,
+      p_actor: context.userId,
+    });
+    if (launchError) throw new Error(`Não foi possível publicar o vídeo ${video.id}: ${launchError.message}`);
+    const result = outcome as {
+      status?: string;
+      queued?: boolean;
+      already_queued?: boolean;
+      unsupported_channels?: string[];
+    } | null;
+
+    if (!result || result.status === "not_due" || result.status === "already_processed") continue;
+    if (result.status !== "published") throw new Error("Resultado inesperado ao processar publicação de vídeo.");
+
     processed++;
+    if (result.queued) queued++;
+    if (result.already_queued) alreadyQueued++;
+    const unsupportedChannels = Array.isArray(result.unsupported_channels) ? result.unsupported_channels : [];
+    unsupported += unsupportedChannels.length;
 
     if (!video.campaign_id) {
       await logAutomationActivity(supabaseAdmin, rule.id, { video_id: video.id, type: "VIDEO_LAUNCH" }, "Vídeo publicado sem campanha vinculada", "skipped");
       continue;
     }
-
-    const { data: channels, error: channelsError } = await supabaseAdmin.from("campaign_channels").select("channel").eq("campaign_id", video.campaign_id).eq("is_enabled", true);
-    if (channelsError) throw channelsError;
-
-    const requestedChannels = Array.from(new Set((channels ?? []).map((entry: { channel: string }) => entry.channel).filter(Boolean)));
-    const telegramRequested = requestedChannels.includes("telegram");
-    const unsupportedChannels = requestedChannels.filter((channel) => channel !== "telegram");
-    unsupported += unsupportedChannels.length;
-
-    if (telegramRequested) {
-      const { data: existing, error: existingError } = await supabaseAdmin
-        .from("scheduled_posts")
-        .select("id")
-        .eq("content_id", video.id)
-        .contains("channels", ["telegram"])
-        .in("status", ["pending", "processing", "published"])
-        .limit(1)
-        .maybeSingle();
-      if (existingError) throw existingError;
-
-      if (!existing) {
-        const { error: queueError } = await supabaseAdmin.from("scheduled_posts").insert({
-          content_type: "video",
-          content_id: video.id,
-          channels: ["telegram"],
-          scheduled_for: now,
-          status: "pending",
-          message_template: `Novo vídeo: ${video.title}`,
-        });
-        if (queueError) throw queueError;
-        queued++;
-      }
-    }
-
     if (unsupportedChannels.length) {
-      await logAutomationActivity(supabaseAdmin, rule.id, { campaign_id: video.campaign_id, video_id: video.id, channels: unsupportedChannels, type: "VIDEO_LAUNCH" }, `Canais sem adapter de publicação: ${unsupportedChannels.join(", ")}`, "queued_for_review");
+      await logAutomationActivity(
+        supabaseAdmin,
+        rule.id,
+        { campaign_id: video.campaign_id, video_id: video.id, channels: unsupportedChannels, type: "VIDEO_LAUNCH" },
+        `Canais sem adapter de publicação: ${unsupportedChannels.join(", ")}`,
+        "queued_for_review",
+      );
     } else {
-      await logAutomationActivity(supabaseAdmin, rule.id, { campaign_id: video.campaign_id, video_id: video.id, channels: requestedChannels, queued_telegram: telegramRequested }, telegramRequested ? "Vídeo publicado e publicação Telegram enfileirada" : "Vídeo publicado; nenhum canal com adapter disponível", telegramRequested ? "success" : "skipped");
+      await logAutomationActivity(
+        supabaseAdmin,
+        rule.id,
+        { campaign_id: video.campaign_id, video_id: video.id, queued_telegram: Boolean(result.queued || result.already_queued) },
+        result.queued ? "Vídeo publicado e publicação Telegram enfileirada" :
+          result.already_queued ? "Vídeo publicado; publicação Telegram já estava enfileirada" :
+          "Vídeo publicado; nenhum canal com adapter disponível",
+        result.queued || result.already_queued ? "success" : "skipped",
+      );
     }
   }
 
@@ -154,5 +155,5 @@ export const processVideoLaunches = createServerFn({ method: "POST" }).middlewar
     await logAutomationActivity(supabaseAdmin, rule.id, { triggered_by: "automation_run" }, "Nenhum vídeo agendado estava pronto para publicação", "skipped");
   }
 
-  return { success: true, processed, queued, unsupported };
+  return { success: true, processed, queued, already_queued: alreadyQueued, unsupported };
 });
