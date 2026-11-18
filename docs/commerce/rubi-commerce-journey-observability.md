@@ -20,6 +20,25 @@ The connected Supabase project `heartful-helper-box` currently has:
 
 Important: the existing RUBI pre-checkout is an internal orchestration/review step, not a payment processor or proof that a completed order exists. It does not collect card data or control the external provider's order state.
 
+
+## 2.1 Verified catalog and partner schema details
+
+A read-only inspection of the connected `heartful-helper-box` database confirms the two catalog domains must remain explicitly typed in cart and order items:
+
+- `hub_products` (RUBI/supplier catalog): UUID, supplier ID, title, description, image URL, category, SKU, active flag, retail price, supplier cost, B2B price/minimum quantity, checkout URL/verification and revision.
+- `products` (marketplace/affiliate catalog): UUID, title, description, image array, category ID, marketplace ID, external product ID, affiliate URL, current/previous price, discount, status and offer metadata.
+
+Both domains use UUID identifiers, so an item reference must be the pair `catalog_type + product_id`; a bare UUID is not a sufficient catalog discriminator. Snapshot the selected title, image, displayed price, currency, marketplace/supplier and destination at cart/order time. Never expose supplier cost to consumers or partners unless an explicit authorized commercial view permits it.
+
+Partner attribution already has a useful relational base:
+- `hub_partner_referral_links` references `commercial_profiles` and `hub_products`; it has a unique code and a unique partner/product pair.
+- `hub_partner_referral_visits` references the referral link and may retain a visit token, publication reference and pre-checkout viewed timestamp.
+- `hub_partner_confirmed_sales` references the referral link, records external order ID, source, gross amount, commission percentage/amount, confirmation timestamp, provider and payment evidence reference/verification timestamp. A unique constraint on `source + external_order_id` already prevents duplicate external order references within a source.
+
+This existing confirmed-sales table should remain the partner-sale evidence domain. A future canonical order may reference it when a reliable match exists; do not copy its rows into a second commission source or count the same sale twice.
+
+RLS is enabled on the inspected catalogs and partner tables. The read-only policy inventory showed explicit public/owner policies on `products`, but did not return policies for `hub_products`, referral links/visits or confirmed sales. Treat this as an access-control review gate, not proof of exposure or intended access: inspect grants, security-definer RPCs and service-role paths before adding cart/order policies. Do not weaken RLS or create broad authenticated policies to make the cart work.
+
 ## 3. Four distinct records
 
 Never collapse these into one "sale" record:
