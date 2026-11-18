@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 
 const migration = readFileSync(new URL("../../supabase/migrations/20260922005336_d46a1b61-fdba-47d0-ae4f-77a4c51a8f0d.sql", import.meta.url), "utf8");
+const triggerMigration = readFileSync(new URL("../../supabase/migrations/20260826030832_081214de-65bb-4f27-ada5-9e39babfcafa.sql", import.meta.url), "utf8");
 const adminMigration = readFileSync(new URL("../../supabase/migrations/20260909001332_bfe38b06-238c-4983-91b5-08671bc4b254.sql", import.meta.url), "utf8");
 
 test("profile trigger prevents self-service changes to protected identity and referral fields", () => {
