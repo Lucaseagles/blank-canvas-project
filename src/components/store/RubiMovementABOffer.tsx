@@ -3,6 +3,7 @@ import {useQuery} from "@tanstack/react-query";
 import {useServerFn} from "@tanstack/react-start";
 import {getRubiActiveMovementAB} from "@/lib/rubi-movement-ab.functions";
 import {assignRubiABArm} from "@/lib/rubi-movement-ab-allocation";
+import {recordRubiABExposureOnce} from "@/lib/rubi-ab-exposure";
 import {trackEvent} from "@/lib/analytics";
 import {RubiPublishedOffer} from "@/components/store/RubiPublishedOffer";
 
@@ -30,14 +31,10 @@ export function RubiMovementABOffer({productId}:{productId:string}){
  useEffect(()=>{
   if(!experiment||!variant||!arm)return;
   const key="rubi_ab_exposure_"+experiment.experimentId+"_"+experiment.revision;
-  try{
-   if(window.sessionStorage.getItem(key)===variant.id)return;
-   window.sessionStorage.setItem(key,variant.id);
-  }catch{return;}
-  void trackEvent("RUBI_AB_EXPOSURE",{
+  void recordRubiABExposureOnce(window.sessionStorage,key,variant.id,()=>trackEvent("RUBI_AB_EXPOSURE",{
    experiment_id:experiment.experimentId,experiment_revision:experiment.revision,
    variant_id:variant.id,arm,product_id:productId,outcome:"view_only"
-  },{productId,source:"rubi_ab"});
+  },{productId,source:"rubi_ab"}));
  },[experiment?.experimentId,experiment?.revision,variant?.id,arm,productId]);
  if(!variant||!experiment||!arm)return <RubiPublishedOffer productId={productId}/>;
  const onCTA=()=>{void trackEvent("RUBI_AB_CTA",{
