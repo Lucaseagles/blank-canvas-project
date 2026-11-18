@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { fetchAllFinancialRows } from "./financial-pagination.server";
 
 export const getMyPartnerStatement = createServerFn({ method: "POST" })
   .validator((input: unknown) => z.object({
@@ -20,9 +21,8 @@ export const getMyPartnerStatement = createServerFn({ method: "POST" })
       .select("id").eq("user_id", claims.claims.sub).eq("audience", "partner").eq("status", "approved").maybeSingle();
     if (profileError) throw profileError;
     if (!profile) return { total: 0, sales: [] };
-    const { data: links, error: linksError } = await (supabaseAdmin as any).from("hub_partner_referral_links")
-      .select("id,product_id").eq("commercial_profile_id", profile.id).limit(500);
-    if (linksError) throw linksError;
+    const links = await fetchAllFinancialRows(() => (supabaseAdmin as any).from("hub_partner_referral_links")
+      .select("id,product_id").eq("commercial_profile_id", profile.id).order("id", { ascending: true }));
     if (!links?.length) return { total: 0, sales: [] };
     const { data: sales, count, error: salesError } = await (supabaseAdmin as any)
       .from("hub_partner_confirmed_sales")
