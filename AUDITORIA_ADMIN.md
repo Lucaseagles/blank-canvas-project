@@ -211,3 +211,13 @@ Continuar a matriz de catálogo público a partir de **Products → Categories �
 - Teste de contrato: `src/lib/rubi-secure-hub-vault-search-path.test.mjs`.
 - Classificação: upgrade de segurança; não altera a pontuação da matriz v1.
 - Pendente: CI completo do commit final, revisão de connectors reais e teste E2E com credenciais de teste rotacionáveis; não usar nem registrar segredos reais em testes.
+
+
+### Sprint 233 — autorização de produtos para parceiros (server-only)
+
+- Auditoria confirmou que `hub_partner_product_grants` tinha RLS habilitado sem policies, mas privilégios diretos SELECT/INSERT/UPDATE/DELETE estavam concedidos a `anon` e `authenticated`. RLS bloqueava o acesso efetivo hoje, mas os grants eram excessivos e frágeis a futuras policies.
+- Revisão dos consumidores da tabela: leituras/escritas ocorrem em server functions; portal e referral verificam token Supabase Auth; mutação administrativa usa `requireOwnerRole` e RPC transacional auditada.
+- Migração `20261118001500_rubi_partner_grants_server_only`: revoga todos os privilégios de PUBLIC/anon/authenticated e concede apenas a `service_role`. Mantém RLS ativo e nenhuma policy genérica.
+- Teste de regressão adicionado ao Hub V1 CI: `src/lib/rubi-partner-grants-server-only.test.mjs`.
+- Classificação: upgrade de segurança e isolamento; não altera automaticamente a cobertura V1.
+- Pós-aplicação: confirmar privilégios efetivos e executar os dois workflows no SHA final antes do merge.
