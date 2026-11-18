@@ -4,7 +4,7 @@ import { readdirSync, readFileSync } from "node:fs";
 
 const migrationDir = new URL("../../supabase/migrations/", import.meta.url);
 const names = readdirSync(migrationDir).filter((name) => /^\d+_.+\.sql$/.test(name));
-const rolloutNames = names.filter((name) => name.startsWith("20261118"));
+const rolloutNames = names.filter((name) => /^(20261117235530|20261118)/.test(name));
 const rolloutVersions = rolloutNames.map((name) => name.split("_", 1)[0]);
 
 test("the November 18 rollout migrations have unique version identifiers", () => {
@@ -21,7 +21,7 @@ test("the already-applied Sprint 234 migration is represented by its database ve
 
 test("recent rollout sequence preserves order and unique versions", () => {
   const expected = [
-    "20261118001500_rubi_partner_grants_server_only.sql",
+    "20261117235530_rubi_partner_grants_server_only.sql",
     "20261118001747_rubi_profile_privilege_hardening_sprint234.sql",
     "20261118010100_rubi_video_launch_atomic_audit.sql",
     "20261118020100_rubi_editorial_session_journey_uuid_fix.sql",
