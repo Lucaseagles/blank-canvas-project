@@ -39,5 +39,5 @@ test("client analytics remains a behavioral signal, not financial authority", ()
   assert.match(analytics, /export async function trackEvent/);
   assert.match(analytics, /Promise<boolean>/);
   assert.match(journey, /Client-generated events are untrusted observations/);
-  assert.match(journey, /cannot promote intent into a confirmed sale or cash receipt/);
+  assert.match(finance, /cannot promote intent into a confirmed sale or cash receipt/);
 });
