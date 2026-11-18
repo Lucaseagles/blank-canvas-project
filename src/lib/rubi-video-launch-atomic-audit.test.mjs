@@ -16,7 +16,7 @@ test("scheduled video automation delegates publication and queueing to one audit
 });
 
 test("atomic launch SQL locks the video and records publication plus queue audit in one transaction", () => {
-  const sql = read("../../supabase/migrations/20261118010000_rubi_video_launch_atomic_audit.sql");
+  const sql = read("../../supabase/migrations/20261118010100_rubi_video_launch_atomic_audit.sql");
   assert.match(sql, /security invoker/);
   assert.match(sql, /Owner authorization required/);
   assert.match(sql, /from public\.videos[\s\S]*for update/);
@@ -31,7 +31,7 @@ test("atomic launch SQL locks the video and records publication plus queue audit
 });
 
 test("the automation returns explicit outcomes for due, already processed and not-yet-due videos", () => {
-  const sql = read("../../supabase/migrations/20261118010000_rubi_video_launch_atomic_audit.sql");
+  const sql = read("../../supabase/migrations/20261118010100_rubi_video_launch_atomic_audit.sql");
   for (const outcome of ["already_processed", "not_due", "published"]) {
     assert.match(sql, new RegExp(`'status','${outcome}'`));
   }
