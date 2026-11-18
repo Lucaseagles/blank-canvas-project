@@ -29,7 +29,7 @@ function PartnerPayouts() {
   });
   const amount = sales.reduce((sum, sale) => sum + Math.min(sale.remaining_amount, Math.max(0, Number(installments[sale.id] ?? 0))), 0);
   return <main className="mx-auto max-w-5xl space-y-6 px-4 py-28">
-    <header><p className="text-xs font-bold uppercase tracking-widest text-primary">Shadow Master · Financeiro</p><h1 className="text-3xl font-black">Pagamentos de comissões</h1><p className="text-muted-foreground">Registre somente transferências efetivamente realizadas e verificadas.</p></header>
+    <header><p className="text-xs font-bold uppercase tracking-widest text-primary">Shadow Master · Financeiro</p><h1 className="text-3xl font-black">Pagamentos de comissões</h1><p className="text-muted-foreground">Registro manual do Owner após conferência externa. O RUBI não consulta nem executa a transferência automaticamente.</p></header>
     {query.isLoading && <p role="status">Carregando pagamentos...</p>}
     {query.isError && <div role="alert"><p>Acesso restrito ou falha ao consultar pagamentos.</p><Button onClick={() => void query.refetch()}>Tentar novamente</Button></div>}
     {query.isSuccess && <section className="space-y-4 rounded-xl border p-5">
@@ -40,7 +40,7 @@ function PartnerPayouts() {
       {sales.map(sale => <label key={sale.id} className="grid gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_180px] sm:items-center"><span>Pedido {sale.external_order_id}<span className="block text-sm text-muted-foreground">Comissão {Number(sale.commission_amount).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} · Pago {Number(sale.paid_amount).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} · Restante {Number(sale.remaining_amount).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span></span><input aria-label={`Valor desta parcela do pedido ${sale.external_order_id}`} type="number" min="0" max={sale.remaining_amount} step="0.01" className="w-full rounded-md border bg-background p-2" value={installments[sale.id] ?? ""} onChange={event => setInstallments(current => ({ ...current, [sale.id]: event.target.value }))} placeholder="Valor desta parcela" /></label>)}
       <p className="font-semibold">Total selecionado: {amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p>
       <label className="block space-y-1">Referência da transferência<input className="block w-full rounded-md border bg-background p-2" value={reference} onChange={event => setReference(event.target.value)} placeholder="Identificador real da transferência" /></label>
-      <label className="flex items-center gap-2"><input type="checkbox" checked={verified} onChange={event => setVerified(event.target.checked)} />Confirmei a transferência e o valor pago.</label>
+      <label className="flex items-center gap-2"><input type="checkbox" checked={verified} onChange={event => setVerified(event.target.checked)} />Declaro que conferi externamente a transferência e o valor pago.</label>
       <Button disabled={!verified || !partnerId || amount <= 0 || sales.some(sale => Number(installments[sale.id] ?? 0) > sale.remaining_amount + 0.005) || reference.trim().length < 3 || mutation.isPending} onClick={() => mutation.mutate()}>Registrar pagamento realizado</Button>
     </section>}
     <h2 className="text-xl font-bold">Histórico de pagamentos</h2>
