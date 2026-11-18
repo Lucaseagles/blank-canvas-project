@@ -1,4 +1,4 @@
-import {GROWTH_STRATEGIES,type GrowthPillar} from "./rubi-growth-11x";
+import {GROWTH_STRATEGIES,type GrowthPillar} from "./rubi-growth-11x.ts";
 
 /** Five-pillar operational plan, derived exclusively from independent observed counters.
  * Counts are not linked cohorts and never imply actual sales or conversion.
