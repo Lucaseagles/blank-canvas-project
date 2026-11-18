@@ -44,7 +44,8 @@
     "test:rubi-inventory-truth": "node --experimental-strip-types --test src/lib/rubi-launch-inventory-truth.test.mjs",
     "test:rubi-connected-flow": "node --experimental-strip-types --test src/lib/rubi-connected-commercial-flow.test.mjs",
     "test:rubi-creator-tagged-visits": "node --experimental-strip-types --test src/lib/rubi-creator-tagged-visits.test.mjs",
-    "test:rubi-finance-schema": "node --test src/lib/rubi-finance-domain-schema-sprint252.test.mjs"
+    "test:rubi-finance-schema": "node --test src/lib/rubi-finance-domain-schema-sprint252.test.mjs",
+    "test:rubi-migration-versions": "node --test src/lib/rubi-migration-version-uniqueness.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
