@@ -161,6 +161,8 @@ jobs:
         run: node --test src/lib/rubi-marketplace-trigger-audit.test.mjs
       - name: RUBI Telegram metric atomic audit regression
         run: node --test src/lib/rubi-telegram-metric-atomic-audit.test.mjs
+      - name: RUBI editorial session journey UUID regression
+        run: node --test src/lib/rubi-editorial-session-journey-uuid.test.mjs
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint
