@@ -10,9 +10,11 @@ export async function recordRubiABExposureOnce(
   write: () => Promise<boolean>,
 ): Promise<boolean> {
   if (!key || !variantId) return false;
+  let claimed = false;
   try {
     if (storage.getItem(key) === variantId || inFlight.has(key)) return false;
     inFlight.add(key);
+    claimed = true;
     const recorded = await write();
     if (!recorded) return false;
     storage.setItem(key, variantId);
@@ -20,6 +22,6 @@ export async function recordRubiABExposureOnce(
   } catch {
     return false;
   } finally {
-    inFlight.delete(key);
+    if (claimed) inFlight.delete(key);
   }
 }
