@@ -1,7 +1,9 @@
 import { supabase } from "@/integrations/supabase/client";
 
-const ANON_KEY = "commerce_anon_id";
-const SESSION_KEY = "commerce_session_id";
+// Keep identity keys aligned with the app shell's SESSION_START event so
+// analytics_events rows from both writers join into one customer journey.
+const ANON_KEY = "analytics_anonymous_id";
+const SESSION_KEY = "analytics_session_id";
 
 function stableId(key: string): string {
   if (typeof window === "undefined") return "";
@@ -96,10 +98,18 @@ export async function trackOutboundClick(
   affiliateUrl: string,
   options: AnalyticsOptions = {}
 ) {
+  let destinationHost: string | null = null;
+  try {
+    destinationHost = new URL(affiliateUrl).hostname;
+  } catch {
+    // Invalid destinations are handled by the checkout/redirect validator.
+    // Analytics must not persist the raw URL as a fallback.
+  }
+
   await trackEvent("OUTBOUND_CLICK", {
     product_id: productId,
     marketplace,
-    url: affiliateUrl,
+    destination_host: destinationHost,
     timestamp: new Date().toISOString(),
   }, { ...options, productId });
 }

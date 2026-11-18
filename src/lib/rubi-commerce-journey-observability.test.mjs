@@ -41,3 +41,18 @@ test("client analytics remains a behavioral signal, not financial authority", ()
   assert.match(journey, /Client-generated events are untrusted observations/);
   assert.match(finance, /cannot promote intent into a confirmed sale or cash receipt/);
 });
+
+
+test("analytics writer shares the app-shell identity keys for one journey timeline", () => {
+  const root = read("../routes/__root.tsx");
+  assert.match(analytics, /const ANON_KEY = "analytics_anonymous_id"/);
+  assert.match(analytics, /const SESSION_KEY = "analytics_session_id"/);
+  assert.match(root, /const key = "analytics_session_id"/);
+  assert.match(root, /localStorage.getItem\("analytics_anonymous_id"\)/);
+});
+
+test("outbound analytics stores destination host, never affiliate query tokens", () => {
+  assert.match(analytics, /destination_host: destinationHost/);
+  assert.doesNotMatch(analytics, /url: affiliateUrl/);
+  assert.match(analytics, /new URL\(affiliateUrl\)\.hostname/);
+});
