@@ -151,6 +151,8 @@ jobs:
         run: node --test src/lib/rubi-partner-grants-server-only.test.mjs
       - name: RUBI unified finance schema security contracts
         run: npm run test:rubi-finance-schema
+      - name: RUBI finance atomic allocation and reversal regression
+        run: npm run test:rubi-finance-operations
       - name: RUBI profile privilege hardening regression
         run: node --test src/lib/rubi-profile-privilege-hardening.test.mjs
       - name: RUBI profile identity and admin RPC guard regression
