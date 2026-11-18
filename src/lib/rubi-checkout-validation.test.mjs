@@ -29,3 +29,28 @@ test("RUBI blocks checkout when unverified, inactive or missing approved supplie
   assert.equal(approvedRubiCheckout({ checkout_url, checkout_verified: true, hub_suppliers: null }), null);
   assert.equal(approvedRubiCheckout({ checkout_url: null, checkout_verified: true, hub_suppliers: supplier }), null);
 });
+
+test("RUBI rejects URL parser edge cases that can disguise the real destination", () => {
+  const expected = "checkout.kairos.example";
+  assert.equal(verifyRubiCheckoutUrl(" https://checkout.kairos.example/offer ", expected), "https://checkout.kairos.example/offer");
+  assert.equal(verifyRubiCheckoutUrl("https://checkout.kairos.example\\@attacker.test/offer", expected), null);
+  assert.equal(verifyRubiCheckoutUrl("https://checkout.kairos.example.attacker.test/offer", expected), null);
+  assert.equal(verifyRubiCheckoutUrl("https://checkout.kairos.example./offer", expected), null);
+  assert.equal(verifyRubiCheckoutUrl("https://127.0.0.1/offer", expected), null);
+  assert.equal(verifyRubiCheckoutUrl("https://[::1]/offer", expected), null);
+  assert.equal(verifyRubiCheckoutUrl("https://checkout.kairos.example:444/offer", expected), null);
+  assert.equal(verifyRubiCheckoutUrl("https://checkout.kairos.example:443/offer", expected), "https://checkout.kairos.example/offer");
+  assert.equal(verifyRubiCheckoutUrl("https://checkout.kairos.example/offer#redirect", expected), null);
+  assert.equal(verifyRubiCheckoutUrl("https://checkout.kairos.example/" + "a".repeat(2001), expected), null);
+});
+
+test("RUBI host allowlist rejects ambiguous, local and malformed host declarations", () => {
+  for (const host of [
+    "", "localhost", "127.0.0.1", "[::1]", "https://checkout.kairos.example",
+    "checkout.kairos.example.", ".checkout.kairos.example", "checkout..kairos.example",
+    "checkout.kairos.example/path", "checkout.kairos.example:443", "checkout_kairos.example",
+    "checkout.kairos.example\\n.attacker.test",
+  ]) {
+    assert.equal(normalizeRubiCheckoutHost(host), null, `expected invalid host: ${host}`);
+  }
+});
