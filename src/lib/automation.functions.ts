@@ -95,7 +95,7 @@ export const processVideoLaunches = createServerFn({ method: "POST" }).middlewar
   let unsupported = 0;
 
   for (const video of scheduledVideos ?? []) {
-    const { data: outcome, error: launchError } = await supabaseAdmin.rpc("rubi_process_due_video_launch_audited", {
+    const { data: outcome, error: launchError } = await (supabaseAdmin as any).rpc("rubi_process_due_video_launch_audited", {
       p_video_id: video.id,
       p_actor: context.userId,
     });
