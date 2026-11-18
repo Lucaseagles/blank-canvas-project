@@ -155,6 +155,8 @@ jobs:
         run: npm run test:rubi-finance-schema
       - name: RUBI finance atomic allocation and reversal regression
         run: npm run test:rubi-finance-operations
+      - name: RUBI commerce journey and external evidence contract regression
+        run: npm run test:rubi-commerce-journey
       - name: RUBI profile privilege hardening regression
         run: node --test src/lib/rubi-profile-privilege-hardening.test.mjs
       - name: RUBI profile identity and admin RPC guard regression
