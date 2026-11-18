@@ -60,3 +60,12 @@ test("flywheel dashboard consumes approved existing data and is Owner-only",()=>
  assert.doesNotMatch(ui,/\.insert\(|\.upsert\(|\.update\(/);
  assert.match(ui,/não representa lucro líquido/);
 });
+
+
+test("Owner flywheel presents the four-engine inside/outside ecosystem architecture",()=>{
+ const ui=read("../components/admin/RubiEcosystemFlywheelAdmin.tsx");
+ for(const term of ["TRÁFEGO","BASE","FUNIL","OFERTA","Fora do aplicativo","Dentro do aplicativo","Atrair → identificar origem","36,5 de 48 pontos","Upgrade + cobertura","inventário em consolidação"]){
+  assert.ok(ui.includes(term),`Missing architecture term: ${term}`);
+ }
+ assert.match(ui,/aria-label="RUBI núcleo de inteligência e flywheel dos quatro motores"/);
+});
