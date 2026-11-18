@@ -24,7 +24,7 @@ test("current external pre-checkout is explicitly an intent, never a paid order"
   assert.match(precheckout, /external_checkout_intent/);
   assert.match(precheckout, /RUBI_PRECHECKOUT_CONTINUE/);
   assert.match(journey, /does not prove that the destination accepted an order or payment/);
-  assert.match(finance, /client events are observations, not payment evidence/);
+  assert.match(journey, /Client-generated events are untrusted observations/);
 });
 
 test("the target first-party cart requires immutable order snapshots and idempotency", () => {
