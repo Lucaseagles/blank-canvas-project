@@ -155,6 +155,12 @@ jobs:
         run: node --test src/lib/rubi-profile-identity-guard.test.mjs
       - name: RUBI A/B exposure retry and deduplication regression
         run: node --test src/lib/rubi-ab-exposure.test.mjs
+      - name: RUBI marketplace atomic audit regression
+        run: node --test src/lib/rubi-marketplace-atomic-audit.test.mjs
+      - name: RUBI marketplace trigger audit hardening regression
+        run: node --test src/lib/rubi-marketplace-trigger-audit.test.mjs
+      - name: RUBI Telegram metric atomic audit regression
+        run: node --test src/lib/rubi-telegram-metric-atomic-audit.test.mjs
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint
