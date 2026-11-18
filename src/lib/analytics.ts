@@ -38,15 +38,15 @@ export type AnalyticsOptions = {
   anonymousId?: string;
 };
 
-/** Canonical client-side analytics writer. Legacy event_type is retained for compatibility. */
+/** Canonical client-side analytics writer. Resolves true only after the insert succeeds. */
 export async function trackEvent(
   eventName: string,
   metadata: Record<string, any> = {},
   options: AnalyticsOptions = {}
-) {
+): Promise<boolean> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    if (user && await isOwnerAccount(user.id)) return;
+    if (user && await isOwnerAccount(user.id)) return false;
 
     const anonymousId = options.anonymousId || stableId(ANON_KEY);
     const currentSessionId = options.sessionId || sessionId();
@@ -73,9 +73,14 @@ export async function trackEvent(
       },
     });
 
-    if (error) console.error(`Error tracking event ${eventName}:`, error);
+    if (error) {
+      console.error(`Error tracking event ${eventName}:`, error);
+      return false;
+    }
+    return true;
   } catch (error) {
     console.error(`Analytics failure for ${eventName}:`, error);
+    return false;
   }
 }
 

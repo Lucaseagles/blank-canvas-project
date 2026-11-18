@@ -153,6 +153,8 @@ jobs:
         run: node --test src/lib/rubi-profile-privilege-hardening.test.mjs
       - name: RUBI profile identity and admin RPC guard regression
         run: node --test src/lib/rubi-profile-identity-guard.test.mjs
+      - name: RUBI A/B exposure retry and deduplication regression
+        run: node --test src/lib/rubi-ab-exposure.test.mjs
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint
