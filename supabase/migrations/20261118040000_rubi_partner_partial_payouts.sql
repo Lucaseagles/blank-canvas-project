@@ -28,7 +28,8 @@ declare
  v_paid numeric(12,2);
  v_amount numeric(12,2);
 begin
- if auth.role() <> 'service_role' then raise exception 'Service role required'; end if;
+ -- EXECUTE is revoked from PUBLIC/anon/authenticated and granted only to service_role.
+ -- Keep the Owner check on the explicit actor supplied by the trusted server function.
  if p_actor is null or not exists(
   select 1 from public.user_roles r where r.user_id=p_actor and r.role='owner'
  ) then raise exception 'Owner authorization required'; end if;
@@ -71,11 +72,17 @@ begin
   join public.hub_partner_referral_links l on l.id=s.referral_link_id
   where s.id=v_allocation.sale_id and l.commercial_profile_id=p_profile_id;
   if not found then raise exception 'Sale does not belong to this partner'; end if;
+  if v_commission is null or v_commission<=0 then
+   raise exception 'Sale commission must be a positive confirmed amount';
+  end if;
 
   select coalesce(sum(i.commission_amount),0) into v_paid
   from public.hub_partner_commission_payout_items i
   where i.sale_id=v_allocation.sale_id;
 
+  if v_paid<0 or v_paid>v_commission then
+   raise exception 'Existing payout allocations exceed the sale commission';
+  end if;
   v_amount:=v_allocation.amount;
   if v_amount>v_commission-v_paid then raise exception 'Installment exceeds remaining commission'; end if;
   v_total:=v_total+v_amount;
