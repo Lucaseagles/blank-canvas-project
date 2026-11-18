@@ -1,7 +1,7 @@
 # RUBI Eagles — Financial Control Center
 ## Foundation architecture and implementation contract
 
-Status: architecture specification; no production schema or provider integration is changed by this document.
+Status: architecture specification. Sprint 252 and Sprint 253 migration files are present on main, but read-only verification on 2026-11-18 found them NOT applied to production Supabase. No provider integration is active.
 Scope: owner-only consolidated finance, partner-scoped statements, external providers, manual reconciliation, imports, future APIs/webhooks.
 
 ## 1. Product principle
@@ -27,7 +27,7 @@ Existing tables:
 
 Existing audited sale reconciliation RPC is rubi_reconcile_partner_sale_audited. Existing partner payout schema is not a general multi-provider cash ledger. Do not overload it to represent store orders, marketplace settlements, supplier bills, gateway fees or operating expenses.
 
-Current gap: no general-purpose financial transaction/receivable/payable/reconciliation domain was found in the inspected public schema. Existing partner finance is a specialized sub-ledger and should be integrated by references/adapters, not replaced abruptly.
+Current production gap (verified 2026-11-18): no general-purpose financial transaction/receivable/payable/reconciliation domain was found in the inspected public schema. The repo contains the proposed Sprint 252 core migration and Sprint 253 atomic allocation/reversal migration, but neither appears in production migration history. The production history currently ends at version 20261118001747 (rubi_profile_privilege_hardening_sprint234); queries for rubi_finance_% tables returned no rows. Existing partner finance remains a specialized production sub-ledger and must be integrated by references/adapters, not replaced abruptly. Therefore no Master/Partner dashboard may present Sprint 252/253 data as live until the migrations are safely deployed and verified.
 
 ## 3. Bounded domain model
 
@@ -165,3 +165,39 @@ The detailed contract is maintained in `docs/commerce/rubi-commerce-journey-obse
 Verified boundary: `analytics_events` captures behavioral observations; current `RubiPreCheckout` records an external checkout intent and redirects to an approved destination. It does not prove an order or payment. The inspected schema did not contain a persistent first-party cart or canonical universal order table.
 
 Target integration: add a persistent cart, immutable item/price snapshots, canonical RUBI orders and idempotent order events. Track outbound marketplace/supplier redirects, but mark external outcomes unknown until supported by a reliable report, external reference with verifiable evidence, authorized manual review, or a documented official integration. Keep behavior events, commercial orders, payment evidence and settled financial entries separate. The algorithm may estimate intent and demand, but cannot promote intent into a confirmed sale or cash receipt.
+
+
+## 11. Production migration readiness — Sprint 258 audit
+
+Read-only checks against project `heartful-helper-box` (`akfvkjarpgocdsieuvvq`) on 2026-11-18 establish:
+
+- Project is `ACTIVE_HEALTHY`, PostgreSQL 17.6.
+- Production migration history currently ends at `20261118001747` (`rubi_profile_privilege_hardening_sprint234`).
+- No production table matching `rubi_finance_%` exists.
+- The repository already contains:
+  - `20261118050000_rubi_financial_domain_core_sprint252.sql`
+  - `20261118060000_rubi_finance_atomic_operations_sprint253.sql`
+- Therefore the financial domain and its atomic allocation/reversal RPCs are committed to the repository but are not yet deployed to production. This is a deployment gap, not a claim that the migrations failed.
+
+### Deployment gates — do not skip
+
+1. Reconcile every pending migration after `20261118001747` in strict timestamp order; do not apply Sprint 252/253 in isolation if earlier migrations are pending.
+2. Verify the exact repository migration list against Supabase production migration history and schema drift. The database has other later Sprint 235–251 migration files that must be included in the same review.
+3. Run the repository's migration-version uniqueness and finance schema/operations tests on the exact merge commit.
+4. Review every migration for prerequisites, security-definer RPC authorization, RLS, grants, audit atomicity, idempotency and rollback/forward-repair strategy.
+5. Confirm the Supabase backup/restore posture and deploy only through the approved migration workflow. This audit did not apply any production migration.
+6. After deployment, verify table existence, RLS flags, policies, grants, RPC execute privileges, and run negative tests for anon, ordinary authenticated users, partner users, and the Owner.
+7. Only then wire dashboard queries to the canonical tables. Until then, dashboards must continue to use the existing production sub-ledgers and label unsupported metrics as unavailable rather than zero or paid.
+
+### Sprint 253 implementation review note
+
+The Sprint 253 migration adds an atomic allocation RPC that locks the financial entry and obligation, checks currency/direction and prevents over-allocation on both sides. Its reversal operation is explicitly ledger-only and does not claim to reverse external provider funds. These guarantees are present in repository SQL/tests; they are not live production guarantees until the migration is applied and verified.
+
+### Operational distinction
+
+- GitHub merged: source code is integrated.
+- Supabase migration present in repository: schema change is prepared.
+- Supabase migration recorded in `schema_migrations`: schema change was applied.
+- Runtime verified: access controls and behavior have been tested against the deployed database.
+
+These states must never be conflated in sprint reports.
