@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 
-const migration = readFileSync(new URL("../../supabase/migrations/20261118010000_rubi_profile_privilege_hardening.sql", import.meta.url), "utf8");
+const migration = readFileSync(new URL("../../supabase/migrations/20261118001747_rubi_profile_privilege_hardening_sprint234.sql", import.meta.url), "utf8");
 
 test("profiles grants are least-privilege and preserve only self-service columns", () => {
   assert.match(migration, /revoke all privileges on table public\.profiles from public, anon, authenticated/i);
