@@ -11,7 +11,7 @@ test("profile trigger prevents self-service changes to protected identity and re
     assert.match(migration, new RegExp("NEW\\." + field + "\\s+IS DISTINCT FROM OLD\\." + field, "i"), field + " must be immutable to ordinary users");
   }
   assert.match(migration, /auth\.uid\(\)\s+IS NULL\s+OR\s+public\.has_role\(auth\.uid\(\),\s*'owner'\)/i);
-  assert.match(migration, /BEFORE UPDATE ON public\.profiles/i);
+  assert.match(triggerMigration, /CREATE TRIGGER tr_prevent_profile_role_change[\s\S]*?BEFORE UPDATE ON public\.profiles[\s\S]*?EXECUTE FUNCTION public\.prevent_profile_role_change\(\)/i);
 });
 
 test("administrative ban operation is owner-gated, audited and server-only", () => {
