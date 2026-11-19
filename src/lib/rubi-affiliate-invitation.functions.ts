@@ -30,8 +30,8 @@ export const getMyRubiAffiliateInvitation=createServerFn({method:"POST"})
   for(const event of rawMeaningful){
    const action=event.event_name??event.event_type??"";
    const day=String(event.created_at).slice(0,10);
-   const videoId=typeof event.metadata?.["video_id"]==="string"?event.metadata.video_id:null;
-   const productId=event.product_id??(typeof event.metadata?.["product_id"]==="string"?event.metadata.product_id:null);
+   const videoId=typeof event.metadata?.["video_id"]==="string"?event.metadata["video_id"]:null;
+   const productId=event.product_id??(typeof event.metadata?.["product_id"]==="string"?event.metadata["product_id"]:null);
    const entity=videoId?("video:"+videoId):productId?("product:"+productId):"daily";
    const key=action==="video_start"||action==="video_complete"||action==="RUBI_FEED_VIDEO_VIEW"
     ? "video:"+String(videoId??"unknown")+":"+day
