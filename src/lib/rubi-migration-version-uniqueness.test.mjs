@@ -34,3 +34,58 @@ test("recent rollout sequence preserves applied and pending migration identities
   ];
   for (const name of expected) assert.ok(rolloutNames.includes(name), name);
 });
+
+test("all historical duplicate migration prefixes remain explicitly allowlisted", () => {
+  // Historical duplicates are intentionally not renamed here: production migration
+  // history contains deployed identities that cannot be inferred from filenames.
+  // Any new duplicate or silent removal must trigger a deliberate reconciliation.
+  const expectedHistoricalDuplicates = {
+    "20260901020000": [
+      "20260901020000_sprint27_part3_support.sql",
+      "20260901020000_sprint33_search_and_recently_viewed.sql",
+    ],
+    "20260902000002": [
+      "20260902000002_sprint34_secure_hub_platform_registry.sql",
+      "20260902000002_sprint34_secure_hub_platforms.sql",
+    ],
+    "20260903000000": [
+      "20260903000000_sprint36_worker_truthfulness.sql",
+      "20260903000000_sprint37_categories_filters.sql",
+    ],
+    "20260911000000": [
+      "20260911000000_sprint31_strategy_orchestrator.sql",
+      "20260911000000_sprint40_opportunity_engine.sql",
+    ],
+    "20261114060000": [
+      "20261114060000_rubi_creator_fit_review.sql",
+      "20261114060000_rubi_partner_manual_reconciliation_evidence.sql",
+    ],
+    "20261114070000": [
+      "20261114070000_rubi_b2b_tier_integrity.sql",
+      "20261114070000_rubi_product_inline_atomic_audit.sql",
+    ],
+    "20261114080000": [
+      "20261114080000_rubi_bulk_product_status_atomic.sql",
+      "20261114080000_rubi_onboarding_quiz_atomic.sql",
+    ],
+    "20261114090000": [
+      "20261114090000_rubi_movement_controlled_ab.sql",
+      "20261114090000_rubi_scheduled_post_decision_atomic.sql",
+    ],
+  };
+
+  const actual = Object.fromEntries(
+    Object.entries(
+      names.reduce((groups, name) => {
+        const version = name.split("_", 1)[0];
+        groups[version] ??= [];
+        groups[version].push(name);
+        return groups;
+      }, {}),
+    )
+      .filter(([, files]) => files.length > 1)
+      .map(([version, files]) => [version, files.sort()]),
+  );
+
+  assert.deepEqual(actual, expectedHistoricalDuplicates);
+});
