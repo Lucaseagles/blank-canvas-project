@@ -18,7 +18,7 @@ export const getPartnerFinanceSummaryAdmin = createServerFn({ method: "POST" })
       return query.order("id", { ascending: true });
     });
     const ids = links.map((link: { id: string }) => link.id);
-    if (!ids.length) return { profiles, sales: 0, grossAmount: 0, accruedCommission: 0, paidCommission: 0, pendingCommission: 0 };
+    if (!ids.length) return { profiles, sales: 0, grossAmount: 0, accruedCommission: 0, paidCommission: 0, pendingCommission: 0, overpaidCommission: 0, overpaidSales: 0, uncommissionedSales: 0 };
     const sales = await fetchFinancialRowsByIds(ids, (batchIds) => (supabaseAdmin as any)
       .from("hub_partner_confirmed_sales").select("id,gross_amount,commission_amount")
       .in("referral_link_id", batchIds).order("id", { ascending: true }));
