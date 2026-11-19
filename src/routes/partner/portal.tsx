@@ -155,12 +155,16 @@ function PartnerPortal() {
         <h2 className="text-2xl font-bold">Situação das suas comissões</h2>
         {commissionsQuery.isLoading && <p role="status">Carregando comissões...</p>}
         {commissionsQuery.isError && <div role="alert"><p>Não foi possível consultar suas comissões.</p><Button variant="outline" onClick={() => void commissionsQuery.refetch()}>Tentar novamente</Button></div>}
-        {commissionsQuery.data && <div className="grid gap-4 sm:grid-cols-3">
+        {commissionsQuery.data && <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-2xl border bg-card p-5"><p className="text-sm text-muted-foreground">Comissões calculadas</p><p className="text-2xl font-black">{Number(commissionsQuery.data.calculated).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p></div>
-          <div className="rounded-2xl border bg-card p-5"><p className="text-sm text-muted-foreground">Comissões pagas</p><p className="text-2xl font-black">{Number(commissionsQuery.data.paid).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p></div>
-          <div className="rounded-2xl border bg-card p-5"><p className="text-sm text-muted-foreground">Comissões pendentes</p><p className="text-2xl font-black">{Number(commissionsQuery.data.pending).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p></div>
+          <div className="rounded-2xl border bg-card p-5"><p className="text-sm text-muted-foreground">Repasses registrados</p><p className="text-2xl font-black">{Number(commissionsQuery.data.paid).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p></div>
+          <div className="rounded-2xl border bg-card p-5"><p className="text-sm text-muted-foreground">Saldo pendente</p><p className="text-2xl font-black">{Number(commissionsQuery.data.pending).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p></div>
+          <div className="rounded-2xl border bg-card p-5"><p className="text-sm text-muted-foreground">Excesso identificado</p><p className="text-2xl font-black">{Number(commissionsQuery.data.overpaid).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p></div>
         </div>}
-        <p className="text-xs text-muted-foreground">Comissões pagas são valores com baixa registrada pelo financeiro. Pagamentos parciais continuam pendentes até a quitação integral da comissão; visitas não geram comissão automaticamente.</p>
+        {commissionsQuery.data && commissionsQuery.data.overpaid > 0 && <div role="alert" className="rounded-xl border border-destructive/40 bg-destructive/5 p-4 text-sm">
+          Há {commissionsQuery.data.overpaidSales} venda(s) com repasse registrado acima da comissão calculada. O excesso de {Number(commissionsQuery.data.overpaid).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} está sinalizado separadamente e não é compensado com pendências de outras vendas.
+        </div>}
+        <p className="text-xs text-muted-foreground">Repasses registrados refletem baixas no subledger da RUBI, não uma confirmação bancária automática. Pagamentos parciais continuam pendentes até a quitação integral da comissão; visitas não geram comissão automaticamente.</p>
       </section>
       {products.length === 0 && <p className="rounded-2xl border p-6">Nenhum produto liberado para seu perfil no momento.</p>}
       <section aria-label="Produtos autorizados" className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
