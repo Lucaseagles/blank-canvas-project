@@ -43,8 +43,10 @@ O pagamento já realizado permanece na tabela legada de lotes/itens até que um 
 
 A migration `20261118070000_rubi_finance_source_idempotency_sprint273.sql` adiciona índices únicos parciais:
 
-1. Obrigações: `source_kind + source_id + obligation_type + scope_type`.
-2. Lançamentos: `source_kind + source_id + entry_type + direction`.
+1. Obrigações: `source_kind + source_id + obligation_type + scope_type + provider_id`.
+2. Lançamentos: `source_kind + source_id + entry_type + direction + provider_id`.
+
+O `provider_id` participa da identidade para evitar colisões quando dois provedores usam o mesmo identificador externo. Para fontes internas sem provedor, o índice usa um namespace nulo estável.
 
 Essas restrições impedem que reprocessamento de uma mesma origem gere obrigações ou lançamentos duplicados. Fontes sem identificador estável não devem ser automaticamente lançadas; devem permanecer em revisão manual/importação até que uma chave determinística seja definida.
 
