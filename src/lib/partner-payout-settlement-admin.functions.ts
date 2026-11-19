@@ -47,6 +47,15 @@ export const settlePartnerCommissionsAdmin = createServerFn({ method: "POST" })
       p_note: data.note ?? null,
       p_actor: context.userId,
     });
-    if (error) throw error;
+    if (error) {
+      // Production may still expose the legacy UUID[]/five-argument RPC.
+      // Never fall back to it: it cannot preserve the audited installment contract.
+      if (error.code === "PGRST202" || error.code === "42883") {
+        throw new Error(
+          "Repasse parcial temporariamente indisponível: o banco ainda não possui a versão compatível da operação financeira. Nenhum repasse foi registrado. Solicite a atualização controlada do banco.",
+        );
+      }
+      throw error;
+    }
     return { payoutId: payoutId as string };
   });
