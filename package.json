@@ -48,7 +48,7 @@
     "test:rubi-finance-operations": "node --test src/lib/rubi-finance-operations-sprint253.test.mjs",
     "test:rubi-migration-versions": "node --test src/lib/rubi-migration-version-uniqueness.test.mjs",
     "test:rubi-commerce-journey": "node --test src/lib/rubi-commerce-journey-observability.test.mjs",
-    "test:rubi-partner-storefront": "node --test src/lib/rubi-partner-storefront.test.mjs"
+    "test:rubi-partner-storefront": "node --test src/lib/rubi-partner-storefront.test.mjs src/lib/rubi-partner-storefront-portal.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
