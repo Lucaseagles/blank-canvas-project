@@ -20,6 +20,10 @@ test("overpayments and sales without calculated commission are returned as separ
   assert.match(ui, /role="alert"/);
 });
 
+test("empty partner selection returns the full metric contract", () => {
+  assert.match(api, /overpaidCommission: 0, overpaidSales: 0, uncommissionedSales: 0/);
+});
+
 test("currency arithmetic is rounded to integer cents", () => {
   assert.match(api, /Math\.round\(amount \* 100\)/);
 });
