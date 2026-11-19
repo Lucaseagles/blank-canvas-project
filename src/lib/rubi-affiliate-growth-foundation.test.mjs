@@ -45,13 +45,17 @@ test("invitation is small, on profile, gated, and never automatically approves p
  assert.match(server,/\.eq\("user_id",userId\)/);
  assert.match(server,/\.limit\(201\)/);
  assert.match(server,/capped\?0:score/);
- assert.match(popup,/bottom-\\[calc/);
+ assert.match(popup,/fixed/);
  assert.match(popup,/rounded-full/);
  assert.match(popup,/Conheça o RUBI Indica/);
  assert.match(popup,/Não mostrar/);
  assert.match(popup,/30\*86400000/);
  assert.match(popup,/partnerType:"affiliate"/);
  assert.match(profile,/<RubiAffiliateMiniInvite userId=\{userId\}\/>/);
+ const feed=read("../routes/feed.tsx");
+ const videos=read("../routes/videos.tsx");
+ assert.match(feed,/<RubiAffiliateMiniInvite/);
+ assert.match(videos,/<RubiAffiliateMiniInvite/);
  assert.match(onboarding,/search.partnerType === "affiliate"/);
  assert.doesNotMatch(server,/\.insert\(|\.update\(|\.upsert\(/);
 });
