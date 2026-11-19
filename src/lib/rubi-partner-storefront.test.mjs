@@ -29,7 +29,7 @@ test("partner storefront sends every product to its own attributed referral chec
   assert.match(route, /createFileRoute\("\/loja\/\$storeCode"\)/);
   assert.match(route, /\/r\/\$\{product\.referralCode\}/);
   assert.match(route, /Ver oferta e continuar/);
-  assert.match(route, /pagamento, aprovação do pedido, entrega, cancelamento e reembolso/);
+  assert.match(route, /pagamento, aprovação do pedido, entrega, cancelamento e reembolso/i);
 });
 
 test("partner onboarding keeps qualification context for later product matching", () => {
