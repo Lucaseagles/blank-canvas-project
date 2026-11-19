@@ -73,8 +73,10 @@ test("supports zero-decimal and three-decimal targets without truncation", () =>
     rate: "0.3075",
     definitions: currencies,
   });
-  assert.equal(jpy.targetAmountMinor, "15000");
-  assert.equal(kwd.targetAmountMinor, "3075");
+  // 100 USD minor units = 1.00 USD. At 150 JPY/USD this is 150 JPY;
+  // at 0.3075 KWD/USD this is 0.3075 KWD, rounded half-up to 308 fils.
+  assert.equal(jpy.targetAmountMinor, "150");
+  assert.equal(kwd.targetAmountMinor, "308");
 });
 
 test("rejects zero, malformed, over-precision and same-currency rates", () => {
