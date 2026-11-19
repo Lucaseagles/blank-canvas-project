@@ -2,11 +2,12 @@ import {useEffect,useState} from "react";
 import {useQuery} from "@tanstack/react-query";
 import {useServerFn} from "@tanstack/react-start";
 import {Link} from "@tanstack/react-router";
+import {Sparkles} from "lucide-react";
 import {supabase} from "@/integrations/supabase/client";
 import {getMyRubiAffiliateInvitation} from "@/lib/rubi-affiliate-invitation.functions";
 
-/** Small opt-in profile invitation. Never traps navigation or displays under 60% readiness. */
-export function RubiAffiliateMiniInvite({userId}:{userId:string}){
+/** Reuses the consumer's existing opt-in invitation across discovery surfaces. */
+export function RubiAffiliateMiniInvite({userId,placement="right"}:{userId:string;placement?:"left"|"right"}){
  const load=useServerFn(getMyRubiAffiliateInvitation);
  const [dismissed,setDismissed]=useState(true);
  const [collapsed,setCollapsed]=useState(true);
@@ -22,7 +23,7 @@ export function RubiAffiliateMiniInvite({userId}:{userId:string}){
    const {data:{session}}=await supabase.auth.getSession();
    if(!session||session.user.id!==userId)throw new Error("Sessão inválida");
    return load({data:{accessToken:session.access_token}});
-  },enabled:!!userId,staleTime:300000,retry:false
+  },enabled:!!userId,staleTime:60_000,retry:false,refetchOnWindowFocus:true
  });
  if(!query.data?.eligible||dismissed)return null;
  const dismiss=(forever:boolean)=>{
@@ -31,25 +32,28 @@ export function RubiAffiliateMiniInvite({userId}:{userId:string}){
   setDismissed(true);
  };
  return <aside aria-label="Convite opcional para afiliados"
-   className="fixed bottom-20 right-3 z-30 w-[min(250px,calc(100vw-24px))] rounded-2xl border border-primary/30 bg-card/95 p-3 shadow-xl backdrop-blur-lg">
-  <div className="flex items-center justify-between gap-2">
-   <strong className="text-[11px]">RUBI Indica · {query.data.score}%</strong>
-   <button type="button" aria-label="Dispensar convite por 30 dias" className="text-xs text-muted-foreground"
-    onClick={()=>dismiss(false)}>✕</button>
-  </div>
-  <p className="mt-1 text-xs font-semibold">Gostaria de divulgar ofertas da RUBI?</p>
-  {!collapsed&&<p className="mt-1 text-[11px] leading-4 text-muted-foreground">
-   Conheça o programa e candidate-se para ganhar comissão por vendas confirmadas.
-   Não precisa comprar nem ter muitos seguidores.
-  </p>}
-  <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
-   <Link to="/onboarding" search={{audience:"partner",returnTo:"/partner/portal",partnerType:"affiliate"}}
-    className="rounded-lg bg-primary px-2 py-1.5 font-semibold text-primary-foreground">Conhecer</Link>
-   <button type="button" onClick={()=>setCollapsed(v=>!v)} className="text-primary underline">
-    {collapsed?"Detalhes":"Recolher"}
-   </button>
-   {!collapsed&&<button type="button" onClick={()=>dismiss(true)}
-    className="text-muted-foreground underline">Não mostrar</button>}
-  </div>
+  className={`fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] ${placement==="left"?"left-3":"right-3"} z-[60]`}>
+  {collapsed?<button type="button" aria-label="Conheça o RUBI Indica" title="Conheça o RUBI Indica"
+    onClick={()=>setCollapsed(false)}
+    className="flex h-12 w-12 items-center justify-center rounded-full border border-primary/40 bg-card/95 text-primary shadow-xl shadow-black/20 backdrop-blur-lg transition hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary">
+    <Sparkles className="h-5 w-5"/>
+    <span className="sr-only">Convite para conhecer o programa de afiliados RUBI</span>
+   </button>:<div className="w-[min(260px,calc(100vw-24px))] rounded-2xl border border-primary/30 bg-card/95 p-3 text-card-foreground shadow-2xl backdrop-blur-xl">
+    <div className="flex items-center justify-between gap-2">
+     <strong className="text-[11px]">RUBI Indica · {query.data.score}%</strong>
+     <button type="button" aria-label="Recolher convite" className="rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
+      onClick={()=>setCollapsed(true)}>−</button>
+    </div>
+    <p className="mt-1 text-xs font-semibold">Seu conteúdo pode abrir novas oportunidades.</p>
+    <p className="mt-1 text-[11px] leading-4 text-muted-foreground">
+     Conheça o programa e candidate-se para receber comissão por vendas confirmadas. Não precisa comprar nem ter muitos seguidores.
+    </p>
+    <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
+     <Link to="/onboarding" search={{audience:"partner",returnTo:"/partner/portal",partnerType:"affiliate"}}
+      className="rounded-lg bg-primary px-3 py-2 font-semibold text-primary-foreground">Conhecer programa</Link>
+     <button type="button" onClick={()=>dismiss(false)} className="text-muted-foreground underline">Pausar 30 dias</button>
+     <button type="button" onClick={()=>dismiss(true)} className="text-muted-foreground underline">Não mostrar</button>
+    </div>
+   </div>}
  </aside>;
 }
