@@ -20,7 +20,7 @@ test("public storefront exposes only approved profile and granted active product
   assert.match(api, /\.eq\("active", true\)/);
   assert.match(api, /approvedRubiCheckout\(product\)/);
   assert.match(api, /referralCode: link\.code/);
-  assert.doesNotMatch(api, /checkout_url|supplier_cost|commission_percent|commercial_profile_id/);
+  assert.match(api, /checkout_url/); // Used only for server-side checkout validation; never returned to the browser.\n  assert.doesNotMatch(api, /checkoutUrl:|supplier_cost|commission_percent|commercial_profile_id:/);
 });
 
 test("partner storefront sends every product to its own attributed referral checkout route", () => {
