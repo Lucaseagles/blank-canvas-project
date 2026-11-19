@@ -52,7 +52,8 @@ function PartnerPublicStorefront() {
               {product.category && <p className="text-[11px] font-bold uppercase tracking-widest text-primary">{product.category}</p>}
               <h3 className="text-lg font-black">{product.title}</h3>
               {product.description && <p className="line-clamp-3 text-sm leading-6 text-muted-foreground">{product.description}</p>}
-              <p className="text-xl font-black">{product.retailPrice.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p>
+              <p className="text-xl font-black"><span className="sr-only">Valor de referência: </span>{product.retailPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+              <p className="text-xs text-muted-foreground">Valor de referência do catálogo. Confirme preço, moeda e disponibilidade no checkout responsável.</p>
               <a href={`/r/${product.referralCode}`} className="inline-flex w-full items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90">Ver oferta e continuar</a>
             </div>
           </article>)}
