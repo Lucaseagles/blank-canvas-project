@@ -140,3 +140,28 @@ Não aplicar alteração em massa de colunas enquanto a cadeia 252/253/273 não 
 O código de cálculo futuro deve usar decimal exato (não Number), validar a escala de origem/destino com metadados de moeda versionados e rejeitar moedas/códigos não suportados. A tabela de moedas não deve presumir que qualquer código de três letras é válido.
 
 **Status:** bloqueio documentado; nenhuma alteração de schema ou valor em produção.
+
+
+## 12. Primeira implementação isolada — aritmética decimal exata
+
+Foi adicionada uma camada pura de cálculo em `src/lib/rubi-finance-fx.ts`, sem acesso a banco, rede, provedor ou relógio do sistema.
+
+Contrato implementado:
+- valores de origem/destino trafegam como strings de unidades menores inteiras;
+- cálculo usa BigInt e fração decimal exata;
+- taxa é explicitamente "unidades maiores de destino por 1 unidade maior de origem";
+- arredondamento half-up ocorre uma única vez, na unidade menor de destino;
+- escala de moeda vem de um registro explícito fornecido pelo chamador;
+- códigos sem exatamente uma definição são rejeitados;
+- a função retorna snapshot contendo valor original, moeda original, valor destino, moeda destino, taxa, direção e regra de arredondamento.
+
+Testes adicionados em `src/lib/rubi-finance-fx.test.mjs` e comando `npm run test:rubi-finance-fx`. A suíte cobre escalas 0/2/3, precisão excessiva, moeda desconhecida, taxa inválida, conversão USD/BRL, arredondamento e ausência de parseFloat/toFixed.
+
+Limites importantes:
+- o registro de moedas de teste é uma fixture pequena, não um catálogo ISO 4217 oficial;
+- o módulo não busca nem valida cotação de mercado;
+- não persiste cotações/conversões, não autentica Owner, não acessa Supabase e não alimenta dashboards;
+- não altera as colunas NUMERIC(18,2) do schema legado;
+- não deve ser conectado ao ledger até que a estratégia de escala/precisão do banco e a origem da cotação sejam aprovadas.
+
+**Validação:** arquivos versionados na branch da PR #276; execução da suíte ainda depende de CI. Não declarar testes aprovados antes do resultado do GitHub Actions.
