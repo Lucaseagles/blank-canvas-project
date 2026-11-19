@@ -3,6 +3,7 @@ import { getVideos } from "@/lib/video.functions";
 import { updateInterestScore } from "@/lib/personalization.functions";
 import { VideoPlayback } from "@/components/video/VideoPlayback";
 import { VideoSocialMilestone } from "@/components/video/VideoSocialMilestone";
+import { RubiAffiliateMiniInvite } from "@/components/profile/RubiAffiliateMiniInvite";
 import { useServerFn } from "@tanstack/react-start";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
