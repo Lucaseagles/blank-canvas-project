@@ -22,9 +22,13 @@ function pow10(scale: number): bigint {
     throw new Error("Currency scale must be an integer between 0 and 8");
   }
   while (POW10_CACHE.length <= scale) {
-    POW10_CACHE.push(POW10_CACHE[POW10_CACHE.length - 1] * 10n);
+    const previous = POW10_CACHE[POW10_CACHE.length - 1];
+    if (previous === undefined) throw new Error("Currency scale cache is unavailable");
+    POW10_CACHE.push(previous * 10n);
   }
-  return POW10_CACHE[scale];
+  const result = POW10_CACHE[scale];
+  if (result === undefined) throw new Error("Currency scale is unavailable");
+  return result;
 }
 
 function getCurrency(code: string, definitions: readonly CurrencyDefinition[]): CurrencyDefinition {
@@ -32,6 +36,7 @@ function getCurrency(code: string, definitions: readonly CurrencyDefinition[]): 
   const matches = definitions.filter((item) => item.code === code);
   if (matches.length !== 1) throw new Error("Currency is unsupported or ambiguously configured");
   const definition = matches[0];
+  if (!definition) throw new Error("Currency is unsupported or ambiguously configured");
   if (!Number.isInteger(definition.minorUnit) || definition.minorUnit < 0 || definition.minorUnit > 8) {
     throw new Error("Currency minor unit is invalid");
   }
