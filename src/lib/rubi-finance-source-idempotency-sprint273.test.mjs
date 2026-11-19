@@ -7,19 +7,19 @@ const migration = readFileSync(
   "utf8",
 );
 
-test("canonical finance obligations are idempotent per source, type and scope", () => {
+test("canonical obligations are idempotent per source, type, scope and provider", () => {
   assert.match(migration, /create unique index rubi_finance_obligations_source_identity_uidx/);
-  assert.match(migration, /\(source_kind, source_id, obligation_type, scope_type\)/);
+  assert.match(migration, /source_kind,[\s\S]*source_id,[\s\S]*obligation_type,[\s\S]*scope_type,[\s\S]*coalesce\(provider_id/);
   assert.match(migration, /where source_id is not null/);
 });
 
-test("canonical finance entries are idempotent per source, entry type and direction", () => {
+test("canonical entries are idempotent per source, entry type, direction and provider", () => {
   assert.match(migration, /create unique index rubi_finance_entries_source_identity_uidx/);
-  assert.match(migration, /\(source_kind, source_id, entry_type, direction\)/);
+  assert.match(migration, /source_kind,[\s\S]*source_id,[\s\S]*entry_type,[\s\S]*direction,[\s\S]*coalesce\(provider_id/);
   assert.match(migration, /where source_id is not null/);
 });
 
-test("the adapter contract links partner commission obligations to the existing sale id", () => {
+test("partner commission adapter references the existing confirmed sale identity", () => {
   assert.match(migration, /source_kind=partner_sale/);
   assert.match(migration, /hub_partner_confirmed_sales\.id/);
   assert.doesNotMatch(migration, /insert into|update public\.|delete from/i);
