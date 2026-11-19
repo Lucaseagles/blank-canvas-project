@@ -1,6 +1,6 @@
 import {Link} from "@tanstack/react-router";
 type Summary={sales:number;grossAmount:number;commissionAmount:number;agreementPercent:number|null};
-type Commission={calculated:number;paid:number;pending:number;paidSales:number;unpaidSales:number};
+type Commission={calculated:number;paid:number;pending:number;overpaid:number;paidSales:number;unpaidSales:number;overpaidSales:number};
 type Visits={links:number;visits:number};
 const money=(n:number)=>Number(n).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 const category:Record<string,string>={
@@ -15,7 +15,8 @@ export function RubiPartnerFinanceDashboard({partnerType,displayName,summary,com
   {label:"Volume vendido",value:money(summary.grossAmount),sub:"Valor bruto dos pedidos atribuídos"},
   {label:"Comissão calculada",value:money(commission.calculated),sub:"Ainda não significa repasse efetuado"},
   {label:"Comissão paga",value:money(commission.paid),sub:"Baixas financeiras registradas"},
-  {label:"Comissão pendente",value:money(commission.pending),sub:"Pode incluir valores ainda sujeitos à conferência"},
+  {label:"Comissão pendente",value:money(commission.pending),sub:"Saldo positivo após repasses registrados"},
+  {label:"Excesso registrado",value:money(commission.overpaid),sub:"Repasses acima da comissão calculada"},
   {label:"Acordo vigente",value:summary.agreementPercent===null?"Não definido":summary.agreementPercent+"%",sub:"Percentual contratual, não bônus automático"}
  ];
  const paid=Math.max(0,Number(commission.paid)||0);
@@ -36,6 +37,11 @@ export function RubiPartnerFinanceDashboard({partnerType,displayName,summary,com
     <p className="mt-1 text-[11px] text-muted-foreground">{m.sub}</p>
    </div>)}
   </div>
+  {commission.overpaid>0&&<div role="alert" className="space-y-1 rounded-xl border border-destructive/40 bg-destructive/5 p-4">
+   <p className="font-bold text-destructive">Divergência nos repasses registrados</p>
+   <p className="text-sm">Há {commission.overpaidSales} venda(s) com repasse acima da comissão calculada, totalizando {money(commission.overpaid)} de excesso. O valor foi mantido visível e não foi compensado com saldos pendentes de outras vendas.</p>
+   <p className="text-xs text-muted-foreground">Este aviso identifica os registros do subledger de parceiros; não confirma nem contesta uma transferência bancária no provedor.</p>
+  </div>}
   <div className="space-y-2 rounded-xl border bg-background p-4">
    <div className="flex justify-between gap-3 text-xs font-semibold">
     <span>Comissões já pagas / calculadas</span><span>{paidFraction.toFixed(1)}%</span>
