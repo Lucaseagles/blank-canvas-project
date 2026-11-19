@@ -32,7 +32,7 @@ export function RubiPartnerStorefrontManager({ storeCode }: { storeCode: string 
       </div>
       <span className="rounded-full border bg-background px-3 py-1.5 text-xs font-bold">Vitrine individual</span>
     </div>
-    {url ? <div className="mt-5 flex flex-col gap-3 rounded-2xl border bg-background/80 p-4 sm:flex-row sm:items-center sm:justify-between">
+    {url && storeCode ? <div className="mt-5 flex flex-col gap-3 rounded-2xl border bg-background/80 p-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
         <p className="text-xs text-muted-foreground">Endereço público da sua loja</p>
         <p className="mt-1 break-all text-sm font-bold">{typeof window === "undefined" ? url : new URL(url, window.location.origin).toString()}</p>
