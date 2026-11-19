@@ -14,17 +14,31 @@ export const getMyRubiAffiliateInvitation=createServerFn({method:"POST"})
    db.from("commercial_profiles").select("id,status").eq("user_id",userId).eq("audience","consumer").maybeSingle(),
    db.from("commercial_profiles").select("id,status").eq("user_id",userId).eq("audience","partner").maybeSingle(),
    db.from("user_preferences").select("preferred_categories").eq("user_id",userId).maybeSingle(),
-   db.from("analytics_events").select("event_name,event_type,created_at")
+   db.from("analytics_events").select("event_name,event_type,created_at,metadata,product_id")
     .eq("user_id",userId).gte("created_at",new Date(Date.now()-60*86400000).toISOString())
     .order("created_at",{ascending:false}).limit(201),
   ]);
   for(const result of [consumer,partner,preferences,events])if(result.error)throw result.error;
   const categories=Array.isArray(preferences.data?.preferred_categories)?preferences.data.preferred_categories.length:0;
-  const approvedEvents=new Set(["RUBI_STORE_PRODUCT_VIEW","PRODUCT_VIEW","PREFERENCE_UPDATED","RUBI_FEED_VIDEO_VIEW","RUBI_STORE_SECTION_VIEW"]);
-  const rows=(events.data??[]) as Array<{event_name:string|null;event_type:string|null;created_at:string}>;
+  const approvedEvents=new Set(["RUBI_STORE_PRODUCT_VIEW","PRODUCT_VIEW","PREFERENCE_UPDATED","RUBI_FEED_VIDEO_VIEW","RUBI_STORE_SECTION_VIEW","video_start","video_complete"]);
+  const rows=(events.data??[]) as Array<{event_name:string|null;event_type:string|null;created_at:string;product_id?:string|null;metadata?:Record<string,unknown>|null}>;
   // Conservative fail-closed for truncated event history: do not declare eligibility.
   const capped=rows.length>200;
-  const meaningful=rows.filter(e=>approvedEvents.has(e.event_name??e.event_type??""));
+  const rawMeaningful=rows.filter(e=>approvedEvents.has(e.event_name??e.event_type??""));
+  // Count distinct content/product signals per day, not repeated play loops or refreshes.
+  const uniqueSignals=new Map<string,typeof rawMeaningful[number]>();
+  for(const event of rawMeaningful){
+   const action=event.event_name??event.event_type??"";
+   const day=String(event.created_at).slice(0,10);
+   const videoId=typeof event.metadata?.video_id==="string"?event.metadata.video_id:null;
+   const productId=event.product_id??(typeof event.metadata?.product_id==="string"?event.metadata.product_id:null);
+   const entity=videoId?("video:"+videoId):productId?("product:"+productId):"daily";
+   const key=action==="video_start"||action==="video_complete"||action==="RUBI_FEED_VIDEO_VIEW"
+    ? "video:"+String(videoId??"unknown")+":"+day
+    : action+":"+entity+":"+day;
+   if(!uniqueSignals.has(key))uniqueSignals.set(key,event);
+  }
+  const meaningful=[...uniqueSignals.values()];
   const days=new Set(meaningful.map(e=>String(e.created_at).slice(0,10))).size;
   const score=(consumer.data?25:0)+(categories>0?20:0)
    +(meaningful.length>=3?20:0)+(meaningful.length>=8?20:0)+(days>=3?15:0);
