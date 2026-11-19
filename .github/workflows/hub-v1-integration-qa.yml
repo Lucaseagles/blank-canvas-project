@@ -91,6 +91,8 @@ jobs:
         run: npm run test:rubi-connected-flow
       - name: RUBI tagged creator visit event tests
         run: npm run test:rubi-creator-tagged-visits
+      - name: RUBI affiliate growth and discovery invitation tests
+        run: npm run test:rubi-affiliate-growth
       - name: RUBI product story media tests
         run: npm run test:rubi-product-stories
       - name: RUBI storefront Story discovery tests
