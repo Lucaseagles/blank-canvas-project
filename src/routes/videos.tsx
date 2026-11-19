@@ -3,6 +3,7 @@ import { getVideos } from "@/lib/video.functions";
 import { updateInterestScore } from "@/lib/personalization.functions";
 import { VideoPlayback } from "@/components/video/VideoPlayback";
 import { VideoSocialMilestone } from "@/components/video/VideoSocialMilestone";
+import { RubiAffiliateMiniInvite } from "@/components/profile/RubiAffiliateMiniInvite";
 import { useServerFn } from "@tanstack/react-start";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -95,5 +96,6 @@ function VideoFeedPage() {
         {video.video_products?.[0]?.products && <div className="p-4 rounded-2xl bg-white/5 backdrop-blur-2xl border border-white/10 flex items-center justify-between group cursor-pointer hover:bg-white/10 transition-all"><div className="flex items-center gap-4 min-w-0"><div className="w-12 h-12 rounded-xl bg-muted overflow-hidden shrink-0"><img src={video.video_products[0].products.images?.[0]} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" /></div><div className="min-w-0"><p className="text-[10px] font-bold text-white/50 uppercase tracking-widest">Produto em Destaque</p><p className="text-sm font-black text-white truncate max-w-[150px]">{video.video_products[0].products.title}</p></div></div><div className="text-right shrink-0 ml-3"><p className="text-lg font-black text-primary italic leading-none">R$ {Number(video.video_products[0].products.current_price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p></div></div>}
       </div></div>
     </div>) : <div className="h-[100dvh] w-full flex flex-col items-center justify-center p-6 text-center space-y-6"><h2 className="text-4xl md:text-6xl font-black text-white italic uppercase tracking-tighter">Motor de Vídeo Frio</h2><p className="text-white/50 max-w-md">Nenhum vídeo foi publicado ainda. Volte logo para o conteúdo de descoberta mais recente.</p><Button variant="outline" className="text-white border-white/20 min-h-touch" asChild><Link to="/">Voltar para o Início</Link></Button></div>}
+    {userId && <RubiAffiliateMiniInvite userId={userId} placement="left" />}
   </div>;
 }
