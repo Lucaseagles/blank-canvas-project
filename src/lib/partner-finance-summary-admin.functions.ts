@@ -18,7 +18,7 @@ export const getPartnerFinanceSummaryAdmin = createServerFn({ method: "POST" })
       return query.order("id", { ascending: true });
     });
     const ids = links.map((link: { id: string }) => link.id);
-    if (!ids.length) return { profiles, sales: 0, grossAmount: 0, accruedCommission: 0, paidCommission: 0, pendingCommission: 0 };
+    if (!ids.length) return { profiles, sales: 0, grossAmount: 0, accruedCommission: 0, paidCommission: 0, pendingCommission: 0, overpaidCommission: 0, overpaidSales: 0, uncommissionedSales: 0 };
     const sales = await fetchFinancialRowsByIds(ids, (batchIds) => (supabaseAdmin as any)
       .from("hub_partner_confirmed_sales").select("id,gross_amount,commission_amount")
       .in("referral_link_id", batchIds).order("id", { ascending: true }));
@@ -26,15 +26,38 @@ export const getPartnerFinanceSummaryAdmin = createServerFn({ method: "POST" })
     const paid = saleIds.length ? await fetchFinancialRowsByIds(saleIds, (batchIds) => (supabaseAdmin as any)
       .from("hub_partner_commission_payout_items").select("id,sale_id,commission_amount")
       .in("sale_id", batchIds).order("id", { ascending: true })) : [];
-    const paidCommission = paid.reduce((sum: number, item: { commission_amount: number }) => sum + Number(item.commission_amount), 0);
-    const grossAmount = sales.reduce((sum: number, sale: { gross_amount: number }) => sum + Number(sale.gross_amount), 0);
-    const accruedCommission = (sales ?? []).reduce((sum: number, sale: { commission_amount: number }) => sum + Number(sale.commission_amount), 0);
+    // Work in integer cents and reconcile each sale independently. A global
+    // accrued-minus-paid total can hide one overpayment behind another unpaid sale.
+    const toCents = (value: unknown) => {
+      const amount = Number(value);
+      return Number.isFinite(amount) ? Math.round(amount * 100) : 0;
+    };
+    const paidBySale = new Map<string, number>();
+    for (const item of paid as Array<{ sale_id: string; commission_amount: number }>) {
+      paidBySale.set(item.sale_id, (paidBySale.get(item.sale_id) ?? 0) + toCents(item.commission_amount));
+    }
+    const paidCommissionCents = [...paidBySale.values()].reduce((sum, amount) => sum + amount, 0);
+    const grossAmountCents = sales.reduce((sum: number, sale: { gross_amount: number }) => sum + toCents(sale.gross_amount), 0);
+    const accruedCommissionCents = sales.reduce((sum: number, sale: { commission_amount: number | null }) => sum + toCents(sale.commission_amount), 0);
+    const pendingCommissionCents = sales.reduce((sum: number, sale: { id: string; commission_amount: number | null }) =>
+      sum + Math.max(0, toCents(sale.commission_amount) - (paidBySale.get(sale.id) ?? 0)), 0);
+    const overpaidCommissionCents = sales.reduce((sum: number, sale: { id: string; commission_amount: number | null }) =>
+      sum + Math.max(0, (paidBySale.get(sale.id) ?? 0) - toCents(sale.commission_amount)), 0);
+    const overpaidSales = sales.filter((sale: { id: string; commission_amount: number | null }) =>
+      (paidBySale.get(sale.id) ?? 0) > toCents(sale.commission_amount)
+    ).length;
+    const uncommissionedSales = sales.filter((sale: { commission_amount: number | null }) =>
+      sale.commission_amount === null
+    ).length;
     return {
       profiles,
       sales: sales.length,
-      grossAmount,
-      accruedCommission,
-      paidCommission,
-      pendingCommission: Math.max(0, accruedCommission - paidCommission),
+      grossAmount: grossAmountCents / 100,
+      accruedCommission: accruedCommissionCents / 100,
+      paidCommission: paidCommissionCents / 100,
+      pendingCommission: pendingCommissionCents / 100,
+      overpaidCommission: overpaidCommissionCents / 100,
+      overpaidSales,
+      uncommissionedSales,
     };
   });

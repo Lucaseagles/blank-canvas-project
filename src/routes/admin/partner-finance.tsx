@@ -26,7 +26,15 @@ function PartnerFinance() {
         { label: "Comissões calculadas", value: money(metrics.accruedCommission) },
         { label: "Comissões pagas", value: money(metrics.paidCommission) },
         { label: "Comissões pendentes", value: money(metrics.pendingCommission) },
+        { label: "Repasses acima da comissão", value: money(metrics.overpaidCommission) },
+        { label: "Vendas com repasse excedente", value: String(metrics.overpaidSales) },
+        { label: "Vendas sem comissão calculada", value: String(metrics.uncommissionedSales) },
       ].map(metric => <article key={metric.label} className="rounded-xl border bg-card p-5"><p className="text-sm text-muted-foreground">{metric.label}</p><p className="mt-2 text-2xl font-black">{metric.value}</p></article>)}
+    </section>}
+    {query.isSuccess && metrics && (metrics.overpaidSales > 0 || metrics.uncommissionedSales > 0) && <section role="alert" className="rounded-xl border border-amber-500/50 bg-amber-500/5 p-4">
+      <h2 className="font-bold">Atenção: divergências na conciliação</h2>
+      {metrics.overpaidSales > 0 && <p>{metrics.overpaidSales} venda(s) têm repasses superiores à comissão calculada. Excedente: {money(metrics.overpaidCommission)}. Revise os itens de repasse antes de qualquer nova liquidação.</p>}
+      {metrics.uncommissionedSales > 0 && <p>{metrics.uncommissionedSales} venda(s) não possuem comissão calculada e não devem ser tratadas como obrigação liquidável.</p>}
     </section>}
     <p className="text-xs text-muted-foreground">Visitas e cliques não são vendas. Comissões pagas exigem baixa registrada. Valores de pedidos não são lucro líquido.</p>
   </main>;
