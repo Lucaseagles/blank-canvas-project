@@ -9,6 +9,7 @@ test("approved partner portal exposes a private storefront link manager", () => 
   const manager = read("../components/partner/RubiPartnerStorefrontManager.tsx");
   assert.match(api, /public_store_code/);
   assert.match(portal, /RubiPartnerStorefrontManager storeCode=\{profile\.public_store_code/);
+  assert.match(portal, /Adicionar à minha vitrine/);
   assert.match(manager, /navigator\.clipboard\.writeText/);
   assert.match(manager, /\/loja\/\$storeCode/);
   assert.match(manager, /Visualizar/);
