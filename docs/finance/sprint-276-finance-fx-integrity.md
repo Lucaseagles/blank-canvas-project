@@ -115,3 +115,28 @@ Sprint 276 só pode ser considerada tecnicamente implementada quando a migration
 Estado desta entrega: especificação técnica versionada; nenhuma migration criada/aplicada; nenhuma alteração de dados; Supabase de produção inalterado.
 
 Cobertura V1: permanece 36,5/48 (76,0%). Não contabilizar documentação nem upgrade de integridade cambial como critério funcional concluído.
+
+
+## 11. Bloqueio adicional encontrado: escala monetária do núcleo atual
+
+A revisão direta da migration Sprint 252 encontrou uma restrição que precisa ser resolvida antes de afirmar suporte completo a moedas ISO 4217:
+
+- eventos, obrigações e lançamentos usam NUMERIC(18,2);
+- isso representa duas casas decimais fixas, não a escala variável de todas as moedas;
+- moedas sem casas fracionárias e moedas com três casas não podem ser representadas corretamente por esse contrato sem uma regra explícita de unidade/escala;
+- o CHECK de moeda valida apenas três letras maiúsculas; não valida código ISO 4217 ativo nem a escala monetária.
+
+Consequência: não declarar "suporte a todas as moedas ISO 4217" com o schema atual. Não arredondar nem truncar valores de moedas com escala diferente para fazê-los caber em duas casas.
+
+### Gate de arquitetura antes da migration cambial
+
+A extensão futura deve decidir e testar uma destas abordagens, com compatibilidade histórica:
+
+1. **Valor decimal com escala por moeda:** ampliar colunas monetárias para precisão suficiente (por exemplo NUMERIC(24,8), sujeito a análise de limites), registrar minor_units/scale efetiva por moeda e manter snapshots históricos; ou
+2. **Unidades menores inteiras:** armazenar unidades menores em BIGINT e registrar a escala ISO versionada aplicada, exigindo migração/backfill comprovado e adaptação de todos os RPCs e clientes.
+
+Não aplicar alteração em massa de colunas enquanto a cadeia 252/253/273 não estiver reconciliada e implantada. A abordagem escolhida deve cobrir eventos, obrigações, lançamentos, alocações, importação, cálculo de comissão, relatórios e APIs — não apenas as tabelas novas de câmbio.
+
+O código de cálculo futuro deve usar decimal exato (não Number), validar a escala de origem/destino com metadados de moeda versionados e rejeitar moedas/códigos não suportados. A tabela de moedas não deve presumir que qualquer código de três letras é válido.
+
+**Status:** bloqueio documentado; nenhuma alteração de schema ou valor em produção.
