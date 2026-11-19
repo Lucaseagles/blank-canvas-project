@@ -6,6 +6,7 @@ import { Zap } from "lucide-react";
 import { RubiStorefrontEntry } from "@/components/store/RubiStorefrontEntry";
 import { RubiConversionGuide } from "@/components/growth/RubiConversionGuide";
 import { RubiApprovedMovementShelf } from "@/components/store/RubiApprovedMovementShelf";
+import { RubiAffiliateMiniInvite } from "@/components/profile/RubiAffiliateMiniInvite";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
@@ -19,7 +20,8 @@ function FeedPage() {
   const fetchFeed = useServerFn(getPersonalizedFeed);
   const [products, setProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  useEffect(() => { let mounted = true; const load = async () => { try { const { data: { session } } = await supabase.auth.getSession(); const data = await fetchFeed({ data: { userId: session?.user.id ?? null, accessToken: session?.access_token ?? null, limit: 12 } }); if (mounted) { setProducts(data || []); setIsLoading(false); } } catch (err) { console.error("Feed load error:", err); if (mounted) setIsLoading(false); } }; load(); return () => { mounted = false; }; }, [fetchFeed]);
+  const [userId, setUserId] = useState<string | null>(null);
+  useEffect(() => { let mounted = true; const load = async () => { try { const { data: { session } } = await supabase.auth.getSession(); const data = await fetchFeed({ data: { userId: session?.user.id ?? null, accessToken: session?.access_token ?? null, limit: 12 } }); if (mounted) { setUserId(session?.user.id ?? null); setProducts(data || []); setIsLoading(false); } } catch (err) { console.error("Feed load error:", err); if (mounted) setIsLoading(false); } }; load(); return () => { mounted = false; }; }, [fetchFeed]);
   return (<div className="container mx-auto py-20 px-4 max-w-7xl reveal-on-scroll"><div className="mb-8"><RubiStorefrontEntry audience="consumer" /></div>
     <RubiConversionGuide audience="consumer" />
     <RubiApprovedMovementShelf />
