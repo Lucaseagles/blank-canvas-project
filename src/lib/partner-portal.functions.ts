@@ -13,7 +13,7 @@ export const getMyPartnerPortal = createServerFn({ method: "POST" })
     const userId = verified.user?.id;
     if (authError || !userId) throw new Error("Sessão expirada. Entre novamente.");
     const { data: profile, error: profileError } = await (supabaseAdmin as any)
-      .from("commercial_profiles").select("id,display_name,partner_type,status,qualification_answers")
+      .from("commercial_profiles").select("id,display_name,partner_type,status,qualification_answers,public_store_code")
       .eq("user_id", userId).eq("audience", "partner").maybeSingle();
     if (profileError) throw profileError;
     if (!profile) return { profile: null, products: [] };
