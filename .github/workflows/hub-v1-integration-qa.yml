@@ -85,6 +85,8 @@ jobs:
         run: npm run test:rubi-launch-gates
       - name: RUBI flagship storefront integration tests
         run: npm run test:rubi-flagship
+      - name: RUBI partner public storefront authorization regression
+        run: npm run test:rubi-partner-storefront
       - name: RUBI connected commercial flow tests
         run: npm run test:rubi-connected-flow
       - name: RUBI tagged creator visit event tests
