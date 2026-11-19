@@ -153,6 +153,8 @@ jobs:
         run: npm run test:rubi-migration-versions
       - name: RUBI unified finance schema security contracts
         run: npm run test:rubi-finance-schema
+      - name: RUBI partner commission overpayment reconciliation regression
+        run: node --test src/lib/rubi-partner-finance-overpayment-guard.test.mjs
       - name: RUBI finance atomic allocation and reversal regression
         run: npm run test:rubi-finance-operations
       - name: RUBI commerce journey and external evidence contract regression
