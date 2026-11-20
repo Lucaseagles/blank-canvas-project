@@ -155,6 +155,8 @@ jobs:
         run: node --test src/lib/rubi-partner-grants-server-only.test.mjs
       - name: Supabase recent migration version uniqueness regression
         run: npm run test:rubi-migration-versions
+      - name: RUBI production migration release manifest safety regression
+        run: npm run test:rubi-migration-release-manifest
       - name: RUBI unified finance schema security contracts
         run: npm run test:rubi-finance-schema
       - name: RUBI partner commission overpayment reconciliation regression

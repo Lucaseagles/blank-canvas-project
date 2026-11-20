@@ -50,7 +50,8 @@
     "test:rubi-commerce-journey": "node --test src/lib/rubi-commerce-journey-observability.test.mjs",
     "test:rubi-finance-fx": "node --experimental-strip-types --test src/lib/rubi-finance-fx.test.mjs",
     "test:rubi-partner-storefront": "node --test src/lib/rubi-partner-storefront.test.mjs src/lib/rubi-partner-storefront-portal.test.mjs",
-    "test:rubi-affiliate-growth": "node --experimental-strip-types --test src/lib/rubi-affiliate-growth-foundation.test.mjs"
+    "test:rubi-affiliate-growth": "node --experimental-strip-types --test src/lib/rubi-affiliate-growth-foundation.test.mjs",
+    "test:rubi-migration-release-manifest": "node --test src/lib/rubi-production-migration-release-manifest.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
