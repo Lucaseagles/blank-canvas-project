@@ -30,6 +30,9 @@ jobs:
       - name: Generate TanStack routes and verify initial build
         run: npm run build
 
+      - name: Sprint 287 product status audit regression
+        run: npm run test:rubi-product-status-audit
+
       - name: TypeScript
         run: npx tsc --noEmit
 
