@@ -29,7 +29,8 @@ test("release manifest pins all nine recent migration identities and source comm
 
 test("release manifest never equates missing version prefixes with pending migrations", () => {
   assert.match(manifest, /não prova que o DDL não foi aplicado sob outra versão/);
-  assert.match(manifest, /não são 189 migrations pendentes/i);
+  assert.match(manifest, /Um prefixo ausente não prova que o DDL não foi aplicado sob outra versão/i);
+  assert.doesNotMatch(manifest, /189 migrations pendentes/i);
   assert.match(manifest, /Inconclusiva/);
   assert.match(manifest, /Bloqueada/);
 });
