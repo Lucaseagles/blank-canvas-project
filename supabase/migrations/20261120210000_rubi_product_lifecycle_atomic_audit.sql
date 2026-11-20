@@ -84,8 +84,12 @@ begin
    ) returning * into new_row;
    insert into public.admin_audit_log(actor_user_id,actor_email,action_type,entity_type,entity_id,previous_value,new_value)
    values(p_actor,null,'RUBI_PRODUCT_CREATED','product',new_id,'{}'::jsonb,
-    jsonb_build_object('title',new_row.title,'slug',new_row.slug,'status',new_row.status,
-     'current_price',new_row.current_price,'category_id',new_row.category_id,'marketplace_id',new_row.marketplace_id));
+    jsonb_build_object('title',new_row.title,'slug',new_row.slug,'description',new_row.description,
+     'status',new_row.status,'current_price',new_row.current_price,'previous_price',new_row.previous_price,
+     'discount',new_row.discount,'rating',new_row.rating,'review_count',new_row.review_count,
+     'category_id',new_row.category_id,'marketplace_id',new_row.marketplace_id,
+     'image_count',cardinality(new_row.images),'free_shipping',new_row.free_shipping,
+     'affiliate_host',split_part(coalesce(new_row.affiliate_url,''),'/',3)));
   else
    select * into old_row from public.products p where p.id=p_product_id for update;
    if not found then raise exception 'Product not found'; end if;
@@ -100,10 +104,18 @@ begin
    where p.id=p_product_id returning * into new_row;
    insert into public.admin_audit_log(actor_user_id,actor_email,action_type,entity_type,entity_id,previous_value,new_value)
    values(p_actor,null,'RUBI_PRODUCT_UPDATED','product',p_product_id,
-    jsonb_build_object('title',old_row.title,'status',old_row.status,'current_price',old_row.current_price,
-     'category_id',old_row.category_id,'marketplace_id',old_row.marketplace_id),
-    jsonb_build_object('title',new_row.title,'status',new_row.status,'current_price',new_row.current_price,
-     'category_id',new_row.category_id,'marketplace_id',new_row.marketplace_id));
+    jsonb_build_object('title',old_row.title,'description',old_row.description,'status',old_row.status,
+     'current_price',old_row.current_price,'previous_price',old_row.previous_price,
+     'discount',old_row.discount,'rating',old_row.rating,'review_count',old_row.review_count,
+     'category_id',old_row.category_id,'marketplace_id',old_row.marketplace_id,
+     'image_count',cardinality(old_row.images),'free_shipping',old_row.free_shipping,
+     'affiliate_host',split_part(coalesce(old_row.affiliate_url,''),'/',3)),
+    jsonb_build_object('title',new_row.title,'description',new_row.description,'status',new_row.status,
+     'current_price',new_row.current_price,'previous_price',new_row.previous_price,
+     'discount',new_row.discount,'rating',new_row.rating,'review_count',new_row.review_count,
+     'category_id',new_row.category_id,'marketplace_id',new_row.marketplace_id,
+     'image_count',cardinality(new_row.images),'free_shipping',new_row.free_shipping,
+     'affiliate_host',split_part(coalesce(new_row.affiliate_url,''),'/',3)));
   end if;
   return to_jsonb(new_row);
  end if;
@@ -127,7 +139,10 @@ begin
  insert into public.admin_audit_log(actor_user_id,actor_email,action_type,entity_type,entity_id,previous_value,new_value)
  values(p_actor,null,'RUBI_PRODUCT_DUPLICATED','product',new_id,
   jsonb_build_object('source_product_id',p_product_id,'source_title',old_row.title),
-  jsonb_build_object('title',new_row.title,'slug',new_row.slug,'status','draft'));
+  jsonb_build_object('title',new_row.title,'slug',new_row.slug,'description',new_row.description,
+   'current_price',new_row.current_price,'status','draft','category_id',new_row.category_id,
+   'marketplace_id',new_row.marketplace_id,'image_count',cardinality(new_row.images),
+   'free_shipping',new_row.free_shipping));
  return to_jsonb(new_row);
 end;
 $fn$;
