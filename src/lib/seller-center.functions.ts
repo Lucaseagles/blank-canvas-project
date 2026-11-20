@@ -244,11 +244,16 @@ export const setSellerProductStatus = createServerFn({ method: "POST" })
 
     // Compare-and-set prevents a stale admin tab from overwriting a newer
     // status. The database trigger audits only the row that actually changes.
-    const { data: saved, error: updateError } = await context.supabase
+    const statusUpdate = context.supabase
       .from("products")
       .update({ status: data.status, updated_at: new Date().toISOString() })
-      .eq("id", data.id)
-      .eq("status", current.status)
+      .eq("id", data.id);
+    // The legacy status column is nullable, so compare NULL with IS NULL
+    // instead of passing null to PostgREST's equality filter.
+    const conditionalStatusUpdate = current.status === null
+      ? statusUpdate.is("status", null)
+      : statusUpdate.eq("status", current.status);
+    const { data: saved, error: updateError } = await conditionalStatusUpdate
       .select("id,status")
       .maybeSingle();
 
