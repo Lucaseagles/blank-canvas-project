@@ -169,6 +169,8 @@ jobs:
         run: node --test src/lib/rubi-partner-finance-overpayment-guard.test.mjs
       - name: RUBI finance atomic allocation and reversal regression
         run: npm run test:rubi-finance-operations
+      - name: RUBI legacy finance migration readiness regression
+        run: npm run test:rubi-legacy-finance-readiness
       - name: RUBI exact multi-currency conversion regression
         run: npm run test:rubi-finance-fx
       - name: RUBI commerce journey and external evidence contract regression
