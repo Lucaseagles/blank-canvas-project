@@ -69,6 +69,13 @@ jobs:
         run: npm run test:rubi-distribution
       - name: RUBI movement performance tests
         run: npm run test:rubi-performance
+      - name: RUBI movement audience evidence, review, attribution and controlled experiment contracts
+        run: >-
+          node --test
+          src/lib/rubi-audience-evidence.test.mjs
+          src/lib/rubi-audience-evidence-status.test.mjs
+          src/lib/rubi-audience-movement-summary.test.mjs
+          src/lib/rubi-movement-controlled-ab.test.mjs
       - name: RUBI movement publication safety tests
         run: npm run test:rubi-publication
       - name: RUBI Kairos launch readiness tests
