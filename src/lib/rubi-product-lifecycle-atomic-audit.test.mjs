@@ -27,6 +27,6 @@ test("admin product create, edit and duplicate use the Owner-gated audited lifec
     "for update", "for share", "RUBI_PRODUCT_CREATED", "RUBI_PRODUCT_UPDATED",
     "RUBI_PRODUCT_DUPLICATED", "insert into public.admin_audit_log",
     "revoke all on function public.rubi_manage_catalog_product_audited",
-    "to service_role", "status", "free_shipping", "images"
+    "to service_role", "p_action is null", "status", "free_shipping", "images", "image_count", "affiliate_host"
   ]) assert.ok(sql.includes(token), token);
 });
