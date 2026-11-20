@@ -11,7 +11,9 @@ test("product status mutation uses the authenticated owner client", () => {
   assert.doesNotMatch(handler, /supabaseAdmin/);
 });
 
-test("status update is compare-and-set and fails closed on concurrent changes", () => {
+test("status update is compare-and-set for nullable and non-null legacy values", () => {
+  assert.match(handler, /current\.status === null/);
+  assert.match(handler, /\.is\("status", null\)/);
   assert.match(handler, /\.eq\("status", current\.status\)/);
   assert.match(handler, /\.select\("id,status"\)\.maybeSingle\(\)/);
   assert.match(handler, /mudou em paralelo/);
