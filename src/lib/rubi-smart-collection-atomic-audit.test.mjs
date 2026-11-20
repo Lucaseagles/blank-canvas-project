@@ -6,7 +6,7 @@ const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 
 test("smart collection writes and candidate generation use one Owner-gated audited RPC", () => {
   const api = read("./smart-collections.functions.ts");
-  for (const name of ["saveSmartCollection", "deleteSmartCollection", "generateSmartCandidates", "prioritizeSmartCandidate"]) {
+  for (const name of ["saveSmartCollection", "deleteSmartCollection", "generateSmartCandidates", "prioritizeSmartCandidate", "reviewSmartCandidate"]) {
     const start = api.indexOf(`export const ${name}`);
     const end = api.indexOf("\nexport const ", start + 1);
     const section = api.slice(start, end < 0 ? undefined : end);
@@ -26,8 +26,9 @@ test("smart collection RPC locks mutable rows, validates Owner and audits every 
     "for update", "insert into public.admin_audit_log",
     "RUBI_SMART_COLLECTION_CREATED", "RUBI_SMART_COLLECTION_UPDATED",
     "RUBI_SMART_COLLECTION_DELETED", "RUBI_COLLECTION_CANDIDATE_PRIORITIZED",
+    "RUBI_COLLECTION_CANDIDATE_APPROVED", "RUBI_COLLECTION_CANDIDATE_REJECTED",
     "RUBI_SMART_COLLECTION_CANDIDATES_GENERATED",
-    "items_deleted", "candidates_deleted", "to service_role",
+    "items_deleted", "candidates_deleted", "for update", "reviewed_by=p_actor", "to service_role",
   ]) assert.ok(sql.includes(token), token);
   assert.match(sql, /revoke all on function public\.rubi_manage_smart_collection_audited\(text,uuid,jsonb,uuid\)[\s\S]*from public,anon,authenticated/);
 });
