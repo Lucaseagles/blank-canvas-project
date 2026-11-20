@@ -22,11 +22,12 @@ declare
  v_candidates integer:=0;
  v_priority integer;
  v_old_priority integer;
+ v_position integer;
 begin
  if p_actor is null or not exists(
   select 1 from public.user_roles r where r.user_id=p_actor and r.role='owner'
  ) then raise exception 'Owner authorization required'; end if;
- if p_action not in ('save','delete','prioritize','generate') then
+ if p_action not in ('save','delete','prioritize','generate','approve','reject') then
   raise exception 'Invalid smart collection action';
  end if;
  if p_action='save' then
@@ -80,6 +81,35 @@ begin
    jsonb_build_object('slug',v_collection.slug,'title',v_collection.title,'collection_type',v_collection.collection_type,
     'items_deleted',v_items,'candidates_deleted',v_candidates),'{}'::jsonb);
   return jsonb_build_object('deleted',true,'id',p_id);
+ end if;
+
+ if p_action in ('approve','reject') then
+  select * into v_candidate from public.collection_candidates where id=p_id for update;
+  if not found then raise exception 'Collection candidate not found'; end if;
+  if v_candidate.status<>'pending' then raise exception 'Candidate is not pending'; end if;
+  if p_action='approve' then
+   select * into v_collection from public.curated_collections where id=v_candidate.collection_id for update;
+   if not found then raise exception 'Smart collection not found'; end if;
+   select coalesce(max(position)+1,0) into v_position
+   from public.collection_items where collection_id=v_candidate.collection_id;
+   insert into public.collection_items(collection_id,product_id,position)
+   values(v_candidate.collection_id,v_candidate.product_id,v_position)
+   on conflict(collection_id,product_id) do update set position=excluded.position
+   returning id into v_item_id;
+   update public.collection_candidates set status='approved',reviewed_at=now(),reviewed_by=p_actor
+   where id=p_id returning * into v_candidate;
+   insert into public.admin_audit_log(actor_user_id,action_type,entity_type,entity_id,previous_value,new_value)
+   values(p_actor,'RUBI_COLLECTION_CANDIDATE_APPROVED','collection_candidate',p_id,
+    jsonb_build_object('status','pending'),
+    jsonb_build_object('status','approved','collection_item_id',v_item_id));
+   return jsonb_build_object('id',v_item_id,'candidate_id',p_id,'status','approved');
+  end if;
+  update public.collection_candidates set status='rejected',reviewed_at=now(),reviewed_by=p_actor
+  where id=p_id returning * into v_candidate;
+  insert into public.admin_audit_log(actor_user_id,action_type,entity_type,entity_id,previous_value,new_value)
+  values(p_actor,'RUBI_COLLECTION_CANDIDATE_REJECTED','collection_candidate',p_id,
+   jsonb_build_object('status','pending'),jsonb_build_object('status','rejected'));
+  return jsonb_build_object('candidate_id',p_id,'status','rejected');
  end if;
 
  if p_action='prioritize' then
