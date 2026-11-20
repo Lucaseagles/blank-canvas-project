@@ -171,6 +171,15 @@ jobs:
         run: npm run test:rubi-finance-operations
       - name: RUBI legacy finance migration readiness regression
         run: npm run test:rubi-legacy-finance-readiness
+      - name: RUBI partner attribution, evidence, payouts and finance idempotency contracts
+        run: >-
+          node --test
+          src/lib/rubi-partner-checkout-attribution-gate.test.mjs
+          src/lib/rubi-partner-reconciliation-evidence.test.mjs
+          src/lib/rubi-partner-partial-payouts.test.mjs
+          src/lib/rubi-partner-payout-pagination.test.mjs
+          src/lib/rubi-partner-statement-pagination.test.mjs
+          src/lib/rubi-finance-source-idempotency-sprint273.test.mjs
       - name: RUBI exact multi-currency conversion regression
         run: npm run test:rubi-finance-fx
       - name: RUBI commerce journey and external evidence contract regression
