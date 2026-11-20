@@ -211,6 +211,8 @@ jobs:
         run: node --test src/lib/rubi-ecosystem-flywheel.test.mjs
       - name: Sprint 287 product status audit regression
         run: npm run test:rubi-product-status-audit
+      - name: RUBI catalog product lifecycle atomic audit regression
+        run: node --test src/lib/rubi-product-lifecycle-atomic-audit.test.mjs
 
       - name: TypeScript
         run: npx tsc --noEmit
