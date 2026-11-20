@@ -47,6 +47,28 @@ A matriz possui 12 módulos e usa pontuação 0 / 0,5 / 1 por critério. A últi
 
 **Próxima ação de cobertura:** reconstruir a avaliação critério a critério, mantendo score anterior, score atual, evidência na main, testes, estado de produção e dependência. Até isso terminar, 76,0% é baseline provisória, não uma reauditoria de 20/11.
 
+### Referência histórica por módulo — não usar como score atual
+
+A última tabela individual recuperável de 12/11 totalizava 31,5/48 = 65,6%, antes das revisões posteriores que levaram a baseline preservada para 36,5/48. Ela é útil como fotografia histórica, mas **não pode ser apresentada como distribuição atual dos 36,5 pontos**.
+
+| Módulo | Pontos no retrato histórico | Percentual histórico |
+|---|---:|---:|
+| Eclipse / Consumidor | 2,5/4 | 62,5% |
+| Story / Marca própria | 2,5/4 | 62,5% |
+| Achadinhos Orgânico | 2,5/4 | 62,5% |
+| Store / Kairos | 3,5/4 | 87,5% |
+| Business / Lojistas | 3,0/4 | 75,0% |
+| Partners / Afiliados | 3,0/4 | 75,0% |
+| Offer Engine | 3,0/4 | 75,0% |
+| Movement Engine | 2,5/4 | 62,5% |
+| Complementary Offers | 2,0/4 | 50,0% |
+| Intelligence / Métricas | 2,5/4 | 62,5% |
+| Shadow Master / Segurança | 2,5/4 | 62,5% |
+| Qualidade / Operação | 2,0/4 | 50,0% |
+| **Total histórico** | **31,5/48** | **65,6%** |
+
+A diferença entre 31,5 e 36,5 pontos exige reconciliação critério a critério; não distribuir os cinco pontos de diferença proporcionalmente nem atribuí-los por inferência.
+
 ## 3. Maturidade das 35 estratégias RUBI 11×
 
 A classificação atual em `src/lib/rubi-growth-11x.ts` tem 35 estratégias, sete por pilar de negócio.
@@ -58,7 +80,17 @@ A classificação atual em `src/lib/rubi-growth-11x.ts` tem 35 estratégias, set
 | `external-blocker` | 3 | 8,6% |
 | **Total** | **35** | **100%** |
 
-Pilares: Eclipse, Store, Achadinhos, Partners e Business.
+Pilares: Eclipse, Store, Achadinhos, Partners e Business. Cada pilar contém sete estratégias. Distribuição por pilar (classificação de evidência, não percentual de operação):
+
+| Pilar | Código observado | Plano de execução | Bloqueio externo |
+|---|---:|---:|---:|
+| Eclipse | 5/7 (71,4%) | 2/7 (28,6%) | 0/7 (0%) |
+| Store | 3/7 (42,9%) | 3/7 (42,9%) | 1/7 (14,3%) |
+| Achadinhos | 1/7 (14,3%) | 5/7 (71,4%) | 1/7 (14,3%) |
+| Partners | 2/7 (28,6%) | 4/7 (57,1%) | 1/7 (14,3%) |
+| Business | 3/7 (42,9%) | 4/7 (57,1%) | 0/7 (0%) |
+
+
 
 **Leitura correta:** 40,0% é a fração com código observado, não a fração pronta para produção. Para elevar uma estratégia a operacional, será necessário comprovar jornada completa, permissões, dados reais, integração externa quando aplicável, observabilidade e testes. O campo de evidência é uma classificação de planejamento e deve ser revisado contra a main; não é telemetria de execução.
 
