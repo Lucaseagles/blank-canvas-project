@@ -12,7 +12,7 @@ const rules = z.object({
 });
 async function client() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  return supabaseAdmin;
+  return supabaseAdmin as any;
 }
 
 export const listSmartCollections = createServerFn({ method: "GET" })
