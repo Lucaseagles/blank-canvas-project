@@ -27,7 +27,7 @@ begin
  if p_actor is null or not exists(
   select 1 from public.user_roles r where r.user_id=p_actor and r.role='owner'
  ) then raise exception 'Owner authorization required'; end if;
- if p_action not in ('save','delete','prioritize','generate','approve','reject') then
+ if p_action is null or p_action not in ('save','delete','prioritize','generate','approve','reject') then
   raise exception 'Invalid smart collection action';
  end if;
  if p_action='save' then
@@ -168,4 +168,4 @@ revoke all on function public.rubi_manage_smart_collection_audited(text,uuid,jso
 grant execute on function public.rubi_manage_smart_collection_audited(text,uuid,jsonb,uuid)
  to service_role;
 comment on function public.rubi_manage_smart_collection_audited(text,uuid,jsonb,uuid)
- is 'Owner-gated transactional smart collection CRUD, candidate priority and candidate generation with mandatory admin audit.';
+ is 'Owner-gated transactional smart collection CRUD, candidate generation, prioritization and review with mandatory admin audit.';
