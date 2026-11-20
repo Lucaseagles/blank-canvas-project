@@ -1,4 +1,4 @@
-import {normalizeRubiInterestLabel} from "./rubi-unified-interest-ranking";
+import {normalizeRubiInterestLabel} from "./rubi-unified-interest-ranking.ts";
 
 export type RubiAudienceProduct={id:string;category:string|null;min_b2b_quantity?:number};
 export type RubiMerchantQuiz={merchant_segment?:string;batch_size?:string};
