@@ -53,7 +53,7 @@
     "test:rubi-affiliate-growth": "node --experimental-strip-types --test src/lib/rubi-affiliate-growth-foundation.test.mjs",
     "test:rubi-migration-release-manifest": "node --test src/lib/rubi-production-migration-release-manifest.test.mjs",
     "test:rubi-legacy-finance-readiness": "node --experimental-strip-types --test src/lib/rubi-legacy-finance-readiness.test.mjs",
-    "test:rubi-product-status-audit": "node --test src/lib/seller-center-product-status-audit.test.mjs"
+    "test:rubi-product-status-audit": "node --test src/lib/seller-center-product-status-audit.test.mjs",\n    "test:rubi-onboarding-quiz": "node --experimental-strip-types --test src/lib/rubi-onboarding-quiz.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
