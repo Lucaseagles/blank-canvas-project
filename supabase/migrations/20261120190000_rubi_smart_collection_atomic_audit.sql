@@ -21,7 +21,7 @@ declare
  v_items integer:=0;
  v_candidates integer:=0;
  v_priority integer;
- v_item_id uuid;
+ v_old_priority integer;
 begin
  if p_actor is null or not exists(
   select 1 from public.user_roles r where r.user_id=p_actor and r.role='owner'
@@ -92,10 +92,11 @@ begin
   select * into v_candidate from public.collection_candidates where id=p_id for update;
   if not found then raise exception 'Collection candidate not found'; end if;
   if v_candidate.status<>'pending' then raise exception 'Only pending candidates can be prioritized'; end if;
+  v_old_priority:=v_candidate.priority;
   update public.collection_candidates set priority=v_priority where id=p_id returning * into v_candidate;
   insert into public.admin_audit_log(actor_user_id,action_type,entity_type,entity_id,previous_value,new_value)
   values(p_actor,'RUBI_COLLECTION_CANDIDATE_PRIORITIZED','collection_candidate',p_id,
-   jsonb_build_object('priority',v_candidate.priority),jsonb_build_object('priority',v_priority));
+   jsonb_build_object('priority',v_old_priority),jsonb_build_object('priority',v_candidate.priority));
   return jsonb_build_object('id',p_id,'priority',v_priority);
  end if;
 
