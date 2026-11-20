@@ -30,7 +30,7 @@ begin
  if p_actor is null or not exists(
   select 1 from public.user_roles r where r.user_id=p_actor and r.role='owner'
  ) then raise exception 'Owner authorization required'; end if;
- if p_action not in ('save','duplicate') then raise exception 'Invalid product action'; end if;
+ if p_action is null or p_action not in ('save','duplicate') then raise exception 'Invalid product action'; end if;
  if p_action='save' then
   if jsonb_typeof(p_payload) is distinct from 'object'
    or length(btrim(coalesce(p_payload->>'title',''))) not between 1 and 300
