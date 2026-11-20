@@ -21,19 +21,36 @@ export const getAdminSocialChannels = createServerFn({ method: "GET" }).middlewa
   return (data ?? []) as SocialChannel[];
 });
 
-export const saveSocialChannel = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ id: z.string().uuid().optional(), platform: Platform, channel_name: z.string().min(2).max(120), channel_url: z.string().url().refine((v) => { try { const url = new URL(v); return url.protocol === "https:" && !url.username && !url.password; } catch { return false; } }, "Informe uma URL HTTPS pública sem credenciais"), icon: z.string().max(40).optional(), is_active: z.boolean().default(true) }).parse(data)).handler(async ({ data }) => {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const payload = { platform: data.platform, channel_name: data.channel_name, channel_url: data.channel_url, icon: data.icon ?? data.platform, is_active: data.is_active, updated_at: new Date().toISOString() };
-  const query = data.id ? (supabaseAdmin as any).from("social_channels").update(payload).eq("id", data.id) : (supabaseAdmin as any).from("social_channels").insert(payload);
-  const { error } = await query;
-  if (error) throw error;
-  return { success: true };
+const SocialChannelInput = z.object({
+  id: z.string().uuid().optional(),
+  platform: Platform,
+  channel_name: z.string().trim().min(2).max(120),
+  channel_url: z.string().url().refine((value) => {
+    try { const url = new URL(value); return url.protocol === "https:" && !url.username && !url.password; }
+    catch { return false; }
+  }, "Informe uma URL HTTPS pública sem credenciais"),
+  icon: z.string().trim().max(40).optional(),
+  is_active: z.boolean().default(true),
 });
 
-export const deleteSocialChannel = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data)).handler(async ({ data }) => {
+export const saveSocialChannel = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => SocialChannelInput.parse(data)).handler(async ({ data, context }) => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { error } = await (supabaseAdmin as any).from("social_channels").delete().eq("id", data.id);
-  if (error) throw error;
+  const payload = { platform: data.platform, channel_name: data.channel_name, channel_url: data.channel_url, icon: data.icon ?? data.platform, is_active: data.is_active };
+  const { data: result, error } = await (supabaseAdmin as any).rpc("rubi_manage_social_channel_audited", {
+    p_action: "save", p_id: data.id ?? null, p_payload: payload, p_actor: context.userId,
+  });
+  if (error) throw new Error(error.message);
+  if (!result?.id) throw new Error("Canal e auditoria não foram registrados.");
+  return { success: true, id: String(result.id) };
+});
+
+export const deleteSocialChannel = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data)).handler(async ({ data, context }) => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: result, error } = await (supabaseAdmin as any).rpc("rubi_manage_social_channel_audited", {
+    p_action: "delete", p_id: data.id, p_payload: null, p_actor: context.userId,
+  });
+  if (error) throw new Error(error.message);
+  if (result?.id !== data.id) throw new Error("Exclusão e auditoria não foram registradas.");
   return { success: true };
 });
 
