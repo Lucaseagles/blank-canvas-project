@@ -113,6 +113,8 @@ jobs:
         run: npm run test:rubi-live-smoke
       - name: RUBI four audience authorization contract tests
         run: npm run test:rubi-four-profiles
+      - name: RUBI consumer and commercial onboarding quiz regression
+        run: npm run test:rubi-onboarding-quiz
       - name: RUBI browser E2E config safety tests
         run: npm run test:rubi-browser-contract
       - name: RUBI browser evidence integrity tests
