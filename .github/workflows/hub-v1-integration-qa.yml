@@ -183,6 +183,9 @@ jobs:
         run: node --test src/lib/rubi-editorial-session-journey-uuid.test.mjs
       - name: RUBI four-engine ecosystem architecture regression
         run: node --test src/lib/rubi-ecosystem-flywheel.test.mjs
+      - name: Sprint 287 product status audit regression
+        run: npm run test:rubi-product-status-audit
+
       - name: TypeScript
         run: npx tsc --noEmit
       - name: ESLint
