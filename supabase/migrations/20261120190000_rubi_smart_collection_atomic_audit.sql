@@ -114,7 +114,7 @@ begin
 
  if p_action='prioritize' then
   if jsonb_typeof(p_payload) is distinct from 'object'
-   or coalesce(p_payload->>'priority','') !~ '^\\d+$' then
+   or coalesce(p_payload->>'priority','') !~ '^[0-9]+$' then
    raise exception 'Invalid candidate priority';
   end if;
   v_priority:=(p_payload->>'priority')::integer;
