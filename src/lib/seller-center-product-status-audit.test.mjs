@@ -7,7 +7,7 @@ const handler = source.slice(source.indexOf("export const setSellerProductStatus
 
 test("product status mutation uses the authenticated owner client", () => {
   assert.match(handler, /\.middleware\(\[requireOwnerRole\]\)/);
-  assert.match(handler, /context\.supabase\.from\("products"\)/);
+  assert.match(handler, /context\\.supabase\\s*\\n\\s*\\.from\\("products"\\)/);
   assert.doesNotMatch(handler, /supabaseAdmin/);
 });
 
