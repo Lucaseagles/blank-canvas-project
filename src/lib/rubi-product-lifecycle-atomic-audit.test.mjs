@@ -22,6 +22,7 @@ test("admin product create, edit and duplicate use the Owner-gated audited lifec
   assert.match(duplicate, /duplicateCatalogProduct/);
   assert.doesNotMatch(duplicate, /duplicateProduct\(/);
   assert.doesNotMatch(legacy, /export async function (createProduct|updateProduct|duplicateProduct)\(/);
+  assert.doesNotMatch(legacy, /\.from\("products"\)\s*\.(insert|update|delete)\(/);
   for (const token of [
     "security invoker", "set search_path=''", "Owner authorization required",
     "for update", "for share", "RUBI_PRODUCT_CREATED", "RUBI_PRODUCT_UPDATED",
