@@ -21,8 +21,8 @@ test("manual reconciliation requires documentary evidence and bounded server ver
   assert.ok(evidenceSchema.includes("source <> 'admin_reconciliation'"));
   assert.ok(evidenceSchema.includes(") not valid;"));
   assert.ok(evidenceSchema.includes("not proof of a provider-originated payment event"));
-  assert.ok(auditedRpc.includes("p_payment_verified_at > now()"));
-  assert.ok(auditedRpc.includes("p_payment_verified_at < now()-interval '366 days'"));
+  assert.match(auditedRpc, /p_payment_verified_at\s*>\s*now\(\)/);
+  assert.match(auditedRpc, /p_payment_verified_at\s*<\s*now\(\)\s*-\s*interval\s+'366 days'/);
   assert.ok(auditedRpc.includes("Owner authorization required"));
   assert.ok(auditedRpc.includes("Active commercial agreement required"));
 });
