@@ -1,4 +1,4 @@
-import {percentOfIntentToView,type RubiMovementTrafficRow} from "./rubi-movement-performance";
+import {percentOfIntentToView,type RubiMovementTrafficRow} from "./rubi-movement-performance.ts";
 
 export type RubiAudienceMovement = {id:string;name:string;audience:"consumer"|"merchant"|"partner"};
 export type RubiAudienceVariant = {id:string;movement_id:string};
