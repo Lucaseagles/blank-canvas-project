@@ -97,10 +97,14 @@ export const simulateSmartCandidates = createServerFn({ method: "POST" })
 export const reviewSmartCandidate = createServerFn({ method: "POST" })
   .middleware([requireOwnerRole])
   .inputValidator((v) => z.object({ candidateId: id, action: z.enum(["approve", "reject"]) }).parse(v))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const c = await client();
-    const fn = data.action === "approve" ? "approve_collection_candidate" : "reject_collection_candidate";
-    const { data: result, error } = await c.rpc(fn, { p_candidate_id: data.candidateId });
+    const { data: result, error } = await c.rpc("rubi_manage_smart_collection_audited", {
+      p_action: data.action,
+      p_id: data.candidateId,
+      p_payload: {},
+      p_actor: context.userId,
+    });
     if (error) throw new Error(error.message);
     return result;
   });
