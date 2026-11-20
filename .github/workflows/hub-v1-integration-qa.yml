@@ -115,6 +115,8 @@ jobs:
         run: npm run test:rubi-four-profiles
       - name: RUBI consumer and commercial onboarding quiz regression
         run: npm run test:rubi-onboarding-quiz
+      - name: RUBI consumer personalization, discovery mix and audience catalog ranking
+        run: npm run test:rubi-consumer-personalization
       - name: RUBI browser E2E config safety tests
         run: npm run test:rubi-browser-contract
       - name: RUBI browser evidence integrity tests
