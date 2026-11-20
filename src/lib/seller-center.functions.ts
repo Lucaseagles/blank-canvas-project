@@ -228,25 +228,32 @@ export const setSellerProductStatus = createServerFn({ method: "POST" })
   .middleware([requireOwnerRole])
   .inputValidator((data) => z.object({ id: z.string().uuid(), status: z.enum(["draft", "published", "archived", "active"]) }).parse(data))
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: current, error: readError } = await supabaseAdmin.from("products").select("id,status").eq("id", data.id).single();
+    // Use the authenticated owner client so auth.uid() is available to the
+    // products audit trigger. The trigger writes the audit row in the same
+    // database transaction as this update; do not append a second audit row.
+    const { data: current, error: readError } = await context.supabase
+      .from("products")
+      .select("id,status")
+      .eq("id", data.id)
+      .maybeSingle();
     if (readError) throw readError;
-    if (current.status === data.status) return { success: true, id: data.id, status: data.status, changed: false };
+    if (!current) throw new Error("Produto não encontrado ou sem acesso.");
+    if (current.status === data.status) {
+      return { success: true, id: data.id, status: data.status, changed: false };
+    }
 
-    const { error } = await supabaseAdmin
+    // Compare-and-set prevents a stale admin tab from overwriting a newer
+    // status. The database trigger audits only the row that actually changes.
+    const { data: saved, error: updateError } = await context.supabase
       .from("products")
       .update({ status: data.status, updated_at: new Date().toISOString() })
-      .eq("id", data.id);
-    if (error) throw error;
+      .eq("id", data.id)
+      .eq("status", current.status)
+      .select("id,status")
+      .maybeSingle();
 
-    const { error: auditError } = await context.supabase.rpc("append_admin_audit", {
-      p_action_type: "SELLER_PRODUCT_STATUS_CHANGED",
-      p_entity_type: "product",
-      p_entity_id: data.id,
-      p_previous_value: { status: current.status },
-      p_new_value: { status: data.status },
-    });
-    if (auditError) throw auditError;
+    if (updateError) throw updateError;
+    if (!saved) throw new Error("O status do produto mudou em paralelo. Recarregue e tente novamente.");
 
-    return { success: true, id: data.id, status: data.status, changed: true };
+    return { success: true, id: saved.id, status: saved.status, changed: true };
   });
