@@ -197,6 +197,8 @@ jobs:
         run: node --test src/lib/rubi-profile-identity-guard.test.mjs
       - name: RUBI A/B exposure retry and deduplication regression
         run: node --test src/lib/rubi-ab-exposure.test.mjs
+      - name: RUBI smart collection atomic audit regression
+        run: node --test src/lib/rubi-smart-collection-atomic-audit.test.mjs
       - name: RUBI marketplace atomic audit regression
         run: node --test src/lib/rubi-marketplace-atomic-audit.test.mjs
       - name: RUBI marketplace trigger audit hardening regression
