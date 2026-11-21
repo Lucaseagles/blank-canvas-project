@@ -35,17 +35,22 @@ async function createIdentity(role, displayName) {
 }
 
 const mode = process.argv[2];
-if (mode === "seed-profiles") {
+if (mode === "bootstrap-owner") {
   const ownerCount = await admin.from("user_roles").select("user_id", { count: "exact", head: true }).eq("role", "owner");
   if (ownerCount.error) throw new Error(`Could not inspect local owner roles: ${ownerCount.error.message}`);
-  if (ownerCount.count !== 0) throw new Error("Expected a clean local database with zero owner roles before fixture bootstrap.");
-
+  if (ownerCount.count !== 0) throw new Error("Expected zero owner roles before bootstrapping the disposable Master.");
   const masterId = await createIdentity("master", "RUBI QA Master");
-  const { error: ownerError } = await admin.from("user_roles").insert({ user_id: masterId, role: "owner" });
-  if (ownerError) throw new Error(`Could not seed the sole local owner role: ${ownerError.message}`);
-  const { error: primaryError } = await admin.from("rubi_primary_master").insert({ singleton: 1, user_id: masterId });
-  if (primaryError) throw new Error(`Could not initialize the local founding Master: ${primaryError.message}`);
+  const { error } = await admin.from("user_roles").insert({ user_id: masterId, role: "owner" });
+  if (error) throw new Error(`Could not seed the sole local owner role: ${error.message}`);
   await addEnv("RUBI_QA_MASTER_USER_ID", masterId);
+  process.stdout.write("One disposable founding Master role seeded before its bootstrap migration; credentials withheld.\\n");
+} else if (mode === "seed-profiles") {
+  const masterId = process.env.RUBI_QA_MASTER_USER_ID;
+  if (!masterId) throw new Error("The disposable Master must be bootstrapped before commercial profiles.");
+  const { data: master, error: masterError } = await admin.from("rubi_primary_master").select("user_id").single();
+  if (masterError || master?.user_id !== masterId) throw new Error("Founding Master migration did not register the disposable owner.");
+  const ownerCount = await admin.from("user_roles").select("user_id", { count: "exact", head: true }).eq("role", "owner");
+  if (ownerCount.error || ownerCount.count !== 1) throw new Error("Expected exactly one local owner after the bootstrap migration.");
 
   const fixtures = [
     { role: "consumer", name: "RUBI QA Consumidor", audience: "consumer", status: "approved" },
@@ -61,12 +66,7 @@ if (mode === "seed-profiles") {
     if (error) throw new Error(`Could not seed local ${role} profile: ${error.message}`);
     await addEnv(`RUBI_QA_${role.toUpperCase()}_USER_ID`, userId);
   }
-  const { data: master, error: masterError } = await admin.from("rubi_primary_master").select("user_id").single();
-  const finalOwners = await admin.from("user_roles").select("user_id", { count: "exact", head: true }).eq("role", "owner");
-  if (masterError || master?.user_id !== masterId || finalOwners.error || finalOwners.count !== 1) {
-    throw new Error("Local founding Master fixture is not the unique owner.");
-  }
-  process.stdout.write("Consumer, approved merchant, approved partner and sole Master fixtures are ready. Credentials withheld.\\n");
+  process.stdout.write("Consumer, approved merchant and approved partner fixtures are ready. Credentials withheld.\\n");
 } else {
-  throw new Error("Use seed-profiles.");
+  throw new Error("Use bootstrap-owner or seed-profiles.");
 }
