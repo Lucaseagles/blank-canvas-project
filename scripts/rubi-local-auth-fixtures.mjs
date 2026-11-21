@@ -5,7 +5,8 @@ import { appendFile } from "node:fs/promises";
 const url = process.env.SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!url || !serviceKey) throw new Error("Local Supabase URL/service key are required.");
-if (!url.includes("127.0.0.1") && !url.includes("localhost")) {
+const localHost = new URL(url).hostname;
+if (!["127.0.0.1", "localhost", "::1"].includes(localHost)) {
   throw new Error("Refusing to create RUBI QA identities outside the local Supabase instance.");
 }
 const admin = createClient(url, serviceKey, {
