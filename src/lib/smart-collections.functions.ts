@@ -24,7 +24,7 @@ export const listSmartCollections = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     const rows = data ?? [];
-    return Promise.all(rows.map(async (collection) => {
+    return Promise.all(rows.map(async (collection: { id: string }) => {
       const { count, error: countError } = await c.from("collection_candidates")
         .select("id", { count: "exact", head: true })
         .eq("collection_id", collection.id).eq("status", "pending");
