@@ -54,7 +54,7 @@ begin
   return v_id;
 end;
 $fn$;
-revoke all on function public.create_strategy_orchestration(text,text,integer,text,uuid[],uuid[],uuid[]) from public,anon,authenticated;
+revoke all on function public.create_strategy_orchestration(text,text,integer,text,uuid[],uuid[],uuid) from public,anon,authenticated;
 grant execute on function public.create_strategy_orchestration(text,text,integer,text,uuid[],uuid[],uuid) to service_role;
 
 create function public.generate_strategy_orchestration_plan(p_orchestration_id uuid,p_actor uuid)
