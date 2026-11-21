@@ -3372,7 +3372,7 @@ export type Database = {
         Returns: string
       }
       approve_strategy_orchestration: {
-        Args: { p_orchestration_id: string }
+        Args: { p_actor: string; p_orchestration_id: string }
         Returns: boolean
       }
       calculate_content_affinity: {
@@ -3394,11 +3394,13 @@ export type Database = {
       cleanup_recently_shown: { Args: never; Returns: undefined }
       create_strategy_orchestration: {
         Args: {
+          p_actor: string
           p_name: string
           p_notes: string
           p_objective: string
           p_priority: number
           p_strategy_ids: string[]
+          p_video_ids: string[]
         }
         Returns: string
       }
@@ -3408,7 +3410,7 @@ export type Database = {
         Returns: Json
       }
       generate_strategy_orchestration_plan: {
-        Args: { p_orchestration_id: string }
+        Args: { p_actor: string; p_orchestration_id: string }
         Returns: Json
       }
       get_ab_experiment_result: {

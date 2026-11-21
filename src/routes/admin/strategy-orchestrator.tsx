@@ -53,7 +53,7 @@ function StrategyOrchestratorPage() {
   });
   const pause = useMutation({
     mutationFn: pauseStrategyOrchestration,
-    onSuccess: () => { refresh(); toast.success("Orquestração pausada"); },
+    onSuccess: (r) => { refresh(); if (r.paused) toast.success("Orquestração pausada"); else toast.error("A orquestração não está mais pronta ou aprovada."); },
     onError: (error) => toast.error(error instanceof Error ? error.message : "Não foi possível pausar"),
   });
   const preparePublishing = useMutation({
