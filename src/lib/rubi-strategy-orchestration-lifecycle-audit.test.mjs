@@ -38,9 +38,10 @@ test("strategy orchestration keeps its existing status transitions and execution
   assert.match(sql, /'strategy_count'/);
   assert.match(sql, /'video_count'/);
 });
+
 test("create RPC revoke and grant signatures match the declared SQL function", () => {
   const sql = read("../../supabase/migrations/20261121100000_rubi_strategy_orchestration_lifecycle_audit.sql");
   const signature = "create_strategy_orchestration(text,text,integer,text,uuid[],uuid[],uuid)";
-  assert.match(sql, new RegExp("revoke all on function public\\\\." + signature.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&") + " from public,anon,authenticated"));
-  assert.match(sql, new RegExp("grant execute on function public\\\\." + signature.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&") + " to service_role"));
+  assert.ok(sql.includes("revoke all on function public." + signature + " from public,anon,authenticated"));
+  assert.ok(sql.includes("grant execute on function public." + signature + " to service_role"));
 });
