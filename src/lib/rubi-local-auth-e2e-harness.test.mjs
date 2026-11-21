@@ -9,11 +9,15 @@ const workflow = read("../../.github/workflows/rubi-local-authenticated-e2e.yml"
 const spec = read("../../scripts/rubi-local-authenticated.e2e.spec.mjs");
 const config = read("../../rubi-local-playwright.config.mjs");
 
-test("clean local database remains fail-closed until exactly one founding Master is seeded", () => {
-  assert.match(migration, /if owner_count = 0 then[\s\S]*?primary Master remains uninitialized/);
-  assert.match(migration, /elsif owner_count <> 1 then[\s\S]*?requires exactly one existing owner role/);
-  assert.match(migration, /elsif not exists\(select 1 from public\.rubi_primary_master where user_id=founding_owner\)/);
-  assert.match(migration, /Founding Master authorization required/);
+test("production founding-Master migration remains unchanged and local QA seeds the owner before it", () => {
+  assert.match(migration, /if owner_count <> 1 then/);
+  assert.match(migration, /Founding Master bootstrap requires exactly one existing owner role/);
+  assert.match(workflow, /supabase db reset --version 20261113089999 --no-seed/);
+  assert.match(workflow, /rubi-local-auth-fixtures\.mjs bootstrap-owner/);
+  assert.match(workflow, /supabase migration up --local/);
+  assert.match(fixture, /mode === "bootstrap-owner"/);
+  assert.match(fixture, /mode === "seed-profiles"/);
+  assert.match(fixture, /Founding Master migration did not register the disposable owner/);
 });
 
 test("QA fixture refuses non-local Supabase and generates temporary credentials without logging them", () => {
