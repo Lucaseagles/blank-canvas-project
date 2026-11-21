@@ -4,6 +4,8 @@ import { readFileSync } from "node:fs";
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 const migration = read("../../supabase/migrations/20261113090000_rubi_primary_master_roles.sql");
+const gamification = read("../../supabase/migrations/20240824000000_gamification_engine.sql");
+const deferredPolicy = read("../../supabase/migrations/20261121120000_restore_gamification_owner_policy.sql");
 const fixture = read("../../scripts/rubi-local-auth-fixtures.mjs");
 const workflow = read("../../.github/workflows/rubi-local-authenticated-e2e.yml");
 const spec = read("../../scripts/rubi-local-authenticated.e2e.spec.mjs");
@@ -12,11 +14,17 @@ const config = read("../../rubi-local-playwright.config.mjs");
 test("production founding-Master migration remains unchanged and local QA seeds the owner before it", () => {
   assert.match(migration, /if owner_count <> 1 then/);
   assert.match(migration, /Founding Master bootstrap requires exactly one existing owner role/);
-  assert.match(workflow, /supabase db reset --version 20261113089999 --no-seed/);
+  assert.match(workflow, /rubi-deferred-migrations/);
+  assert.match(workflow, /bootstrap-owner/);
+  assert.match(workflow, /supabase migration up --local/);
+  assert.doesNotMatch(workflow, /supabase db reset --version/);
   assert.match(workflow, /rubi-local-auth-fixtures\.mjs bootstrap-owner/);
   assert.match(workflow, /supabase migration up --local/);
   assert.match(fixture, /mode === "bootstrap-owner"/);
   assert.match(fixture, /mode === "seed-profiles"/);
+  assert.doesNotMatch(gamification, /public\\.has_role/);
+  assert.match(deferredPolicy, /public\\.has_role\\(auth\\.uid\\(\\), 'owner'::public\\.app_role\\)/);
+  assert.match(workflow, /version.*20261113089999/);
   assert.match(fixture, /Founding Master migration did not register the disposable owner/);
 });
 
