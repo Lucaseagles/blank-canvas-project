@@ -1,0 +1,80 @@
+name: RUBI Local Authenticated E2E — Four Profiles
+
+on:
+  pull_request:
+    paths:
+      - "src/integrations/supabase/client.ts"
+      - "src/routes/**"
+      - "src/lib/**"
+      - "scripts/rubi-local-auth-fixtures.mjs"
+      - "scripts/rubi-local-authenticated.e2e.spec.mjs"
+      - "rubi-local-playwright.config.mjs"
+      - "supabase/migrations/**"
+      - ".github/workflows/rubi-local-authenticated-e2e.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rubi-local-auth-e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  authenticated-local:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Install application and browser dependencies
+        run: |
+          npm ci
+          npm install --no-save --package-lock=false @playwright/test
+          npx playwright install --with-deps chromium
+      - name: Start isolated local Supabase
+        run: |
+          supabase start > "$RUNNER_TEMP/rubi-supabase-start.log" 2>&1
+          STATUS="$(supabase status -o env)"
+          value() { printf '%s\n' "$STATUS" | sed -n "s/^$1=\"\(.*\)\"$/\1/p"; }
+          echo "SUPABASE_URL=$(value API_URL)" >> "$GITHUB_ENV"
+          echo "SUPABASE_PUBLISHABLE_KEY=$(value ANON_KEY)" >> "$GITHUB_ENV"
+          echo "SUPABASE_SERVICE_ROLE_KEY=$(value SERVICE_ROLE_KEY)" >> "$GITHUB_ENV"
+          echo "VITE_SUPABASE_URL=$(value API_URL)" >> "$GITHUB_ENV"
+          echo "VITE_SUPABASE_PUBLISHABLE_KEY=$(value ANON_KEY)" >> "$GITHUB_ENV"
+      - name: Apply migrations up to the local Master bootstrap gate
+        run: supabase db reset --local --version 20261113089999 --no-seed
+      - name: Seed one disposable founding Master before the bootstrap migration
+        run: node scripts/rubi-local-auth-fixtures.mjs bootstrap-owner
+      - name: Apply remaining migrations, including sole-Master bootstrap
+        run: supabase migration up --local
+      - name: Seed disposable consumer, approved merchant and approved partner
+        run: node scripts/rubi-local-auth-fixtures.mjs seed-profiles
+      - name: Start the app against local Supabase
+        run: |
+          npm run dev -- --host 127.0.0.1 --port 4173 > "$RUNNER_TEMP/rubi-vite.log" 2>&1 &
+          for attempt in $(seq 1 60); do
+            if curl --silent --fail http://127.0.0.1:4173/auth > /dev/null; then exit 0; fi
+            sleep 2
+          done
+          cat "$RUNNER_TEMP/rubi-vite.log"
+          exit 1
+      - name: Run authenticated journeys for all four profiles on mobile and desktop
+        env:
+          RUBI_E2E_REPORT_PATH: ${{ runner.temp }}/rubi-local-auth-evidence.json
+        run: npx playwright test --config=rubi-local-playwright.config.mjs
+      - name: Publish non-secret test evidence
+        if: always()
+        run: |
+          if [ -f "$RUNNER_TEMP/rubi-local-auth-evidence.json" ]; then
+            node -e 'const r=require(process.argv[1]); const s=(r.suites||[]).flatMap(x=>x.specs||[]); console.log("## RUBI authenticated local E2E"); console.log("Specs: "+s.length); console.log("Tests: "+(r.stats?.expected??0)+" expected, "+(r.stats?.unexpected??0)+" failed.");' "$RUNNER_TEMP/rubi-local-auth-evidence.json" >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Stop and discard local Supabase
+        if: always()
+        run: supabase stop --no-backup
