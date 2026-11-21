@@ -57,13 +57,21 @@ export const updateExperiencePopup = createServerFn({ method: "POST" })
       cta_target: z.string().trim().max(2000).nullable(),
       is_active: z.boolean(),
     }),
+    expected: z.record(z.string(), z.unknown()),
   }).parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     if (data.patch.starts_at && data.patch.ends_at && new Date(data.patch.ends_at) <= new Date(data.patch.starts_at)) {
       throw new Error("A data final do pop-up deve ser posterior à inicial.");
     }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: row, error } = await (supabaseAdmin as any).from("popup_rules").update(data.patch).eq("id", data.id).select("*").single();
+    const { data: row, error } = await (supabaseAdmin as any).rpc("rubi_update_admin_setting_audited", {
+      p_source: "popup_rules",
+      p_id: data.id,
+      p_patch: data.patch,
+      p_expected: data.expected,
+      p_actor: context.userId,
+    });
     if (error) throw error;
+    if (!row) throw new Error("Regra de experiência não atualizada.");
     return row;
   });
