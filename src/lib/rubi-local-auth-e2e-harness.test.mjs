@@ -25,7 +25,7 @@ test("QA fixture refuses non-local Supabase and generates temporary credentials 
   assert.match(fixture, /randomBytes\(30\)/);
   assert.match(fixture, /GITHUB_ENV/);
   assert.doesNotMatch(fixture, /console\.log\([^\n]*(password|secret)/i);
-  assert.match(fixture, /finalOwners\.count !== 1/);
+  assert.match(fixture, /ownerCount\.count !== 1/);
 });
 
 test("local browser workflow never links or resets the hosted production database", () => {
