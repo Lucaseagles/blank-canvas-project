@@ -53,13 +53,20 @@ jobs:
         run: |
           echo "## Local Supabase startup diagnostics" >> "$GITHUB_STEP_SUMMARY"
           if [ -f "$RUNNER_TEMP/rubi-supabase-start.log" ]; then
-            echo '### Supabase CLI output (local credentials redacted)' >> "$GITHUB_STEP_SUMMARY"
-            sed -E 's/eyJ[A-Za-z0-9._-]{20,}/[REDACTED_JWT]/g; s/(service_role|anon)[=: ]+[A-Za-z0-9._-]{20,}/\1=[REDACTED]/g' "$RUNNER_TEMP/rubi-supabase-start.log" | tail -n 180 >> "$GITHUB_STEP_SUMMARY"
+            sed -E 's/eyJ[A-Za-z0-9._-]{20,}/[REDACTED_JWT]/g; s/(service_role|anon)[=: ]+[A-Za-z0-9._-]{20,}/\\1=[REDACTED]/g' "$RUNNER_TEMP/rubi-supabase-start.log" | tail -n 240 | tee "$RUNNER_TEMP/rubi-supabase-start-sanitized.log" >> "$GITHUB_STEP_SUMMARY"
           fi
           echo '### Docker containers' >> "$GITHUB_STEP_SUMMARY"
           docker ps -a --no-trunc >> "$GITHUB_STEP_SUMMARY" 2>&1 || true
           echo '### Docker daemon summary' >> "$GITHUB_STEP_SUMMARY"
           docker info --format 'Server={{.ServerVersion}} Storage={{.Driver}} Cgroup={{.CgroupVersion}}' >> "$GITHUB_STEP_SUMMARY" 2>&1 || true
+      - name: Upload sanitized Supabase diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rubi-local-supabase-diagnostics
+          path: ${{ runner.temp }}/rubi-supabase-start-sanitized.log
+          if-no-files-found: ignore
+          retention-days: 3
       - name: Apply migrations up to the founding-Master gate
         run: supabase db reset --version 20261113089999 --no-seed
       - name: Seed one disposable founding Master before its migration
