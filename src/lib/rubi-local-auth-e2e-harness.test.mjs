@@ -22,8 +22,8 @@ test("local QA preserves the strict founding-Master invariant and orders depende
   assert.match(workflow, /supabase migration up --local/);
   assert.match(fixture, /mode === "bootstrap-owner"/);
   assert.match(fixture, /mode === "seed-profiles"/);
-  assert.doesNotMatch(gamification, /public\\.has_role/);
-  assert.match(deferredPolicy, /public\\.has_role\\(auth\\.uid\\(\\), 'owner'::public\\.app_role\\)/);
+  assert.doesNotMatch(gamification, /public\.has_role/);
+  assert.match(deferredPolicy, /public\.has_role\(auth\.uid\(\), 'owner'::public\.app_role\)/);
   assert.match(fixture, /Founding Master migration did not register the disposable owner/);
 });
 
