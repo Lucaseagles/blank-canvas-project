@@ -13,10 +13,14 @@ declare owner_count integer; founding_owner uuid;
 begin
  select count(*) into owner_count from public.user_roles where role='owner';
  select user_id into founding_owner from public.user_roles where role='owner' limit 1;
- if owner_count <> 1 then
+ if owner_count = 0 then
+  -- A clean local/preview database may be migrated before its disposable Master
+  -- fixture exists. Keep the table empty: all Master operations fail closed
+  -- until the single founding owner is provisioned explicitly.
+  raise notice 'No founding owner exists yet; primary Master remains uninitialized';
+ elsif owner_count <> 1 then
   raise exception 'Founding Master bootstrap requires exactly one existing owner role';
- end if;
- if not exists(select 1 from public.rubi_primary_master) then
+ elsif not exists(select 1 from public.rubi_primary_master) then
   insert into public.rubi_primary_master(user_id) values(founding_owner);
  elsif not exists(select 1 from public.rubi_primary_master where user_id=founding_owner) then
   raise exception 'Founding Master mismatch; manual security review required';
