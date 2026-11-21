@@ -215,6 +215,8 @@ jobs:
         run: node --test src/lib/rubi-product-lifecycle-atomic-audit.test.mjs
       - name: RUBI social channel lifecycle atomic audit regression
         run: node --test src/lib/rubi-social-channel-atomic-audit.test.mjs
+      - name: RUBI Experience Engine atomic audit boundary regression
+        run: node --test src/lib/rubi-experience-popup-atomic-audit.test.mjs
 
       - name: TypeScript
         run: npx tsc --noEmit
