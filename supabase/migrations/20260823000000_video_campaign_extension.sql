@@ -18,13 +18,7 @@ ON public.videos FOR ALL
 TO authenticated
 USING (public.has_role(auth.uid(), 'owner'));
 
--- Add automation action for video launches if it doesn't exist
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_type t JOIN pg_enum e ON t.oid = e.enumtypid WHERE t.typname = 'automation_action_type' AND e.enumlabel = 'VIDEO_LAUNCH') THEN
-    ALTER TYPE public.automation_action_type ADD VALUE 'VIDEO_LAUNCH';
-  END IF;
-END $$;
+-- VIDEO_LAUNCH is added after the canonical automation enum is created.
 
 -- Update campaign funnel RPC to include video intelligence
 CREATE OR REPLACE FUNCTION public.get_campaign_funnel(_campaign_id uuid)
