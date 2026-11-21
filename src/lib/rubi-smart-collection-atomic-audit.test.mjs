@@ -28,7 +28,7 @@ test("smart collection RPC locks mutable rows, validates Owner and audits every 
     "RUBI_SMART_COLLECTION_DELETED", "RUBI_COLLECTION_CANDIDATE_PRIORITIZED",
     "RUBI_COLLECTION_CANDIDATE_APPROVED", "RUBI_COLLECTION_CANDIDATE_REJECTED",
     "RUBI_SMART_COLLECTION_CANDIDATES_GENERATED",
-    "items_deleted", "candidates_deleted", "for update", "reviewed_by=p_actor", "^[0-9]+$", "to service_role",
+    "items_deleted", "candidates_deleted", "for update", "reviewed_by=p_actor", "^[0-9]+$", "to service_role", "v_item_id uuid",
   ]) assert.ok(sql.includes(token), token);
   assert.match(sql, /revoke all on function public\.rubi_manage_smart_collection_audited\(text,uuid,jsonb,uuid\)[\s\S]*from public,anon,authenticated/);
 });
