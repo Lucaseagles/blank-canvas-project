@@ -74,8 +74,10 @@ create policy campaign_products_owner_select
 
 revoke all on public.campaigns, public.campaign_channels, public.campaign_products
   from public, anon, authenticated;
-grant select on public.campaigns, public.campaign_channels, public.campaign_products
-  to authenticated;
+grant select on public.campaigns, public.campaign_products to authenticated;
+-- Preserve the existing column-level secrecy contract for channel config.
+grant select (id, campaign_id, channel, is_enabled)
+  on public.campaign_channels to authenticated;
 grant all on public.campaigns, public.campaign_channels, public.campaign_products
   to service_role;
 
