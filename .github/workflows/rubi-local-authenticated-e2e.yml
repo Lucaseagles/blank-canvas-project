@@ -36,7 +36,7 @@ jobs:
       - name: Install application and browser dependencies
         run: |
           npm ci
-          npm install --no-save --package-lock=false @playwright/test
+          npm install --no-save --package-lock=false --legacy-peer-deps @playwright/test
           npx playwright install --with-deps chromium
       - name: Start isolated local Supabase
         run: |
