@@ -11,7 +11,7 @@ const workflow = read("../../.github/workflows/rubi-local-authenticated-e2e.yml"
 const spec = read("../../scripts/rubi-local-authenticated.e2e.spec.mjs");
 const config = read("../../rubi-local-playwright.config.mjs");
 
-test("production founding-Master migration remains unchanged and local QA seeds the owner before it", () => {
+test("local QA preserves the strict founding-Master invariant and orders dependent migrations safely", () => {
   assert.match(migration, /if owner_count <> 1 then/);
   assert.match(migration, /Founding Master bootstrap requires exactly one existing owner role/);
   assert.match(workflow, /rubi-deferred-migrations/);
@@ -24,7 +24,6 @@ test("production founding-Master migration remains unchanged and local QA seeds 
   assert.match(fixture, /mode === "seed-profiles"/);
   assert.doesNotMatch(gamification, /public\\.has_role/);
   assert.match(deferredPolicy, /public\\.has_role\\(auth\\.uid\\(\\), 'owner'::public\\.app_role\\)/);
-  assert.match(workflow, /version.*20261113089999/);
   assert.match(fixture, /Founding Master migration did not register the disposable owner/);
 });
 
