@@ -48,7 +48,13 @@ jobs:
           echo "SUPABASE_SERVICE_ROLE_KEY=$(value SERVICE_ROLE_KEY)" >> "$GITHUB_ENV"
           echo "VITE_SUPABASE_URL=$(value API_URL)" >> "$GITHUB_ENV"
           echo "VITE_SUPABASE_PUBLISHABLE_KEY=$(value ANON_KEY)" >> "$GITHUB_ENV"
-      - name: Seed isolated consumer, merchant, partner and sole Master identities
+      - name: Apply migrations up to the founding-Master gate
+        run: supabase db reset --version 20261113089999 --no-seed
+      - name: Seed one disposable founding Master before its migration
+        run: node scripts/rubi-local-auth-fixtures.mjs bootstrap-owner
+      - name: Apply remaining migrations with the real founding-Master invariant
+        run: supabase migration up --local
+      - name: Seed isolated consumer, approved merchant and approved partner identities
         run: node scripts/rubi-local-auth-fixtures.mjs seed-profiles
       - name: Point the generated browser client to the local Supabase instance
         run: |
