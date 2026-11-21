@@ -38,6 +38,18 @@ jobs:
           npm ci
           npm install --no-save --package-lock=false --legacy-peer-deps @playwright/test
           npx playwright install --with-deps chromium
+      - name: Defer the founding-Master gate and later migrations until the disposable owner exists
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/rubi-deferred-migrations"
+          while IFS= read -r -d '' file; do
+            name="$(basename "$file")"
+            version="${name%%_*}"
+            if [[ "$version" =~ ^[0-9]{14}$ ]] && [[ "$version" > "20261113089999" ]]; then
+              mv "$file" "$RUNNER_TEMP/rubi-deferred-migrations/$name"
+            fi
+          done < <(find supabase/migrations -maxdepth 1 -type f -name '*.sql' -print0 | sort -z)
+          test -f "$RUNNER_TEMP/rubi-deferred-migrations/20261113090000_rubi_primary_master_roles.sql"
       - name: Start isolated local Supabase
         run: |
           supabase start -x studio,imgproxy,logflare,vector,edge-runtime,supavisor,mailpit > "$RUNNER_TEMP/rubi-supabase-start.log" 2>&1
@@ -67,12 +79,13 @@ jobs:
           path: ${{ runner.temp }}/rubi-supabase-start-sanitized.log
           if-no-files-found: ignore
           retention-days: 3
-      - name: Apply migrations up to the founding-Master gate
-        run: supabase db reset --version 20261113089999 --no-seed
       - name: Seed one disposable founding Master before its migration
         run: node scripts/rubi-local-auth-fixtures.mjs bootstrap-owner
-      - name: Apply remaining migrations with the real founding-Master invariant
-        run: supabase migration up --local
+      - name: Restore deferred migrations and apply the real founding-Master invariant
+        run: |
+          set -euo pipefail
+          find "$RUNNER_TEMP/rubi-deferred-migrations" -maxdepth 1 -type f -name '*.sql' -exec mv -t supabase/migrations -- {} +
+          supabase migration up --local
       - name: Seed isolated consumer, approved merchant and approved partner identities
         run: node scripts/rubi-local-auth-fixtures.mjs seed-profiles
       - name: Point the generated browser client to the local Supabase instance
