@@ -101,7 +101,7 @@ ALTER TABLE public.missions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_missions ENABLE ROW LEVEL SECURITY;
 
 -- Policies
-CREATE POLICY "Admins can manage points config" ON public.app_points_config TO authenticated USING (public.has_role(auth.uid(), 'owner'));
+-- Owner-only policy is installed by a later migration after public.has_role exists.
 CREATE POLICY "Users can view their own points" ON public.user_points FOR SELECT TO authenticated USING (auth.uid() = user_id);
 CREATE POLICY "Users can view their own transactions" ON public.point_transactions FOR SELECT TO authenticated USING (auth.uid() = user_id);
 CREATE POLICY "Anyone can view badges" ON public.badges FOR SELECT TO authenticated USING (true);
