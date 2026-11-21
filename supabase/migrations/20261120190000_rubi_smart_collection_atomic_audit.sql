@@ -23,6 +23,7 @@ declare
  v_priority integer;
  v_old_priority integer;
  v_position integer;
+ v_item_id uuid;
 begin
  if p_actor is null or not exists(
   select 1 from public.user_roles r where r.user_id=p_actor and r.role='owner'
