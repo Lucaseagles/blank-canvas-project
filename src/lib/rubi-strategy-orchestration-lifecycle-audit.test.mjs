@@ -24,7 +24,7 @@ test("all orchestration lifecycle RPCs verify the server-derived Owner and atomi
   assert.match(sql, /grant execute on function public\.generate_strategy_orchestration_plan\(uuid,uuid\) to service_role/);
   assert.match(sql, /grant execute on function public\.approve_strategy_orchestration\(uuid,uuid\) to service_role/);
   assert.match(sql, /grant execute on function public\.rubi_pause_strategy_orchestration_audited\(uuid,uuid\) to service_role/);
-  assert.match(api, /p_actor: context\.userId/g);
+  assert.equal((api.match(/p_actor: context\.userId/g) ?? []).length, 4);
   assert.match(api, /rpc\("rubi_pause_strategy_orchestration_audited"/);
   assert.doesNotMatch(api, /from\("strategy_orchestrations"\)\.update\(/);
 });
