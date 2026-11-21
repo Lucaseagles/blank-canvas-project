@@ -51,30 +51,30 @@ export const getStrategyOrchestrationVideos = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
-export const createStrategyOrchestration = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ name: z.string().trim().min(2).max(160), objective: Objective, priority: z.number().int().min(0).max(100), notes: z.string().trim().max(1000).optional().nullable(), strategy_ids: z.array(z.string().uuid()).max(50), video_ids: z.array(z.string().uuid()).max(100).default([]) }).parse(data)).handler(async ({ data }) => {
+export const createStrategyOrchestration = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ name: z.string().trim().min(2).max(160), objective: Objective, priority: z.number().int().min(0).max(100), notes: z.string().trim().max(1000).optional().nullable(), strategy_ids: z.array(z.string().uuid()).max(50), video_ids: z.array(z.string().uuid()).max(100).default([]) }).parse(data)).handler(async ({ data, context }) => {
   const supabase = await db();
-  const { data: id, error } = await supabase.rpc("create_strategy_orchestration", { p_name: data.name, p_objective: data.objective, p_priority: data.priority, p_notes: data.notes ?? null, p_strategy_ids: data.strategy_ids, p_video_ids: data.video_ids });
+  const { data: id, error } = await supabase.rpc("create_strategy_orchestration", { p_name: data.name, p_objective: data.objective, p_priority: data.priority, p_notes: data.notes ?? null, p_strategy_ids: data.strategy_ids, p_video_ids: data.video_ids, p_actor: context.userId });
   if (error) throw error;
   return { id: id as string };
 });
 
-export const generateStrategyOrchestrationPlan = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data)).handler(async ({ data }) => {
+export const generateStrategyOrchestrationPlan = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data)).handler(async ({ data, context }) => {
   const supabase = await db();
-  const { data: plan, error } = await supabase.rpc("generate_strategy_orchestration_plan", { p_orchestration_id: data.id });
+  const { data: plan, error } = await supabase.rpc("generate_strategy_orchestration_plan", { p_orchestration_id: data.id, p_actor: context.userId });
   if (error) throw error;
   return plan as any;
 });
 
-export const approveStrategyOrchestration = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data)).handler(async ({ data }) => {
+export const approveStrategyOrchestration = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data)).handler(async ({ data, context }) => {
   const supabase = await db();
-  const { data: approved, error } = await supabase.rpc("approve_strategy_orchestration", { p_orchestration_id: data.id });
+  const { data: approved, error } = await supabase.rpc("approve_strategy_orchestration", { p_orchestration_id: data.id, p_actor: context.userId });
   if (error) throw error;
   return { approved: Boolean(approved) };
 });
 
-export const pauseStrategyOrchestration = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data)).handler(async ({ data }) => {
+export const pauseStrategyOrchestration = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data)).handler(async ({ data, context }) => {
   const supabase = await db();
-  const { error } = await supabase.from("strategy_orchestrations").update({ status: "paused", updated_at: new Date().toISOString() }).eq("id", data.id).in("status", ["ready", "approved"]);
+  const { data: paused, error } = await supabase.rpc("rubi_pause_strategy_orchestration_audited", { p_orchestration_id: data.id, p_actor: context.userId });
   if (error) throw error;
-  return { success: true };
+  return { paused: Boolean(paused) };
 });
