@@ -2358,6 +2358,8 @@ export type Database = {
           status?: string
         }
         Update: {
+          campaign_id?: string | null
+          orchestration_id?: string | null
           channels?: string[]
           content_id?: string
           content_type?: string
