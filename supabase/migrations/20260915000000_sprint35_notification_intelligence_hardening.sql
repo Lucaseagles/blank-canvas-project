@@ -1,6 +1,6 @@
 CREATE OR REPLACE FUNCTION public.get_notification_intelligence()
 RETURNS jsonb
-LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=''
 AS $$
 DECLARE result jsonb;
 BEGIN
