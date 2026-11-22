@@ -60,3 +60,26 @@ $$;
 
 REVOKE ALL ON FUNCTION public.set_whatsapp_opt_in(boolean, text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.set_whatsapp_opt_in(boolean, text) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.set_referral_leaderboard_visibility(p_show boolean)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = ''
+AS $$
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Authentication required';
+  END IF;
+
+  UPDATE public.profiles
+  SET show_on_leaderboard = p_show,
+      updated_at = now()
+  WHERE user_id = auth.uid();
+
+  RETURN FOUND;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.set_referral_leaderboard_visibility(boolean) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.set_referral_leaderboard_visibility(boolean) TO authenticated;
