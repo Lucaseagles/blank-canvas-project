@@ -32,6 +32,6 @@ CREATE POLICY "Master can read notification history"
   );
 
 COMMENT ON TABLE public.notification_logs IS
-  'Server-written notification delivery history; readable only by authorized Master/admin users.';
+  'Server-written notification delivery history; readable only by the founding Master.';
 COMMENT ON COLUMN public.notification_logs.payload IS
   'Notification payload metadata. Do not store provider secrets or access tokens here.';
