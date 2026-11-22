@@ -22,7 +22,7 @@ test("profile referral and consent columns exist before admin RPCs and privilege
   assert.match(migration, /SECURITY INVOKER[\\s\\S]*SET search_path = ''/i);
   assert.match(migration, /WHERE profile\\.user_id = auth\\.uid\\(\\)/i);
   assert.match(migration, /REVOKE ALL ON FUNCTION public\\.set_whatsapp_opt_in\\(boolean, text\\) FROM PUBLIC, anon/i);
-  assert.match(migration, /GRANT EXECUTE ON FUNCTION public\\.set_whatsapp_opt_in\\(boolean, text\\) TO authenticated/i);
+  assert.match(migration, /GRANT EXECUTE ON FUNCTION public\\.set_whatsapp_opt_in\\(boolean, text\\) TO authenticated/i);\n  assert.match(migration, /CREATE OR REPLACE FUNCTION public\\.set_referral_leaderboard_visibility\\(p_show boolean\\)/i);\n  assert.match(migration, /UPDATE public\\.profiles[\\s\\S]*show_on_leaderboard = p_show[\\s\\S]*WHERE user_id = auth\\.uid\\(\\)/i);\n  assert.match(migration, /GRANT EXECUTE ON FUNCTION public\\.set_referral_leaderboard_visibility\\(boolean\\) TO authenticated/i);
 });
 
 test("WhatsApp consent defaults to opt-out and revocation clears the affirmative consent evidence", () => {
