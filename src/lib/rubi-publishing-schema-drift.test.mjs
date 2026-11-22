@@ -7,12 +7,12 @@ test("Publishing schema drift repair restores exactly the existing code's necess
  const bootstrap=read("../../supabase/migrations/20260918020000_sprint27_publishing_provenance.sql");
  const publisher=read("./admin-publishing.functions.ts");
  const orchestrator=read("./strategy-orchestrator.functions.ts");
- assert.match(bootstrap,/create table if not exists public\\.scheduled_posts/);
- assert.match(bootstrap,/content_type text not null check \\(content_type in \\('offer','video','bundle'\\)\\)/);
+ assert.match(bootstrap,/create table if not exists public\.scheduled_posts/);
+ assert.match(bootstrap,/content_type text not null check \(content_type in \('offer','video','bundle'\)\)/);
  assert.match(bootstrap,/status text not null default 'pending'/);
- assert.match(bootstrap,/alter table public\\.scheduled_posts enable row level security/);
- assert.match(bootstrap,/revoke all on table public\\.scheduled_posts from public, anon, authenticated/);
- assert.match(bootstrap,/grant all on table public\\.scheduled_posts to service_role/);
+ assert.match(bootstrap,/alter table public\.scheduled_posts enable row level security/);
+ assert.match(bootstrap,/revoke all on table public\.scheduled_posts from public, anon, authenticated/);
+ assert.match(bootstrap,/grant all on table public\.scheduled_posts to service_role/);
  assert.match(migration,/create table if not exists public\.strategy_orchestration_videos/);
  assert.match(migration,/alter table public\.strategy_orchestration_videos enable row level security/);
  assert.match(migration,/revoke all on public\.strategy_orchestration_videos from public,anon,authenticated/);
