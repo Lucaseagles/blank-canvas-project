@@ -2,6 +2,9 @@
 -- and whose EXECUTE privileges are hardened by the next historical migration.
 -- This implementation preserves the existing notification model while also
 -- honoring each user's retention opt-out and configured frequency cap.
+ALTER TABLE public.notification_preferences
+  ADD COLUMN IF NOT EXISTS last_retention_sent_at timestamptz;
+
 CREATE OR REPLACE FUNCTION public.run_retention_engine(_inactive_days integer DEFAULT 3)
 RETURNS integer
 LANGUAGE plpgsql
@@ -38,6 +41,8 @@ BEGIN
        AND u.last_sign_in_at IS NOT NULL
        AND u.last_sign_in_at < now() - make_interval(days => greatest(1, least(coalesce(_inactive_days, 3), 90)))
        AND coalesce(np.retention_enabled, true) = true
+       AND coalesce(np.last_retention_sent_at, '-infinity'::timestamptz)
+           <= now() - make_interval(days => greatest(1, least(coalesce(np.frequency_cap_days, 1), 90)))
        AND NOT EXISTS (
          SELECT 1
            FROM public.notifications AS n
@@ -55,6 +60,11 @@ BEGIN
 
     -- Re-check after acquiring the per-user lock.
     IF EXISTS (
+      SELECT 1
+        FROM public.notification_preferences AS np
+       WHERE np.user_id = v_user.user_id
+         AND np.last_retention_sent_at > now() - make_interval(days => v_user.frequency_cap_days)
+    ) OR EXISTS (
       SELECT 1
         FROM public.notifications AS n
        WHERE n.user_id = v_user.user_id
