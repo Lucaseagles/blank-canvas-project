@@ -26,4 +26,7 @@ alter table public.support_chat_log enable row level security;
 
 -- Writes are intentionally limited to the following policy migration and service role.
 revoke all on public.support_chat_log from public, anon, authenticated;
+-- The following migration installs INSERT-only RLS policies for anonymous and
+-- authenticated support requests; table privileges must also permit those inserts.
+grant insert on public.support_chat_log to anon, authenticated;
 grant all on public.support_chat_log to service_role;
