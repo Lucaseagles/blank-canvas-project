@@ -48,11 +48,16 @@ alter table public.curated_collections enable row level security;
 alter table public.collection_items enable row level security;
 alter table public.collection_candidates enable row level security;
 
-create policy if not exists "Public can view active curated collections" on public.curated_collections for select using (is_active = true);
-create policy if not exists "Owners can manage curated collections" on public.curated_collections for all using (has_role(auth.uid(), 'owner'::app_role)) with check (has_role(auth.uid(), 'owner'::app_role));
-create policy if not exists "Public can view items of active collections" on public.collection_items for select using (exists (select 1 from public.curated_collections c where c.id = collection_items.collection_id and c.is_active = true));
-create policy if not exists "Owners can manage collection items" on public.collection_items for all using (has_role(auth.uid(), 'owner'::app_role)) with check (has_role(auth.uid(), 'owner'::app_role));
-create policy if not exists "Owners can manage collection candidates" on public.collection_candidates for all using (has_role(auth.uid(), 'owner'::app_role)) with check (has_role(auth.uid(), 'owner'::app_role));
+drop policy if exists "Public can view active curated collections" on public.curated_collections;
+create policy "Public can view active curated collections" on public.curated_collections for select using (is_active = true);
+drop policy if exists "Owners can manage curated collections" on public.curated_collections;
+create policy "Owners can manage curated collections" on public.curated_collections for all using (has_role(auth.uid(), 'owner'::app_role)) with check (has_role(auth.uid(), 'owner'::app_role));
+drop policy if exists "Public can view items of active collections" on public.collection_items;
+create policy "Public can view items of active collections" on public.collection_items for select using (exists (select 1 from public.curated_collections c where c.id = collection_items.collection_id and c.is_active = true));
+drop policy if exists "Owners can manage collection items" on public.collection_items;
+create policy "Owners can manage collection items" on public.collection_items for all using (has_role(auth.uid(), 'owner'::app_role)) with check (has_role(auth.uid(), 'owner'::app_role));
+drop policy if exists "Owners can manage collection candidates" on public.collection_candidates;
+create policy "Owners can manage collection candidates" on public.collection_candidates for all using (has_role(auth.uid(), 'owner'::app_role)) with check (has_role(auth.uid(), 'owner'::app_role));
 
 create or replace function public.generate_collection_candidates(p_collection_id uuid)
 returns jsonb language plpgsql security definer set search_path = public as $$
