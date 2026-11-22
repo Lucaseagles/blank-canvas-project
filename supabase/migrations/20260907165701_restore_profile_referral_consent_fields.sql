@@ -83,3 +83,76 @@ $$;
 
 REVOKE ALL ON FUNCTION public.set_referral_leaderboard_visibility(boolean) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.set_referral_leaderboard_visibility(boolean) TO authenticated;
+
+-- Restore the server-side leaderboard RPCs consumed by the referral dashboard.
+-- Only users who explicitly opted in are eligible; banned users are excluded.
+CREATE OR REPLACE FUNCTION public.get_referral_leaderboard(limit_count integer DEFAULT 50)
+RETURNS TABLE (
+  ranking_position integer,
+  user_id uuid,
+  display_name text,
+  total_referrals integer,
+  tier_name text,
+  tier_icon text,
+  tier_color text
+)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT ranked.ranking_position,
+         ranked.user_id,
+         ranked.display_name,
+         ranked.total_referrals,
+         ranked.tier_name,
+         ranked.tier_icon,
+         ranked.tier_color
+  FROM (
+    SELECT
+      row_number() OVER (
+        ORDER BY profile.total_referrals DESC, profile.created_at ASC, profile.user_id ASC
+      )::integer AS ranking_position,
+      profile.user_id,
+      COALESCE(NULLIF(btrim(profile.display_name), ''), 'Membro RUBI') AS display_name,
+      profile.total_referrals,
+      COALESCE(tier.tier_name, 'Inicial') AS tier_name,
+      COALESCE(tier.icon, '🏅') AS tier_icon,
+      COALESCE(tier.color, '#6B7280') AS tier_color
+    FROM public.profiles AS profile
+    LEFT JOIN public.referral_tiers AS tier
+      ON tier.id = profile.current_tier_id
+    WHERE profile.show_on_leaderboard IS TRUE
+      AND profile.is_banned IS FALSE
+      AND profile.total_referrals > 0
+  ) AS ranked
+  ORDER BY ranked.ranking_position
+  LIMIT LEAST(GREATEST(COALESCE(limit_count, 50), 1), 100);
+$$;
+
+CREATE OR REPLACE FUNCTION public.get_referral_leaderboard_position(p_user_id uuid)
+RETURNS integer
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT ranked.ranking_position
+  FROM (
+    SELECT
+      profile.user_id,
+      row_number() OVER (
+        ORDER BY profile.total_referrals DESC, profile.created_at ASC, profile.user_id ASC
+      )::integer AS ranking_position
+    FROM public.profiles AS profile
+    WHERE profile.show_on_leaderboard IS TRUE
+      AND profile.is_banned IS FALSE
+      AND profile.total_referrals > 0
+  ) AS ranked
+  WHERE ranked.user_id = p_user_id;
+$$;
+
+REVOKE ALL ON FUNCTION public.get_referral_leaderboard(integer) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.get_referral_leaderboard_position(uuid) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_referral_leaderboard(integer) TO service_role;
+GRANT EXECUTE ON FUNCTION public.get_referral_leaderboard_position(uuid) TO service_role;
