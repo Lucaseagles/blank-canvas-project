@@ -15,12 +15,12 @@ const notificationRestore = read("../../supabase/migrations/20260914990000_resto
 const notificationHardening = read("../../supabase/migrations/20260915000000_sprint35_notification_intelligence_hardening.sql");
 
 test("notification intelligence uses only defined roles and a hardened search path", () => {
-  assert.match(appRole, /CREATE TYPE public\\.app_role AS ENUM \\('owner', 'user'\\)/);
-  assert.doesNotMatch(notificationRestore, /'admin'::public\\.app_role/);
-  assert.match(notificationRestore, /public\\.has_role\\(auth\\.uid\\(\\), 'owner'::public\\.app_role\\)/);
+  assert.match(appRole, /CREATE TYPE public\.app_role AS ENUM \('owner', 'user'\)/);
+  assert.doesNotMatch(notificationRestore, /'admin'::public\.app_role/);
+  assert.match(notificationRestore, /public\.has_role\(auth\.uid\(\), 'owner'::public\.app_role\)/);
   assert.match(notificationHardening, /SECURITY DEFINER SET search_path=''/);
-  assert.match(notificationHardening, /public\\.has_role\\(auth\\.uid\\(\\),'owner'::public\\.app_role\\)/);
-  assert.doesNotMatch(notificationHardening, /'admin'::public\\.app_role/);
+  assert.match(notificationHardening, /public\.has_role\(auth\.uid\(\),'owner'::public\.app_role\)/);
+  assert.doesNotMatch(notificationHardening, /'admin'::public\.app_role/);
 });
 
 test("local QA preserves the strict founding-Master invariant and orders dependent migrations safely", () => {
@@ -59,7 +59,7 @@ test("local browser workflow never links or resets the hosted production databas
 test("four authenticated profiles are covered on mobile and desktop, including non-owner Master denial", () => {
   for (const profile of ["CONSUMER", "MERCHANT", "PARTNER", "MASTER"]) assert.match(spec, new RegExp(`key: "${profile}"`));
   assert.match(spec, /authenticated non-owner cannot enter the Master dashboard/i);
-  assert.match(spec, /signIn\\(page, "CONSUMER", "\\/admin", "\\/"\\)/);
+  assert.match(spec, /signIn\(page, "CONSUMER", "\/admin", "\/"\)/);
   assert.match(config, /rubi-local-authenticated/);
   assert.match(spec, /width: 390, height: 844/);
   assert.match(spec, /width: 1366, height: 768/);
