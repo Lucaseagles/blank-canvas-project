@@ -4,6 +4,7 @@ import {readFileSync} from "node:fs";
 const read=p=>readFileSync(new URL(p,import.meta.url),"utf8");
 test("Publishing schema drift repair restores exactly the existing code's necessary tables and columns",()=>{
  const migration=read("../../supabase/migrations/20261114050000_rubi_publishing_schema_drift_repair.sql");
+ const bootstrap=read("../../supabase/migrations/20260918020000_sprint27_publishing_provenance.sql");
  const publisher=read("./admin-publishing.functions.ts");
  const orchestrator=read("./strategy-orchestrator.functions.ts");
  assert.match(bootstrap,/create table if not exists public\\.scheduled_posts/);
