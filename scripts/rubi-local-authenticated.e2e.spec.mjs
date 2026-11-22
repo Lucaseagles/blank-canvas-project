@@ -11,7 +11,7 @@ const viewports = [
   { name: "desktop", width: 1366, height: 768 },
 ];
 
-async function signIn(page, key, path) {
+async function signIn(page, key, path, expectedPath = path) {
   const email = process.env[`RUBI_QA_${key}_EMAIL`];
   const password = process.env[`RUBI_QA_${key}_PASSWORD`];
   if (!email || !password) throw new Error(`Missing ephemeral credentials for ${key}.`);
@@ -19,7 +19,7 @@ async function signIn(page, key, path) {
   await page.locator('input[type="email"]').fill(email);
   await page.locator('input[type="password"]').fill(password);
   await page.getByRole("button", { name: "Engajar Sistema" }).click();
-  await page.waitForURL((url) => url.pathname === path, { timeout: 30000 });
+  await page.waitForURL((url) => url.pathname === expectedPath, { timeout: 30000 });
 }
 
 for (const viewport of viewports) {
@@ -46,8 +46,7 @@ for (const viewport of viewports) {
     }
 
     test("authenticated non-owner cannot enter the Master dashboard", async ({ page }) => {
-      await signIn(page, "CONSUMER", "/admin");
-      await page.waitForURL((url) => url.pathname === "/", { timeout: 30000 });
+      await signIn(page, "CONSUMER", "/admin", "/");
       await expect(page.getByText("Verificando acesso seguro...")).toHaveCount(0);
     });
   });
