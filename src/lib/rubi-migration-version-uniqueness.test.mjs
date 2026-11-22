@@ -35,15 +35,17 @@ test("recent rollout sequence preserves applied and pending migration identities
   for (const name of expected) assert.ok(rolloutNames.includes(name), name);
 });
 
+test("Sprint 27 support and Sprint 33 search use distinct migration versions", () => {
+  assert.ok(names.includes("20260901015000_sprint27_part3_support.sql"));
+  assert.ok(names.includes("20260901020000_sprint33_search_and_recently_viewed.sql"));
+  assert.ok(!names.includes("20260901020000_sprint27_part3_support.sql"));
+});
+
 test("all historical duplicate migration prefixes remain explicitly allowlisted", () => {
   // Historical duplicates are intentionally not renamed here: production migration
   // history contains deployed identities that cannot be inferred from filenames.
   // Any new duplicate or silent removal must trigger a deliberate reconciliation.
   const expectedHistoricalDuplicates = {
-    "20260901020000": [
-      "20260901020000_sprint27_part3_support.sql",
-      "20260901020000_sprint33_search_and_recently_viewed.sql",
-    ],
     "20260902000002": [
       "20260902000002_sprint34_secure_hub_platform_registry.sql",
       "20260902000002_sprint34_secure_hub_platforms.sql",
