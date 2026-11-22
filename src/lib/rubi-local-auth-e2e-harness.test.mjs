@@ -46,7 +46,7 @@ test("local browser workflow never links or resets the hosted production databas
 
 test("four authenticated profiles are covered on mobile and desktop, including non-owner Master denial", () => {
   for (const profile of ["CONSUMER", "MERCHANT", "PARTNER", "MASTER"]) assert.match(spec, new RegExp(`key: "${profile}"`));
-  assert.match(spec, /authenticated non-owner cannot enter the Master dashboard/i);
+  assert.match(spec, /authenticated non-owner cannot enter the Master dashboard/i);\n  assert.match(spec, /signIn\\(page, "CONSUMER", "\\/admin", "\\/"\\)/);
   assert.match(config, /rubi-local-authenticated/);
   assert.match(spec, /width: 390, height: 844/);
   assert.match(spec, /width: 1366, height: 768/);
