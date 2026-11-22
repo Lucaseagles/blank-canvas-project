@@ -2347,6 +2347,8 @@ export type Database = {
           status: string
         }
         Insert: {
+          campaign_id?: string | null
+          orchestration_id?: string | null
           channels?: string[]
           content_id: string
           content_type: string
