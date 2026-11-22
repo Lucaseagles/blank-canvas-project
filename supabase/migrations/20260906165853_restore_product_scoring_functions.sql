@@ -41,14 +41,17 @@ CREATE OR REPLACE FUNCTION public.classify_user_segment(p_user_id uuid)
 RETURNS text LANGUAGE sql STABLE SECURITY INVOKER SET search_path = public
 AS $$
   SELECT CASE
-    WHEN lower(coalesce(role, '')) IN ('admin','master','super_admin','superadmin') THEN 'admin'
-    WHEN lower(coalesce(role, '')) IN ('merchant','store_owner','lojista','business') THEN 'merchant'
-    WHEN lower(coalesce(role, '')) IN ('partner','affiliate','influencer','parceiro') THEN 'partner'
+    WHEN p.role::text = 'owner'
+      OR EXISTS (
+        SELECT 1 FROM public.user_roles ur
+        WHERE ur.user_id = p.user_id AND ur.role::text IN ('owner', 'admin', 'master', 'super_admin')
+      )
+      THEN 'admin'
     ELSE 'consumer'
   END
-  FROM public.profiles
-  WHERE user_id = p_user_id OR id = p_user_id
-  ORDER BY CASE WHEN user_id = p_user_id THEN 0 ELSE 1 END
+  FROM public.profiles p
+  WHERE p.user_id = p_user_id OR p.id = p_user_id
+  ORDER BY CASE WHEN p.user_id = p_user_id THEN 0 ELSE 1 END
   LIMIT 1;
 $$;
 
