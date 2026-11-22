@@ -2332,6 +2332,8 @@ export type Database = {
       }
       scheduled_posts: {
         Row: {
+          campaign_id: string | null
+          orchestration_id: string | null
           channels: string[]
           content_id: string
           content_type: string
@@ -2372,7 +2374,22 @@ export type Database = {
           scheduled_for?: string
           status?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_posts_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_posts_orchestration_id_fkey"
+            columns: ["orchestration_id"]
+            isOneToOne: false
+            referencedRelation: "strategy_orchestrations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       search_history: {
         Row: {
