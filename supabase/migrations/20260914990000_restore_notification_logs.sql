@@ -29,7 +29,6 @@ CREATE POLICY "Master can read notification history"
   TO authenticated
   USING (
     public.has_role(auth.uid(), 'owner'::public.app_role)
-    OR public.has_role(auth.uid(), 'admin'::public.app_role)
   );
 
 COMMENT ON TABLE public.notification_logs IS
