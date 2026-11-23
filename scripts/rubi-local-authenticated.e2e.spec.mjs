@@ -12,8 +12,25 @@ const viewports = [
 ];
 
 async function signIn(page, key, path, expectedPath = path) {
-  const browserDiagnostics = { pageErrors: [], failedRequests: [], consoleErrors: [] };
+  const browserDiagnostics = { pageErrors: [], failedRequests: [], consoleErrors: [], httpErrors: [] };
   page.on("pageerror", (error) => browserDiagnostics.pageErrors.push(error.message));
+  page.on("response", async (response) => {
+    if (response.status() < 400) return;
+    const request = response.request();
+    let body = "";
+    try {
+      body = (await response.text()).slice(0, 500);
+    } catch {
+      body = "response body unavailable";
+    }
+    const url = new URL(response.url());
+    browserDiagnostics.httpErrors.push({
+      status: response.status(),
+      method: request.method(),
+      url: `${url.origin}${url.pathname}`,
+      body: body.replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/gi, "[EMAIL]"),
+    });
+  });
   page.on("console", (message) => {
     if (message.type() === "error") browserDiagnostics.consoleErrors.push(message.text());
   });
