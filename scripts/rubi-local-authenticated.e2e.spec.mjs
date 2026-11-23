@@ -11,7 +11,7 @@ const viewports = [
   { name: "desktop", width: 1366, height: 768 },
 ];
 
-const scrubSensitive = (value) => value.replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/gi, "[EMAIL]");
+const scrubSensitive = (value) => value.replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[EMAIL]");
 
 async function signIn(page, key, path, expectedPath = path) {
   const browserDiagnostics = { pageErrors: [], failedRequests: [], consoleErrors: [], httpErrors: [] };
@@ -30,7 +30,7 @@ async function signIn(page, key, path, expectedPath = path) {
       status: response.status(),
       method: request.method(),
       url: `${url.origin}${url.pathname}`,
-      body: body.replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/gi, "[EMAIL]"),
+      body: scrubSensitive(body),
     });
   });
   page.on("console", (message) => {
@@ -75,7 +75,7 @@ async function signIn(page, key, path, expectedPath = path) {
       })(),
     }));
     const scrub = (value) => value.replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/gi, "[EMAIL]");
-    throw new Error(`Authentication wait timed out for ${key}. Browser state: ${scrub(JSON.stringify(diagnostic))}. Runtime diagnostics: ${scrub(JSON.stringify(browserDiagnostics))}. Original: ${error.message}`);
+    throw new Error(`Authentication wait timed out for ${key}. Browser state: ${scrubSensitive(JSON.stringify(diagnostic))}. Runtime diagnostics: ${scrubSensitive(JSON.stringify(browserDiagnostics))}. Original: ${error.message}`);
   }
 
   if (page.url() && new URL(page.url()).pathname !== expectedPath) {
