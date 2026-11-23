@@ -12,6 +12,15 @@ const viewports = [
 ];
 
 async function signIn(page, key, path, expectedPath = path) {
+  const browserDiagnostics = { pageErrors: [], failedRequests: [], consoleErrors: [] };
+  page.on("pageerror", (error) => browserDiagnostics.pageErrors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") browserDiagnostics.consoleErrors.push(message.text());
+  });
+  page.on("requestfailed", (request) => {
+    const url = new URL(request.url());
+    browserDiagnostics.failedRequests.push(`${request.method()} ${url.origin}${url.pathname}: ${request.failure()?.errorText ?? "request failed"}`);
+  });
   const email = process.env[`RUBI_QA_${key}_EMAIL`];
   const password = process.env[`RUBI_QA_${key}_PASSWORD`];
   if (!email || !password) throw new Error(`Missing ephemeral credentials for ${key}.`);
@@ -23,14 +32,32 @@ async function signIn(page, key, path, expectedPath = path) {
 
   // Wait for either the expected route or a visible auth error in one bounded poll.
   // This avoids a sequential toast delay and leaves no competing promise running.
-  await page.waitForFunction(
-    ({ expectedPath }) => {
-      const authError = document.querySelector('[data-sonner-toast][data-type="error"]');
-      return window.location.pathname === expectedPath || Boolean(authError);
-    },
-    { expectedPath },
-    { timeout: 30000 },
-  );
+  try {
+    await page.waitForFunction(
+      ({ expectedPath }) => {
+        const authError = document.querySelector('[data-sonner-toast][data-type="error"]');
+        return window.location.pathname === expectedPath || Boolean(authError);
+      },
+      { expectedPath },
+      { timeout: 30000 },
+    );
+  } catch (error) {
+    const diagnostic = await page.evaluate(() => ({
+      pathname: window.location.pathname,
+      title: document.title,
+      bodyText: (document.body?.innerText ?? "").slice(0, 2500),
+      toasts: Array.from(document.querySelectorAll("[data-sonner-toast]")).map((toast) => ({
+        type: toast.getAttribute("data-type"),
+        text: (toast.textContent ?? "").slice(0, 500),
+      })),
+      loginButton: (() => {
+        const button = Array.from(document.querySelectorAll("button")).find((item) => /Engajar Sistema|Autenticando/i.test(item.innerText));
+        return button ? { text: button.innerText, disabled: button.disabled } : null;
+      })(),
+    }));
+    const scrub = (value) => value.replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/gi, "[EMAIL]");
+    throw new Error(`Authentication wait timed out for ${key}. Browser state: ${scrub(JSON.stringify(diagnostic))}. Runtime diagnostics: ${scrub(JSON.stringify(browserDiagnostics))}. Original: ${error.message}`);
+  }
 
   if (page.url() && new URL(page.url()).pathname !== expectedPath) {
     const feedbackText = (
