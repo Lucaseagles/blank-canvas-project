@@ -52,6 +52,25 @@ jobs:
           test -f "$RUNNER_TEMP/rubi-deferred-migrations/20261113090000_rubi_primary_master_roles.sql"
       - name: Consolidate reviewed historical migration collisions for local bootstrap only
         run: node scripts/consolidate-local-migration-versions.mjs
+      - name: Allocate a dedicated local database port for CI
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { readFile, writeFile } from "node:fs/promises";
+          const path = "supabase/config.toml";
+          let config = await readFile(path, "utf8");
+          if (/^\\[db\\]\\s*$/m.test(config)) {
+            if (/^port\\s*=.*$/m.test(config)) {
+              config = config.replace(/^port\\s*=.*$/m, "port = 55432");
+            } else {
+              config = config.replace(/^\\[db\\]\\s*$/m, "[db]\\nport = 55432");
+            }
+          } else {
+            config += "\\n[db]\\nport = 55432\\n";
+          }
+          await writeFile(path, config);
+          console.log("Configured disposable CI database on 127.0.0.1:55432.");
+          NODE
       - name: Start isolated local Supabase
         run: |
           supabase start -x studio,imgproxy,logflare,vector,edge-runtime,supavisor,mailpit > "$RUNNER_TEMP/rubi-supabase-start.log" 2>&1
