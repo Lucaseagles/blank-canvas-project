@@ -17,6 +17,12 @@ async function signIn(page, key, path, expectedPath = path) {
   const browserDiagnostics = { pageErrors: [], failedRequests: [], consoleErrors: [], httpErrors: [] };
   page.on("pageerror", (error) => browserDiagnostics.pageErrors.push(error.message));
   page.on("response", async (response) => {
+    const request = response.request();
+    const responseUrl = new URL(response.url());
+    if (responseUrl.pathname.startsWith("/auth/v1/")) {
+      browserDiagnostics.authResponses ??= [];
+      browserDiagnostics.authResponses.push({ status: response.status(), method: request.method(), path: responseUrl.pathname });
+    }
     if (response.status() < 400) return;
     const request = response.request();
     let body = "";
@@ -44,6 +50,9 @@ async function signIn(page, key, path, expectedPath = path) {
   const password = process.env[`RUBI_QA_${key}_PASSWORD`];
   if (!email || !password) throw new Error(`Missing ephemeral credentials for ${key}.`);
   await page.goto(`/auth?returnTo=${encodeURIComponent(path)}`);
+  // Wait for the Vite-served client modules and React event handlers to hydrate
+  // before interacting; DOM visibility alone does not guarantee hydration.
+  await page.waitForLoadState("networkidle");
   // Use the login form's own unique placeholder, not a page-wide email selector.
   await page.getByPlaceholder("operator@system.io").fill(email);
   await page.locator('input[type="password"]').fill(password);
