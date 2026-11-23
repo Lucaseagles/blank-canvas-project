@@ -101,3 +101,27 @@ test("saving a Story draft is owner-only, revision-checked and clears prior appr
  assert.match(migration,/revoke all on function public\.rubi_save_story_draft_audited[\s\S]*from public,anon,authenticated/);
  assert.match(migration,/grant execute on function public\.rubi_save_story_draft_audited[\s\S]*to service_role/);
 });
+
+test("versioned Story eligibility accepts only the exact reviewed consumer movement revision",()=>{
+ const story={movement_id:"movement-1",approved_movement_revision:7,status:"approved",rights_confirmed:true};
+ const movement={id:"movement-1",product_id:"product-1",status:"review",audience:"consumer",revision:7};
+ assert.equal(canServeVersionedRubiStory(story,movement,"product-1"),true);
+ assert.equal(canServeVersionedRubiStory(story,{...movement,revision:8},"product-1"),false);
+ assert.equal(canServeVersionedRubiStory(story,{...movement,product_id:"product-2"},"product-1"),false);
+ assert.equal(canServeVersionedRubiStory(story,{...movement,audience:"merchant"},"product-1"),false);
+ assert.equal(canServeVersionedRubiStory(story,{...movement,status:"published"},"product-1"),false);
+ assert.equal(canServeVersionedRubiStory({...story,rights_confirmed:false},movement,"product-1"),false);
+ assert.equal(canServeVersionedRubiStory({...story,movement_id:null},movement,"product-1"),false);
+ assert.equal(canServeVersionedRubiStory(story,null,"product-1"),false);
+});
+
+test("Story media URLs reject non-HTTPS, credentials, fragments and wrong file extensions",()=>{
+ assert.equal(validRubiStoryMediaUrl("https://cdn.example.test/story.mp4","video"),true);
+ assert.equal(validRubiStoryMediaUrl("https://cdn.example.test/story.webm","video"),true);
+ assert.equal(validRubiStoryMediaUrl("https://cdn.example.test/poster.webp","poster"),true);
+ assert.equal(validRubiStoryMediaUrl("http://cdn.example.test/story.mp4","video"),false);
+ assert.equal(validRubiStoryMediaUrl("https://user:pass@cdn.example.test/story.mp4","video"),false);
+ assert.equal(validRubiStoryMediaUrl("https://cdn.example.test/story.mp4#fragment","video"),false);
+ assert.equal(validRubiStoryMediaUrl("https://cdn.example.test/story.mov","video"),false);
+ assert.equal(validRubiStoryMediaUrl("https://cdn.example.test/poster.gif","poster"),false);
+});
