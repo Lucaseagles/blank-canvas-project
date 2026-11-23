@@ -20,7 +20,7 @@ comment on table public.rubi_creator_team_membership_events is
 
 create or replace function public.rubi_record_team_membership_transition()
 returns trigger
-language plpgsql security definer set search_path = '' as $
+language plpgsql security definer set search_path = '' as $$
 begin
  if tg_op='INSERT' then
    insert into public.rubi_creator_team_membership_events
