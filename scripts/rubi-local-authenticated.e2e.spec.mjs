@@ -20,6 +20,19 @@ async function signIn(page, key, path, expectedPath = path) {
   await page.getByPlaceholder("operator@system.io").fill(email);
   await page.locator('input[type="password"]').fill(password);
   await page.getByRole("button", { name: "Engajar Sistema" }).click();
+
+  // Surface the application's actual auth feedback instead of reporting only a navigation timeout.
+  const authFeedback = page.locator("[data-sonner-toast]").first();
+  try {
+    await authFeedback.waitFor({ state: "visible", timeout: 10000 });
+    const feedbackText = (await authFeedback.innerText()).trim();
+    if (feedbackText && !feedbackText.includes("Login realizado com sucesso")) {
+      throw new Error(`Authentication rejected for ${key}: ${feedbackText}`);
+    }
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith("Authentication rejected")) throw error;
+  }
+
   await page.waitForURL((url) => url.pathname === expectedPath, { timeout: 30000 });
 }
 
