@@ -11,6 +11,8 @@ const viewports = [
   { name: "desktop", width: 1366, height: 768 },
 ];
 
+const scrubSensitive = (value) => value.replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/gi, "[EMAIL]");
+
 async function signIn(page, key, path, expectedPath = path) {
   const browserDiagnostics = { pageErrors: [], failedRequests: [], consoleErrors: [], httpErrors: [] };
   page.on("pageerror", (error) => browserDiagnostics.pageErrors.push(error.message));
@@ -80,7 +82,7 @@ async function signIn(page, key, path, expectedPath = path) {
     const feedbackText = (
       await page.locator('[data-sonner-toast][data-type="error"]').first().innerText()
     ).trim();
-    throw new Error(`Authentication rejected for ${key}: ${feedbackText || "unspecified authentication error"}`);
+    throw new Error(`Authentication rejected for ${key}: ${feedbackText || "unspecified authentication error"}. Runtime diagnostics: ${scrubSensitive(JSON.stringify(browserDiagnostics))}`);
   }
 }
 
