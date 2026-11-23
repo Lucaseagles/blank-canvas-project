@@ -16,11 +16,10 @@ async function signIn(page, key, path, expectedPath = path) {
   const password = process.env[`RUBI_QA_${key}_PASSWORD`];
   if (!email || !password) throw new Error(`Missing ephemeral credentials for ${key}.`);
   await page.goto(`/auth?returnTo=${encodeURIComponent(path)}`);
-  // Scope credentials to the login form: the public footer also contains an email field.
-  const loginForm = page.locator("form");
-  await loginForm.locator('input[type="email"]').fill(email);
-  await loginForm.locator('input[type="password"]').fill(password);
-  await loginForm.getByRole("button", { name: "Engajar Sistema" }).click();
+  // Use the login form's own unique placeholder, not a page-wide email selector.
+  await page.getByPlaceholder("operator@system.io").fill(email);
+  await page.locator('input[type="password"]').fill(password);
+  await page.getByRole("button", { name: "Engajar Sistema" }).click();
   await page.waitForURL((url) => url.pathname === expectedPath, { timeout: 30000 });
 }
 
@@ -42,7 +41,7 @@ for (const viewport of viewports) {
         }
         if (profile.proof === "master") {
           await expect(page.getByText("Verificando acesso seguro...")).toHaveCount(0);
-          await expect(page).toHaveURL(/\/admin(?:\/|$)/);
+          await expect(page).toHaveURL(/\\/admin(?:\\/|$)/);
         }
       });
     }
