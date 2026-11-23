@@ -21,19 +21,23 @@ async function signIn(page, key, path, expectedPath = path) {
   await page.locator('input[type="password"]').fill(password);
   await page.getByRole("button", { name: "Engajar Sistema" }).click();
 
-  // Observe navigation and explicit auth rejection concurrently: do not spend 10s
-  // waiting for a success toast before even starting the protected-route assertion.
-  const navigation = page.waitForURL((url) => url.pathname === expectedPath, { timeout: 30000 });
-  const authRejection = page
-    .locator('[data-sonner-toast][data-type="error"]')
-    .first()
-    .waitFor({ state: "visible", timeout: 30000 })
-    .then(async () => {
-      const feedbackText = (await page.locator('[data-sonner-toast][data-type="error"]').first().innerText()).trim();
-      throw new Error(`Authentication rejected for ${key}: ${feedbackText || "unspecified authentication error"}`);
-    });
+  // Wait for either the expected route or a visible auth error in one bounded poll.
+  // This avoids a sequential toast delay and leaves no competing promise running.
+  await page.waitForFunction(
+    ({ expectedPath }) => {
+      const authError = document.querySelector('[data-sonner-toast][data-type="error"]');
+      return window.location.pathname === expectedPath || Boolean(authError);
+    },
+    { expectedPath },
+    { timeout: 30000 },
+  );
 
-  await Promise.race([navigation, authRejection]);
+  if (page.url() && new URL(page.url()).pathname !== expectedPath) {
+    const feedbackText = (
+      await page.locator('[data-sonner-toast][data-type="error"]').first().innerText()
+    ).trim();
+    throw new Error(`Authentication rejected for ${key}: ${feedbackText || "unspecified authentication error"}`);
+  }
 }
 
 for (const viewport of viewports) {
