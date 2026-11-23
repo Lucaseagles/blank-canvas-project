@@ -34,7 +34,7 @@ test("public Story listing fails closed unless product, supplier, checkout and S
  assert.match(server,/\.eq\("status","approved"\)/);
  assert.match(server,/\.eq\("rights_confirmed",true\)/);
  assert.match(server,/\.not\("movement_id","is",null\)/);
- assert.match(server,/if\(\(rows\?\?\)\.length>50\)return \[\]/);
+ assert.match(server,/if\(\(rows\?\?\[\]\)\.length>50\)return \[\]/);
 });
 
 test("Story approval requires rights, active official supplier checkout and consumer movement for the same product",()=>{
