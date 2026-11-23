@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
+import {canServeVersionedRubiStory,validRubiStoryMediaUrl} from "./rubi-product-stories.ts";
 const source=(path)=>readFileSync(new URL(path,import.meta.url),"utf8");
 
 test("published Story -> same-product official precheckout is connected",()=>{
