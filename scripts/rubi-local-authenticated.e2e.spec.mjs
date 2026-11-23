@@ -21,19 +21,19 @@ async function signIn(page, key, path, expectedPath = path) {
   await page.locator('input[type="password"]').fill(password);
   await page.getByRole("button", { name: "Engajar Sistema" }).click();
 
-  // Surface the application's actual auth feedback instead of reporting only a navigation timeout.
-  const authFeedback = page.locator("[data-sonner-toast]").first();
-  try {
-    await authFeedback.waitFor({ state: "visible", timeout: 10000 });
-    const feedbackText = (await authFeedback.innerText()).trim();
-    if (feedbackText && !feedbackText.includes("Login realizado com sucesso")) {
-      throw new Error(`Authentication rejected for ${key}: ${feedbackText}`);
-    }
-  } catch (error) {
-    if (error instanceof Error && error.message.startsWith("Authentication rejected")) throw error;
-  }
+  // Observe navigation and explicit auth rejection concurrently: do not spend 10s
+  // waiting for a success toast before even starting the protected-route assertion.
+  const navigation = page.waitForURL((url) => url.pathname === expectedPath, { timeout: 30000 });
+  const authRejection = page
+    .locator('[data-sonner-toast][data-type="error"]')
+    .first()
+    .waitFor({ state: "visible", timeout: 30000 })
+    .then(async () => {
+      const feedbackText = (await page.locator('[data-sonner-toast][data-type="error"]').first().innerText()).trim();
+      throw new Error(`Authentication rejected for ${key}: ${feedbackText || "unspecified authentication error"}`);
+    });
 
-  await page.waitForURL((url) => url.pathname === expectedPath, { timeout: 30000 });
+  await Promise.race([navigation, authRejection]);
 }
 
 for (const viewport of viewports) {
