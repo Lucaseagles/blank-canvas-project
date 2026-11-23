@@ -1,8 +1,8 @@
--- Seed a test user
+-- Seed a non-privileged local/demo user; Master ownership is provisioned only by the isolated QA fixture.
 INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, role, aud, raw_app_meta_data, raw_user_meta_data, is_super_admin, created_at, updated_at)
 VALUES (
   'd41e74f8-1d2a-4a2c-b51f-5c2d3e4f5a6b',
-  'admin@example.com',
+  'rubi-seed@example.test',
   '$2a$10$wT8K8V.YQ/F.l1E/y.W0.O7R0.W0.O7R0.W0.O7R0.W0.O7R0.W0.',
   now(),
   'authenticated',
@@ -18,15 +18,15 @@ VALUES (
 INSERT INTO public.profiles (user_id, display_name, role)
 VALUES (
   'd41e74f8-1d2a-4a2c-b51f-5c2d3e4f5a6b',
-  'Admin',
-  'owner'
+  'RUBI Seed',
+  'user'
 ) ON CONFLICT (user_id) DO NOTHING;
 
--- Grant role using 'owner' as it is the valid enum value
+-- Keep the demo identity non-privileged; never pre-seed an Owner role.
 INSERT INTO public.user_roles (user_id, role)
 VALUES (
   'd41e74f8-1d2a-4a2c-b51f-5c2d3e4f5a6b',
-  'owner'
+  'user'
 ) ON CONFLICT (user_id, role) DO NOTHING;
 
 -- Seed some products
