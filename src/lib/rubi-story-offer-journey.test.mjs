@@ -82,3 +82,22 @@ test("Story approval and audit RPC is service-role-only and transactionally guar
  assert.match(migration,/revoke all on function public\.rubi_set_story_approval_audited[\s\S]*from public,anon,authenticated/);
  assert.match(migration,/grant execute on function public\.rubi_set_story_approval_audited[\s\S]*to service_role/);
 });
+
+test("Story approval pin must reference a positive revision of its linked movement",()=>{
+ const migration=source("../../supabase/migrations/20261113040000_rubi_story_movement_revision.sql");
+ assert.match(migration,/add column if not exists movement_id uuid references public\\.rubi_movements\\(id\\) on delete restrict/);
+ assert.match(migration,/add column if not exists approved_movement_revision integer/);
+ assert.match(migration,/approved_movement_revision is null or \\(movement_id is not null and approved_movement_revision>0\\)/);
+});
+
+test("saving a Story draft is owner-only, revision-checked and clears prior approval pin",()=>{
+ const migration=source("../../supabase/migrations/20261114020000_rubi_story_storefront_writes_atomic_audit.sql");
+ assert.match(migration,/create or replace function public\\.rubi_save_story_draft_audited/);
+ assert.match(migration,/p_actor is null or not exists\\(select 1 from public\\.user_roles r where r\\.user_id=p_actor and r\\.role='owner'\\)/);
+ assert.match(migration,/prior\\.revision is distinct from p_expected_revision/);
+ assert.match(migration,/status='draft',approved_movement_revision=null/);
+ assert.match(migration,/RUBI_STORY_DRAFT_CREATED/);
+ assert.match(migration,/RUBI_STORY_DRAFT_UPDATED/);
+ assert.match(migration,/revoke all on function public\\.rubi_save_story_draft_audited[\\s\\S]*from public,anon,authenticated/);
+ assert.match(migration,/grant execute on function public\\.rubi_save_story_draft_audited[\\s\\S]*to service_role/);
+});
