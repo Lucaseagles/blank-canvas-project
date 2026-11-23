@@ -29,8 +29,8 @@ Sprint 305 PR #305 has been merged into `main` at `b928afd65bf554c61e3e6c090e3bd
 |---|---|---|
 | G0 — implementation | Confirm current main path and product/story data contract | Passed by source review |
 | G1 — behavior | Success, no Story, stale movement, missing rights, unavailable product/checkout, retry and failure cases | Partial: source tests exist; browser behavior incomplete |
-| G2 — persistence/security | Disposable DB migrations, RLS/grants, owner approval, public read filters and negative authorization | Not yet evidenced for this sprint |
-| G3 — real journey | HTTPS staging browser journey with isolated consumer identity, real approved Story fixture, mobile and desktop | Blocked: staging URL and isolated staging identities/data not supplied or confirmed |
+| G2 — persistence/security | Disposable DB migrations, RLS/grants, owner approval, public read filters and negative authorization | Partial: isolated local Supabase bootstrap and full migration chain passed; Story-specific persisted fixtures and negative authorization assertions remain unproven |
+| G3 — real journey | HTTPS staging browser journey with isolated consumer identity, real approved Story fixture, mobile and desktop | Partial: four authenticated profiles passed local mobile/desktop E2E; Story-to-offer with persisted approved Story remains unexecuted; staging origin/identities not confirmed |
 | G4 — external proof | Official checkout redirect/round-trip and provider-confirmed attribution where applicable | Blocked on provider-owned test checkout; no purchase or commission may be inferred |
 | G5 — evidence bundle | Run IDs, sanitized event/story/product references, screenshots and reviewer sign-off | Pending |
 
@@ -65,3 +65,13 @@ Sprint 305 PR #305 has been merged into `main` at `b928afd65bf554c61e3e6c090e3bd
 ## Next dependency
 
 The next executable step is to obtain/confirm the authorized staging URL and isolated staging test identity/data. Until then, work is limited to local disposable tests and source review; do not claim the staging gate passed.
+
+## Sprint 306 CI evidence update
+
+Validated on head commit `ae4881c5c6e0dbb8b7804616832cf26c4f535bb3`:
+
+- `RUBI Local Authenticated E2E — Four Profiles`, run `45286495595`: **success**. Ten browser tests passed (consumer, merchant, partner and Master on mobile and desktop, plus non-owner Master access denial on both viewports). Isolated Supabase migrations and disposable identities succeeded; local Supabase was stopped/discarded.
+- `Hub V1 integration QA`, run `45286495870`: **success**. Includes the dedicated Story-to-offer contract command: `npm run test:rubi-story-offer-journey`, with **10/10 passing**.
+- `Sprint 33 QA`, run `45286495557`: **success**, including TypeScript, ESLint and production build.
+
+These results strengthen CI confidence but do not prove a persisted Story-to-offer browser journey, staging checkout round-trip, provider attribution, or Story-specific runtime authorization. The score remains unchanged until those acceptance gates are satisfied.
