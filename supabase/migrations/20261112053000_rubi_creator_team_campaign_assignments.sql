@@ -37,7 +37,7 @@ comment on table public.rubi_creator_team_campaign_assignment_events is
  'Private append-only assignment status changes; snapshots are not proof a campaign was distributed.';
 
 create or replace function public.rubi_log_creator_team_campaign_assignment()
-returns trigger language plpgsql security definer set search_path='' as $
+returns trigger language plpgsql security definer set search_path = '' as $$
 begin
  if tg_op='INSERT' then
    insert into public.rubi_creator_team_campaign_assignment_events
