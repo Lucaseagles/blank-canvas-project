@@ -16,9 +16,11 @@ async function signIn(page, key, path, expectedPath = path) {
   const password = process.env[`RUBI_QA_${key}_PASSWORD`];
   if (!email || !password) throw new Error(`Missing ephemeral credentials for ${key}.`);
   await page.goto(`/auth?returnTo=${encodeURIComponent(path)}`);
-  await page.locator('input[type="email"]').fill(email);
-  await page.locator('input[type="password"]').fill(password);
-  await page.getByRole("button", { name: "Engajar Sistema" }).click();
+  // Scope credentials to the login form: the public footer also contains an email field.
+  const loginForm = page.locator("form");
+  await loginForm.locator('input[type="email"]').fill(email);
+  await loginForm.locator('input[type="password"]').fill(password);
+  await loginForm.getByRole("button", { name: "Engajar Sistema" }).click();
   await page.waitForURL((url) => url.pathname === expectedPath, { timeout: 30000 });
 }
 
