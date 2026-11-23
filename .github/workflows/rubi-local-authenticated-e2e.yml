@@ -59,14 +59,14 @@ jobs:
           import { readFile, writeFile } from "node:fs/promises";
           const path = "supabase/config.toml";
           let config = await readFile(path, "utf8");
-          if (/^\\[db\\]\\s*$/m.test(config)) {
-            if (/^port\\s*=.*$/m.test(config)) {
-              config = config.replace(/^port\\s*=.*$/m, "port = 55432");
+          if (/^\[db\]\s*$/m.test(config)) {
+            if (/^port\s*=.*$/m.test(config)) {
+              config = config.replace(/^port\s*=.*$/m, "port = 55432");
             } else {
-              config = config.replace(/^\\[db\\]\\s*$/m, "[db]\\nport = 55432");
+              config = config.replace(/^\[db\]\s*$/m, "[db]\nport = 55432");
             }
           } else {
-            config += "\\n[db]\\nport = 55432\\n";
+            config += "\n[db]\nport = 55432\n";
           }
           await writeFile(path, config);
           console.log("Configured disposable CI database on 127.0.0.1:55432.");
