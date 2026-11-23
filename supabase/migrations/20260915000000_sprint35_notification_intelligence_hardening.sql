@@ -1,10 +1,10 @@
 CREATE OR REPLACE FUNCTION public.get_notification_intelligence()
 RETURNS jsonb
-LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=''
 AS $$
 DECLARE result jsonb;
 BEGIN
-  IF NOT public.has_role(auth.uid(),'owner'::public.app_role) AND NOT public.has_role(auth.uid(),'admin'::public.app_role) THEN
+  IF NOT public.has_role(auth.uid(),'owner'::public.app_role) THEN
     RAISE EXCEPTION 'Acesso negado';
   END IF;
   SELECT jsonb_build_object(

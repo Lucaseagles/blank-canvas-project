@@ -5,12 +5,21 @@ create table if not exists public.share_templates (
   id uuid primary key default gen_random_uuid(),
   platform text not null unique check (platform in ('tiktok','instagram','kwai','telegram','whatsapp')),
   caption_template text not null,
-  max_length integer not null default 280 check (max_length > 0 and max_length <= 4000),
+  max_length integer not null default 280 check (max_length > 0 and max_length <= 4096),
   hashtags text[] not null default '{}',
   is_active boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- Telegram supports captions/messages up to 4096 characters. Reconcile an
+-- existing table as well as a fresh install; the previous 4000 cap rejected
+-- the platform's own seeded template during clean local bootstrap.
+alter table public.share_templates
+  drop constraint if exists share_templates_max_length_check;
+alter table public.share_templates
+  add constraint share_templates_max_length_check
+  check (max_length > 0 and max_length <= 4096);
 
 create table if not exists public.share_card_config (
   id uuid primary key default gen_random_uuid(),

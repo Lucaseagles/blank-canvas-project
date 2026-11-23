@@ -35,15 +35,30 @@ test("recent rollout sequence preserves applied and pending migration identities
   for (const name of expected) assert.ok(rolloutNames.includes(name), name);
 });
 
+test("Sprint 27 support and Sprint 33 search use distinct migration versions", () => {
+  assert.ok(names.includes("20260901015000_sprint27_part3_support.sql"));
+  assert.ok(names.includes("20260901020000_sprint33_search_and_recently_viewed.sql"));
+  assert.ok(!names.includes("20260901020000_sprint27_part3_support.sql"));
+});
+
+test("local-only migration consolidation preserves reviewed SQL order and production filenames", () => {
+  const script = readFileSync(new URL("../../scripts/consolidate-local-migration-versions.mjs", import.meta.url), "utf8");
+  const workflow = readFileSync(new URL("../../.github/workflows/rubi-local-authenticated-e2e.yml", import.meta.url), "utf8");
+  assert.match(script, /20260902000002_sprint34_secure_hub_platforms\.sql/);
+  assert.match(script, /20260902000002_sprint34_secure_hub_platform_registry\.sql/);
+  assert.match(script, /20260903000000_sprint36_worker_truthfulness\.sql/);
+  assert.match(script, /20260911000000_sprint31_strategy_orchestrator\.sql/);
+  assert.match(script, /20261114090000_rubi_movement_controlled_ab\.sql/);
+  assert.match(script, /Unreviewed duplicate migration version/);
+  assert.equal((workflow.match(/node scripts\/consolidate-local-migration-versions\.mjs/g) || []).length, 2);
+  assert.match(workflow, /Consolidate reviewed historical migration collisions for local bootstrap only/);
+});
+
 test("all historical duplicate migration prefixes remain explicitly allowlisted", () => {
   // Historical duplicates are intentionally not renamed here: production migration
   // history contains deployed identities that cannot be inferred from filenames.
   // Any new duplicate or silent removal must trigger a deliberate reconciliation.
   const expectedHistoricalDuplicates = {
-    "20260901020000": [
-      "20260901020000_sprint27_part3_support.sql",
-      "20260901020000_sprint33_search_and_recently_viewed.sql",
-    ],
     "20260902000002": [
       "20260902000002_sprint34_secure_hub_platform_registry.sql",
       "20260902000002_sprint34_secure_hub_platforms.sql",

@@ -1,0 +1,158 @@
+name: RUBI Local Authenticated E2E — Four Profiles
+
+on:
+  pull_request:
+    paths:
+      - "src/integrations/supabase/client.ts"
+      - "src/routes/**"
+      - "src/lib/**"
+      - "scripts/rubi-local-auth-fixtures.mjs"
+      - "scripts/rubi-local-authenticated.e2e.spec.mjs"
+      - "rubi-local-playwright.config.mjs"
+      - "supabase/migrations/**"
+      - ".github/workflows/rubi-local-authenticated-e2e.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rubi-local-auth-e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  authenticated-local:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 3.2.0
+      - name: Install application and browser dependencies
+        run: |
+          npm ci
+          npm install --no-save --package-lock=false --legacy-peer-deps @playwright/test @tanstack/react-query@5.102.8 @tanstack/query-core@5.102.8
+          npx playwright install --with-deps chromium
+      - name: Defer the founding-Master gate and later migrations until the disposable owner exists
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/rubi-deferred-migrations"
+          while IFS= read -r -d '' file; do
+            name="$(basename "$file")"
+            version="${name%%_*}"
+            if [[ "$version" =~ ^[0-9]{14}$ ]] && [[ "$version" > "20261113089999" ]]; then
+              mv "$file" "$RUNNER_TEMP/rubi-deferred-migrations/$name"
+            fi
+          done < <(find supabase/migrations -maxdepth 1 -type f -name '*.sql' -print0 | sort -z)
+          test -f "$RUNNER_TEMP/rubi-deferred-migrations/20261113090000_rubi_primary_master_roles.sql"
+      - name: Consolidate reviewed historical migration collisions for local bootstrap only
+        run: node scripts/consolidate-local-migration-versions.mjs
+      - name: Allocate a dedicated local database port for CI
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { readFile, writeFile } from "node:fs/promises";
+          const path = "supabase/config.toml";
+          let config = await readFile(path, "utf8");
+          if (/^\[db\]\s*$/m.test(config)) {
+            if (/^port\s*=.*$/m.test(config)) {
+              config = config.replace(/^port\s*=.*$/m, "port = 55432");
+            } else {
+              config = config.replace(/^\[db\]\s*$/m, "[db]\nport = 55432");
+            }
+          } else {
+            config += "\n[db]\nport = 55432\n";
+          }
+          await writeFile(path, config);
+          console.log("Configured disposable CI database on 127.0.0.1:55432.");
+          NODE
+      - name: Start isolated local Supabase
+        run: |
+          supabase start -x studio,imgproxy,logflare,vector,edge-runtime,supavisor,mailpit > "$RUNNER_TEMP/rubi-supabase-start.log" 2>&1
+          STATUS="$(supabase status -o env)"
+          value() { printf '%s\n' "$STATUS" | sed -n "s/^$1=\"\(.*\)\"$/\1/p"; }
+          echo "SUPABASE_URL=$(value API_URL)" >> "$GITHUB_ENV"
+          echo "SUPABASE_PUBLISHABLE_KEY=$(value ANON_KEY)" >> "$GITHUB_ENV"
+          echo "SUPABASE_SERVICE_ROLE_KEY=$(value SERVICE_ROLE_KEY)" >> "$GITHUB_ENV"
+          echo "VITE_SUPABASE_URL=$(value API_URL)" >> "$GITHUB_ENV"
+          echo "VITE_SUPABASE_PUBLISHABLE_KEY=$(value ANON_KEY)" >> "$GITHUB_ENV"
+      - name: Apply schema migrations before seeding the disposable Master
+        run: supabase migration up --local
+      - name: Diagnose local Supabase startup failure
+        if: failure()
+        run: |
+          echo "## Local Supabase startup diagnostics" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f "$RUNNER_TEMP/rubi-supabase-start.log" ]; then
+            sed -E 's/eyJ[A-Za-z0-9._-]{20,}/[REDACTED_JWT]/g; s/(service_role|anon)[=: ]+[A-Za-z0-9._-]{20,}/\\1=[REDACTED]/g' "$RUNNER_TEMP/rubi-supabase-start.log" | tail -n 240 | tee "$RUNNER_TEMP/rubi-supabase-start-sanitized.log" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo '### Docker containers' >> "$GITHUB_STEP_SUMMARY"
+          docker ps -a --no-trunc >> "$GITHUB_STEP_SUMMARY" 2>&1 || true
+          echo '### Docker daemon summary' >> "$GITHUB_STEP_SUMMARY"
+          docker info --format 'Server={{.ServerVersion}} Storage={{.Driver}} Cgroup={{.CgroupVersion}}' >> "$GITHUB_STEP_SUMMARY" 2>&1 || true
+      - name: Upload sanitized Supabase diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rubi-local-supabase-diagnostics
+          path: ${{ runner.temp }}/rubi-supabase-start-sanitized.log
+          if-no-files-found: ignore
+          retention-days: 3
+      - name: Seed one disposable founding Master before its migration
+        run: node scripts/rubi-local-auth-fixtures.mjs bootstrap-owner
+      - name: Restore deferred migrations and apply the real founding-Master invariant
+        run: |
+          set -euo pipefail
+          find "$RUNNER_TEMP/rubi-deferred-migrations" -maxdepth 1 -type f -name '*.sql' -exec mv -t supabase/migrations -- {} +
+          node scripts/consolidate-local-migration-versions.mjs
+          supabase migration up --local
+      - name: Seed isolated consumer, approved merchant and approved partner identities
+        run: node scripts/rubi-local-auth-fixtures.mjs seed-profiles
+      - name: Point the generated browser client to the local Supabase instance
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFile, writeFile } from "node:fs/promises";
+          const path = "src/integrations/supabase/client.ts";
+          let source = await readFile(path, "utf8");
+          source = source.replace(
+            /const SUPABASE_URL = "[^"]+";/,
+            'const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? "";'
+          );
+          source = source.replace(
+            /const SUPABASE_PUBLISHABLE_KEY = "[^"]+";/,
+            'const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "";'
+          );
+          if (!source.includes("import.meta.env.VITE_SUPABASE_URL") || !source.includes("import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY")) {
+            throw new Error("Could not safely redirect the browser Supabase client to local QA.");
+          }
+          await writeFile(path, source);
+          NODE
+      - name: Start the app against local Supabase
+        run: |
+          npm run dev -- --host 127.0.0.1 --port 4173 > "$RUNNER_TEMP/rubi-vite.log" 2>&1 &
+          for attempt in $(seq 1 60); do
+            if curl --silent --fail http://127.0.0.1:4173/auth > /dev/null; then exit 0; fi
+            sleep 2
+          done
+          cat "$RUNNER_TEMP/rubi-vite.log"
+          exit 1
+      - name: Run authenticated journeys for all four profiles on mobile and desktop
+        env:
+          RUBI_E2E_REPORT_PATH: ${{ runner.temp }}/rubi-local-auth-evidence.json
+        run: npx playwright test --config=rubi-local-playwright.config.mjs
+      - name: Publish non-secret test evidence
+        if: always()
+        run: |
+          if [ -f "$RUNNER_TEMP/rubi-local-auth-evidence.json" ]; then
+            node -e 'const r=require(process.argv[1]); const s=(r.suites||[]).flatMap(x=>x.specs||[]); console.log("## RUBI authenticated local E2E"); console.log("Specs: "+s.length); console.log("Tests: "+(r.stats?.expected??0)+" expected, "+(r.stats?.unexpected??0)+" failed.");' "$RUNNER_TEMP/rubi-local-auth-evidence.json" >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Stop and discard local Supabase
+        if: always()
+        run: |
+          if command -v supabase >/dev/null 2>&1; then
+            supabase stop --no-backup || true
+          fi

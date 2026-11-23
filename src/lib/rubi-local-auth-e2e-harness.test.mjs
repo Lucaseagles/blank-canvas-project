@@ -1,0 +1,66 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+
+const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
+const migration = read("../../supabase/migrations/20261113090000_rubi_primary_master_roles.sql");
+const gamification = read("../../supabase/migrations/20240824000000_gamification_engine.sql");
+const deferredPolicy = read("../../supabase/migrations/20261121120000_restore_gamification_owner_policy.sql");
+const fixture = read("../../scripts/rubi-local-auth-fixtures.mjs");
+const workflow = read("../../.github/workflows/rubi-local-authenticated-e2e.yml");
+const spec = read("../../scripts/rubi-local-authenticated.e2e.spec.mjs");
+const config = read("../../rubi-local-playwright.config.mjs");
+const appRole = read("../../supabase/migrations/20260820045247_cd8c6b83-9742-48be-a9bf-fb33579aaeea.sql");
+const notificationRestore = read("../../supabase/migrations/20260914990000_restore_notification_logs.sql");
+const notificationHardening = read("../../supabase/migrations/20260915000000_sprint35_notification_intelligence_hardening.sql");
+
+test("notification intelligence uses only defined roles and a hardened search path", () => {
+  assert.match(appRole, /CREATE TYPE public\.app_role AS ENUM \('owner', 'user'\)/);
+  assert.doesNotMatch(notificationRestore, /'admin'::public\.app_role/);
+  assert.match(notificationRestore, /public\.has_role\(auth\.uid\(\), 'owner'::public\.app_role\)/);
+  assert.match(notificationHardening, /SECURITY DEFINER SET search_path=''/);
+  assert.match(notificationHardening, /public\.has_role\(auth\.uid\(\),'owner'::public\.app_role\)/);
+  assert.doesNotMatch(notificationHardening, /'admin'::public\.app_role/);
+});
+
+test("local QA preserves the strict founding-Master invariant and orders dependent migrations safely", () => {
+  assert.match(migration, /if owner_count <> 1 then/);
+  assert.match(migration, /Founding Master bootstrap requires exactly one existing owner role/);
+  assert.match(workflow, /rubi-deferred-migrations/);
+  assert.match(workflow, /bootstrap-owner/);
+  assert.match(workflow, /supabase migration up --local/);
+  assert.doesNotMatch(workflow, /supabase db reset --version/);
+  assert.match(workflow, /rubi-local-auth-fixtures\.mjs bootstrap-owner/);
+  assert.match(workflow, /supabase migration up --local/);
+  assert.match(fixture, /mode === "bootstrap-owner"/);
+  assert.match(fixture, /mode === "seed-profiles"/);
+  assert.doesNotMatch(gamification, /CREATE POLICY[^;]*public\.has_role/s);
+  assert.match(deferredPolicy, /public\.has_role\(auth\.uid\(\), 'owner'::public\.app_role\)/);
+  assert.match(fixture, /Founding Master migration did not register the disposable owner/);
+});
+
+test("QA fixture refuses non-local Supabase and generates temporary credentials without logging them", () => {
+  assert.match(fixture, /Refusing to create RUBI QA identities outside the local Supabase instance/);
+  assert.match(fixture, /randomBytes\(30\)/);
+  assert.match(fixture, /GITHUB_ENV/);
+  assert.doesNotMatch(fixture, /console\.log\([^\n]*(password|secret)/i);
+  assert.match(fixture, /ownerCount\.count !== 1/);
+});
+
+test("local browser workflow never links or resets the hosted production database", () => {
+  assert.match(workflow, /supabase start -x/);
+  assert.match(workflow, /supabase stop --no-backup/);
+  assert.doesNotMatch(workflow, /supabase link/);
+  assert.doesNotMatch(workflow, /db reset --remote|db push --remote|migration up --remote/);
+  assert.match(workflow, /VITE_SUPABASE_URL/);
+  assert.match(workflow, /VITE_SUPABASE_PUBLISHABLE_KEY/);
+});
+
+test("four authenticated profiles are covered on mobile and desktop, including non-owner Master denial", () => {
+  for (const profile of ["CONSUMER", "MERCHANT", "PARTNER", "MASTER"]) assert.match(spec, new RegExp(`key: "${profile}"`));
+  assert.match(spec, /authenticated non-owner cannot enter the Master dashboard/i);
+  assert.match(spec, /signIn\(page, "CONSUMER", "\/admin", "\/"\)/);
+  assert.match(config, /rubi-local-authenticated/);
+  assert.match(spec, /width: 390, height: 844/);
+  assert.match(spec, /width: 1366, height: 768/);
+});

@@ -17,8 +17,8 @@ comment on column public.hub_products.checkout_verified is
 
 -- A checkout can only be approved when the URL exists; domain and HTTPS
 -- are also validated by server-side functions on save and on every request.
-do $
-begin
+DO $supplier_checkout_constraint$
+BEGIN
   if not exists (
     select 1 from pg_constraint
     where conname = 'hub_products_verified_checkout_has_url'
@@ -28,8 +28,8 @@ begin
       add constraint hub_products_verified_checkout_has_url
       check (not checkout_verified or (checkout_url is not null and length(btrim(checkout_url)) > 0));
   end if;
-end;
-$;
+END;
+$supplier_checkout_constraint$;
 
 -- Explicitly retain the original protections even on projects whose default
 -- privileges changed after these catalog tables were first created.

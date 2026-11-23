@@ -65,7 +65,7 @@ as $$
       + least(greatest(coalesce(c.offer_score, 0), 0), 100) / 100.0 * 0.20)::numeric
   from candidates c
   left join public.marketplaces m on m.id = c.marketplace_id
-  order by final_score desc, c.relevance desc, c.review_count desc nulls last
+  order by 17 desc, c.relevance desc, c.review_count desc nulls last
   limit 100;
 $$;
 

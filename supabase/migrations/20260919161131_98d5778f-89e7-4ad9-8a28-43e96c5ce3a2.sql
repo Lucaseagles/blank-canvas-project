@@ -14,7 +14,19 @@ DROP POLICY IF EXISTS "Public reads safe social proof config" ON public.social_p
 REVOKE ALL ON public.social_proof_config FROM anon;
 GRANT ALL ON public.social_proof_config TO service_role;
 
--- SECURITY DEFINER routines must not be callable by signed-in users directly
-REVOKE EXECUTE ON FUNCTION public.get_ab_experiment_result(uuid) FROM authenticated, anon, PUBLIC;
-REVOKE EXECUTE ON FUNCTION public.get_eligible_strategic_popup(uuid) FROM authenticated, anon, PUBLIC;
-REVOKE EXECUTE ON FUNCTION public.get_notification_intelligence() FROM authenticated, anon, PUBLIC;
+-- SECURITY DEFINER routines must not be callable by signed-in users directly.
+-- Historical installations may not contain every optional RPC; harden those that exist
+-- without making a clean database fail while replaying this migration.
+DO $security_hardening$
+BEGIN
+  IF to_regprocedure('public.get_ab_experiment_result(uuid)') IS NOT NULL THEN
+    EXECUTE 'REVOKE EXECUTE ON FUNCTION public.get_ab_experiment_result(uuid) FROM authenticated, anon, PUBLIC';
+  END IF;
+  IF to_regprocedure('public.get_eligible_strategic_popup(uuid)') IS NOT NULL THEN
+    EXECUTE 'REVOKE EXECUTE ON FUNCTION public.get_eligible_strategic_popup(uuid) FROM authenticated, anon, PUBLIC';
+  END IF;
+  IF to_regprocedure('public.get_notification_intelligence()') IS NOT NULL THEN
+    EXECUTE 'REVOKE EXECUTE ON FUNCTION public.get_notification_intelligence() FROM authenticated, anon, PUBLIC';
+  END IF;
+END;
+$security_hardening$;

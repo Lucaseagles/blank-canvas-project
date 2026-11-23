@@ -120,6 +120,8 @@ jobs:
         run: npm run test:rubi-live-smoke
       - name: RUBI four audience authorization contract tests
         run: npm run test:rubi-four-profiles
+      - name: RUBI local authenticated E2E harness isolation contracts
+        run: node --test src/lib/rubi-local-auth-e2e-harness.test.mjs
       - name: RUBI consumer and commercial onboarding quiz regression
         run: npm run test:rubi-onboarding-quiz
       - name: RUBI consumer personalization, discovery mix and audience catalog ranking

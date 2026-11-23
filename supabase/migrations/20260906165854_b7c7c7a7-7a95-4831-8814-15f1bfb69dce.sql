@@ -1,25 +1,60 @@
--- 1. Fixed search_path on helper functions
-ALTER FUNCTION public.calculate_product_demand(uuid) SET search_path = public;
-ALTER FUNCTION public.calculate_product_trend_velocity(uuid) SET search_path = public;
-ALTER FUNCTION public.classify_user_segment(uuid) SET search_path = public;
-ALTER FUNCTION public.search_products_fuzzy(text) SET search_path = public;
-ALTER FUNCTION public.touch_video_watch_progress(uuid, integer) SET search_path = public;
+-- Harden search_path and execute grants only for helper functions that exist
+-- in this database lineage. Older deployments may not have every optional RPC.
+DO $$
+DECLARE
+  signature text;
+BEGIN
+  FOREACH signature IN ARRAY ARRAY[
+    'public.calculate_product_demand(uuid)',
+    'public.calculate_product_trend_velocity(uuid)',
+    'public.classify_user_segment(uuid)',
+    'public.search_products_fuzzy(text)',
+    'public.touch_video_watch_progress(uuid,integer)'
+  ] LOOP
+    IF to_regprocedure(signature) IS NOT NULL THEN
+      EXECUTE format('ALTER FUNCTION %s SET search_path = public', signature);
+    END IF;
+  END LOOP;
+END;
+$$;
 
--- 2. Revoke EXECUTE on internal SECURITY DEFINER functions
-REVOKE ALL ON FUNCTION public.calculate_content_affinity(uuid, text) FROM anon, authenticated, public;
-REVOKE ALL ON FUNCTION public.get_content_affinity_summary(uuid) FROM anon, authenticated, public;
-REVOKE ALL ON FUNCTION public.process_content_notification_queue(integer) FROM anon, authenticated, public;
-REVOKE ALL ON FUNCTION public.enqueue_published_product_notification() FROM anon, authenticated, public;
+-- Revoke access to internal SECURITY DEFINER functions when installed.
+DO $$
+DECLARE
+  signature text;
+BEGIN
+  FOREACH signature IN ARRAY ARRAY[
+    'public.calculate_content_affinity(uuid,text)',
+    'public.get_content_affinity_summary(uuid)',
+    'public.process_content_notification_queue(integer)',
+    'public.enqueue_published_product_notification()'
+  ] LOOP
+    IF to_regprocedure(signature) IS NOT NULL THEN
+      EXECUTE format('REVOKE ALL ON FUNCTION %s FROM anon, authenticated, public', signature);
+    END IF;
+  END LOOP;
+END;
+$$;
 
--- 3. Restrict anon-only access on user-scoped SECURITY DEFINER functions
-REVOKE ALL ON FUNCTION public.is_owner() FROM anon, public;
-REVOKE ALL ON FUNCTION public.get_eligible_strategic_popup(uuid) FROM anon, public;
-REVOKE ALL ON FUNCTION public.get_referral_leaderboard_position(uuid) FROM anon, public;
-GRANT EXECUTE ON FUNCTION public.is_owner() TO authenticated;
-GRANT EXECUTE ON FUNCTION public.get_eligible_strategic_popup(uuid) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.get_referral_leaderboard_position(uuid) TO authenticated;
+-- Restrict anon-only access on user-scoped SECURITY DEFINER functions.
+DO $$
+DECLARE
+  signature text;
+BEGIN
+  FOREACH signature IN ARRAY ARRAY[
+    'public.is_owner()',
+    'public.get_eligible_strategic_popup(uuid)',
+    'public.get_referral_leaderboard_position(uuid)'
+  ] LOOP
+    IF to_regprocedure(signature) IS NOT NULL THEN
+      EXECUTE format('REVOKE ALL ON FUNCTION %s FROM anon, public', signature);
+      EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO authenticated', signature);
+    END IF;
+  END LOOP;
+END;
+$$;
 
--- 4. Marketplaces: column-level access, api_config never exposed to API roles
+-- Marketplaces: column-level access, api_config never exposed to API roles.
 REVOKE SELECT ON public.marketplaces FROM anon, authenticated;
 GRANT SELECT (id, name, slug, status, api_status, created_at) ON public.marketplaces TO anon, authenticated;
 GRANT INSERT, UPDATE, DELETE ON public.marketplaces TO authenticated;
