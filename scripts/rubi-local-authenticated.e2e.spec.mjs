@@ -41,7 +41,7 @@ for (const viewport of viewports) {
         }
         if (profile.proof === "master") {
           await expect(page.getByText("Verificando acesso seguro...")).toHaveCount(0);
-          await expect(page).toHaveURL(/\\/admin(?:\\/|$)/);
+          await expect(page).toHaveURL((url) => /^\/admin(?:\/|$)/.test(url.pathname));
         }
       });
     }
