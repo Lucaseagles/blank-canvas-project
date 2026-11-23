@@ -24,7 +24,6 @@ async function signIn(page, key, path, expectedPath = path) {
       browserDiagnostics.authResponses.push({ status: response.status(), method: request.method(), path: responseUrl.pathname });
     }
     if (response.status() < 400) return;
-    const request = response.request();
     let body = "";
     try {
       body = (await response.text()).slice(0, 500);
