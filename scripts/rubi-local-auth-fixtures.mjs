@@ -19,6 +19,8 @@ if (!envFile) throw new Error("GITHUB_ENV is required so temporary credentials n
 
 async function addEnv(key, value) {
   if (/[\r\n]/.test(value)) throw new Error("Invalid environment value.");
+  // Register disposable credentials with GitHub Actions log masking before later steps use them.
+  process.stdout.write(`::add-mask::${value}\n`);
   await appendFile(envFile, `${key}=${value}\n`, { encoding: "utf8", mode: 0o600 });
 }
 async function createIdentity(role, displayName) {
