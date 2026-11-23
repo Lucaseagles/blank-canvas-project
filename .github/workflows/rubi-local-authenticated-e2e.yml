@@ -36,7 +36,7 @@ jobs:
       - name: Install application and browser dependencies
         run: |
           npm ci
-          npm install --no-save --package-lock=false --legacy-peer-deps @playwright/test @tanstack/query-core@5.102.8
+          npm install --no-save --package-lock=false --legacy-peer-deps @playwright/test @tanstack/react-query@5.102.8 @tanstack/query-core@5.102.8
           npx playwright install --with-deps chromium
       - name: Defer the founding-Master gate and later migrations until the disposable owner exists
         run: |
