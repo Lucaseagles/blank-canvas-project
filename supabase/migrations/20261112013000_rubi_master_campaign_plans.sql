@@ -40,7 +40,7 @@ comment on table public.rubi_master_campaign_plan_audit is 'Private append-only 
 
 -- Database trigger records every insert and status/field change, including failed concurrent updates.
 create or replace function public.rubi_master_campaign_plan_audit_trigger()
-returns trigger language plpgsql security definer set search_path='' as $
+returns trigger language plpgsql security definer set search_path = '' as $$
 begin
  if tg_op='INSERT' then
   insert into public.rubi_master_campaign_plan_audit(plan_id,action,old_status,new_status,details)
