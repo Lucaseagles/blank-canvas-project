@@ -2,8 +2,7 @@ import {test,expect} from "@playwright/test";
 
 const productId=process.env.RUBI_QA_STORY_PRODUCT_ID;
 const storyTitle=process.env.RUBI_QA_STORY_TITLE;
-const productTitle=process.env.RUBI_QA_STORY_PRODUCT_TITLE;
-if(!productId||!storyTitle||!productTitle)throw new Error("Disposable local Story fixture environment is missing.");
+if(!productId||!storyTitle)throw new Error("Disposable local Story fixture environment is missing.");
 
 async function signIn(page,key,path){
  const email=process.env[`RUBI_QA_${key}_EMAIL`];
@@ -18,44 +17,23 @@ async function signIn(page,key,path){
 }
 
 for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",width:1366,height:768}]){
- test.describe(`RUBI Story persistido → oferta — ${viewport.name}`,()=>{
+ test.describe(`RUBI Story persistido — bloqueio seguro de publicação — ${viewport.name}`,()=>{
   test.use({viewport:{width:viewport.width,height:viewport.height}});
-  test("Master aprova Story descartável e consumidor chega à pré-compra do mesmo produto",async({browser})=>{
-   const masterContext=await browser.newContext({viewport:{width:viewport.width,height:viewport.height}});
-   const master=await masterContext.newPage();
-   await signIn(master,"MASTER","/admin/hub-catalog");
-   const storyAdmin=master.getByRole("region",{name:"RUBI Stories por produto"});
+  test("Master não publica Story quando produto não possui checkout oficial verificado",async({page})=>{
+   await signIn(page,"MASTER","/admin/hub-catalog");
+   const storyAdmin=page.getByRole("region",{name:"RUBI Stories por produto"});
    await storyAdmin.getByLabel("Produto").selectOption(productId);
    const storyCard=storyAdmin.getByRole("button",{name:new RegExp(storyTitle)});
    await expect(storyCard).toBeVisible({timeout:20000});
    await storyCard.click();
+   await expect(storyAdmin.getByText("Rascunho privado")).toBeVisible();
    const approve=storyAdmin.getByRole("button",{name:"Aprovar e publicar Story"});
-   if(await approve.count()){
-    master.once("dialog",dialog=>dialog.accept());
-    await approve.click();
-    await expect(storyAdmin.getByText(/Aprovado e visível/)).toBeVisible({timeout:20000});
-   }else{
-    await expect(storyAdmin.getByRole("button",{name:"Retirar Story do público"})).toBeVisible();
-   }
-   await masterContext.close();
-
-   const consumerContext=await browser.newContext({viewport:{width:viewport.width,height:viewport.height}});
-   const consumer=await consumerContext.newPage();
-   await signIn(consumer,"CONSUMER","/feed");
-   await consumer.goto(`/hub-product/${productId}`,{waitUntil:"domcontentloaded"});
-   await expect(consumer.getByRole("heading",{name:productTitle}).first()).toBeVisible({timeout:25000});
-   const publicStories=consumer.getByRole("region",{name:"Histórias e vídeos deste produto"});
-   await expect(publicStories.getByRole("heading",{name:storyTitle})).toBeVisible({timeout:25000});
-   const cta=publicStories.getByRole("link",{name:/Consultar preço e compra oficial/i});
-   await expect(cta).toBeVisible();
-   await cta.click();
-   await expect(consumer).toHaveURL(new RegExp(`/hub-product/${productId}#rubi-purchase$`));
-   await expect(consumer.locator("#rubi-purchase")).toBeInViewport();
-   await expect(consumer.getByText("Pré-compra RUBI · Pagamento no fornecedor")).toBeVisible();
-   await expect(consumer.getByRole("heading",{name:productTitle}).last()).toBeVisible();
-   // The synthetic checkout destination is never opened; this journey proves only the same-SKU precheckout.
-   expect(new URL(consumer.url()).origin).toBe(new URL(consumer.url()).origin);
-   await consumerContext.close();
+   await expect(approve).toBeVisible();
+   await approve.click();
+   await expect(page.locator('[data-sonner-toast][data-type="error"]')).toContainText(/checkout oficial aprovado e fornecedor ativo/i);
+   await expect(storyAdmin.getByText("Rascunho privado")).toBeVisible();
+   await expect(storyAdmin.getByText("Aprovado e visível")).toHaveCount(0);
+   await expect(storyAdmin.getByRole("button",{name:"Aprovar e publicar Story"})).toBeVisible();
   });
  });
 }
