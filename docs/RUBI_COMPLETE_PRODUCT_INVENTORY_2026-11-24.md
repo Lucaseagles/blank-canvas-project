@@ -505,3 +505,45 @@ A documentação `docs/rubi-sprint238-ci-audit-regressions.md` registra que os t
 ### Correção da prioridade U1
 
 Remover marketplace CRUD/credenciais/status e Telegram metric da fila de trabalho aberto. Próxima varredura U1 deve procurar caminhos DML administrativos ainda sem RPC atômica e conferir os fluxos que não foram cobertos pelos testes específicos existentes. Nenhum ponto V1 é concedido nesta correção.
+
+
+## 14. Administração central — auditoria de governança e cobertura do painel
+
+**Prioridade estratégica:** P0. O painel administrativo é o centro de comando do RUBI; deve permitir ao Owner governar catálogo, conteúdo, parceiros, financeiro, integrações, campanhas, segurança, suporte e operação sem depender de caminhos paralelos ou visibilidade enganosa.
+
+### Capacidades já confirmadas em `main`
+
+- `requireOwnerRole` aplica autenticação Supabase no servidor e consulta `has_role(owner)`; não confia em e-mail ou metadata mutável.
+- `admin-settings.functions.ts` centraliza 15 fontes de configuração em registry explícito; atualização passa por RPC atômica auditada, com allowlist de campos, comparação optimistic-lock (`expected`), sanitização de segredos e ator derivado de `context.userId`.
+- Banners usam RPCs específicas de criação/exclusão com trilha atômica.
+- `getAdminAuditLog` oferece paginação e filtros por ação/entidade.
+- As funções de leitura e mutação desse núcleo usam middleware Owner.
+
+### Achados concretos no próprio painel de auditoria
+
+1. `src/routes/admin/v1-audit.tsx` mantém `KNOWN_ROUTES` como lista manual. A lista inclui rotas antigas, mas não inclui ao menos rotas administrativas que existem hoje, como `/admin/support`, `/admin/support-knowledge`, `/admin/hub-catalog` e `/admin/finance-migration-readiness`. O contador de destinos administrativos exibido pelo cenário mobile pode, portanto, ficar desatualizado. A verificação do route tree para as rotas listadas não equivale a inventário completo de todas as rotas administrativas.
+2. O mesmo painel faz `tableCheck` com SELECT direto pelo cliente autenticado e chama o resultado “Tabela acessível”. Isso mede visibilidade da sessão/RLS, não integridade do schema, disponibilidade para as funções Owner, nem prova de que a tabela está corretamente protegida. O rótulo e a interpretação precisam ser revistos para não gerar falso PASS/FAIL.
+3. As verificações de presença de produto/vínculo de vídeo e de usuário autenticado são pré-condições, não execução real da jornada. O painel já marca partes como `NOT MEASURED`, mas a semântica dos status deve permanecer rigorosa e separar presença de dado, autorização, operação persistida e resultado externo.
+4. `getAdminSettings` consulta até 100 linhas por fonte e retorna `available:false`/erro por fonte sem abortar toda a tela. É útil para resiliência, mas o painel precisa tornar falhas de fonte visíveis e não confundir lista vazia com configuração ausente.
+
+### Requisitos para o Admin Control Center — sem duplicar sistemas
+
+- **Visão executiva:** saúde de catálogo, conteúdo, pedidos, vendas confirmadas, comissões, repasses, fornecedores, integrações e filas; todo KPI com fonte, período, horário da última atualização e estado de qualidade.
+- **Governança:** RBAC server-side, Owner único/privado, histórico imutável por ação, snapshots redigidos, revisão otimista, motivo/ator, exportação controlada e alertas de falha de auditoria.
+- **Operação diária:** pendências acionáveis, falhas de webhook/checkout, publicação pendente, estoque/preço inválido, produtos sem fornecedor/checkout válido, reconciliações e jobs em retry; sem apresentar dados fictícios.
+- **Catálogo e conteúdo:** produto, fornecedor, categoria, coleção, vídeo, Story, campanha, oferta, cupom, bundles, banners e revisão/publicação com preview do impacto na vitrine.
+- **Parceiros e financeiro:** atribuição rastreável, venda paga/estornada, comissão, saldo, lote de payout e conciliação separados por provedor; nenhuma venda ou saldo inferido de clique.
+- **Integrações e automações:** credenciais via Vault, teste de conexão, último sucesso/erro, idempotência, fila, retry, pausa e trilha de execução; estado “configurado” distinto de “conector funcional”.
+- **Marketing e aprendizagem:** funis, criativos, canais, campanhas, exposição, conversão confirmada, coortes e experimentos com tamanho de amostra e qualidade de atribuição.
+- **Suporte e qualidade:** conversas, FAQ, lacunas, incidentes, feedback, acessibilidade, responsividade e evidências E2E por perfil.
+- **Experiência administrativa:** navegação responsiva, busca global, filtros salvos, estados de loading/erro/vazio, confirmação para ação destrutiva, undo quando seguro e operações em lote com relatório por item.
+
+### Próximo trabalho técnico recomendado
+
+1. Substituir a lista manual de rotas administrativas por inventário gerado/derivado do route tree, ou por um contrato testado que falhe quando qualquer rota `/admin/*` não estiver catalogada.
+2. Reescrever checks de banco para distinguir “SELECT visível para esta sessão”, “tabela/schema esperado”, “RPC Owner operacional” e “RLS/GRANT validado”; não marcar autorização como PASS com uma simples contagem.
+3. Criar matriz de controle por domínio: rota → server function → middleware → RPC/tabela → grant/RLS → audit log → teste CI → E2E.
+4. Exigir teste negativo dos quatro perfis (consumidor, lojista, parceiro, Shadow Master não-Owner) e sessão anônima para cada ação administrativa crítica; Owner único segue privado.
+5. Acrescentar health/status de filas, integrações e webhooks com timestamp e fonte, sem simular atividade externa.
+
+**Classificação:** upgrade-only; nenhum ponto V1 concedido. Esta auditoria identificou melhorias no próprio instrumento de auditoria e no painel central; não é evidência de que o Admin Control Center já cumpra todos os requisitos acima. Nenhuma alteração de runtime ou banco remoto nesta rodada.
