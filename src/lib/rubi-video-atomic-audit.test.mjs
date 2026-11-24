@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 
 test("video create/update and product associations use one audited RPC", () => {
@@ -49,4 +49,17 @@ test("SQL enforces Owner, row locks, atomic associations and audit writes", () =
   assert.match(sql, /revoke all on function public\.rubi_manage_video_audited/);
   assert.match(sql, /revoke all on function public\.rubi_manage_bridge_video_audited/);
   assert.match(sql, /to service_role/);
+});
+
+
+test("legacy video editor routes cannot reach direct client-side writes", () => {
+  const createRoute = read("../routes/admin/videos.new.tsx");
+  const editRoute = read("../routes/admin/videos.$id.edit.tsx");
+  for (const route of [createRoute, editRoute]) {
+    assert.match(route, /beforeLoad/);
+    assert.match(route, /redirect\(\{ to: "\\/admin\\/videos" \}\)/);
+  }
+  assert.equal(existsSync(new URL("../admin/videos/NativeVideoForm.tsx", import.meta.url)), false);
+  assert.equal(existsSync(new URL("../admin/videos/VideoForm.tsx", import.meta.url)), false);
+  assert.equal(existsSync(new URL("./supabase/videos.ts", import.meta.url)), false);
 });
