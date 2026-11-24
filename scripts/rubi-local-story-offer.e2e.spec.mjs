@@ -42,34 +42,42 @@ for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",widt
 for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",width:1366,height:768}]){
  test.describe("RUBI Story aprovado → produto correspondente → pré-checkout local — "+viewport.name,()=>{
   test("Master aprova o Story persistido e consumidor encontra a mesma oferta sem sair para pagamento",async({browser})=>{
-   const productId=process.env.RUBI_QA_APPROVED_STORY_PRODUCT_ID;
-   const storyTitle=process.env.RUBI_QA_APPROVED_STORY_TITLE;
+   const approvedProductId=process.env.RUBI_QA_APPROVED_STORY_PRODUCT_ID;
+   const approvedStoryTitle=process.env.RUBI_QA_APPROVED_STORY_TITLE;
    const productTitle=process.env.RUBI_QA_APPROVED_STORY_PRODUCT_TITLE;
-   if(!productId||!storyTitle||!productTitle)throw new Error("Disposable approved Story fixture environment is missing.");
+   if(!approvedProductId||!approvedStoryTitle||!productTitle)throw new Error("Disposable approved Story fixture environment is missing.");
    const masterContext=await browser.newContext({viewport:{width:viewport.width,height:viewport.height}});
    const masterPage=await masterContext.newPage();
    await signIn(masterPage,"MASTER","/admin/hub-catalog");
    const storyAdmin=masterPage.getByRole("region",{name:"RUBI Stories por produto"});
-   await storyAdmin.getByLabel("Produto").selectOption(productId);
-   const storyCard=storyAdmin.getByRole("button",{name:new RegExp(storyTitle)});
+   await storyAdmin.getByLabel("Produto").selectOption(approvedProductId);
+   const storyCard=storyAdmin.getByRole("button",{name:new RegExp(approvedStoryTitle)});
    await expect(storyCard).toBeVisible({timeout:20000});
-   await expect(storyCard).toContainText("Rascunho privado");
-   await storyCard.click();
-   await expect(storyAdmin.getByRole("button",{name:"Aprovar e publicar Story"})).toBeVisible();
-   masterPage.once("dialog",dialog=>dialog.accept());
-   await storyAdmin.getByRole("button",{name:"Aprovar e publicar Story"}).click();
-   await expect(masterPage.locator('[data-sonner-toast][data-type="success"]').filter({hasText:/Story aprovado para exibição/i})).toBeVisible();
+
+   // Mobile and desktop share one disposable database in this workflow. Publish once;
+   // the second viewport must verify the already-persisted approved state instead.
+   if(await storyCard.getByText("Rascunho privado").count()){
+    await storyCard.click();
+    await expect(storyAdmin.getByRole("button",{name:"Aprovar e publicar Story"})).toBeVisible();
+    masterPage.once("dialog",dialog=>dialog.accept());
+    await storyAdmin.getByRole("button",{name:"Aprovar e publicar Story"}).click();
+    await expect(masterPage.locator('[data-sonner-toast][data-type="success"]').filter({hasText:/Story aprovado para exibição/i})).toBeVisible();
+   }else{
+    await expect(storyCard).toContainText("Aprovado e visível");
+   }
    await masterContext.close();
+
    const consumerContext=await browser.newContext({viewport:{width:viewport.width,height:viewport.height}});
    const consumerPage=await consumerContext.newPage();
-   await signIn(consumerPage,"CONSUMER","/hub-product/"+productId);
-   await expect(consumerPage.getByRole("heading",{name:productTitle})).toBeVisible();
+   await signIn(consumerPage,"CONSUMER","/hub-product/"+approvedProductId);
+   const productPresentation=consumerPage.getByRole("region",{name:"Apresentação do produto"});
+   await expect(productPresentation.getByRole("heading",{name:productTitle})).toBeVisible();
    const storySection=consumerPage.getByRole("region",{name:"Histórias e vídeos deste produto"});
-   await expect(storySection.getByRole("heading",{name:storyTitle})).toBeVisible({timeout:20000});
+   await expect(storySection.getByRole("heading",{name:approvedStoryTitle})).toBeVisible({timeout:20000});
    const offerLink=storySection.getByRole("link",{name:/Consultar preço e compra oficial/i});
    await expect(offerLink).toBeVisible();
    await offerLink.click();
-   await expect(consumerPage).toHaveURL(new RegExp("/hub-product/"+productId+"#rubi-purchase$"));
+   await expect(consumerPage).toHaveURL(new RegExp("/hub-product/"+approvedProductId+"#rubi-purchase$"));
    await expect(consumerPage.getByRole("button",{name:/Continuar para pagamento no fornecedor/i})).toBeEnabled({timeout:20000});
    await expect(consumerPage.getByText(/A RUBI não coleta dados do cartão nesta página/i)).toBeVisible();
    await consumerContext.close();
