@@ -29,6 +29,7 @@ for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",widt
    await expect(storyAdmin.getByText("Rascunho privado")).toBeVisible();
    const approve=storyAdmin.getByRole("button",{name:"Aprovar e publicar Story"});
    await expect(approve).toBeVisible();
+   page.once("dialog",dialog=>dialog.accept());
    await approve.click();
    await expect(page.locator('[data-sonner-toast][data-type="error"]')).toContainText(/checkout oficial aprovado e fornecedor ativo/i);
    await expect(storyAdmin.getByText("Rascunho privado")).toBeVisible();
