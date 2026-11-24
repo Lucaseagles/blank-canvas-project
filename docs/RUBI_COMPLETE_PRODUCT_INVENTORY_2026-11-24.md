@@ -444,3 +444,34 @@ Isto **não é conclusão jurídica de não conformidade**: pode existir mecanis
 - `src/lib/rubi-ab-exposure.ts`
 
 **Resultado da rodada:** upgrade-only. A/B controlado tem boa fundação técnica, distribuição externa ainda não é automaticamente confirmada, e consentimento/opt-out central de analytics precisa de verificação direcionada antes de qualquer alegação de fechamento de LGPD.
+
+
+## 12. Auditoria direcionada de consentimento e analytics — evidência de código
+
+**Classificação:** upgrade-only; risco técnico a investigar; não é parecer jurídico e não altera pontuação V1.
+
+### O que está comprovado
+
+1. O writer canônico `src/lib/analytics.ts::trackEvent` chama `supabase.auth.getUser()`, exclui contas Owner e então sempre gera/recupera `analytics_anonymous_id` em `localStorage` para visitantes anônimos, gera/recupera `analytics_session_id` em `sessionStorage` e tenta inserir em `analytics_events`. No código inspecionado não existe consulta de consentimento/opt-out antes de criar esses IDs ou executar o insert.
+2. Há consentimento separado para WhatsApp: a migração `20260907165701_restore_profile_referral_consent_fields.sql` cria `profiles.whatsapp_opt_in` com default false, timestamp e origem, além da RPC autenticada `set_whatsapp_opt_in`. Isso é consentimento de canal de comunicação, não consentimento geral de analytics.
+3. Preferências de categoria do feed são explícitas: `personalization.functions.ts` usa `user_preferences.preferred_categories` e não deriva categorias comportamentais quando não há preferências explícitas. Isso é um guardrail útil de personalização, mas não substitui consentimento/controle da telemetria.
+4. O contrato `docs/commerce/rubi-commerce-journey-observability.md` exige transparência, consentimento/base aplicável, retenção, exclusão/anonimização e exportação; é um contrato de design, não evidência de que o ciclo inteiro já esteja implementado.
+5. Busca de código no branch `main` não encontrou, pelos símbolos `set_whatsapp_opt_in`, `whatsapp_opt_in`, `CookieConsent`, `PrivacySettings`, `consent banner`, `opt_out` e `analytics consent`, uma interface geral de preferências de analytics ou uma chamada UI da RPC WhatsApp. A busca por texto não é prova absoluta de inexistência; o call graph deve ser conferido antes de remover/alterar comportamento.
+
+### Risco e decisão
+
+O writer canônico atual não diferencia analytics opcional de eventos estritamente necessários para segurança/funcionamento. Não se deve simplesmente bloquear todo `trackEvent` sem classificar os eventos: isso pode afetar segurança, antifraude, auditoria operacional e jornadas essenciais. Também não se deve manter rastreamento opcional sem verificar a transparência e os controles aplicáveis.
+
+### Próxima entrega proposta — Sprint de privacidade, sem mexer em produção
+
+- Inventariar todos os chamadores de `trackEvent` e classificar cada evento: estritamente necessário, analytics de produto, marketing/atribuição ou comunicação.
+- Localizar e revisar política de privacidade, termos, onboarding, preferências e consentimento já existentes; confirmar finalidade, base legal, retenção e canal de exercício de direitos com responsável jurídico/privacidade.
+- Definir um contrato central de preferências/consentimento versionado e granular quando aplicável, com defaults seguros para analytics não essenciais e registro de alteração/revogação.
+- Garantir que a revogação interrompa novos eventos opcionais e que IDs opcionais não sejam criados antes do estado de permissão aplicável.
+- Criar fluxo de acesso, exportação, eliminação/anonimização e política de retenção para eventos vinculáveis a usuário ou pseudônimo, preservando registros necessários por obrigação/segurança mediante regra documentada.
+- Testar visitante anônimo, usuário autenticado, recusa, aceite, revogação, falha de leitura de preferências, Owner, sessão nova e navegadores com armazenamento indisponível.
+- Separar métricas operacionais essenciais de tracking opcional e nunca transformar clique, visita ou evento de intenção em compra confirmada.
+
+**Aceite mínimo:** testes demonstram que nenhum evento opcional é emitido antes da permissão aplicável; revogação bloqueia novos eventos opcionais; eventos essenciais possuem finalidade documentada; não há regressão em checkout autorizado, autenticação, segurança, auditoria e atribuição confirmada.
+
+**Sem alteração de runtime nesta rodada:** não foi editado `analytics.ts`, não foi criada migração, não foi alterado Supabase remoto e nenhum comportamento de produção foi modificado. O achado foi registrado para evitar uma correção precipitada que poderia quebrar a instrumentação necessária.
