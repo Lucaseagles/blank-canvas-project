@@ -154,6 +154,60 @@ jobs:
           if [ -f "$RUNNER_TEMP/rubi-local-auth-evidence.json" ]; then
             node -e 'const r=require(process.argv[1]); const s=(r.suites||[]).flatMap(x=>x.specs||[]); console.log("## RUBI authenticated local E2E"); console.log("Specs: "+s.length); console.log("Tests: "+(r.stats?.expected??0)+" expected, "+(r.stats?.unexpected??0)+" failed.");' "$RUNNER_TEMP/rubi-local-auth-evidence.json" >> "$GITHUB_STEP_SUMMARY"
           fi
+      - name: Build sanitized downloadable E2E evidence
+        if: always()
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFile, writeFile } from "node:fs/promises";
+          const source = process.env.RUNNER_TEMP + "/rubi-local-auth-evidence.json";
+          const destination = process.env.RUNNER_TEMP + "/rubi-local-evidence-sanitized.json";
+          try {
+            const report = JSON.parse(await readFile(source, "utf8"));
+            const suites = [];
+            const visit = (suite, parents = []) => {
+              const titles = [...parents, suite.title].filter(Boolean);
+              for (const spec of suite.specs || []) {
+                suites.push({
+                  suite: titles.join(" / "),
+                  spec: spec.title || "untitled",
+                  tests: (spec.tests || []).map(test => ({
+                    project: test.projectName || null,
+                    status: test.status || null,
+                    outcomes: (test.results || []).map(result => ({
+                      status: result.status || null,
+                      duration_ms: Number.isFinite(result.duration) ? result.duration : null
+                    }))
+                  }))
+                });
+              }
+              for (const child of suite.suites || []) visit(child, titles);
+            };
+            for (const suite of report.suites || []) visit(suite);
+            const safe = {
+              generated_at: new Date().toISOString(),
+              stats: {
+                expected: report.stats?.expected ?? null,
+                unexpected: report.stats?.unexpected ?? null,
+                skipped: report.stats?.skipped ?? null,
+                flaky: report.stats?.flaky ?? null
+              },
+              suites
+            };
+            await writeFile(destination, JSON.stringify(safe, null, 2) + "\\n", { mode: 0o600 });
+            console.log("Sanitized E2E summary generated; raw report and runtime details excluded.");
+          } catch (error) {
+            console.log("No complete Playwright report available for evidence export.");
+            if (error?.code !== "ENOENT") throw error;
+          }
+          NODE
+      - name: Upload sanitized E2E evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rubi-local-e2e-sanitized-evidence
+          path: ${{ runner.temp }}/rubi-local-evidence-sanitized.json
+          if-no-files-found: warn
+          retention-days: 7
       - name: Stop and discard local Supabase
         if: always()
         run: |
