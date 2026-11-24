@@ -121,3 +121,32 @@ for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",widt
   await expect(page.getByRole("heading",{name:staleTitle})).toHaveCount(0);
  });
 }
+
+
+for(const gate of [
+ {key:"INACTIVE_PRODUCT",label:"produto inativo"},
+ {key:"INACTIVE_SUPPLIER",label:"fornecedor inativo"}
+]){
+ for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",width:1366,height:768}]){
+  test(`Master não publica Story com ${gate.label} — ${viewport.name}`,async({page})=>{
+   const gateProductId=process.env[`RUBI_QA_${gate.key}_PRODUCT_ID`];
+   const gateStoryTitle=process.env[`RUBI_QA_${gate.key}_STORY_TITLE`];
+   if(!gateProductId||!gateStoryTitle)throw new Error(`Disposable ${gate.label} fixture environment is missing.`);
+   await page.setViewportSize({width:viewport.width,height:viewport.height});
+   await signIn(page,"MASTER","/admin/hub-catalog");
+   const storyAdmin=page.getByRole("region",{name:"RUBI Stories por produto"});
+   await storyAdmin.getByLabel("Produto").selectOption(gateProductId);
+   const storyCard=storyAdmin.getByRole("button",{name:new RegExp(gateStoryTitle)});
+   await expect(storyCard).toBeVisible({timeout:20000});
+   await storyCard.click();
+   await expect(storyAdmin.getByText("Rascunho privado")).toBeVisible();
+   const approve=storyAdmin.getByRole("button",{name:"Aprovar e publicar Story"});
+   await expect(approve).toBeEnabled();
+   page.once("dialog",dialog=>dialog.accept());
+   await approve.click();
+   await expect(page.locator('[data-sonner-toast][data-type="error"]')).toContainText(/checkout oficial aprovado e fornecedor ativo/i);
+   await expect(storyAdmin.getByText("Rascunho privado")).toBeVisible();
+   await expect(storyAdmin.getByText("Aprovado e visível")).toHaveCount(0);
+  });
+ }
+}
