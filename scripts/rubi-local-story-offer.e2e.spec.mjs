@@ -39,37 +39,39 @@ for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",widt
  });
 }
 
-test.describe("RUBI Story aprovado → produto correspondente → pré-checkout local",()=>{
- test("Master aprova o Story persistido e consumidor encontra a mesma oferta sem sair para pagamento",async({browser})=>{
-  const productId=process.env.RUBI_QA_APPROVED_STORY_PRODUCT_ID;
-  const storyTitle=process.env.RUBI_QA_APPROVED_STORY_TITLE;
-  const productTitle=process.env.RUBI_QA_APPROVED_STORY_PRODUCT_TITLE;
-  if(!productId||!storyTitle||!productTitle)throw new Error("Disposable approved Story fixture environment is missing.");
-  const masterContext=await browser.newContext({viewport:{width:1366,height:768}});
-  const masterPage=await masterContext.newPage();
-  await signIn(masterPage,"MASTER","/admin/hub-catalog");
-  const storyAdmin=masterPage.getByRole("region",{name:"RUBI Stories por produto"});
-  await storyAdmin.getByLabel("Produto").selectOption(productId);
-  const storyCard=storyAdmin.getByRole("button",{name:new RegExp(storyTitle)});
-  await expect(storyCard).toBeVisible({timeout:20000});
-  await storyCard.click();
-  await expect(storyAdmin.getByText("Rascunho privado")).toBeVisible();
-  masterPage.once("dialog",dialog=>dialog.accept());
-  await storyAdmin.getByRole("button",{name:"Aprovar e publicar Story"}).click();
-  await expect(masterPage.locator('[data-sonner-toast][data-type="success"]')).toContainText(/Story aprovado para exibição/i);
-  await masterContext.close();
-  const consumerContext=await browser.newContext({viewport:{width:390,height:844}});
-  const consumerPage=await consumerContext.newPage();
-  await signIn(consumerPage,"CONSUMER","/hub-product/"+productId);
-  await expect(consumerPage.getByRole("heading",{name:productTitle})).toBeVisible();
-  const storySection=consumerPage.getByRole("region",{name:"Histórias e vídeos deste produto"});
-  await expect(storySection.getByRole("heading",{name:storyTitle})).toBeVisible({timeout:20000});
-  const offerLink=storySection.getByRole("link",{name:/Consultar preço e compra oficial/i});
-  await expect(offerLink).toBeVisible();
-  await offerLink.click();
-  await expect(consumerPage).toHaveURL(new RegExp("/hub-product/"+productId+"#rubi-purchase$"));
-  await expect(consumerPage.getByRole("button",{name:/Continuar para pagamento no fornecedor/i})).toBeEnabled({timeout:20000});
-  await expect(consumerPage.getByText(/A RUBI não coleta dados do cartão nesta página/i)).toBeVisible();
-  await consumerContext.close();
+for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",width:1366,height:768}]){
+ test.describe("RUBI Story aprovado → produto correspondente → pré-checkout local — "+viewport.name,()=>{
+  test("Master aprova o Story persistido e consumidor encontra a mesma oferta sem sair para pagamento",async({browser})=>{
+   const productId=process.env.RUBI_QA_APPROVED_STORY_PRODUCT_ID;
+   const storyTitle=process.env.RUBI_QA_APPROVED_STORY_TITLE;
+   const productTitle=process.env.RUBI_QA_APPROVED_STORY_PRODUCT_TITLE;
+   if(!productId||!storyTitle||!productTitle)throw new Error("Disposable approved Story fixture environment is missing.");
+   const masterContext=await browser.newContext({viewport:{width:viewport.width,height:viewport.height}});
+   const masterPage=await masterContext.newPage();
+   await signIn(masterPage,"MASTER","/admin/hub-catalog");
+   const storyAdmin=masterPage.getByRole("region",{name:"RUBI Stories por produto"});
+   await storyAdmin.getByLabel("Produto").selectOption(productId);
+   const storyCard=storyAdmin.getByRole("button",{name:new RegExp(storyTitle)});
+   await expect(storyCard).toBeVisible({timeout:20000});
+   await storyCard.click();
+   await expect(storyAdmin.getByText("Rascunho privado")).toBeVisible();
+   masterPage.once("dialog",dialog=>dialog.accept());
+   await storyAdmin.getByRole("button",{name:"Aprovar e publicar Story"}).click();
+   await expect(masterPage.locator('[data-sonner-toast][data-type="success"]')).toContainText(/Story aprovado para exibição/i);
+   await masterContext.close();
+   const consumerContext=await browser.newContext({viewport:{width:viewport.width,height:viewport.height}});
+   const consumerPage=await consumerContext.newPage();
+   await signIn(consumerPage,"CONSUMER","/hub-product/"+productId);
+   await expect(consumerPage.getByRole("heading",{name:productTitle})).toBeVisible();
+   const storySection=consumerPage.getByRole("region",{name:"Histórias e vídeos deste produto"});
+   await expect(storySection.getByRole("heading",{name:storyTitle})).toBeVisible({timeout:20000});
+   const offerLink=storySection.getByRole("link",{name:/Consultar preço e compra oficial/i});
+   await expect(offerLink).toBeVisible();
+   await offerLink.click();
+   await expect(consumerPage).toHaveURL(new RegExp("/hub-product/"+productId+"#rubi-purchase$"));
+   await expect(consumerPage.getByRole("button",{name:/Continuar para pagamento no fornecedor/i})).toBeEnabled({timeout:20000});
+   await expect(consumerPage.getByText(/A RUBI não coleta dados do cartão nesta página/i)).toBeVisible();
+   await consumerContext.close();
+  });
  });
-});
+}
