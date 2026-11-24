@@ -87,3 +87,19 @@ Validated on Sprint 306 head commit `214f05fe8fdb8987e2567b1c9c24055cad3b950b`:
 - No failed steps were reported in the three completed workflow jobs.
 
 This green CI confirms the corrected test suite and current code contracts. It does **not** close G2/G3/G4: the persisted Story fixture, Story-specific browser navigation on staging, and provider-owned checkout round-trip remain unexecuted. V1 remains **36.5/48 (76.0%)**; this update awards **0 additional points**.
+
+## Persisted local Story negative-path evidence — 2026-11-24
+
+Validated on PR head commit `fbe9c944a218e65593850ed3809a8ebd09fe93af`:
+
+- `RUBI Local Authenticated E2E — Four Profiles`, run `45304701540`: **success**.
+- The isolated local Supabase bootstrap applied migrations, seeded disposable consumer/merchant/partner/Master identities, and created a disposable supplier, unpublished product without verified checkout, reviewed consumer movement and private Story draft.
+- The Playwright suite executed **12/12 passing tests**: ten authenticated profile/access tests (four profiles plus non-owner Master denial, mobile and desktop) and two persisted Story negative-path tests.
+- The Story negative-path tests ran at mobile (390×844) and desktop (1366×768). In both, the Master attempted publication of the persisted private Story; the server rejected publication because the product had no verified official checkout and active supplier, the Story remained a private draft, and it did not become publicly approved.
+- The local Supabase instance was stopped and discarded after the run.
+- `Hub V1 integration QA`, run `45304701494`: **success**.
+- `Sprint 33 QA`, run `45304701471`: **success**.
+
+This closes the local persisted-fixture and negative publication-blocking proof for the missing-checkout scenario. It does **not** prove the positive approved-Story browser journey, public Story discovery, click-through to the same product's offer, HTTPS staging behavior, or provider-owned checkout round-trip. The local fixture intentionally has no verified checkout and cannot be published. No screenshot bundle or provider confirmation was produced by this run.
+
+V1 remains **36.5/48 (76.0%)** and this evidence update awards **0 additional points** pending the complete positive-path and staging/provider acceptance gates.
