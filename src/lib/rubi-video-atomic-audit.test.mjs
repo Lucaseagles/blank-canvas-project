@@ -65,6 +65,7 @@ test("legacy native editor is retired while audited native and bridge entry poin
   assert.equal(existsSync(new URL("../admin/videos/NativeVideoForm.tsx", import.meta.url)), false);
   assert.equal(existsSync(new URL("../admin/videos/VideoForm.tsx", import.meta.url)), false);
   assert.equal(existsSync(new URL("./supabase/videos.ts", import.meta.url)), false);
+  assert.equal(existsSync(new URL("./supabase/external-videos.ts", import.meta.url)), false);
 });
 
 test("compliance rules retain the audited settings write path without a legacy direct upsert", () => {
