@@ -46,3 +46,18 @@ test("Story cannot remain public after linked movement changes revision or statu
  assert.equal(canServeVersionedRubiStory({...story,approved_movement_revision:null},movement,"p1"),false);
  assert.equal(canServeVersionedRubiStory({...story,status:"draft"},movement,"p1"),false);
 });
+
+test("atomic approval RPC rechecks active product, supplier and exact verified checkout while holding row locks",()=>{
+ const migration=readFileSync(new URL("../../supabase/migrations/20261124020000_sprint306_atomic_story_checkout_eligibility.sql",import.meta.url),"utf8");
+ assert.match(migration,/p\.active=true/);
+ assert.match(migration,/p\.checkout_verified=true/);
+ assert.match(migration,/p\.retail_price>0/);
+ assert.match(migration,/supplier\.active=true/);
+ assert.match(migration,/supplier\.checkout_host is not null/);
+ assert.match(migration,/p\.checkout_url ~ \('\^https:\/\/' \|\| replace\(supplier\.checkout_host,'\\.','\[\\.\]'\)/);
+ assert.match(migration,/for share of p,supplier/);
+ assert.match(migration,/for share/);
+ assert.match(migration,/strpos\(p\.checkout_url,chr\(92\)\)=0/);
+ assert.match(migration,/revoke all on function public\.rubi_set_story_approval_audited[\s\S]*from public,anon,authenticated/);
+ assert.match(migration,/grant execute on function public\.rubi_set_story_approval_audited[\s\S]*to service_role/);
+});
