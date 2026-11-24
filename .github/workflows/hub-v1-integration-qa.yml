@@ -57,21 +57,22 @@ jobs:
           const lines = [
             "## Locked dependency audit",
             "",
-            `Findings: ${summary.total ?? entries.length} total; ${summary.high ?? 0} high; ${summary.moderate ?? 0} moderate; ${summary.low ?? 0} low; ${summary.critical ?? 0} critical.`,
+            \`Findings: \${summary.total ?? entries.length} total; \${summary.high ?? 0} high; \${summary.moderate ?? 0} moderate; \${summary.low ?? 0} low; \${summary.critical ?? 0} critical.\`,
             "",
-            "| Package | Severity | Direct | Range | Safe fix available | Advisory |","            "|---|---:|:---:|---|:---:|---|"
+            "| Package | Severity | Direct | Range | Safe fix available | Advisory |",
+            "|---|---:|:---:|---|:---:|---|"
           ];
           for (const [name, item] of entries) {
             const advisories = (item.via || []).filter(value => typeof value === "object");
             const advisory = advisories.map(value => value.title || value.url || value.name).join("; ") || "Transitive dependency chain";
             const safe = item.fixAvailable === true ? "Yes" : item.fixAvailable === false ? "No" : item.fixAvailable ? "Review" : "Unknown";
-            lines.push(`| ${name} | ${item.severity} | ${item.isDirect ? "Yes" : "No"} | ${item.range || "—"} | ${safe} | ${advisory.replaceAll("|", "/")} |`);
+            lines.push(\`| \${name} | \${item.severity} | \${item.isDirect ? "Yes" : "No"} | \${item.range || "—"} | \${safe} | \${advisory.replaceAll("|", "/")} |\`);
           }
           if (!entries.length) lines.push("| — | none | — | — | — | No vulnerable packages reported |");
           lines.push("", "This diagnostic is informational and does not modify package.json or package-lock.json.", "");
-          const output = lines.join("\\n");
+          const output = lines.join("\n");
           console.log(output);
-          await appendFile(process.env.GITHUB_STEP_SUMMARY, output + "\\n");
+          await appendFile(process.env.GITHUB_STEP_SUMMARY, output + "\n");
           NODE
       - name: Generate routes and build
         run: npm run build
