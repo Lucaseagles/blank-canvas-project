@@ -2,7 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./scripts",
-  testMatch: /rubi-local-authenticated\.e2e\.spec\.mjs/,
+  testMatch: /rubi-local-(?:authenticated|story-offer)\.e2e\.spec\.mjs/,
   timeout: 60000,
   expect: { timeout: 25000 },
   retries: 0,
