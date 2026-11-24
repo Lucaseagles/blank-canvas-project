@@ -164,3 +164,30 @@ Validado no head `f8a5935022c9205cd0260286762b3e7758acf1c3`:
 Esta execução fecha os cenários locais de direitos não confirmados e confirma novamente os caminhos positivos/negativos persistidos nos dois viewports. Ela continua sendo validação local com dados descartáveis e checkout sintético: não comprova staging HTTPS, transação no sandbox do provedor, pedido pago, nem atribuição externa de parceiro.
 
 **Decisão de cobertura:** permanece **36,5/48 (76,0%)**, sem pontos adicionais. Classificação: **upgrade**. G2/G3 ainda exigem evidência de staging/RLS aplicável; G4 continua bloqueado pela validação externa do provedor. PR #307 permanece Draft e não deve ser integrada até concluir as dependências restantes e revisar todos os gates.
+
+
+## Revisão obsoleta do movimento e evidência sanitizada — 2026-11-24
+
+Validado no head `22a956c7e50f5957f1ba792aa4947f35490ff5ee`:
+
+- `RUBI Local Authenticated E2E — Four Profiles`, run `45318777770`: **success**.
+- Playwright executou **18/18 testes aprovados**, com **0 unexpected, 0 skipped e 0 flaky**.
+- Além dos quatro perfis e dos cenários de direitos/checkout/jornada positiva, os testes de mobile e desktop confirmaram que uma Story cuja revisão aprovada do movimento ficou obsoleta não é exibida ao consumidor; a Story válida vinculada ao mesmo produto continua visível.
+- Supabase local descartável iniciou, aplicou a cadeia de migrações, criou as identidades e fixtures isoladas, executou os testes autenticados e foi parado/descartado com sucesso.
+- Evidência JSON sanitizada foi validada e enviada como artifact `rubi-local-e2e-sanitized-evidence`, ID `14886308735`, com retenção até 2026-12-01.
+- No mesmo head: `Hub V1 integration QA`, run `45318777768`: **success**; `Sprint 33 QA`, run `45318777815`: **success**. Os três workflows concluíram com sucesso.
+
+### Status atualizado dos gates
+
+| Gate | Status |
+|---|---|
+| G0 — implementação | Passou na revisão de código e nos contratos de CI executados |
+| G1 — comportamento local | Positivo e negativos de checkout, direitos e revisão obsoleta passaram em mobile/desktop; cenários adicionais de falha/retry ainda exigem revisão |
+| G2 — persistência/segurança | Migrações e fixtures locais descartáveis passaram; isso não substitui a revisão completa de RLS/grants em staging |
+| G3 — jornada real | Story persistida → mesmo produto → pré-checkout interno passou localmente nos dois viewports; staging HTTPS ainda não validado |
+| G4 — prova externa | Pendente: checkout sandbox de propriedade do provedor e confirmação de round-trip/atribuição quando aplicável |
+| G5 — evidências | Relatório sanitizado anexado; revisão independente/sign-off ainda pendente |
+
+O checkout `checkout.example.test` é intencionalmente sintético e local. Não houve pagamento, pedido, venda, comissão ou atribuição real. Não tratar este teste como prova de integração externa.
+
+**Decisão de cobertura:** V1 permanece **36,5/48 (76,0%)**, sem pontos adicionais. Classificação: **upgrade**. PR #307 continua Draft e não está pronta para integrar à main enquanto os gates de staging/provedor e a revisão final não forem concluídos.
