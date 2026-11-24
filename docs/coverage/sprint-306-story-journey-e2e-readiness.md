@@ -148,3 +148,19 @@ Validated on PR head commit `7806b0b84cbeff740b6396cf0a28814fcf8e2aeb`:
 The local browser evidence and downloadable sanitized summary are now repeatable. It still uses disposable local data and a synthetic checkout host; it is not HTTPS staging, provider-owned sandbox round-trip, payment, order, or provider-confirmed attribution evidence. Staging and external-provider gates remain open. Broader Story-specific browser negatives for missing rights and stale movement revision also remain outstanding.
 
 **Score decision:** V1 remains **36.5/48 (76.0%)**, with **0 additional points**. Classification: **upgrade**. PR #307 remains Draft and unmerged pending staging/provider evidence and remaining negative-path acceptance.
+
+
+## Direitos de uso: bloqueio negativo persistido — 2026-11-24
+
+Validado no head `f8a5935022c9205cd0260286762b3e7758acf1c3`:
+
+- Execução `RUBI Local Authenticated E2E — Four Profiles`, run `45315500598`: **success**.
+- Playwright executou **16/16 testes aprovados** em 41,5 segundos, sem falhas: quatro perfis autenticados (consumidor, lojista, parceiro e Master) em mobile e desktop; negação de acesso Master para não proprietário nos dois viewports; bloqueio de publicação sem checkout oficial/fornecedor ativo; bloqueio de publicação quando os direitos não estão confirmados apesar de produto/checkout elegíveis; e jornada positiva Story persistido → mesmo produto → pré-checkout local, em mobile e desktop.
+- O teste de direitos confirma que o botão de publicação permanece indisponível e que o Story não é publicado. O teste não depende de clique impossível em botão desabilitado nem de mensagem de erro do servidor.
+- Supabase local descartável iniciou, aplicou migrações, criou fixtures isoladas, e foi parado/descartado com sucesso.
+- Evidência sanitizada gerada, validada por parse e enviada como artifact `rubi-local-e2e-sanitized-evidence`, ID `14884044672`, com retenção de sete dias.
+- Verificações no mesmo head: `Install, build, TypeScript and lint` — **success**; `Hub V1 Integration QA` — **success**; E2E autenticado — **success**.
+
+Esta execução fecha os cenários locais de direitos não confirmados e confirma novamente os caminhos positivos/negativos persistidos nos dois viewports. Ela continua sendo validação local com dados descartáveis e checkout sintético: não comprova staging HTTPS, transação no sandbox do provedor, pedido pago, nem atribuição externa de parceiro.
+
+**Decisão de cobertura:** permanece **36,5/48 (76,0%)**, sem pontos adicionais. Classificação: **upgrade**. G2/G3 ainda exigem evidência de staging/RLS aplicável; G4 continua bloqueado pela validação externa do provedor. PR #307 permanece Draft e não deve ser integrada até concluir as dependências restantes e revisar todos os gates.
