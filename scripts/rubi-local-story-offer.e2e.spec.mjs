@@ -53,11 +53,12 @@ for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",widt
    await storyAdmin.getByLabel("Produto").selectOption(productId);
    const storyCard=storyAdmin.getByRole("button",{name:new RegExp(storyTitle)});
    await expect(storyCard).toBeVisible({timeout:20000});
+   await expect(storyCard).toContainText("Rascunho privado");
    await storyCard.click();
-   await expect(storyAdmin.getByText("Rascunho privado")).toBeVisible();
+   await expect(storyAdmin.getByRole("button",{name:"Aprovar e publicar Story"})).toBeVisible();
    masterPage.once("dialog",dialog=>dialog.accept());
    await storyAdmin.getByRole("button",{name:"Aprovar e publicar Story"}).click();
-   await expect(masterPage.locator('[data-sonner-toast][data-type="success"]')).toContainText(/Story aprovado para exibição/i);
+   await expect(masterPage.locator('[data-sonner-toast][data-type="success"]').filter({hasText:/Story aprovado para exibição/i})).toBeVisible();
    await masterContext.close();
    const consumerContext=await browser.newContext({viewport:{width:viewport.width,height:viewport.height}});
    const consumerPage=await consumerContext.newPage();
