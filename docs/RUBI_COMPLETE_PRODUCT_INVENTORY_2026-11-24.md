@@ -394,3 +394,12 @@ A baseline 36,5/48 continua sendo o total oficial carregado, mas não há uma fo
 4. Lista de bloqueadores externos e quem precisa fornecer acesso/documentação.
 5. Plano de sprints ordenado por ganho potencial, risco e dependência.
 6. Separação explícita entre cobertura técnica, validação E2E, operação comercial e QA humano.
+
+
+## 10. Matriz V1 nominal de 48 critérios — reconciliação linha a linha
+
+A auditoria desta rodada extraiu as 48 linhas do snapshot histórico Sprint 122 e registrou, separadamente, as evidências posteriores e os gates ainda abertos. A baseline total de 36,5/48 continua preservada, mas **não há distribuição autoritativa atual dos 36,5 pontos por linha**. Por isso, nenhum score individual foi inventado. O ledger também registra a divergência do critério 11.4 com a decisão aprovada de manter um único Shadow Master privado.
+
+- [Abrir ledger de reconciliação dos 48 critérios](sprint-309-v1-48-row-reconciliation.md)
+- O ledger contém os 48 IDs, descrições, scores históricos Sprint 122, evidências posteriores conhecidas, bloqueios externos e ordem de revalidação.
+- Resultado desta rodada: upgrade-only; 0 ponto novo; 36,5/48 permanece baseline carregada, não scorecard linha a linha reconstituído.
