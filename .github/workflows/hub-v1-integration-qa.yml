@@ -169,6 +169,8 @@ jobs:
         run: npm run test:rubi-consumer-personalization
       - name: RUBI Story to official offer journey contract tests
         run: npm run test:rubi-story-offer-journey
+      - name: RUBI privileged content notification worker hardening regression
+        run: npm run test:rubi-content-notification-worker
       - name: RUBI browser E2E config safety tests
         run: npm run test:rubi-browser-contract
       - name: RUBI browser evidence integrity tests
