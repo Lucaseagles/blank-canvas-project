@@ -8,6 +8,8 @@ on:
       - "src/lib/**"
       - "scripts/rubi-local-auth-fixtures.mjs"
       - "scripts/rubi-local-authenticated.e2e.spec.mjs"
+      - "scripts/rubi-local-story-fixture.mjs"
+      - "scripts/rubi-local-story-offer.e2e.spec.mjs"
       - "rubi-local-playwright.config.mjs"
       - "supabase/migrations/**"
       - ".github/workflows/rubi-local-authenticated-e2e.yml"
@@ -112,6 +114,8 @@ jobs:
           supabase migration up --local
       - name: Seed isolated consumer, approved merchant and approved partner identities
         run: node scripts/rubi-local-auth-fixtures.mjs seed-profiles
+      - name: Seed disposable supplier, product, reviewed movement and private Story
+        run: node scripts/rubi-local-story-fixture.mjs
       - name: Point the generated browser client to the local Supabase instance
         run: |
           node --input-type=module <<'NODE'
@@ -140,7 +144,7 @@ jobs:
           done
           cat "$RUNNER_TEMP/rubi-vite.log"
           exit 1
-      - name: Run authenticated journeys for all four profiles on mobile and desktop
+      - name: Run authenticated profiles and persisted Story-to-offer journeys on mobile and desktop
         env:
           RUBI_E2E_REPORT_PATH: ${{ runner.temp }}/rubi-local-auth-evidence.json
         run: npx playwright test --config=rubi-local-playwright.config.mjs
