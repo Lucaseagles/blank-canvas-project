@@ -103,3 +103,33 @@ Validated on PR head commit `fbe9c944a218e65593850ed3809a8ebd09fe93af`:
 This closes the local persisted-fixture and negative publication-blocking proof for the missing-checkout scenario. It does **not** prove the positive approved-Story browser journey, public Story discovery, click-through to the same product's offer, HTTPS staging behavior, or provider-owned checkout round-trip. The local fixture intentionally has no verified checkout and cannot be published. No screenshot bundle or provider confirmation was produced by this run.
 
 V1 remains **36.5/48 (76.0%)** and this evidence update awards **0 additional points** pending the complete positive-path and staging/provider acceptance gates.
+
+
+## Persisted Story positive-path and four-profile browser evidence — 2026-11-24
+
+Validated on PR head commit `ac532a2b459a7b56e0625d7ebe6f921a820ecd3c`:
+
+- `RUBI Local Authenticated E2E — Four Profiles`, run `45307420453`: **success**.
+- The isolated local Supabase instance started successfully, applied the migration chain, seeded disposable Master/consumer/merchant/partner identities and Story fixtures, and was stopped/discarded after the run.
+- Playwright executed **14/14 passing tests** in 35.6 seconds:
+  - 10 authenticated profile and Master non-owner access tests across mobile (390×844) and desktop (1366×768).
+  - 2 persisted Story negative-path tests across mobile and desktop: publication remains blocked when the product lacks a verified official checkout and active supplier.
+  - 2 persisted Story positive-path tests across mobile and desktop: Master publishes the disposable Story; the consumer finds that same Story on its matching product page and reaches the internal pre-checkout section.
+- The positive-path fixture uses a synthetic local-only checkout host `checkout.example.test`. The browser test verifies navigation to the pre-checkout section; it does not execute an external checkout, payment, order, or provider attribution.
+- `Hub V1 Integration QA`, run `45307420476`: **success**, including route generation/build, the dedicated RUBI regression suite, TypeScript and ESLint.
+- The workflow completed its non-secret test summary step and stopped/discarded local Supabase. The workflow run exposed no downloadable artifacts.
+
+## Updated acceptance status and score decision
+
+| Gate | Current status |
+|---|---|
+| G0 — implementation | Passed by source review and CI contracts |
+| G1 — local behavior | Improved: positive and negative persisted Story paths pass in mobile and desktop; broader stale-version, missing-rights and retry/failure browser cases remain outstanding |
+| G2 — persistence/security | Local migration bootstrap, disposable fixtures, four-profile authentication and Master non-owner denial passed; full staging/RLS acceptance evidence remains outstanding |
+| G3 — real journey | Local persisted Story → same-product pre-checkout journey passed in both viewports; authorized HTTPS staging journey remains outstanding |
+| G4 — external proof | Blocked: no provider-owned sandbox checkout round-trip or provider-confirmed attribution |
+| G5 — evidence bundle | CI run IDs and sanitized test summary are available in workflow logs; downloadable screenshot/artifact bundle and reviewer sign-off remain outstanding |
+
+The latest local browser run closes an important local positive-path gap, but does not satisfy the staging and provider-owned external acceptance gates. Do not infer a sale, payment, commission, or production checkout from this test.
+
+V1 remains **36.5/48 (76.0%)** and this update awards **0 additional points**. Classification: **upgrade**. PR #307 remains Draft and must not be merged until the remaining acceptance gates are satisfied and reviewed.
