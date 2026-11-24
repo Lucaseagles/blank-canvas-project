@@ -193,7 +193,8 @@ jobs:
               },
               suites
             };
-            await writeFile(destination, JSON.stringify(safe, null, 2) + "\\n", { mode: 0o600 });
+            await writeFile(destination, JSON.stringify(safe, null, 2) + "\n", { mode: 0o600 });
+            JSON.parse(await readFile(destination, "utf8"));
             console.log("Sanitized E2E summary generated; raw report and runtime details excluded.");
           } catch (error) {
             console.log("No complete Playwright report available for evidence export.");
