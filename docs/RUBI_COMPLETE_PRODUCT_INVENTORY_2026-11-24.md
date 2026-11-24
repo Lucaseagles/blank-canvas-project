@@ -627,3 +627,35 @@ A revisão direta do arquivo atual src/lib/admin_intel.functions.ts mostra que g
 6. Métricas administrativas com value/status/source/window/updatedAt/error, unavailable distinto de zero; gráficos com agregação real; CTR somente quando impressões válidas existirem.
 
 Sem mudança de runtime nesta rodada; apenas correção documental e de precisão do diagnóstico. Nenhum dado remoto ou segredo foi acessado/alterado.
+
+
+## 17. Estado consolidado dos PRs e gate de integração da Sprint 307 (2026-11-24)
+
+### PR #308 — Sprint 307: validação no head atual
+
+Head consultado diretamente: `9e15f125ded8cba2320e86cb1b104c990508edbf`. PR aberto, Draft, base `main`, mergeable true, não integrado.
+
+Os três workflows associados exatamente a esse SHA concluíram com sucesso:
+- Hub V1 integration QA — run `45464734972`, job `Install, build, TypeScript and lint`: success.
+- Sprint 33 QA — run `45464734712`, job `qa`: success.
+- RUBI Local Authenticated E2E — Four Profiles — run `45464734801`, job `authenticated-local`: success.
+
+A discussão do PR registra o artefato sanitizado com 22 cenários esperados, 22 aprovados, zero inesperados, zero skipped e zero flaky. O patch de 11 arquivos remove os helpers de escrita direta legados para vídeos nativos/externos, mantém os fluxos atuais nativo e ponte nas entradas server-side auditadas, remove o endpoint sem callers de upsert direto de compliance e conecta a regressão ao Sprint 33 QA.
+
+### Decisão de integração — ainda não recomendar
+
+Embora a CI esteja verde e o PR seja mergeable, não liberar integração ainda: o próprio escopo de cobertura 11.3 requer inventário exaustivo de mutações administrativas e prova transacional real (rollback quando a auditoria falha, concorrência/locks e grants) em PostgreSQL descartável. O teste específico adicionado nesta sprint é principalmente source-level e não fecha esses dois requisitos. Não confundir sucesso dos três workflows com cobertura integral da governança administrativa.
+
+**Critérios objetivos para mudar a decisão:**
+1. Matriz de todas as mutações administrativas: rota/caller, server function, middleware, RPC, tabelas, grants/RLS, audit log e teste CI.
+2. Evidência de banco descartável: sucesso e rollback induzido por falha de audit insert; transações concorrentes para mesmo recurso; permissões Owner versus consumer/merchant/partner/non-Owner.
+3. Revalidar as três workflows no head final após quaisquer alterações.
+4. Confirmar que fluxos nativo e ponte, edição, compliance e redirecionamentos continuam preservados por testes funcionais.
+
+### PR #309 — Inventário mestre
+
+Head atual confirmado na consulta anterior: `2671680903737dff2c872912f70b2255870c3874`; aberto, Draft, não integrado. É uma alteração documental. A consulta de workflows por SHA retornou lista vazia; não declarar QA verde. O conteúdo precisa continuar acompanhando a evidência, mas não substitui testes de implementação.
+
+### Política de decisão
+
+A integração só será recomendada quando os gates específicos do escopo forem satisfeitos. Não é necessário esperar 100% da matriz V1 para integrar toda sprint; porém não se deve integrar um PR cujo próprio critério de aceite ainda não esteja demonstrado. Nenhum merge foi executado nesta rodada.
