@@ -52,7 +52,7 @@ begin
     and p.checkout_url ~ ('^https://' || replace(supplier.checkout_host,'.','[.]') || '(/|[?]|$)')
     and p.checkout_url !~ '[#@]'
     and p.checkout_url !~ '[[:space:]]'
-    and position(E'\\\\' in p.checkout_url)=0
+    and strpos(p.checkout_url,chr(92))=0
    for share of p,supplier;
   if not found then
    raise exception 'Active product and supplier with verified official checkout are required';
