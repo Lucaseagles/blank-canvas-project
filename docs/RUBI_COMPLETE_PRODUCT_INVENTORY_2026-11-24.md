@@ -228,6 +228,52 @@ A matriz V1 mede 48 critérios selecionados de cobertura técnica, não a porcen
 
 **Estado:** CI automatizado e E2E local autenticado estão avançando. QA visual/humano hospedado e validação operacional real continuam separados. Corrigir o texto enganoso de parcelamento "ou 10x" se não houver metadado real de parcelas antes de liberar comercialmente.
 
+## 3.1. Estratégias RUBI 11× — inventário nominal do código atual
+
+A lista abaixo foi lida diretamente de `src/lib/rubi-growth-11x.ts` na `main`. Os estados são classificação do plano/código, não telemetria de execução, vendas ou maturidade comercial.
+
+| ID | Pilar | Estratégia | Estado no código |
+|---:|---|---|---|
+| 1 | Eclipse | Três entradas comerciais | code-observed |
+| 2 | Eclipse | Cadastro do consumidor | code-observed |
+| 3 | Eclipse | Preferências e nichos | code-observed |
+| 4 | Eclipse | Feed de descoberta | code-observed |
+| 5 | Eclipse | Comunidades opt-in | execution-plan |
+| 6 | Eclipse | Indicação entre consumidores | code-observed |
+| 7 | Eclipse | Reativação e LTV | execution-plan |
+| 8 | Store | Catálogo de marca própria | code-observed |
+| 9 | Store | Precificação por fornecedor | code-observed |
+| 10 | Store | Destaques oficiais RUBI | code-observed |
+| 11 | Store | Lançamentos sazonais | execution-plan |
+| 12 | Store | Kits e produtos complementares | execution-plan |
+| 13 | Store | Vídeos de demonstração própria | execution-plan |
+| 14 | Store | Compra com confirmação Kairos | external-blocker |
+| 15 | Achadinhos | Vídeos de achadinhos | code-observed |
+| 16 | Achadinhos | Afiliados TikTok Shop | external-blocker |
+| 17 | Achadinhos | Ofertas Shopee e outros | execution-plan |
+| 18 | Achadinhos | Páginas orgânicas de nicho | execution-plan |
+| 19 | Achadinhos | Reels e TikTok original | execution-plan |
+| 20 | Achadinhos | Shorts e Pinterest | execution-plan |
+| 21 | Achadinhos | SEO de categorias e produtos | execution-plan |
+| 22 | Partners | Captação de experts | execution-plan |
+| 23 | Partners | Captação microinfluenciadores | execution-plan |
+| 24 | Partners | Consumidor vira afiliado | execution-plan |
+| 25 | Partners | Aprovação e grants | code-observed |
+| 26 | Partners | Kit de storytelling | execution-plan |
+| 27 | Partners | Link e pré-checkout | external-blocker |
+| 28 | Partners | Comissões conciliadas | code-observed |
+| 29 | Business | Onboarding de lojistas | code-observed |
+| 30 | Business | Catálogo e mínimo B2B | code-observed |
+| 31 | Business | Preços progressivos | code-observed |
+| 32 | Business | Kits de abastecimento | execution-plan |
+| 33 | Business | Reposição recorrente | execution-plan |
+| 34 | Business | Conteúdo B2B demonstrativo | execution-plan |
+| 35 | Business | Consultoria comercial WhatsApp | execution-plan |
+
+### Metas 11× que não devem ser confundidas com resultados
+
+O mesmo arquivo declara metas-alvo de mês 12: 800 parceiros vendendo; 110 pedidos/mês por vendedor; 1.200 lojistas compradores; 100 unidades por lojista; 2.000 pedidos diretos da Store; 3.600 conversões de marketplace; margens unitárias-alvo de R$24,50 para parceiro RUBI, R$10 no atacado, R$49 na venda direta e R$10 em afiliados. São **metas de planejamento**, não dados reais, garantias, forecast validado ou lucro líquido. Só usar como metas operacionais depois de aprovar custos, margem, capacidade, estoque, canais e evidência de conversão.
+
 ## 4. Lacunas V1 de maior evidência / dependência
 
 Os IDs abaixo são alvos herdados da matriz detalhada antiga e do Sprint 301. Precisam ser revalidados contra a main e o score atual; não são afirmação de score individual atualizado.
