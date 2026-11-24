@@ -132,7 +132,7 @@ test("public Story response is minimized and capped without leaking editorial ev
  assert.match(server,/\.select\("id,title,description,video_url,poster_url,movement_id,approved_movement_revision,status,rights_confirmed"\)/);
  assert.match(server,/\.slice\(0,6\)\.map/);
  assert.match(server,/id:story\.id,title:story\.title,description:story\.description,video_url:story\.video_url,poster_url:story\.poster_url/);
- assert.doesNotMatch(server,/\.select\(storyFields\)[\s\S]*listRubiApprovedProductStories/);
+ assert.doesNotMatch(publicHandler,/\.select\(storyFields\)/);
  assert.doesNotMatch(server,/evidence_notes:story\.evidence_notes|rights_confirmed:story\.rights_confirmed/);
 });
 test("public Story query binds every Story to the requested active product and current movement",()=>{
