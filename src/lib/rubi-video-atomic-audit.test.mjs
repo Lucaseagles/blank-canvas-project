@@ -52,12 +52,16 @@ test("SQL enforces Owner, row locks, atomic associations and audit writes", () =
 });
 
 
-test("legacy video editor routes cannot reach direct client-side writes", () => {
+test("legacy native editor is retired while audited native and bridge entry points remain usable", () => {
   const createRoute = read("../routes/admin/videos.new.tsx");
   const editRoute = read("../routes/admin/videos.$id.edit.tsx");
-  for (const route of [createRoute, editRoute]) {
-    assert.ok(route.includes("redirect({ to: \"/admin/videos\" })"));
-  }
+  const adminVideos = read("../routes/admin/videos.tsx");
+  assert.match(createRoute, /BridgeVideoForm/);
+  assert.match(createRoute, /navigate\(\{ to: "\/admin\/videos" \}\)/);
+  assert.ok(editRoute.includes('redirect({ to: "/admin/videos" })'));
+  assert.match(adminVideos, /setIsDialogOpen\(true\)/);
+  assert.match(adminVideos, /saveVideoFn\(\{ data \}\)/);
+  assert.match(adminVideos, /New Bridge Video/);
   assert.equal(existsSync(new URL("../admin/videos/NativeVideoForm.tsx", import.meta.url)), false);
   assert.equal(existsSync(new URL("../admin/videos/VideoForm.tsx", import.meta.url)), false);
   assert.equal(existsSync(new URL("./supabase/videos.ts", import.meta.url)), false);
