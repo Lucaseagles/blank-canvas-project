@@ -75,3 +75,15 @@ Validated on head commit `ae4881c5c6e0dbb8b7804616832cf26c4f535bb3`:
 - `Sprint 33 QA`, run `45286495557`: **success**, including TypeScript, ESLint and production build.
 
 These results strengthen CI confidence but do not prove a persisted Story-to-offer browser journey, staging checkout round-trip, provider attribution, or Story-specific runtime authorization. The score remains unchanged until those acceptance gates are satisfied.
+
+
+## CI evidence update — 2026-11-24
+
+Validated on Sprint 306 head commit `214f05fe8fdb8987e2567b1c9c24055cad3b950b`:
+
+- `Hub V1 integration QA`, run `45301766933`: **success**. Dedicated `npm run test:rubi-story-offer-journey` passed **14/14** tests, including the public response minimization and product/movement binding assertions. Browser E2E configuration safety passed 3/3; TypeScript and ESLint passed.
+- `Sprint 33 QA`, run `45301766782`: **success**, including route generation, TypeScript, ESLint and production build.
+- `RUBI Local Authenticated E2E — Four Profiles`, run `45301766985`: **success**. The isolated local Supabase flow and all four authenticated profiles passed on mobile and desktop; disposable database was stopped/discarded.
+- No failed steps were reported in the three completed workflow jobs.
+
+This green CI confirms the corrected test suite and current code contracts. It does **not** close G2/G3/G4: the persisted Story fixture, Story-specific browser navigation on staging, and provider-owned checkout round-trip remain unexecuted. V1 remains **36.5/48 (76.0%)**; this update awards **0 additional points**.
