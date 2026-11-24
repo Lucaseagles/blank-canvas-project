@@ -139,7 +139,7 @@ test("public Story query binds every Story to the requested active product and c
  const server=source("./rubi-product-stories.functions.ts");
  const publicHandler=server.slice(server.indexOf("export const listRubiApprovedProductStories"));
  assert.match(publicHandler,/\.eq\("id",data\.productId\)/);
- assert.match(publicHandler,/\.eq\("active",true\)/);
+ assert.match(publicHandler,/if\(!product\?\.active/);
  assert.match(publicHandler,/Number\(product\.retail_price\)<=0/);
  assert.match(publicHandler,/approvedRubiCheckout\(product\)/);
  assert.match(publicHandler,/\.eq\("product_id",data\.productId\)/);
