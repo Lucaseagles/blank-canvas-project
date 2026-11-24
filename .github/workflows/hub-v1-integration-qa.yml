@@ -57,7 +57,7 @@ jobs:
           const lines = [
             "## Locked dependency audit",
             "",
-            \`Findings: \${summary.total ?? entries.length} total; \${summary.high ?? 0} high; \${summary.moderate ?? 0} moderate; \${summary.low ?? 0} low; \${summary.critical ?? 0} critical.\`,
+            "Findings: " + (summary.total ?? entries.length) + " total; " + (summary.high ?? 0) + " high; " + (summary.moderate ?? 0) + " moderate; " + (summary.low ?? 0) + " low; " + (summary.critical ?? 0) + " critical.",
             "",
             "| Package | Severity | Direct | Range | Safe fix available | Advisory |",
             "|---|---:|:---:|---|:---:|---|"
@@ -66,7 +66,7 @@ jobs:
             const advisories = (item.via || []).filter(value => typeof value === "object");
             const advisory = advisories.map(value => value.title || value.url || value.name).join("; ") || "Transitive dependency chain";
             const safe = item.fixAvailable === true ? "Yes" : item.fixAvailable === false ? "No" : item.fixAvailable ? "Review" : "Unknown";
-            lines.push(\`| \${name} | \${item.severity} | \${item.isDirect ? "Yes" : "No"} | \${item.range || "—"} | \${safe} | \${advisory.replaceAll("|", "/")} |\`);
+            lines.push("| " + name + " | " + item.severity + " | " + (item.isDirect ? "Yes" : "No") + " | " + (item.range || "—") + " | " + safe + " | " + advisory.replaceAll("|", "/") + " |");
           }
           if (!entries.length) lines.push("| — | none | — | — | — | No vulnerable packages reported |");
           lines.push("", "This diagnostic is informational and does not modify package.json or package-lock.json.", "");
