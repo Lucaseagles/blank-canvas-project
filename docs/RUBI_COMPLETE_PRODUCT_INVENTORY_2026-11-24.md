@@ -547,3 +547,51 @@ Remover marketplace CRUD/credenciais/status e Telegram metric da fila de trabalh
 5. Acrescentar health/status de filas, integrações e webhooks com timestamp e fonte, sem simular atividade externa.
 
 **Classificação:** upgrade-only; nenhum ponto V1 concedido. Esta auditoria identificou melhorias no próprio instrumento de auditoria e no painel central; não é evidência de que o Admin Control Center já cumpra todos os requisitos acima. Nenhuma alteração de runtime ou banco remoto nesta rodada.
+
+
+## 15. Admin Control Center — achados operacionais de integrações e métricas
+
+**Classificação:** upgrade-only; riscos funcionais/admin confirmados por leitura estática; não altera cobertura V1.
+
+### A. Configuração Telegram não é uma única transação
+
+Em `src/lib/telegram.functions.ts::saveTelegramConfig`, o fluxo atual:
+1. insere/atualiza `telegram_config` diretamente;
+2. chama depois a RPC `set_integration_secret` para `channel_id`;
+3. chama separadamente a RPC para `bot_token`, quando fornecido.
+
+Se a etapa 2 ou 3 falhar, o registro da configuração pode já ter sido alterado, enquanto os segredos permanecem antigos/ausentes. O usuário recebe erro, mas o estado fica parcialmente atualizado. O conjunto também não escreve uma única trilha administrativa atômica de configuração. O fato de os segredos individuais usarem RPC não torna a sequência inteira atômica.
+
+**Correção recomendada:** uma única operação server-side/RPC transacional para atualizar configuração + referências + segredos no Vault e registrar auditoria, ou um fluxo explicitamente compensatório com estado pendente e reconciliação idempotente. Não persistir token em tabela de configuração nem em audit log. Adicionar testes de falha em cada etapa, rollback, rotação de token, remoção/retenção do token existente e concorrência.
+
+### B. Envio Telegram pode gerar falso estado “failed” após envio externo bem-sucedido
+
+Em `sendTelegramManual`, a API Telegram é chamada primeiro. Depois, o código grava `telegram_messages` como `sent`. Se a chamada externa tiver sucesso mas o insert local falhar, o catch grava uma linha `failed` e retorna falha, embora a mensagem possa já estar publicada. Uma repetição do operador pode publicar duplicado. Se a gravação de falha também falhar, esse erro secundário é ignorado.
+
+**Correção recomendada:** outbox local idempotente com chave de operação, estados `pending → sending → sent/unknown/failed`, guardar o message_id externo assim que conhecido e reconciliar respostas ambíguas; não declarar falha certa quando a resposta externa já confirmou sucesso. Interface do Admin deve mostrar “resultado externo confirmado / persistência local pendente” e oferecer reconciliação, não botão cego de reenvio.
+
+### C. Métricas do painel podem ocultar falhas e sugerir precisão maior do que a fonte
+
+- `getAdminMetrics` desestrutura somente `count` de seis consultas paralelas e não verifica os objetos `error`; falhas de leitura podem aparecer como zero, confundindo “zero real” com “consulta falhou”.
+- `getAdminIntelligenceData` valida erros em várias consultas, mas usa consultas de eventos para gráficos de produto/marketplace que selecionam eventos `OUTBOUND_CLICK` e metadados crus; isso não equivale, por si só, a ranking agregado por produto ou participação de marketplace. A consulta `marketplaceEvents` não limita o volume na origem, ao contrário de `topEvents` (limit 100), o que pode aumentar custo/volume e enviesar amostra se limite fosse aplicado.
+- CTR calculado como `periodClicks / productViews` mistura eventos de clique de saída e visualizações de produto; sem definição comum de unidade, deduplicação, janela e população elegível, o rótulo CTR pode não representar taxa de clique por impressão. Deve ser tratado como razão derivada, não KPI confiável, até definir denominador compatível.
+
+**Correção recomendada:** resultado tipado por métrica `value | status | source | window | updatedAt | error`; nunca converter erro em zero. Agregar no servidor/banco com denominadores explícitos e deduplicação; nomear cada gráfico conforme a consulta realmente calcula; separar clicks, product views, impressions, purchases confirmed e attribution quality. Exibir “sem dados”/“indisponível”/“parcial” separadamente de zero.
+
+### D. Controles positivos já confirmados
+
+- `saveCategory`, `reorderCategories`, `deleteCategory` usam `rubi_manage_category_audited`.
+- Operações de grupos de oferta usam `rubi_manage_offer_group_audited`.
+- Configuração de prova social usa `rubi_update_admin_setting_audited` com valores esperados.
+- Feature flags do Command Center também usam `rubi_update_admin_setting_audited` com optimistic locking.
+- Esses exemplos devem ser aproveitados como padrão; não duplicar uma nova trilha de configurações.
+
+### Prioridade administrativa atualizada
+
+1. **P0:** tornar o save de Telegram transacional e o envio manual idempotente/reconciliável; testar falhas parciais.
+2. **P0:** corrigir semântica de métricas: erro nunca é zero, CTR com denominador válido e gráficos com agregação real.
+3. **P1:** matriz exaustiva de mutações administrativas e testes negativos por perfil.
+4. **P1:** route inventory derivado do route tree e health-checks com status/fonte/última execução.
+5. **P2:** experiência administrativa mobile, filtros, ações em lote e revisão visual/acessibilidade.
+
+**Sem alteração de runtime nesta rodada:** achados foram documentados antes de implementar para evitar corrigir integração com risco de duplicar envios ou perder segredos. Nenhuma alteração no Supabase remoto.
