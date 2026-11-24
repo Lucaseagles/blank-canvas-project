@@ -133,3 +133,18 @@ Validated on PR head commit `ac532a2b459a7b56e0625d7ebe6f921a820ecd3c`:
 The latest local browser run closes an important local positive-path gap, but does not satisfy the staging and provider-owned external acceptance gates. Do not infer a sale, payment, commission, or production checkout from this test.
 
 V1 remains **36.5/48 (76.0%)** and this update awards **0 additional points**. Classification: **upgrade**. PR #307 remains Draft and must not be merged until the remaining acceptance gates are satisfied and reviewed.
+
+## Sanitized evidence validation after workflow hardening — 2026-11-24
+
+Validated on PR head commit `7806b0b84cbeff740b6396cf0a28814fcf8e2aeb`:
+
+- `RUBI Local Authenticated E2E — Four Profiles`, run `45312370327`: **success**. The isolated Supabase migration/bootstrap, disposable Master/consumer/merchant/partner identities, Story fixtures, app startup, browser tests and teardown all completed successfully.
+- Playwright executed **14/14 passing tests** in 43.8 seconds across mobile (390×844) and desktop (1366×768), including authenticated profile boundaries, non-owner Master denial, persisted Story publication blocking without valid checkout/supplier, and the positive persisted Story → matching product → internal pre-checkout path.
+- The workflow generated the sanitized JSON summary, parsed it again successfully before upload, and uploaded artifact `rubi-local-e2e-sanitized-evidence` (artifact ID `14883354186`, run `45312370327`). This validates the evidence-export correction; the artifact excludes the raw report and runtime details.
+- `Hub V1 integration QA`, run `45312370330`: **success**.
+- `Sprint 33 QA`, run `45312370293`: **success**.
+- All three workflows for this head completed successfully.
+
+The local browser evidence and downloadable sanitized summary are now repeatable. It still uses disposable local data and a synthetic checkout host; it is not HTTPS staging, provider-owned sandbox round-trip, payment, order, or provider-confirmed attribution evidence. Staging and external-provider gates remain open. Broader Story-specific browser negatives for missing rights and stale movement revision also remain outstanding.
+
+**Score decision:** V1 remains **36.5/48 (76.0%)**, with **0 additional points**. Classification: **upgrade**. PR #307 remains Draft and unmerged pending staging/provider evidence and remaining negative-path acceptance.
