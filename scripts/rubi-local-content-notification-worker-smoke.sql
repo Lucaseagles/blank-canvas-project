@@ -9,7 +9,7 @@ CREATE TEMP TABLE rubi_worker_qa_target (
 ) ON COMMIT DROP;
 
 INSERT INTO pg_temp.rubi_worker_qa_target(product_id)
-VALUES (:'product_id'::uuid);
+VALUES (gen_random_uuid());
 
 DELETE FROM public.content_notification_queue
 WHERE content_type = 'product'
@@ -25,15 +25,41 @@ CREATE TEMP TABLE tmp_content_affinity (
 INSERT INTO pg_temp.tmp_content_affinity(user_id, affinity_score)
 VALUES ('00000000-0000-4000-8000-000000000306', 99.99);
 
--- Force the disposable fixture product through the real publication trigger.
--- The trigger enqueues the product and invokes the SECURITY DEFINER worker.
+-- The affinity worker belongs to the marketplace catalog (public.products),
+-- not the separate RUBI wholesale catalog (public.hub_products) used by the
+-- Story fixture. Create an isolated synthetic marketplace product here so the
+-- actual publication trigger and worker are exercised without cross-linking
+-- the two catalog domains.
+INSERT INTO public.products (id, title, current_price, status, slug)
+SELECT product_id,
+       'RUBI notification worker security QA',
+       19.90,
+       'active',
+       'rubi-notification-worker-security-qa-' || product_id::text
+FROM pg_temp.rubi_worker_qa_target;
+
+-- Force the synthetic product through the real publication trigger.
 UPDATE public.products
 SET status = 'draft'
 WHERE id = (SELECT product_id FROM pg_temp.rubi_worker_qa_target);
+DO $assert_draft$
+BEGIN
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Synthetic marketplace product was not updated to draft';
+  END IF;
+END;
+$assert_draft$;
 
 UPDATE public.products
 SET status = 'published'
 WHERE id = (SELECT product_id FROM pg_temp.rubi_worker_qa_target);
+DO $assert_published$
+BEGIN
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Synthetic marketplace product was not published';
+  END IF;
+END;
+$assert_published$;
 
 DO $assertions$
 DECLARE
