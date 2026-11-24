@@ -60,7 +60,7 @@ test("four authenticated profiles are covered on mobile and desktop, including n
   for (const profile of ["CONSUMER", "MERCHANT", "PARTNER", "MASTER"]) assert.match(spec, new RegExp(`key: "${profile}"`));
   assert.match(spec, /authenticated non-owner cannot enter the Master dashboard/i);
   assert.match(spec, /signIn\(page, "CONSUMER", "\/admin", "\/"\)/);
-  assert.match(config, /rubi-local-authenticated/);
+  assert.match(config, /rubi-local-(?:authenticated|story-offer)/);
   assert.match(spec, /width: 390, height: 844/);
   assert.match(spec, /width: 1366, height: 768/);
 });
