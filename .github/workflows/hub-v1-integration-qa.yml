@@ -45,6 +45,47 @@ jobs:
           cache: npm
       - name: Install locked dependencies
         run: npm ci
+      - name: Diagnose locked dependency advisories (non-blocking)
+        run: |
+          npm audit --json > "$RUNNER_TEMP/npm-audit.json" 2> "$RUNNER_TEMP/npm-audit.stderr" || true
+          node --input-type=module <<'NODE'
+          import { readFile, appendFile } from "node:fs/promises";
+          const path = process.env.RUNNER_TEMP + "/npm-audit.json";
+          let report;
+          let parseError = null;
+          try {
+            report = JSON.parse(await readFile(path, "utf8"));
+          } catch (error) {
+            parseError = error;
+          }
+          const hasAuditMetadata = report && report.metadata && report.metadata.vulnerabilities;
+          const lines = ["## Locked dependency audit", ""];
+          if (parseError || report?.error || !hasAuditMetadata) {
+            const reason = report?.error?.summary || report?.error?.code || parseError?.message || "npm audit returned no vulnerability metadata";
+            lines.push("**Result unavailable — not interpreted as zero vulnerabilities.**", "", "Reason: " + String(reason).replaceAll("|", "/"), "", "The diagnostic is non-blocking; rerun npm audit when registry access is available.");
+          } else {
+            const entries = Object.entries(report.vulnerabilities || {});
+            const summary = report.metadata.vulnerabilities;
+            lines.push(
+              "Findings: " + (summary.total ?? entries.length) + " total; " + (summary.critical ?? 0) + " critical; " + (summary.high ?? 0) + " high; " + (summary.moderate ?? 0) + " moderate; " + (summary.low ?? 0) + " low; " + (summary.info ?? 0) + " info.",
+              "",
+              "| Package | Severity | Direct | Affected range | Suggested fix | Advisory |",
+              "|---|---:|:---:|---|---|---|"
+            );
+            for (const [name, item] of entries) {
+              const advisories = (item.via || []).filter(value => typeof value === "object");
+              const advisory = advisories.map(value => value.title || value.url || value.name).join("; ") || "Transitive dependency chain";
+              const fix = item.fixAvailable === true ? "Compatible fix" : item.fixAvailable === false ? "No automatic fix" : item.fixAvailable && typeof item.fixAvailable === "object" ? (item.fixAvailable.name || name) + "@" + (item.fixAvailable.version || "version unspecified") + (item.fixAvailable.isSemVerMajor ? " (major; manual review)" : " (review)") : "Unknown";
+              lines.push("| " + name + " | " + item.severity + " | " + (item.isDirect ? "Yes" : "No") + " | " + (item.range || "—") + " | " + fix.replaceAll("|", "/") + " | " + advisory.replaceAll("|", "/") + " |");
+            }
+            if (!entries.length) lines.push("| — | none | — | — | — | No vulnerable packages reported |");
+            lines.push("", "This diagnostic is informational and does not modify package.json or package-lock.json.");
+          }
+          lines.push("");
+          const output = lines.join("\n");
+          console.log(output);
+          await appendFile(process.env.GITHUB_STEP_SUMMARY, output + "\n");
+          NODE
       - name: Generate routes and build
         run: npm run build
       - name: RUBI checkout validation security tests
@@ -128,6 +169,8 @@ jobs:
         run: npm run test:rubi-consumer-personalization
       - name: RUBI Story to official offer journey contract tests
         run: npm run test:rubi-story-offer-journey
+      - name: RUBI privileged content notification worker hardening regression
+        run: npm run test:rubi-content-notification-worker
       - name: RUBI browser E2E config safety tests
         run: npm run test:rubi-browser-contract
       - name: RUBI browser evidence integrity tests
