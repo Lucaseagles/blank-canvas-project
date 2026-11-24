@@ -304,6 +304,20 @@ Esta seção registra fatos novos encontrados na main e em PRs posteriores. Ela 
 | 07.4 — biblioteca de ativos | Sprint 207 já elevou o critério para 1,0 na baseline de 36,5/48, condicionado a merge e pipelines, ambos registrados. | Operação comercial ainda exige ativos/licenças reais e prova de uso, mas isso não reabre automaticamente o ponto técnico já contabilizado. | **Manter 1,0 na baseline histórica**, sem somar novamente. |
 | 03.4 / 06.4 / 04.4 / 09.3 / 09.4 / 10.4 / 12.4 | PRs recentes reforçam proteção de checkout, atribuição, ledger, pagamentos parciais, conciliação e preparação de carrinho/pedido. | Não foi encontrada evidência de evento oficial de provedor, compra liquidada, order bump/upsell cobrados, comissão externa conciliada, payout e estorno reais. | **Não pontuar por CI ou estrutura**: dependem de prova externa/financeira. |
 
+### Revisão técnica adicional — Sprint 307 / PR #308
+
+A leitura do diff e dos arquivos de implementação confirmou o seguinte escopo:
+
+- O workspace `/admin/videos` mantém criação/edição de vídeo nativo por formulário integrado ao `saveVideo`, que chama a RPC `rubi_manage_video_audited`; upload é limitado a MP4/WebM de até 50 MB, com bucket privado e URL temporária restrita ao Owner.
+- A criação de vídeo ponte permanece separada e chama `rubi_manage_bridge_video_audited`, com validação HTTPS e host permitido por plataforma.
+- Status e exclusão de vídeo nativo também usam a RPC auditada; a exclusão de vídeo ponte usa a RPC própria.
+- O editor legado `NativeVideoForm`, o antigo `VideoForm` e os helpers de escrita direta no cliente foram removidos; a rota antiga de edição redireciona para o workspace auditado.
+- O endpoint de gravação de regras de compliance que fazia upsert direto foi removido; a escrita permanece pelo registro de configurações auditadas.
+
+**Risco funcional observado para QA antes do merge:** a rota `/admin/videos/new` agora cria especificamente vídeo ponte; o formulário nativo é aberto pelo botão `New Video` no workspace. Isso é coerente com a separação dos dois tipos, mas precisa ser conferido visualmente e por teste manual para garantir que o usuário Master não interprete as opções como um único fluxo. Também conferir edição de registros legados de vídeo e associação dos produtos.
+
+**Limite de evidência:** o teste novo `rubi-video-atomic-audit.test.mjs` é principalmente um contrato estático/source-level que verifica uso das RPCs, grants, row locks e remoção dos caminhos legados. Os três workflows do PR #308 estão verdes no head `9e15f125...`, mas a leitura desta rodada não encontrou um teste SQL de integração que execute a RPC e provoque falha de auditoria/rollback/conflito em banco descartável. Portanto, manter esse gate em aberto para o critério 11.3; não declarar rollback e concorrência comprovados somente por regex de SQL.
+
 ### Estado de integração no corte
 
 - PR #307 (Sprint 306) está integrada na `main`; a sua evidência Story local foi incorporada ao inventário.
