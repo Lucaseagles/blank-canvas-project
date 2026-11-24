@@ -126,3 +126,22 @@ test("Story media URLs reject non-HTTPS, credentials, fragments and wrong file e
  assert.equal(validRubiStoryMediaUrl("https://cdn.example.test/story.mov","video"),false);
  assert.equal(validRubiStoryMediaUrl("https://cdn.example.test/poster.gif","poster"),false);
 });
+
+test("public Story response is minimized and capped without leaking editorial evidence",()=>{
+ const server=source("./rubi-product-stories.functions.ts");
+ assert.match(server,/\.select\("id,title,description,video_url,poster_url,movement_id,approved_movement_revision,status,rights_confirmed"\)/);
+ assert.match(server,/\.slice\(0,6\)\.map/);
+ assert.match(server,/id:story\.id,title:story\.title,description:story\.description,video_url:story\.video_url,poster_url:story\.poster_url/);
+ assert.doesNotMatch(server,/\.select\(storyFields\)[\s\S]*listRubiApprovedProductStories/);
+ assert.doesNotMatch(server,/evidence_notes:story\.evidence_notes|rights_confirmed:story\.rights_confirmed/);
+});
+test("public Story query binds every Story to the requested active product and current movement",()=>{
+ const server=source("./rubi-product-stories.functions.ts");
+ const publicHandler=server.slice(server.indexOf("export const listRubiApprovedProductStories"));
+ assert.match(publicHandler,/\.eq\("id",data\.productId\)/);
+ assert.match(publicHandler,/\.eq\("active",true\)/);
+ assert.match(publicHandler,/Number\(product\.retail_price\)<=0/);
+ assert.match(publicHandler,/approvedRubiCheckout\(product\)/);
+ assert.match(publicHandler,/\.eq\("product_id",data\.productId\)/);
+ assert.match(publicHandler,/canServeVersionedRubiStory\(story,byId\.get\(story\.movement_id\)\?\?null,data\.productId\)/);
+});
