@@ -76,4 +76,32 @@ await setEnv("RUBI_QA_APPROVED_STORY_PRODUCT_ID",approvedProductId);
 await setEnv("RUBI_QA_APPROVED_STORY_ID",approvedStoryId);
 await setEnv("RUBI_QA_APPROVED_STORY_TITLE","Story aprovado de validação RUBI");
 await setEnv("RUBI_QA_APPROVED_STORY_PRODUCT_TITLE",approvedProductTitle);
+
+const rightsProductTitle="RUBI QA Rights Gate Product "+run;
+const rightsProductRows=await rpc("rubi_save_hub_product_audited",{p_id:null,p_expected_revision:null,p_actor:masterId,p_values:{
+ supplier_id:supplierId,title:rightsProductTitle,description:"Produto sintético local para validar bloqueio por ausência de direitos.",image_url:null,
+ category:"QA local",sku:"RUBI-QA-STORY-RIGHTS-"+run,retail_price:19.9,supplier_cost:8,b2b_base_price:null,
+ min_b2b_quantity:1,active:true,checkout_url:"https://checkout.example.test/qa-no-payment",checkout_verified:true
+}});
+const rightsProductId=rightsProductRows?.[0]?.product_id;
+if(!rightsProductId)throw new Error("Disposable rights-gate product was not created.");
+const rightsMovementRows=await rpc("rubi_mutate_movement_audited",{p_action:"create",p_id:null,p_product_id:rightsProductId,p_expected_revision:null,p_actor:masterId,p_values:{
+ name:"Movimento QA direitos consumidor",audience:"consumer",buyer_persona:"Pessoa avaliando uma oferta sintética local.",
+ problem:"Precisa conferir a apresentação antes de conhecer a oferta.",desired_outcome:"Visualizar o Story e chegar à pré-compra do mesmo produto.",
+ truthful_promise:"Conteúdo sintético sem alegações comerciais.",differentiator:"Teste isolado sem clientes ou pagamentos reais.",
+ narrative:"Movimento exclusivo para validar o bloqueio de publicação quando direitos não foram confirmados.",
+ evidence_notes:"Fixture fictícia e descartável de QA local.",status:"review"
+}});
+const rightsMovementId=rightsMovementRows?.[0]?.id;
+if(!rightsMovementId)throw new Error("Disposable rights-gate movement was not created.");
+const rightsStoryRows=await rpc("rubi_save_story_draft_audited",{p_actor:masterId,p_id:null,p_expected_revision:null,p_product:rightsProductId,p_movement:rightsMovementId,
+ p_title:"Story sem direitos confirmados — QA",p_description:"Story sintético privado para testar bloqueio de publicação sem confirmação de direitos de uso.",
+ p_video_url:"https://cdn.example.test/rubi-qa-rights-story.mp4",p_poster_url:null,
+ p_evidence:"Direitos intencionalmente não confirmados neste fixture local.",p_rights:false,p_position:0
+}});
+const rightsStoryId=rightsStoryRows?.[0]?.saved_id;
+if(!rightsStoryId)throw new Error("Disposable rights-gate Story was not created.");
+await setEnv("RUBI_QA_RIGHTS_PRODUCT_ID",rightsProductId);
+await setEnv("RUBI_QA_RIGHTS_STORY_TITLE","Story sem direitos confirmados — QA");
+
 process.stdout.write("Disposable supplier, unpublished product without verified checkout, reviewed consumer movement and private Story draft created in local Supabase. No checkout or payment evidence was fabricated.\n");
