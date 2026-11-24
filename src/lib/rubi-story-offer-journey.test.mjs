@@ -129,11 +129,12 @@ test("Story media URLs reject non-HTTPS, credentials, fragments and wrong file e
 
 test("public Story response is minimized and capped without leaking editorial evidence",()=>{
  const server=source("./rubi-product-stories.functions.ts");
- assert.match(server,/\.select\("id,title,description,video_url,poster_url,movement_id,approved_movement_revision,status,rights_confirmed"\)/);
- assert.match(server,/\.slice\(0,6\)\.map/);
- assert.match(server,/id:story\.id,title:story\.title,description:story\.description,video_url:story\.video_url,poster_url:story\.poster_url/);
+ const publicHandler=server.slice(server.indexOf("export const listRubiApprovedProductStories"));
+ assert.match(publicHandler,/\.select\("id,title,description,video_url,poster_url,movement_id,approved_movement_revision,status,rights_confirmed"\)/);
+ assert.match(publicHandler,/\.slice\(0,6\)\.map/);
+ assert.match(publicHandler,/id:story\.id,title:story\.title,description:story\.description,video_url:story\.video_url,poster_url:story\.poster_url/);
  assert.doesNotMatch(publicHandler,/\.select\(storyFields\)/);
- assert.doesNotMatch(server,/evidence_notes:story\.evidence_notes|rights_confirmed:story\.rights_confirmed/);
+ assert.doesNotMatch(publicHandler,/evidence_notes:story\.evidence_notes|rights_confirmed:story\.rights_confirmed/);
 });
 test("public Story query binds every Story to the requested active product and current movement",()=>{
  const server=source("./rubi-product-stories.functions.ts");
