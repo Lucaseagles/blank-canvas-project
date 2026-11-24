@@ -180,7 +180,7 @@ A matriz V1 mede 48 critérios selecionados de cobertura técnica, não a porcen
 - Nenhum caminho de escrita sensível deve contornar Owner/server-side/auditoria atômica.
 - Segredos nunca aparecem em logs ou auditoria; registrar apenas metadados seguros.
 
-**Estado:** amplo conjunto de rotas/admin e muitas RPCs auditadas existe. Sprint 307 investiga caminhos legados de vídeo e compliance. O inventário global ainda precisa varrer CRUD de marketplaces, connectors/api_config, Telegram metrics e outros DML indicados no Sprint 226. Não afirmar cobertura administrativa completa.
+**Estado:** amplo conjunto de rotas/admin e muitas RPCs auditadas existe. Sprint 307 investiga caminhos legados de vídeo e compliance. A revalidação da main em 2026-11-24 confirmou que os achados específicos do Sprint 226 para CRUD de marketplaces, gravação de credenciais/status em connectors e coleta de métricas Telegram já possuem RPCs atômicas Owner-gated e testes dedicados (marketplace CRUD/trigger, redaction de api_config e Telegram metric + audit). Portanto, esses três itens históricos não devem ser reabertos como pendências sem novo defeito reproduzível. Ainda falta uma varredura completa dos demais DML administrativos e comprovação de rollback/concorrência em banco descartável; não afirmar cobertura administrativa completa.
 
 ### K. Integrações e automações
 
