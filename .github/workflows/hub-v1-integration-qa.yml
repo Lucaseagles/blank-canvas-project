@@ -51,7 +51,6 @@ jobs:
           node --input-type=module <<'NODE'
           import { readFile, appendFile } from "node:fs/promises";
           const path = process.env.RUNNER_TEMP + "/npm-audit.json";
-          const summaryPath = process.env.GITHUB_STEP_SUMMARY;
           let report;
           let parseError = null;
           try {
@@ -70,14 +69,14 @@ jobs:
             lines.push(
               "Findings: " + (summary.total ?? entries.length) + " total; " + (summary.critical ?? 0) + " critical; " + (summary.high ?? 0) + " high; " + (summary.moderate ?? 0) + " moderate; " + (summary.low ?? 0) + " low; " + (summary.info ?? 0) + " info.",
               "",
-              "| Package | Severity | Direct | Range | Safe fix available | Advisory |",
-              "|---|---:|:---:|---|:---:|---|"
+              "| Package | Severity | Direct | Affected range | Suggested fix | Advisory |",
+              "|---|---:|:---:|---|---|---|"
             );
             for (const [name, item] of entries) {
               const advisories = (item.via || []).filter(value => typeof value === "object");
               const advisory = advisories.map(value => value.title || value.url || value.name).join("; ") || "Transitive dependency chain";
-              const safe = item.fixAvailable === true ? "Yes" : item.fixAvailable === false ? "No" : item.fixAvailable ? "Review" : "Unknown";
-              lines.push("| " + name + " | " + item.severity + " | " + (item.isDirect ? "Yes" : "No") + " | " + (item.range || "—") + " | " + safe + " | " + advisory.replaceAll("|", "/") + " |");
+              const fix = item.fixAvailable === true ? "Compatible fix" : item.fixAvailable === false ? "No automatic fix" : item.fixAvailable && typeof item.fixAvailable === "object" ? (item.fixAvailable.name || name) + "@" + (item.fixAvailable.version || "version unspecified") + (item.fixAvailable.isSemVerMajor ? " (major; manual review)" : " (review)") : "Unknown";
+              lines.push("| " + name + " | " + item.severity + " | " + (item.isDirect ? "Yes" : "No") + " | " + (item.range || "—") + " | " + fix.replaceAll("|", "/") + " | " + advisory.replaceAll("|", "/") + " |");
             }
             if (!entries.length) lines.push("| — | none | — | — | — | No vulnerable packages reported |");
             lines.push("", "This diagnostic is informational and does not modify package.json or package-lock.json.");
@@ -85,7 +84,7 @@ jobs:
           lines.push("");
           const output = lines.join("\n");
           console.log(output);
-          await appendFile(summaryPath, output + "\n");
+          await appendFile(process.env.GITHUB_STEP_SUMMARY, output + "\n");
           NODE
       - name: Generate routes and build
         run: npm run build
