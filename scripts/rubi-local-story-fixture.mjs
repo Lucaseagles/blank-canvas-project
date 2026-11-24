@@ -13,16 +13,14 @@ const run=(process.env.GITHUB_RUN_ID||randomBytes(6).toString("hex")).replace(/[
 async function setEnv(key,value){if(/[\r\n]/.test(String(value)))throw new Error("Invalid fixture environment value.");await appendFile(envFile,`${key}=${value}\n`,{encoding:"utf8",mode:0o600});}
 async function rpc(name,args){const {data,error}=await db.rpc(name,args);if(error)throw new Error(`${name} failed: ${error.message}`);return data;}
 const supplierName=`RUBI QA Story Supplier ${run}`;
-const host="checkout.rubi-qa.example.test";
 const supplierRows=await rpc("rubi_save_supplier_audited",{p_id:null,p_revision:null,p_name:supplierName,p_mode:"supplier",p_active:true,p_host:host,p_actor:masterId});
 const supplierId=supplierRows?.[0]?.saved_id;
 if(!supplierId)throw new Error("Disposable Story supplier was not created.");
 const productTitle=`RUBI QA Story Product ${run}`;
-const checkoutUrl=`https://${host}/local-only-no-payment`;
 const productRows=await rpc("rubi_save_hub_product_audited",{p_id:null,p_expected_revision:null,p_actor:masterId,p_values:{
  supplier_id:supplierId,title:productTitle,description:"Produto sintético exclusivo do teste local Story para oferta.",image_url:null,
  category:"QA local",sku:`RUBI-QA-STORY-${run}`,retail_price:19.9,supplier_cost:8,b2b_base_price:null,
- min_b2b_quantity:1,active:true,checkout_url:checkoutUrl,checkout_verified:true
+ min_b2b_quantity:1,active:false,checkout_url:null,checkout_verified:false
 }});
 const productId=productRows?.[0]?.product_id;
 if(!productId)throw new Error("Disposable Story product was not created.");
@@ -48,4 +46,4 @@ await setEnv("RUBI_QA_STORY_PRODUCT_ID",productId);
 await setEnv("RUBI_QA_STORY_ID",storyId);
 await setEnv("RUBI_QA_STORY_TITLE","Story de validação da jornada RUBI");
 await setEnv("RUBI_QA_STORY_PRODUCT_TITLE",productTitle);
-process.stdout.write("Disposable supplier, verified-format product, reviewed consumer movement and private Story draft created in local Supabase. No purchase or payment was performed.\n");
+process.stdout.write("Disposable supplier, unpublished product without verified checkout, reviewed consumer movement and private Story draft created in local Supabase. No checkout or payment evidence was fabricated.\n");
