@@ -13,7 +13,7 @@ const run=(process.env.GITHUB_RUN_ID||randomBytes(6).toString("hex")).replace(/[
 async function setEnv(key,value){if(/[\r\n]/.test(String(value)))throw new Error("Invalid fixture environment value.");await appendFile(envFile,`${key}=${value}\n`,{encoding:"utf8",mode:0o600});}
 async function rpc(name,args){const {data,error}=await db.rpc(name,args);if(error)throw new Error(`${name} failed: ${error.message}`);return data;}
 const supplierName=`RUBI QA Story Supplier ${run}`;
-const supplierRows=await rpc("rubi_save_supplier_audited",{p_id:null,p_revision:null,p_name:supplierName,p_mode:"supplier",p_active:true,p_host:host,p_actor:masterId});
+const supplierRows=await rpc("rubi_save_supplier_audited",{p_id:null,p_revision:null,p_name:supplierName,p_mode:"supplier",p_active:true,p_host:null,p_actor:masterId});
 const supplierId=supplierRows?.[0]?.saved_id;
 if(!supplierId)throw new Error("Disposable Story supplier was not created.");
 const productTitle=`RUBI QA Story Product ${run}`;
