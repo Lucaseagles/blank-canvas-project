@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
 import {emptyRubiProductStory,validRubiStoryMediaUrl,canApproveRubiProductStory,canServeVersionedRubiStory} from "./rubi-product-stories.ts";
 test("Story starts private, no false claims or approvals",()=>{
  const s=emptyRubiProductStory("p");
