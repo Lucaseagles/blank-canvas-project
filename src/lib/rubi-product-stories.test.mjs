@@ -54,7 +54,7 @@ test("atomic approval RPC rechecks active product, supplier and exact verified c
  assert.match(migration,/p\.retail_price>0/);
  assert.match(migration,/supplier\.active=true/);
  assert.match(migration,/supplier\.checkout_host is not null/);
- assert.match(migration,/p\.checkout_url ~ \('\^https:\/\/' \|\| replace\(supplier\.checkout_host,'\\.','\[\\.\]'\)/);
+ assert.ok(migration.includes("and p.checkout_url ~ ('^https://' || replace(supplier.checkout_host,'.','[.]')"), "atomic RPC must enforce exact supplier checkout host");
  assert.match(migration,/for share of p,supplier/);
  assert.match(migration,/for share/);
  assert.match(migration,/strpos\(p\.checkout_url,chr\(92\)\)=0/);
