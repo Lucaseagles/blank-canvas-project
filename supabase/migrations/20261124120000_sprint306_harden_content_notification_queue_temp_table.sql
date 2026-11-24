@@ -4,8 +4,8 @@
 -- authenticated/anon roles have TEMP privilege. The old worker used
 -- CREATE TEMP TABLE IF NOT EXISTS + unqualified TRUNCATE/SELECT under
 -- search_path=public, allowing a pre-existing session temp relation to shadow
--- the intended work table. Recompute the deterministic affinity set for each
--- write instead; this avoids session objects entirely.
+-- the intended work table. Snapshot eligible users once into a local JSONB
+-- value instead; no session objects or repeated affinity calculation remain.
 CREATE OR REPLACE FUNCTION public.process_content_notification_queue(
   p_batch_size integer DEFAULT 25
 )
@@ -20,6 +20,7 @@ DECLARE
   processed_count integer := 0;
   notified_count integer := 0;
   title text;
+  eligible jsonb;
   eligible_rows integer := 0;
 BEGIN
   SELECT COALESCE(content_affinity_threshold, 70)
@@ -53,40 +54,55 @@ BEGIN
           RAISE EXCEPTION 'Published product not found';
         END IF;
 
+        SELECT COALESCE(
+          jsonb_agg(jsonb_build_object(
+            'user_id', a.user_id,
+            'affinity_score', a.affinity_score
+          )),
+          '[]'::jsonb
+        )
+        INTO eligible
+        FROM public.calculate_content_affinity(q.content_id, q.content_type) AS a
+        WHERE a.affinity_score >= threshold;
+
+        eligible_rows := jsonb_array_length(eligible);
+        notified_count := notified_count + eligible_rows;
+
         INSERT INTO public.content_affinity_log (
           content_id, user_id, affinity_score, notified
         )
         SELECT
-          q.content_id, a.user_id, a.affinity_score, true
-        FROM public.calculate_content_affinity(q.content_id, q.content_type) AS a
-        WHERE a.affinity_score >= threshold
+          q.content_id, x.user_id, x.affinity_score, true
+        FROM jsonb_to_recordset(eligible) AS x(
+          user_id uuid,
+          affinity_score numeric
+        )
         ON CONFLICT (content_id, user_id)
         DO UPDATE SET
           affinity_score = EXCLUDED.affinity_score,
           notified = true;
 
-        GET DIAGNOSTICS eligible_rows = ROW_COUNT;
-        notified_count := notified_count + eligible_rows;
-
         INSERT INTO public.notifications (
           user_id, type, title, body, product_id
         )
         SELECT
-          a.user_id,
+          x.user_id,
           'content_affinity',
           'Novo conteúdo para você',
           'Porque você se interessou por ' || title || '.',
           q.content_id
-        FROM public.calculate_content_affinity(q.content_id, q.content_type) AS a
-        WHERE a.affinity_score >= threshold
-          AND NOT EXISTS (
-            SELECT 1
-            FROM public.notifications AS n
-            WHERE n.user_id = a.user_id
-              AND n.type = 'content_affinity'
-              AND n.product_id = q.content_id
-              AND n.created_at >= now() - interval '24 hours'
-          );
+        FROM jsonb_to_recordset(eligible) AS x(
+          user_id uuid,
+          affinity_score numeric
+        )
+        WHERE NOT EXISTS (
+          SELECT 1
+          FROM public.notifications AS n
+          WHERE n.user_id = x.user_id
+            AND n.type = 'content_affinity'
+            AND n.product_id = q.content_id
+            AND n.created_at >= now() - interval '24 hours'
+        );
       END IF;
 
       UPDATE public.content_notification_queue
