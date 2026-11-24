@@ -81,6 +81,7 @@ jobs:
           echo "SUPABASE_URL=$(value API_URL)" >> "$GITHUB_ENV"
           echo "SUPABASE_PUBLISHABLE_KEY=$(value ANON_KEY)" >> "$GITHUB_ENV"
           echo "SUPABASE_SERVICE_ROLE_KEY=$(value SERVICE_ROLE_KEY)" >> "$GITHUB_ENV"
+          echo "SUPABASE_DB_URL=$(value DB_URL)" >> "$GITHUB_ENV"
           echo "VITE_SUPABASE_URL=$(value API_URL)" >> "$GITHUB_ENV"
           echo "VITE_SUPABASE_PUBLISHABLE_KEY=$(value ANON_KEY)" >> "$GITHUB_ENV"
       - name: Apply schema migrations before seeding the disposable Master
@@ -116,6 +117,18 @@ jobs:
         run: node scripts/rubi-local-auth-fixtures.mjs seed-profiles
       - name: Seed disposable supplier, product, reviewed movement and private Story
         run: node scripts/rubi-local-story-fixture.mjs
+      - name: Install PostgreSQL client for isolated worker smoke
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+      - name: Exercise privileged notification worker against hostile temp relation
+        run: |
+          set -euo pipefail
+          test -n "${SUPABASE_DB_URL:-}"
+          test -n "${RUBI_QA_APPROVED_STORY_PRODUCT_ID:-}"
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -v product_id="$RUBI_QA_APPROVED_STORY_PRODUCT_ID" -f scripts/rubi-local-content-notification-worker-smoke.sql
       - name: Point the generated browser client to the local Supabase instance
         run: |
           node --input-type=module <<'NODE'
