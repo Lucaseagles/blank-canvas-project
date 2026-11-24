@@ -55,10 +55,9 @@ for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",widt
    await storyCard.click();
    await expect(storyAdmin.getByText("Rascunho privado")).toBeVisible();
    const approve=storyAdmin.getByRole("button",{name:"Aprovar e publicar Story"});
-   await expect(approve).toBeVisible();
-   page.once("dialog",dialog=>dialog.accept());
-   await approve.click();
-   await expect(page.locator('[data-sonner-toast][data-type="error"]')).toContainText(/direitos de uso antes de aprovar/i);
+   // The UI must fail closed: without confirmed rights, publication is disabled.
+   // Do not click a disabled control and wait for a server toast that cannot occur.
+   await expect(approve).toBeDisabled();
    await expect(storyAdmin.getByText("Rascunho privado")).toBeVisible();
    await expect(storyAdmin.getByText("Aprovado e visível")).toHaveCount(0);
   });
