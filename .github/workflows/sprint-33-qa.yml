@@ -33,6 +33,9 @@ jobs:
       - name: Sprint 287 product status audit regression
         run: npm run test:rubi-product-status-audit
 
+      - name: Sprint 307 administrative video and compliance audit regression
+        run: npm run test:rubi-video-atomic-audit
+
       - name: TypeScript
         run: npx tsc --noEmit
 
