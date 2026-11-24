@@ -156,14 +156,57 @@ jobs:
           const path = process.env.RUNNER_TEMP + "/rubi-local-auth-evidence.json";
           const report = JSON.parse(await readFile(path, "utf8"));
           const stats = report.stats || {};
-          const required = ["expected", "unexpected", "skipped", "flaky"];
-          for (const key of required) {
+          const requiredStats = ["expected", "unexpected", "skipped", "flaky"];
+          for (const key of requiredStats) {
             if (!Number.isInteger(stats[key])) throw new Error(`Playwright report is missing integer stats.${key}`);
           }
-          if (stats.expected < 1 || stats.unexpected !== 0 || stats.skipped !== 0 || stats.flaky !== 0) {
-            throw new Error(`Authenticated E2E report rejected: expected=${stats.expected}, unexpected=${stats.unexpected}, skipped=${stats.skipped}, flaky=${stats.flaky}. Require at least one test and zero failures/skips/flakes.`);
+          if (stats.expected < 22 || stats.unexpected !== 0 || stats.skipped !== 0 || stats.flaky !== 0) {
+            throw new Error(`Authenticated E2E report rejected: expected=${stats.expected}, unexpected=${stats.unexpected}, skipped=${stats.skipped}, flaky=${stats.flaky}. Require all 22 baseline tests and zero failures/skips/flakes.`);
           }
-          console.log(`Authenticated E2E report accepted: ${stats.expected} passed, zero unexpected/skipped/flaky.`);
+
+          const tests = [];
+          const visit = (suite, parents = []) => {
+            const titles = [...parents, suite.title].filter(Boolean);
+            for (const spec of suite.specs || []) {
+              for (const test of spec.tests || []) {
+                tests.push({
+                  title: [...titles, spec.title || "untitled"].join(" / "),
+                  results: test.results || []
+                });
+              }
+            }
+            for (const child of suite.suites || []) visit(child, titles);
+          };
+          for (const suite of report.suites || []) visit(suite);
+
+          if (tests.length < 22) {
+            throw new Error(`Authenticated E2E report contains only ${tests.length} test records; require at least 22.`);
+          }
+          const incomplete = tests.filter(test => !test.results.length || test.results.at(-1)?.status !== "passed");
+          if (incomplete.length) {
+            throw new Error("Authenticated E2E report contains tests without a final passed result: " + incomplete.map(test => test.title).join("; "));
+          }
+
+          const requiredScenarios = [
+            "CONSUMER authenticates and reaches its protected journey",
+            "MERCHANT authenticates and reaches its protected journey",
+            "PARTNER authenticates and reaches its protected journey",
+            "MASTER authenticates and reaches its protected journey",
+            "authenticated non-owner cannot enter the Master dashboard",
+            "Master não publica Story quando produto não possui checkout oficial verificado",
+            "Master não publica Story sem confirmação de direitos mesmo com produto e checkout elegíveis",
+            "Master aprova o Story persistido e consumidor encontra a mesma oferta sem sair para pagamento",
+            "Consumidor não recebe Story cuja revisão do movimento ficou obsoleta",
+            "Master não publica Story com produto inativo",
+            "Master não publica Story com fornecedor inativo"
+          ];
+          for (const scenario of requiredScenarios) {
+            const matches = tests.filter(test => test.title.includes(scenario));
+            if (matches.length < 2) {
+              throw new Error(`Required mobile/desktop E2E scenario is missing or incomplete: ${scenario} (found ${matches.length}, expected at least 2).`);
+            }
+          }
+          console.log(`Authenticated E2E report accepted: ${tests.length} test records, all final results passed, all 11 required scenarios present on mobile and desktop, zero unexpected/skipped/flaky.`);
           NODE
       - name: Publish non-secret test evidence
         if: always()
