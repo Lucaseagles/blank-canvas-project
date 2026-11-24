@@ -56,10 +56,19 @@ test("legacy video editor routes cannot reach direct client-side writes", () => 
   const createRoute = read("../routes/admin/videos.new.tsx");
   const editRoute = read("../routes/admin/videos.$id.edit.tsx");
   for (const route of [createRoute, editRoute]) {
-    assert.match(route, /beforeLoad/);
+    assert.ok(route.includes("redirect({ to: \"/admin/videos\" })"));
     assert.match(route, /redirect\(\{ to: "\\/admin\\/videos" \}\)/);
   }
   assert.equal(existsSync(new URL("../admin/videos/NativeVideoForm.tsx", import.meta.url)), false);
   assert.equal(existsSync(new URL("../admin/videos/VideoForm.tsx", import.meta.url)), false);
   assert.equal(existsSync(new URL("./supabase/videos.ts", import.meta.url)), false);
+});
+
+test("compliance rules retain the audited settings write path without a legacy direct upsert", () => {
+  const compliance = read("./compliance.functions.ts");
+  const settings = read("./admin-settings.functions.ts");
+  const migration = read("../../supabase/migrations/20261113123000_rubi_admin_setting_atomic_audit.sql");
+  assert.doesNotMatch(compliance, /export const saveComplianceRule/);
+  assert.match(settings, /rubi_update_admin_setting_audited/);
+  assert.match(migration, /when 'compliance_rules' then array\['rule_value','is_enforced','notes','source_url','reviewed_at'\]/);
 });
