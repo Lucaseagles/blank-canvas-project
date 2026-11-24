@@ -55,6 +55,16 @@ test("atomic approval RPC rechecks active product, supplier and exact verified c
  assert.match(migration,/p\.retail_price>0/);
  assert.match(migration,/supplier\.active=true/);
  assert.match(migration,/supplier\.checkout_host is not null/);
+ assert.match(migration,/char_length\(supplier\.checkout_host\) between 4 and 253/);
+ assert.ok(migration.includes("supplier.checkout_host ~ '^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?[.])+[a-z]{2,63}
+ assert.ok(migration.includes("and p.checkout_url ~ ('^https://' || replace(supplier.checkout_host,'.','[.]')"), "atomic RPC must enforce exact supplier checkout host");
+ assert.match(migration,/for share of p,supplier/);
+ assert.match(migration,/for share/);
+ assert.match(migration,/strpos\(p\.checkout_url,chr\(92\)\)=0/);
+ assert.match(migration,/revoke all on function public\.rubi_set_story_approval_audited[\s\S]*from public,anon,authenticated/);
+ assert.match(migration,/grant execute on function public\.rubi_set_story_approval_audited[\s\S]*to service_role/);
+});
+"));
  assert.ok(migration.includes("and p.checkout_url ~ ('^https://' || replace(supplier.checkout_host,'.','[.]')"), "atomic RPC must enforce exact supplier checkout host");
  assert.match(migration,/for share of p,supplier/);
  assert.match(migration,/for share/);
