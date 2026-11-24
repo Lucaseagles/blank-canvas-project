@@ -191,3 +191,38 @@ Validado no head `22a956c7e50f5957f1ba792aa4947f35490ff5ee`:
 O checkout `checkout.example.test` é intencionalmente sintético e local. Não houve pagamento, pedido, venda, comissão ou atribuição real. Não tratar este teste como prova de integração externa.
 
 **Decisão de cobertura:** V1 permanece **36,5/48 (76,0%)**, sem pontos adicionais. Classificação: **upgrade**. PR #307 continua Draft e não está pronta para integrar à main enquanto os gates de staging/provedor e a revisão final não forem concluídos.
+
+
+## Gates comerciais adicionais: produto e fornecedor inativos — 2026-11-24
+
+Validado no commit de código `0b5ad2f525f6b055f650ac4ad65eaa7ee3628604`:
+
+- `RUBI Local Authenticated E2E — Four Profiles`, run `45321313182`: **success**.
+- Relatório sanitizado baixado e inspecionado: **22 expected, 0 unexpected, 0 skipped, 0 flaky**.
+- Os quatro cenários novos de publicação foram aprovados: produto inativo (mobile/desktop) e fornecedor inativo (mobile/desktop). O fixture de fornecedor respeita o ciclo auditado: cria fornecedor ativo, cria produto elegível e então desativa o fornecedor pela RPC com revisão esperada; não contorna a regra de negócio.
+- Permanecem aprovados os cenários de direitos não confirmados, checkout oficial não verificado, Story válida → produto correspondente → pré-checkout local e ocultação de Story cuja revisão do movimento ficou obsoleta.
+- Os dez testes de quatro perfis e isolamento Master (mobile/desktop) também passaram.
+- Artefato sanitizado `rubi-local-e2e-sanitized-evidence`, ID `14887283563`, foi baixado e conferido: lista os 22 testes individuais, todos com resultado `passed`; nenhum resultado inesperado, ignorado ou flaky.
+- No mesmo commit de código: Hub V1 Integration QA, run `45321313165`, **success**; Sprint 33 QA, run `45321313166`, **success**.
+- O workflow encerrou o Supabase local descartável com sucesso.
+
+### Revisão do limite externo
+
+`getRubiCheckoutReadiness` mantém a proteção de atribuição: para `partnerCode`, valida link ativo, produto correspondente, perfil parceiro aprovado e concessão ativa; mesmo assim, não libera checkout até haver URL oficial de parceiro e atribuição verificável. Não faz fallback para o checkout direto do SKU. O teste de contrato `partner checkout never falls back to a direct product URL without verified attribution` cobre essa proteção.
+
+A arquitetura de checkout documentada define Kairos como processador final dos produtos publicados nela, mas não presume que todos os fornecedores usem Kairos. Não há evidência de sandbox/provider round-trip nesta execução.
+
+### Staging e decisão de cobertura
+
+O projeto Supabase conectado ao repositório apresenta somente a branch `main`; não foi identificada branch de staging/preview isolada. Nenhuma consulta ou escrita foi executada no banco remoto. Não é seguro tratar a branch `main` do projeto ativo como staging nem aplicar fixtures nela.
+
+| Gate | Estado após esta rodada |
+|---|---|
+| G0 — implementação | Passou na revisão do caminho Story, pré-checkout e validações comerciais |
+| G1 — comportamento local | Passou para os 22 testes E2E; cenários de retry/falha externa ainda pendentes |
+| G2 — persistência/segurança | Migrações e fixtures isoladas passaram localmente; revisão completa de RLS/grants em staging ainda pendente |
+| G3 — jornada real | Jornada persistida local passou em mobile/desktop; HTTPS staging isolado não disponível/identificado |
+| G4 — prova externa | Pendente: checkout sandbox oficial e atribuição confirmada pelo provedor |
+| G5 — evidências | Artefato sanitizado conferido; revisão independente/sign-off ainda pendente |
+
+**Decisão de cobertura:** permanece **36,5/48 (76,0%)**, sem pontos adicionais. Classificação: **upgrade**. PR #307 continua Draft e não está pronta para integrar à main.
