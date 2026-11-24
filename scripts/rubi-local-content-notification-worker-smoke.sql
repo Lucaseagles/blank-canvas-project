@@ -44,7 +44,11 @@ SET status = 'draft'
 WHERE id = (SELECT product_id FROM pg_temp.rubi_worker_qa_target);
 DO $assert_draft$
 BEGIN
-  IF NOT FOUND THEN
+  IF NOT EXISTS (
+    SELECT 1 FROM public.products
+    WHERE id = (SELECT product_id FROM pg_temp.rubi_worker_qa_target)
+      AND status = 'draft'
+  ) THEN
     RAISE EXCEPTION 'Synthetic marketplace product was not updated to draft';
   END IF;
 END;
@@ -55,7 +59,11 @@ SET status = 'published'
 WHERE id = (SELECT product_id FROM pg_temp.rubi_worker_qa_target);
 DO $assert_published$
 BEGIN
-  IF NOT FOUND THEN
+  IF NOT EXISTS (
+    SELECT 1 FROM public.products
+    WHERE id = (SELECT product_id FROM pg_temp.rubi_worker_qa_target)
+      AND status = 'published'
+  ) THEN
     RAISE EXCEPTION 'Synthetic marketplace product was not published';
   END IF;
 END;
