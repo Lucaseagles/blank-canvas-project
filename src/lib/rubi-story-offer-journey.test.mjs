@@ -146,3 +146,12 @@ test("public Story query binds every Story to the requested active product and c
  assert.match(publicHandler,/\.eq\("product_id",data\.productId\)/);
  assert.match(publicHandler,/canServeVersionedRubiStory\(story,byId\.get\(story\.movement_id\)\?\?null,data\.productId\)/);
 });
+
+test("admin audit schema includes optional actor email metadata required by audited RPCs without changing identity or access controls",()=>{
+ const base=source("../../supabase/migrations/20260901000000_sprint32_admin_audit.sql");
+ const migration=source("../../supabase/migrations/20261124010000_sprint306_admin_audit_actor_email.sql");
+ assert.match(base,/actor_user_id uuid not null references auth\.users\(id\)/);
+ assert.match(migration,/add column if not exists actor_email text/);
+ assert.match(migration,/actor_email[\s\S]*never used for authorization/);
+ assert.doesNotMatch(migration,/enable row level security|grant |revoke |create policy/i);
+});
