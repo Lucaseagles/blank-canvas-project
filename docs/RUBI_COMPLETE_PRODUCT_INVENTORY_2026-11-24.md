@@ -475,3 +475,33 @@ O writer canônico atual não diferencia analytics opcional de eventos estritame
 **Aceite mínimo:** testes demonstram que nenhum evento opcional é emitido antes da permissão aplicável; revogação bloqueia novos eventos opcionais; eventos essenciais possuem finalidade documentada; não há regressão em checkout autorizado, autenticação, segurança, auditoria e atribuição confirmada.
 
 **Sem alteração de runtime nesta rodada:** não foi editado `analytics.ts`, não foi criada migração, não foi alterado Supabase remoto e nenhum comportamento de produção foi modificado. O achado foi registrado para evitar uma correção precipitada que poderia quebrar a instrumentação necessária.
+
+
+## 13. Correção de histórico — Marketplace e métricas Telegram já fechados
+
+**Classificação:** upgrade de precisão do inventário; não altera cobertura V1.
+
+A auditoria cruzada desta rodada identificou que a seção histórica da Sprint 226 descreve duas lacunas antigas como se ainda estivessem abertas. Isso está desatualizado para a `main` atual. Não reabrir nem reimplementar esses itens:
+
+### Marketplaces — implementação já presente
+
+- `src/lib/marketplace.functions.ts`: `saveAdminMarketplace` e `deleteAdminMarketplace` passam por `rubi_manage_marketplace_audited`, com middleware Owner e ator autenticado.
+- `src/lib/connectors.functions.ts`: credenciais e status de integração também usam a mesma RPC; o sync informa explicitamente `connector_not_implemented` quando não existe conector, sem simular sincronização nem alterar produtos.
+- Migrações `20261117120000_rubi_marketplace_atomic_audit.sql` e `20261117160000_rubi_marketplace_trigger_audit_hardening.sql`: CRUD, credenciais e status com auditoria na mesma transação; segredo não é copiado para a trilha; exclusão verifica produtos vinculados sob transação/lock.
+- Testes existentes: `rubi-marketplace-atomic-audit.test.mjs` e `rubi-marketplace-trigger-audit.test.mjs`.
+
+### Métricas Telegram — implementação já presente
+
+- `src/lib/admin-metrics.functions.ts::collectTelegramMetric` obtém a contagem real via Telegram API, exige exatamente um canal Telegram ativo e chama `rubi_record_telegram_metric_audited`.
+- Migração `20261117143000_rubi_telegram_metric_atomic_audit.sql`: grava métrica e auditoria na mesma transação, valida Owner e canal ativo, usa `FOR SHARE` e concede execução apenas a `service_role`.
+- Teste existente `rubi-telegram-metric-atomic-audit.test.mjs` verifica RPC, atomicidade estrutural e remoção do caminho legado.
+
+### CI / evidência de regressão
+
+A documentação `docs/rubi-sprint238-ci-audit-regressions.md` registra que os testes de marketplace e Telegram foram adicionados como etapas explícitas do workflow Hub V1 Integration QA. Assim, a conclusão correta é: os dois achados U1 originais da Sprint 226 já foram implementados e incluídos em CI até a Sprint 238. Não são pendências atuais.
+
+**Limite de evidência:** os testes de atomicidade acima incluem verificações source-level do SQL/RPC; isso não substitui um teste de integração PostgreSQL que force falha real no insert de auditoria, prove rollback, teste concorrência e valide grants no banco descartável. Esse é um gate geral de confiança operacional, não evidência de que marketplace ou Telegram estejam sem implementação.
+
+### Correção da prioridade U1
+
+Remover marketplace CRUD/credenciais/status e Telegram metric da fila de trabalho aberto. Próxima varredura U1 deve procurar caminhos DML administrativos ainda sem RPC atômica e conferir os fluxos que não foram cobertos pelos testes específicos existentes. Nenhum ponto V1 é concedido nesta correção.
