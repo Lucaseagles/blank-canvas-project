@@ -226,3 +226,19 @@ O projeto Supabase conectado ao repositório apresenta somente a branch `main`; 
 | G5 — evidências | Artefato sanitizado conferido; revisão independente/sign-off ainda pendente |
 
 **Decisão de cobertura:** permanece **36,5/48 (76,0%)**, sem pontos adicionais. Classificação: **upgrade**. PR #307 continua Draft e não está pronta para integrar à main.
+
+
+## Revalidação no head documental c3b4da2 — 2026-11-24
+
+Após a atualização do registro de evidências, os três workflows foram executados novamente no **mesmo head** `c3b4da204c67a5436d9a22dc0363b9cdb881b644`:
+
+- Hub V1 Integration QA, run `45322659339`: **success**.
+- Sprint 33 QA, run `45322659612`: **success**.
+- RUBI Local Authenticated E2E — Four Profiles, run `45322659280`: **success**.
+- O relatório sanitizado do E2E foi baixado e inspecionado: **22 expected, 0 unexpected, 0 skipped e 0 flaky**. Os 22 resultados individuais estão marcados como `passed`.
+- Os testes incluem os quatro perfis e a negação de acesso Master para não proprietário em mobile/desktop; Story obsoleta não exibida; bloqueio de publicação para produto inativo, fornecedor inativo, checkout não verificado e direitos não confirmados; e jornada positiva da Story persistida até a pré-compra do mesmo produto em mobile/desktop.
+- O workflow aplicou a cadeia de migrações no Supabase local descartável e encerrou o ambiente com sucesso.
+
+Esta execução corrige a lacuna documental anterior: o E2E **também foi executado no head c3b4da2**, não apenas no commit de código anterior. Ela continua sendo prova local descartável; não valida staging HTTPS, RLS/grants em ambiente hospedado, checkout do provedor, pagamento ou atribuição externa.
+
+**Decisão:** upgrade-only; V1 permanece **36,5/48 (76,0%)**. G2/G3 hospedado, G4 provedor e G5 revisão independente permanecem pendentes. A PR continua Draft e não está pronta para integrar à main.
