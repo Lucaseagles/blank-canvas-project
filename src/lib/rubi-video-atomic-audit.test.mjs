@@ -57,7 +57,6 @@ test("legacy video editor routes cannot reach direct client-side writes", () => 
   const editRoute = read("../routes/admin/videos.$id.edit.tsx");
   for (const route of [createRoute, editRoute]) {
     assert.ok(route.includes("redirect({ to: \"/admin/videos\" })"));
-    assert.match(route, /redirect\(\{ to: "\\/admin\\/videos" \}\)/);
   }
   assert.equal(existsSync(new URL("../admin/videos/NativeVideoForm.tsx", import.meta.url)), false);
   assert.equal(existsSync(new URL("../admin/videos/VideoForm.tsx", import.meta.url)), false);
