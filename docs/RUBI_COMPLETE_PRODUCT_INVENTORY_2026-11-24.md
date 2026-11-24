@@ -403,3 +403,44 @@ A auditoria desta rodada extraiu as 48 linhas do snapshot histórico Sprint 122 
 - [Abrir ledger de reconciliação dos 48 critérios](sprint-309-v1-48-row-reconciliation.md)
 - O ledger contém os 48 IDs, descrições, scores históricos Sprint 122, evidências posteriores conhecidas, bloqueios externos e ordem de revalidação.
 - Resultado desta rodada: upgrade-only; 0 ponto novo; 36,5/48 permanece baseline carregada, não scorecard linha a linha reconstituído.
+
+
+## 11. Auditoria de experimentos, distribuição e privacidade — rodada adicional
+
+**Classificação:** upgrade-only / achado de governança; nenhum ponto V1 concedido.
+
+### Experimentos controlados (08.3 / 08.4 / 10.3)
+
+A leitura da `main` confirma implementação real, não apenas plano:
+
+- `rubi_movement_ab_experiments` mantém experimento, variantes, revisões de produto/movimento e estado.
+- A RPC `rubi_configure_movement_ab_audited` exige Owner, variantes revisadas e direitos confirmados, checkout/produto/fornecedor ativos, revisão esperada, serialização por SKU com advisory lock e gravação de auditoria na mesma transação.
+- A distribuição pública é estável por visitante/experimento/revisão; a UI registra exposição e intenção, não compra.
+- O motor de desempenho evita atribuição quando rótulos de campanha são ambíguos, não converte ausência de tráfego em zero e não declara vencedor A/B a partir de dados observacionais.
+- Testes dedicados cobrem alocação, bloqueios, qualidade de atribuição, dados parciais e comparação temporal.
+
+**Limite:** isso comprova fundação técnica e guardrails. Não comprova volume de amostra, significância estatística, experimento comercial concluído, lift causal ou venda paga. Não atribuir ponto adicional sem evidência do critério e da régua.
+
+### Distribuição orgânica (03.3)
+
+A fundação atual cria planos e URLs UTM para Instagram, TikTok, YouTube Shorts, Facebook, Pinterest, WhatsApp e Telegram. O estado `planned` não equivale a publicação. O estado `manually_published` exige referência, mas ainda depende de evidência externa de que o post está público e acessível; não encontramos confirmação automática de entrega/publicação de todos os canais. Tratar como planejamento + registro manual, não como distribuição multicanal automatizada.
+
+### Privacidade e LGPD — novo gate de auditoria
+
+A implementação de `trackEvent` gera/recupera identificadores anônimos persistentes via `localStorage` e grava eventos em `analytics_events`. O componente A/B também mantém identificador aleatório do visitante e marcador de exposição em armazenamento do navegador. Na revisão desta rodada não foi localizado, pelos símbolos/arquivos pesquisados, um gate central explícito de consentimento/opt-out aplicado ao writer canônico `trackEvent` antes de criar identificador ou inserir evento.
+
+Isto **não é conclusão jurídica de não conformidade**: pode existir mecanismo equivalente fora do escopo da busca. É uma lacuna técnica a verificar, porque a arquitetura/documentação do próprio projeto exige respeitar consentimento, opt-out e retenção. Próximo passo: mapear o fluxo de consentimento da interface/termos/preferências, validar por teste que analytics opcional não é iniciado antes do consentimento aplicável e que revogação interrompe novos eventos e respeita retenção/eliminação. Não remover analytics operacional necessário à segurança sem avaliação de finalidade e base legal.
+
+### Arquivos revisados nesta rodada
+
+- `supabase/migrations/20261114090000_rubi_movement_controlled_ab.sql`
+- `src/lib/rubi-movement-ab-allocation.ts`
+- `src/components/store/RubiMovementABOffer.tsx`
+- `src/lib/rubi-movement-ab.functions.ts`
+- `src/lib/rubi-movement-performance.ts`
+- `src/lib/rubi-movement-distribution.ts`
+- `src/lib/rubi-organic-campaigns.ts`
+- `src/lib/analytics.ts`
+- `src/lib/rubi-ab-exposure.ts`
+
+**Resultado da rodada:** upgrade-only. A/B controlado tem boa fundação técnica, distribuição externa ainda não é automaticamente confirmada, e consentimento/opt-out central de analytics precisa de verificação direcionada antes de qualquer alegação de fechamento de LGPD.
