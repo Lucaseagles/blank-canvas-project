@@ -595,3 +595,35 @@ Em `sendTelegramManual`, a API Telegram é chamada primeiro. Depois, o código g
 5. **P2:** experiência administrativa mobile, filtros, ações em lote e revisão visual/acessibilidade.
 
 **Sem alteração de runtime nesta rodada:** achados foram documentados antes de implementar para evitar corrigir integração com risco de duplicar envios ou perder segredos. Nenhuma alteração no Supabase remoto.
+
+## 16. Revisão de precisão — Telegram e métricas administrativas (2026-11-24)
+
+**Classificação:** upgrade-only; correção de diagnóstico + refinamento de requisitos P0.
+
+### Correção explícita de diagnóstico anterior
+
+A revisão direta do arquivo atual src/lib/admin_intel.functions.ts mostra que getAdminIntelligenceData **já verifica** erros nas 13 consultas de KPI e nas quatro consultas de gráficos, lançando erro quando alguma falha. Portanto, não é correto afirmar que essa função transforma indiscriminadamente falhas em zero. A lacuna confirmada de erro→zero está em getAdminMetrics, que desestrutura somente count das seis consultas e não verifica error; ali uma falha pode ser exibida como zero. Corrigir esta distinção nos relatórios futuros.
+
+### Achados refinados no dashboard
+
+- getAdminIntelligenceData retorna topProducts: topEvents e marketplaceDist: marketplaceEvents, mas ambas as consultas selecionam os mesmos campos (metadata,event_type), filtram somente OUTBOUND_CLICK e não agregam por produto nem marketplace. A consulta de marketplace não tem limite de origem. Erros são tratados, porém o nome/semântica dos gráficos não corresponde a agregações demonstradas.
+- ctr é calculado como OUTBOUND_CLICK / PRODUCT_VIEW. O denominador é visualização de página de produto, não impressão de uma unidade de anúncio/posição; sem coorte, janela e deduplicação compatíveis, não chamar isso de CTR de campanha. Renomear como razão clique/visualização ou criar métrica real com impressões elegíveis.
+- getAdminMetrics continua sendo endpoint separado com seis consultas sem tratamento individual de erros e fallback count || 0; corrigir com resultado tipado por métrica e propagação/estado de falha.
+
+### Telegram — UI e fluxo de entrega
+
+- A tela src/routes/admin/telegram.tsx desabilita o botão enquanto a mutation está pendente, o que evita clique duplo simples na mesma instância. Isso é uma proteção útil, mas não cobre retry após timeout, refresh, duas abas, repetição do request ou falha após sucesso remoto.
+- sendTelegramManual não persiste um identificador de operação antes da chamada externa nem uma chave idempotente; a linha local sent é inserida só depois do sucesso do Telegram. O tratamento atual pode registrar failed depois de uma entrega externa confirmada se a gravação sent falhar. O risco de falso-failed/duplicação permanece confirmado.
+- saveTelegramConfig faz DML em telegram_config antes das duas chamadas set_integration_secret; não há uma transação única entre configuração e segredos. A UI limpa o token após sucesso, mas não há confirmação composta para falhas intermediárias.
+- testTelegramConnection chama sendMessage e envia mensagem real de teste ao canal. A UI comunica “Mensagem de teste enviada”; documentar como ação externa com efeito, não como health check sem efeito. Considerar trocar o teste de conexão por método sem publicação (ex. validação de credencial/identidade) e deixar envio de teste explicitamente separado e confirmado.
+
+### Aceite técnico P0 para correção futura
+
+1. Outbox persistida antes do envio, idempotency key gerada pelo servidor e restrição UNIQUE no banco.
+2. Estados pending, sending, sent, unknown, failed; registrar chat_id/message_id remoto e timestamps; erro local pós-envio resulta em reconciliação/unknown, não em failed falso.
+3. Retry só de itens comprovadamente não entregues; estado unknown exige reconciliação, não reenvio automático.
+4. Configuração Telegram salva por RPC transacional única que atualiza estado, referências de segredo/Vault e audit log sem expor segredo; rotação/omissão do token preserva explicitamente o token anterior conforme contrato.
+5. Testes reais no Postgres descartável para rollback por falha em cada passo, idempotência concorrente, grants e isolamento Owner; testes de UI para duas abas/retry e confirmação do efeito externo.
+6. Métricas administrativas com value/status/source/window/updatedAt/error, unavailable distinto de zero; gráficos com agregação real; CTR somente quando impressões válidas existirem.
+
+Sem mudança de runtime nesta rodada; apenas correção documental e de precisão do diagnóstico. Nenhum dado remoto ou segredo foi acessado/alterado.
