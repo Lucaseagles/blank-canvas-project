@@ -104,4 +104,32 @@ if(!rightsStoryId)throw new Error("Disposable rights-gate Story was not created.
 await setEnv("RUBI_QA_RIGHTS_PRODUCT_ID",rightsProductId);
 await setEnv("RUBI_QA_RIGHTS_STORY_TITLE","Story sem direitos confirmados — QA");
 
+
+const staleMovementRows=await rpc("rubi_mutate_movement_audited",{p_action:"create",p_id:null,p_product_id:approvedProductId,p_expected_revision:null,p_actor:masterId,p_values:{
+ name:"Movimento QA revisão obsoleta",audience:"consumer",buyer_persona:"Pessoa avaliando uma oferta sintética local.",
+ problem:"Precisa conferir a apresentação antes de conhecer a oferta.",desired_outcome:"Visualizar apenas conteúdo ainda revisado.",
+ truthful_promise:"Conteúdo sintético sem alegações comerciais.",differentiator:"Teste local isolado.",
+ narrative:"Fixture para provar que a Story some da vitrine quando a revisão do movimento muda.",
+ evidence_notes:"Fixture fictícia de QA local.",status:"review"
+}});
+const staleMovementId=staleMovementRows?.[0]?.id;
+if(!staleMovementId)throw new Error("Stale-revision movement was not created.");
+const staleStoryRows=await rpc("rubi_save_story_draft_audited",{p_actor:masterId,p_id:null,p_expected_revision:null,p_product:approvedProductId,p_movement:staleMovementId,
+ p_title:"Story com revisão editorial obsoleta — QA",p_description:"Story sintético para comprovar remoção automática da vitrine após alteração do movimento revisado.",
+ p_video_url:"https://cdn.example.test/rubi-qa-stale-story.mp4",p_poster_url:null,
+ p_evidence:"Fixture sintética local sem mídia comercial real.",p_rights:true,p_position:1
+});
+const staleStoryId=staleStoryRows?.[0]?.saved_id;
+if(!staleStoryId)throw new Error("Stale-revision Story draft was not created.");
+await rpc("rubi_set_story_approval_audited",{p_story_id:staleStoryId,p_product_id:approvedProductId,p_expected_revision:1,p_approved:true,p_actor:masterId});
+const editedMovementRows=await rpc("rubi_mutate_movement_audited",{p_action:"update",p_id:staleMovementId,p_product_id:approvedProductId,p_expected_revision:1,p_actor:masterId,p_values:{
+ name:"Movimento QA revisão alterada",audience:"consumer",buyer_persona:"Pessoa avaliando uma oferta sintética local.",
+ problem:"Precisa conferir a apresentação atualizada antes de conhecer a oferta.",desired_outcome:"Visualizar apenas conteúdo ainda revisado.",
+ truthful_promise:"Conteúdo sintético sem alegações comerciais.",differentiator:"Teste local isolado.",
+ narrative:"Revisão alterada depois da aprovação para invalidar a versão anteriormente fixada pela Story.",
+ evidence_notes:"Fixture fictícia de QA local.",status:"review"
+}});
+if(Number(editedMovementRows?.[0]?.revision)!==2)throw new Error("Movement revision did not advance after editorial update.");
+await setEnv("RUBI_QA_STALE_STORY_TITLE","Story com revisão editorial obsoleta — QA");
+
 process.stdout.write("Disposable supplier, unpublished product without verified checkout, reviewed consumer movement and private Story draft created in local Supabase. No checkout or payment evidence was fabricated.\n");
