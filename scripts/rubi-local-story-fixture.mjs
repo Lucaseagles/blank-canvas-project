@@ -133,3 +133,37 @@ if(Number(editedMovementRows?.[0]?.revision)!==2)throw new Error("Movement revis
 await setEnv("RUBI_QA_STALE_STORY_TITLE","Story com revisão editorial obsoleta — QA");
 
 process.stdout.write("Disposable supplier, unpublished product without verified checkout, reviewed consumer movement and private Story draft created in local Supabase. No checkout or payment evidence was fabricated.\n");
+
+
+async function createPublicationGateFixture(kind,{supplierActive=true,productActive=true}={}){
+ const suffix=kind.toUpperCase()+"-"+run;
+ const supplier=await rpc("rubi_save_supplier_audited",{p_id:null,p_revision:null,p_name:"RUBI QA "+suffix,p_mode:"supplier",p_active:supplierActive,p_host:"checkout.example.test",p_actor:masterId});
+ const gateSupplierId=supplier?.[0]?.saved_id;
+ if(!gateSupplierId)throw new Error("Disposable "+kind+" supplier was not created.");
+ const title="RUBI QA "+suffix+" Product";
+ const product=await rpc("rubi_save_hub_product_audited",{p_id:null,p_expected_revision:null,p_actor:masterId,p_values:{
+  supplier_id:gateSupplierId,title,description:"Produto sintético descartável para teste isolado de elegibilidade comercial.",image_url:null,
+  category:"QA local",sku:"RUBI-QA-"+suffix,retail_price:19.9,supplier_cost:8,b2b_base_price:null,
+  min_b2b_quantity:1,active:productActive,checkout_url:"https://checkout.example.test/qa-no-payment",checkout_verified:true
+ }});
+ const gateProductId=product?.[0]?.product_id;
+ if(!gateProductId)throw new Error("Disposable "+kind+" product was not created.");
+ const movement=await rpc("rubi_mutate_movement_audited",{p_action:"create",p_id:null,p_product_id:gateProductId,p_expected_revision:null,p_actor:masterId,p_values:{
+  name:"Movimento QA "+suffix,audience:"consumer",buyer_persona:"Pessoa avaliando uma oferta sintética local.",
+  problem:"Precisa conferir a apresentação antes de conhecer a oferta.",desired_outcome:"Visualizar conteúdo autorizado e atual.",
+  truthful_promise:"Conteúdo sintético sem alegações comerciais.",differentiator:"Teste local isolado.",
+  narrative:"Movimento descartável para validar os bloqueios de elegibilidade comercial.",evidence_notes:"Fixture fictícia de QA local.",status:"review"
+ }});
+ const gateMovementId=movement?.[0]?.id;
+ if(!gateMovementId)throw new Error("Disposable "+kind+" movement was not created.");
+ const story=await rpc("rubi_save_story_draft_audited",{p_actor:masterId,p_id:null,p_expected_revision:null,p_product:gateProductId,p_movement:gateMovementId,
+  p_title:"Story "+kind+" — QA",p_description:"Story sintético privado para validar o bloqueio comercial no ambiente local.",
+  p_video_url:"https://cdn.example.test/rubi-qa-"+kind+".mp4",p_poster_url:null,
+  p_evidence:"Fixture fictícia local; direitos confirmados apenas para isolar o gate comercial.",p_rights:true,p_position:0
+ });
+ if(!story?.[0]?.saved_id)throw new Error("Disposable "+kind+" Story was not created.");
+ await setEnv("RUBI_QA_"+suffix.replace(/-/g,"_")+"_PRODUCT_ID",gateProductId);
+ await setEnv("RUBI_QA_"+suffix.replace(/-/g,"_")+"_STORY_TITLE","Story "+kind+" — QA");
+}
+await createPublicationGateFixture("inactive-product",{supplierActive:true,productActive:false});
+await createPublicationGateFixture("inactive-supplier",{supplierActive:false,productActive:true});
