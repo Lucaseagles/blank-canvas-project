@@ -11,6 +11,10 @@ CREATE TEMP TABLE rubi_worker_qa_target (
 INSERT INTO pg_temp.rubi_worker_qa_target(product_id)
 VALUES (:'product_id'::uuid);
 
+DELETE FROM public.content_notification_queue
+WHERE content_type = 'product'
+  AND content_id = (SELECT product_id FROM pg_temp.rubi_worker_qa_target);
+
 -- Simulate a caller-owned temp relation with the legacy worker's name.
 -- The hardened worker must neither truncate nor write to it.
 CREATE TEMP TABLE tmp_content_affinity (
