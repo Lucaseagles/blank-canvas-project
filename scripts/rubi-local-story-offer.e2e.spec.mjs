@@ -109,3 +109,15 @@ for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",widt
   });
  });
 }
+
+for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",width:1366,height:768}]){
+ test(`Consumidor não recebe Story cuja revisão do movimento ficou obsoleta — ${viewport.name}`,async({page})=>{
+  const approvedProductId=process.env.RUBI_QA_APPROVED_STORY_PRODUCT_ID;
+  const staleTitle=process.env.RUBI_QA_STALE_STORY_TITLE;
+  if(!approvedProductId||!staleTitle)throw new Error("Disposable stale-revision Story fixture environment is missing.");
+  await page.setViewportSize({width:viewport.width,height:viewport.height});
+  await signIn(page,"CONSUMER","/hub-product/"+approvedProductId);
+  await expect(page.getByRole("heading",{name:"Story aprovado de validação RUBI"})).toBeVisible({timeout:20000});
+  await expect(page.getByRole("heading",{name:staleTitle})).toHaveCount(0);
+ });
+}
