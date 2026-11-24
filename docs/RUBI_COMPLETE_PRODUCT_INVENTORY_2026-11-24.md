@@ -292,6 +292,29 @@ Cada item precisa ter estado, rota, função, tabela, permissão, teste, evidên
 13. Revisar UX, acessibilidade, performance, suporte, termos, LGPD e segurança.
 14. Realizar teste humano completo depois do inventário/fechamento técnico, sem confundi-lo com CI.
 
+## 8.1. Delta de evidências verificado em 2026-11-24 (após Sprint 301)
+
+Esta seção registra fatos novos encontrados na main e em PRs posteriores. Ela atualiza o estado das evidências, **não redistribui nem altera automaticamente os 36,5 pontos**.
+
+| Alvo | Evidência atual verificada | O que continua faltando | Decisão de pontuação nesta auditoria |
+|---|---|---|---|
+| 02.4 — Story E2E | PR #307 (Sprint 306) integrada em 24/11; E2E local autenticado executou Story persistido aprovado → mesma página de produto → seção de pré-checkout, em mobile e desktop. Fixtures e Supabase eram descartáveis. | Ambiente HTTPS de homologação autorizado, evidência hospedada e round-trip do checkout oficial quando aplicável. A fixture usa `checkout.example.test`; não houve pagamento. | **Não pontuar ainda**: G3 hospedado/G5 continuam incompletos conforme contrato do Sprint 301. |
+| 12.3 — E2E quatro perfis | PR #305 integrada; harness local autenticado cobre consumidor, lojista aprovado, parceiro aprovado e Master único em mobile/desktop, com bloqueio de não-Owner. PR #307 adiciona a jornada Story e repete os quatro perfis. | Evidência em ambiente de homologação autorizado, revisão do pacote completo e validação de jornadas adicionais do aplicativo. | **Não pontuar ainda**: manter pendente até aceite dos gates de homologação e evidência definidos no Sprint 301. |
+| 11.3 — auditoria administrativa | PRs #227–#230 cobrem CRUD Marketplace e métricas Telegram; PRs #287, #295–#297 e #302–#303 ampliam auditoria de produto, coleções, canais, Experience Engine e Social Proof; PR #308 / Sprint 307 adiciona regressão para caminhos legados de vídeo/compliance. | PR #308 ainda é Draft/não integrada no corte desta auditoria. Falta demonstrar inventário exaustivo dos DML administrativos restantes, execução de migrations no banco descartável e rollback/concorrência de forma abrangente. | **Sem novo ponto**: progresso real de hardening, mas o aceite de 11.3 exige prova exaustiva e transacional. |
+| 07.4 — biblioteca de ativos | Sprint 207 já elevou o critério para 1,0 na baseline de 36,5/48, condicionado a merge e pipelines, ambos registrados. | Operação comercial ainda exige ativos/licenças reais e prova de uso, mas isso não reabre automaticamente o ponto técnico já contabilizado. | **Manter 1,0 na baseline histórica**, sem somar novamente. |
+| 03.4 / 06.4 / 04.4 / 09.3 / 09.4 / 10.4 / 12.4 | PRs recentes reforçam proteção de checkout, atribuição, ledger, pagamentos parciais, conciliação e preparação de carrinho/pedido. | Não foi encontrada evidência de evento oficial de provedor, compra liquidada, order bump/upsell cobrados, comissão externa conciliada, payout e estorno reais. | **Não pontuar por CI ou estrutura**: dependem de prova externa/financeira. |
+
+### Estado de integração no corte
+
+- PR #307 (Sprint 306) está integrada na `main`; a sua evidência Story local foi incorporada ao inventário.
+- PR #308 (Sprint 307 — caminhos legados de auditoria de vídeo) permanece aberta e Draft; não é parte da `main` no corte.
+- PR #309 é este inventário, aberto e Draft; é documentação de governança e não altera código ou banco.
+- PRs #305, #301, #302 e #303 estão integradas. A integração desses PRs não implica, por si só, conversão de pontos V1.
+
+### Consequência para a matriz
+
+A baseline 36,5/48 continua sendo o total oficial carregado, mas não há uma fonte autoritativa que distribua esses 36,5 pontos entre as 48 linhas após todas as sprints. A matriz histórica de 31,5/48 é apenas referência. O inventário deve preservar esse limite até existir uma trilha documental completa para cada ponto. Não estimar a distribuição faltante.
+
 ## 8. Regra de pontuação e governança
 
 - Baseline de continuidade: 36,5/48 = 76,0%; gap aritmético 11,5 pontos.
