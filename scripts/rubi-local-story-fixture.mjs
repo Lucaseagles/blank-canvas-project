@@ -137,7 +137,7 @@ process.stdout.write("Disposable supplier, unpublished product without verified 
 
 async function createPublicationGateFixture(kind,{supplierActive=true,productActive=true}={}){
  const suffix=kind.toUpperCase()+"-"+run;
- const supplier=await rpc("rubi_save_supplier_audited",{p_id:null,p_revision:null,p_name:"RUBI QA "+suffix,p_mode:"supplier",p_active:supplierActive,p_host:"checkout.example.test",p_actor:masterId});
+ const supplier=await rpc("rubi_save_supplier_audited",{p_id:null,p_revision:null,p_name:"RUBI QA "+suffix,p_mode:"supplier",p_active:true,p_host:"checkout.example.test",p_actor:masterId});
  const gateSupplierId=supplier?.[0]?.saved_id;
  if(!gateSupplierId)throw new Error("Disposable "+kind+" supplier was not created.");
  const title="RUBI QA "+suffix+" Product";
@@ -148,6 +148,13 @@ async function createPublicationGateFixture(kind,{supplierActive=true,productAct
  }});
  const gateProductId=product?.[0]?.product_id;
  if(!gateProductId)throw new Error("Disposable "+kind+" product was not created.");
+ // The audited product RPC correctly forbids creating an active product under an
+ // inactive supplier. Create the eligible product first, then deactivate its
+ // supplier through the audited supplier RPC to isolate that approval gate.
+ if(!supplierActive){
+  const deactivated=await rpc("rubi_save_supplier_audited",{p_id:gateSupplierId,p_revision:1,p_name:"RUBI QA "+suffix,p_mode:"supplier",p_active:false,p_host:"checkout.example.test",p_actor:masterId});
+  if(Number(deactivated?.[0]?.saved_revision)!==2)throw new Error("Disposable supplier deactivation was not persisted.");
+ }
  const movement=await rpc("rubi_mutate_movement_audited",{p_action:"create",p_id:null,p_product_id:gateProductId,p_expected_revision:null,p_actor:masterId,p_values:{
   name:"Movimento QA "+suffix,audience:"consumer",buyer_persona:"Pessoa avaliando uma oferta sintética local.",
   problem:"Precisa conferir a apresentação antes de conhecer a oferta.",desired_outcome:"Visualizar conteúdo autorizado e atual.",
