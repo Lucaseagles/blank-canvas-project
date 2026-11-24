@@ -1,10 +1,11 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { BridgeVideoForm } from "@/admin/videos/BridgeVideoForm";
 
-// Legacy editor used direct client-side table writes. Keep the URL compatible,
-// but route all video administration through the audited /admin/videos workspace.
+function NewBridgeVideoPage() {
+  const navigate = useNavigate();
+  return <BridgeVideoForm onBack={() => navigate({ to: "/admin/videos" })} />;
+}
+
 export const Route = createFileRoute("/admin/videos/new")({
-  beforeLoad: () => {
-    throw redirect({ to: "/admin/videos" });
-  },
-  component: () => null,
+  component: NewBridgeVideoPage,
 });
