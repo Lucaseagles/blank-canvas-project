@@ -162,8 +162,9 @@ async function createPublicationGateFixture(kind,{supplierActive=true,productAct
   p_evidence:"Fixture fictícia local; direitos confirmados apenas para isolar o gate comercial.",p_rights:true,p_position:0
  });
  if(!story?.[0]?.saved_id)throw new Error("Disposable "+kind+" Story was not created.");
- await setEnv("RUBI_QA_"+suffix.replace(/-/g,"_")+"_PRODUCT_ID",gateProductId);
- await setEnv("RUBI_QA_"+suffix.replace(/-/g,"_")+"_STORY_TITLE","Story "+kind+" — QA");
+ const key=kind==="inactive-product"?"INACTIVE_PRODUCT":"INACTIVE_SUPPLIER";
+ await setEnv("RUBI_QA_"+key+"_PRODUCT_ID",gateProductId);
+ await setEnv("RUBI_QA_"+key+"_STORY_TITLE","Story "+kind+" — QA");
 }
 await createPublicationGateFixture("inactive-product",{supplierActive:true,productActive:false});
 await createPublicationGateFixture("inactive-supplier",{supplierActive:false,productActive:true});
