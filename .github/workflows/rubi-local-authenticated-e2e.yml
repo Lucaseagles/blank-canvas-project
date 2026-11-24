@@ -148,6 +148,23 @@ jobs:
         env:
           RUBI_E2E_REPORT_PATH: ${{ runner.temp }}/rubi-local-auth-evidence.json
         run: npx playwright test --config=rubi-local-playwright.config.mjs
+      - name: Enforce complete authenticated E2E report
+        if: success()
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFile } from "node:fs/promises";
+          const path = process.env.RUNNER_TEMP + "/rubi-local-auth-evidence.json";
+          const report = JSON.parse(await readFile(path, "utf8"));
+          const stats = report.stats || {};
+          const required = ["expected", "unexpected", "skipped", "flaky"];
+          for (const key of required) {
+            if (!Number.isInteger(stats[key])) throw new Error(`Playwright report is missing integer stats.${key}`);
+          }
+          if (stats.expected < 1 || stats.unexpected !== 0 || stats.skipped !== 0 || stats.flaky !== 0) {
+            throw new Error(`Authenticated E2E report rejected: expected=${stats.expected}, unexpected=${stats.unexpected}, skipped=${stats.skipped}, flaky=${stats.flaky}. Require at least one test and zero failures/skips/flakes.`);
+          }
+          console.log(`Authenticated E2E report accepted: ${stats.expected} passed, zero unexpected/skipped/flaky.`);
+          NODE
       - name: Publish non-secret test evidence
         if: always()
         run: |
