@@ -98,7 +98,7 @@ const rightsStoryRows=await rpc("rubi_save_story_draft_audited",{p_actor:masterI
  p_title:"Story sem direitos confirmados — QA",p_description:"Story sintético privado para testar bloqueio de publicação sem confirmação de direitos de uso.",
  p_video_url:"https://cdn.example.test/rubi-qa-rights-story.mp4",p_poster_url:null,
  p_evidence:"Direitos intencionalmente não confirmados neste fixture local.",p_rights:false,p_position:0
-}});
+});
 const rightsStoryId=rightsStoryRows?.[0]?.saved_id;
 if(!rightsStoryId)throw new Error("Disposable rights-gate Story was not created.");
 await setEnv("RUBI_QA_RIGHTS_PRODUCT_ID",rightsProductId);
