@@ -935,3 +935,60 @@ Também não confundir o programa de indicação entre consumidores (`referrals/
 7. Definir se a atribuição pode persistir entre dispositivos somente após login e consentimento/base legal aplicável; não usar fingerprinting oculto.
 
 **Conclusão desta auditoria:** a infraestrutura de vitrine, referral por produto, visita e dashboard financeiro já tem componentes concretos. O elo mais importante ainda não fechado é o checkout externo de parceiro com atribuição verificável; a aquisição por parceiro e a comissão sobre compras futuras também precisam de uma política explícita. Classificação upgrade-only; nenhum ponto V1 concedido e nenhuma alteração de runtime/schema/banco remoto.
+
+
+## 22. Inventário de mutações administrativas e próximos gates de governança
+
+Leitura estática da `main` em 2026-11-25, após a rodada aprovada da Sprint 307. Esta seção é uma triagem de risco e desenho de trabalho futuro; não é certificação de todos os caminhos nem altera o escopo da Sprint 307.
+
+### 22.1 Caminhos já protegidos — preservar o padrão
+
+- `setSellerProductStatus`: Owner middleware, cliente autenticado para preservar `auth.uid()`, trigger de auditoria na mesma transação e compare-and-set para impedir sobrescrita por aba obsoleta.
+- `saveSocialChannel` / `deleteSocialChannel`: Owner middleware e RPCs `rubi_manage_social_channel_audited`.
+- Configurações e banners no módulo `admin-settings.functions.ts`: Owner middleware e RPCs auditados dedicados.
+- `saveComplianceRule`: Owner middleware está presente; porém a implementação observada faz upsert direto com `supabaseAdmin`, apesar de existir allowlist de `compliance_rules` no contrato central de configurações auditadas. Confirmar se há trigger de auditoria equivalente antes de classificar como lacuna definitiva.
+
+### 22.2 Escritas administrativas com evidência de auditoria ainda insuficiente
+
+1. **Níveis de indicação — `ReferralTiersAdmin`**
+   - O componente executa INSERT/UPDATE direto pelo cliente Supabase.
+   - A rota fica dentro do layout administrativo, cuja verificação Owner ocorre no cliente; adicionalmente, a migration `20260907165700_restore_referral_tiers.sql` define RLS com política `Owners can manage referral tiers` usando `user_roles` e `auth.uid()`. Portanto, não classificar como escrita pública/desprotegida.
+   - Na migration examinada, não foi localizada trilha transacional de auditoria para INSERT/UPDATE/desativação. Migrar para server functions Owner + RPC/trigger auditado ou demonstrar formalmente o mecanismo equivalente. Preservar leitura pública somente dos níveis ativos.
+
+2. **Identidade da marca — `updateBrandIdentity`**
+   - Já exige `requireOwnerRole`, mas grava por upsert direto usando `supabaseAdmin`.
+   - Confirmar trigger/audit log no banco. Se não houver, migrar para mutação auditada atômica, sem mudar o comportamento público de leitura do nome.
+
+3. **Telegram — `saveTelegramConfig` e envio**
+   - A configuração da tabela e os segredos são gravados em operações separadas. Uma falha após atualizar `telegram_config` pode deixar configuração e segredo divergentes.
+   - `testTelegramConnection` envia uma mensagem real; a interface/contrato deve deixar explícito que é teste com efeito externo, ou criar health check sem envio.
+   - `sendTelegramManual` chama o provedor antes de persistir a mensagem. Se a persistência falhar após o envio externo, a resposta pode indicar falha e uma repetição pode duplicar a mensagem.
+   - Próximo desenho: outbox/idempotency key, estados `pending/sending/sent/unknown/failed`, guardar identificador do provedor, reconciliar estado `unknown` antes de repetir, e tratar configuração/segredos com compensação ou operação atômica compatível com o Vault. Não prometer exactly-once no Telegram sem suporte do provedor.
+
+4. **Orquestração de estratégia — `pauseStrategyOrchestration`**
+   - A operação exige Owner e valida status elegível, mas faz UPDATE direto com service client, enquanto criar/gerar/aprovar usam RPCs.
+   - Uniformizar pausa com RPC auditado e compare-and-set; testar duas pausas concorrentes, transição inválida e falha de auditoria.
+
+5. **Compliance**
+   - `saveComplianceRule` está protegida por Owner, mas a gravação direta não demonstra atomicidade com auditoria no código da função.
+   - `validateAffiliateLink` é endpoint sem middleware Owner e usa cliente administrativo para gravar violações. Isso pode ser intencional por ser validação chamada no fluxo de produto; precisa de limites de taxa, validação de existência/estado do marketplace e proteção contra spam de logs. Não transformar endpoint público de validação em endpoint de leitura/gestão de regras.
+
+### 22.3 Escritas que não devem ser confundidas com mutação Master
+
+- `getAbVariant` cria uma atribuição A/B para o próprio usuário; é uma escrita de execução/telemetria, não uma alteração administrativa de experimento. Exigir autenticação/ownership do usuário, unicidade por experimento+usuário e comportamento idempotente sob concorrência.
+- `trackFollowIntent`, `markRubiPartnerPrecheckoutViewed` e `markMyPartnerFinancialNotificationRead` registram ações do usuário ou atualizam um recurso estritamente escopado ao perfil autenticado. Validar isolamento e abuso, mas não classificá-los automaticamente como bypass Master.
+- A presença de `requireOwnerRole` protege a entrada server-side, mas não substitui teste de RLS/GRANT, auditoria transacional e idempotência.
+
+### 22.4 Plano de execução recomendado para sprints futuras
+
+- **P0 — inventário verificável:** gerar matriz route → server function → middleware → tabela/RPC → RLS/GRANT → trigger/audit → teste negativo/positivo. Incluir toda mutação, não apenas componentes dentro de `/admin`.
+- **P1 — integridade financeira e integrações:** fechar outbox/reconciliação do Telegram e demais provedores; preservar idempotência, evidência externa e ledger.
+- **P1 — governança Master:** fechar Referral Tiers, Brand Identity, Compliance e Strategy Orchestration com trilha auditável e provas de rollback.
+- **P2 — experimentação segura:** garantir unicidade/idempotência das atribuições A/B, denominadores de exposição e isolamento de coortes.
+- **P2 — observabilidade:** painel separar `authorized`, `readable`, `has_data`, `mutation_verified`, `audit_verified` e `e2e_verified`; falha de consulta não pode aparecer como zero.
+
+### 22.5 Aceite mínimo antes de marcar cobertura
+
+Para cada mutação administrativa: Owner permitido; anon/consumer/merchant/partner/non-owner negados; validação de payload; escopo do registro; rollback quando auditoria falha; concorrência; repetição idempotente; evento de auditoria com ator/ação/entidade/diff seguro; ausência de segredo/PII indevido no log; E2E da jornada real.
+
+**Classificação:** triagem de correções e upgrades para próximas sprints. Não concede ponto V1. A leitura estática não prova ausência de trigger quando não localizado em uma busca parcial; cada candidato precisa de inspeção de migrations/schema e teste no PostgreSQL descartável. Nenhuma alteração de runtime, migration, política RLS, segredo ou banco remoto foi feita nesta seção.
