@@ -1121,3 +1121,22 @@ PR #310 — `feat/sprint-308-strategy-orchestration-audit` — foi aberta em Dra
 - PR #310 permanece Draft, não integrada.
 
 **Classificação:** implementação parcial / upgrade-only. Pontos V1 adicionados: 0. Não atribuir aumento de cobertura até concluir os quatro caminhos da Strategy Orchestration e os testes exigidos.
+
+
+### 26.1 Correção do smoke SQL após primeira execução (2026-11-25)
+
+A primeira execução do run 194 aplicou a migration com sucesso e passou pelas fixtures, mas o smoke falhou durante a limpeza do trigger de auditoria: o script tentou executar DDL sobre `admin_audit_log` enquanto ainda estava sob `SET LOCAL ROLE service_role`. Isso era um defeito do teste, não da migration.
+
+Correção registrada na PR #310:
+- `RESET ROLE` antes de remover o trigger temporário.
+- Remoção do trigger/função de teste sob o papel proprietário da sessão.
+- `SET LOCAL ROLE service_role` novamente antes das provas de não-Owner, estado inválido e sucesso.
+
+Commit corretivo: `79bc6c882377b57ac7d9ffb9e7076c4241c0444a`.
+
+Nova execução aberta para esse HEAD:
+- Sprint 33 QA — run 1791: IN_PROGRESS.
+- Hub V1 Integration QA — run 761: IN_PROGRESS.
+- RUBI Local Authenticated E2E — run 195: IN_PROGRESS.
+
+O resultado anterior permanece registrado como falha do smoke; somente a nova execução poderá validar a correção. PR #310 continua Draft e não integrada.
