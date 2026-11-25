@@ -33,6 +33,9 @@ jobs:
       - name: Sprint 287 product status audit regression
         run: npm run test:rubi-product-status-audit
 
+      - name: Sprint 308 strategy orchestration pause audit regression
+        run: npm run test:rubi-orchestration-pause-audit
+
       - name: TypeScript
         run: npx tsc --noEmit
 
