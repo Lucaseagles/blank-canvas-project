@@ -1140,3 +1140,13 @@ Nova execução aberta para esse HEAD:
 - RUBI Local Authenticated E2E — run 195: IN_PROGRESS.
 
 O resultado anterior permanece registrado como falha do smoke; somente a nova execução poderá validar a correção. PR #310 continua Draft e não integrada.
+
+
+### 26.2 Estado atualizado da reexecução (2026-11-25)
+
+Para o HEAD corretivo `79bc6c882377b57ac7d9ffb9e7076c4241c0444a`:
+- Hub V1 Integration QA — run 761: SUCCESS.
+- Sprint 33 QA — run 1791: IN_PROGRESS; teste específico da Sprint 308 já passou anteriormente no run 1789; TypeScript está em execução nesta consulta.
+- RUBI Local Authenticated E2E — run 195: IN_PROGRESS; Supabase local já iniciou com sucesso e aguarda a etapa de aplicação das migrations/execução do smoke corrigido.
+
+O smoke PostgreSQL ainda não foi declarado aprovado. Manter a PR #310 em Draft até o run 195 concluir e a concorrência receber prova dedicada.
