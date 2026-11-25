@@ -141,6 +141,10 @@ jobs:
             -v non_owner_id="$RUBI_QA_CONSUMER_USER_ID" \
             -v product_id="$RUBI_QA_APPROVED_STORY_PRODUCT_ID" \
             -f scripts/rubi-local-admin-audit-smoke.sql
+      - name: Prove concurrent administrative video transitions serialize in disposable PostgreSQL
+        run: |
+          set -euo pipefail
+          bash scripts/rubi-local-admin-audit-concurrency.sh
       - name: Point the generated browser client to the local Supabase instance
         run: |
           node --input-type=module <<'NODE'
