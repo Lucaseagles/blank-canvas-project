@@ -1083,3 +1083,15 @@ A allowlist de `rubi_update_admin_setting_audited` contém 15 fontes e recebe `p
 - A descoberta foi feita por leitura estática da `main`; nenhum código de produto, migration, RLS, grant ou dado foi alterado nesta etapa.
 - Ordem recomendada: Strategy Orchestration (menor superfície e RPCs existentes), Brand Identity (singleton simples), Referral Tiers (CRUD completo e maior superfície).
 - Classificação: upgrade-only / descoberta técnica. Pontos V1 adicionados: 0. O critério 11.3 permanece sem pontuação adicional até inventário transversal e evidência de todos os caminhos administrativos.
+
+
+### 25.6 Revisão aprofundada de RLS e superfície de mutação
+
+A leitura das migrations canônicas refinou o risco e evita classificar ausência de auditoria como ausência de autorização:
+
+- `referral_tiers`: RLS está habilitada; leitura pública somente de tiers ativos; política `FOR ALL` permite escrita apenas quando `auth.uid()` possui role `owner`. O problema confirmado é o CRUD direto no componente cliente, sem auditoria atômica; não foi demonstrado bypass de RLS. A migração futura deve preservar leitura pública de tiers ativos e política Owner, movendo mutações para operações auditadas.
+- `brand_identity`: RLS habilitada e privilégios revogados de `anon` e `authenticated`; escrita ocorre pelo servidor com `requireOwnerRole` e cliente administrativo. O problema confirmado é ausência de registro de auditoria atômico, não exposição direta ao cliente. A RPC dedicada deve manter o singleton `id=true` e não conceder DML aos papéis públicos.
+- `strategy_orchestrations`: a superfície administrativa inclui mais do que pausa. Criação (`create_strategy_orchestration`), geração de plano (UPDATE de `plan/status` em `generate_strategy_orchestration_plan`), aprovação (`approve_strategy_orchestration`) e pausa (`pauseStrategyOrchestration`, UPDATE via servidor) alteram estado e não inserem `admin_audit_log` nas implementações/migrations inspecionadas. As RPCs de criação/geração/aprovação já verificam Owner em SQL; a pausa usa middleware Owner no servidor e UPDATE direto. A correção deve auditar as quatro transições e manter validação de estado/locking.
+- O padrão de auditoria de vídeo mostra o modelo desejado: validação Owner, lock da linha, mutação e insert em `admin_audit_log` na mesma transação; falha do insert deve reverter a mutação. O payload de auditoria deve ser mínimo e sanitizado.
+
+**Revisão de escopo Sprint 308:** Strategy Orchestration passa a ser uma frente de auditoria das quatro mutações, não apenas da pausa. A prioridade permanece: (1) Strategy Orchestration, (2) Brand Identity, (3) Referral Tiers. Para cada frente, exigir testes de Owner/não-Owner, estado inválido/conflito concorrente, rollback quando auditoria falha, e confirmação de que nenhuma credencial ou dado privado é escrito no log. Nenhuma mudança de código ou banco foi feita nesta revisão documental.
