@@ -44,7 +44,7 @@ export const getStrategyOrchestrationVideos = createServerFn({ method: "GET" })
     const supabase = await db();
     const { data, error } = await supabase
       .from("videos")
-      .select("id,title,platform,video_url,external_url,thumbnail_url")
+      .select("id,title,video_url,external_url,thumbnail_url")
       .order("created_at", { ascending: false })
       .limit(100);
     if (error) throw error;
