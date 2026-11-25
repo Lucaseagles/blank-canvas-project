@@ -79,19 +79,37 @@ export const createStrategyOrchestration = createServerFn({ method: "POST" })
     return { id: result.id as string };
   });
 
-export const generateStrategyOrchestrationPlan = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data)).handler(async ({ data }) => {
-  const supabase = await db();
-  const { data: plan, error } = await supabase.rpc("generate_strategy_orchestration_plan", { p_orchestration_id: data.id });
-  if (error) throw error;
-  return plan as any;
-});
+export const generateStrategyOrchestrationPlan = createServerFn({ method: "POST" })
+  .middleware([requireOwnerRole])
+  .validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const supabase = await db();
+    const { data: plan, error } = await supabase.rpc("rubi_generate_strategy_orchestration_plan_audited", {
+      p_orchestration_id: data.id,
+      p_actor: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    if (!plan || typeof plan !== "object" || !Array.isArray(plan.strategies)) {
+      throw new Error("Geração e auditoria do plano não foram confirmadas.");
+    }
+    return plan as any;
+  });
 
-export const approveStrategyOrchestration = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data)).handler(async ({ data }) => {
-  const supabase = await db();
-  const { data: approved, error } = await supabase.rpc("approve_strategy_orchestration", { p_orchestration_id: data.id });
-  if (error) throw error;
-  return { approved: Boolean(approved) };
-});
+export const approveStrategyOrchestration = createServerFn({ method: "POST" })
+  .middleware([requireOwnerRole])
+  .validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const supabase = await db();
+    const { data: result, error } = await supabase.rpc("rubi_approve_strategy_orchestration_audited", {
+      p_orchestration_id: data.id,
+      p_actor: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    if (result?.approved !== true || result?.id !== data.id || result?.status !== "approved") {
+      throw new Error("Aprovação e auditoria da estratégia não foram confirmadas.");
+    }
+    return { approved: true };
+  });
 
 export const pauseStrategyOrchestration = createServerFn({ method: "POST" })
   .middleware([requireOwnerRole])
