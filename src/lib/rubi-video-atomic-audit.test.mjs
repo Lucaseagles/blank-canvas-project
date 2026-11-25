@@ -88,5 +88,5 @@ test("disposable PostgreSQL concurrency proof exercises real row-lock serializat
   assert.match(script, /session_a_pid/);
   assert.match(script, /RUBI_VIDEO_STATUS_CHANGED/);
   assert.match(script, /ordered_transitions/);
-  assert.match(workflow, /bash scripts\\/rubi-local-admin-audit-concurrency\\.sh/);
+  assert.ok(workflow.includes("bash scripts/rubi-local-admin-audit-concurrency.sh"));
 });
