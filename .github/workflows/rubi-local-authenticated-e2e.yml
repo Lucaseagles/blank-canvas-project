@@ -121,6 +121,8 @@ jobs:
             -v master_id="$RUBI_QA_MASTER_USER_ID" \
             -v non_owner_id="$RUBI_QA_CONSUMER_USER_ID" \
             -f scripts/rubi-local-strategy-orchestration-pause-audit-smoke.sql
+      - name: Verify concurrent Sprint 308 audited pauses serialize to one transition
+        run: bash scripts/rubi-local-strategy-orchestration-pause-concurrency.sh
       - name: Seed disposable supplier, product, reviewed movement and private Story
         run: node scripts/rubi-local-story-fixture.mjs
       - name: Install PostgreSQL client for isolated worker smoke
