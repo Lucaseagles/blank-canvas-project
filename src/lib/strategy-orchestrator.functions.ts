@@ -72,9 +72,18 @@ export const approveStrategyOrchestration = createServerFn({ method: "POST" }).m
   return { approved: Boolean(approved) };
 });
 
-export const pauseStrategyOrchestration = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data)).handler(async ({ data }) => {
-  const supabase = await db();
-  const { error } = await supabase.from("strategy_orchestrations").update({ status: "paused", updated_at: new Date().toISOString() }).eq("id", data.id).in("status", ["ready", "approved"]);
-  if (error) throw error;
-  return { success: true };
-});
+export const pauseStrategyOrchestration = createServerFn({ method: "POST" })
+  .middleware([requireOwnerRole])
+  .validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const supabase = await db();
+    const { data: result, error } = await supabase.rpc("rubi_pause_strategy_orchestration_audited", {
+      p_orchestration_id: data.id,
+      p_actor: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    if (result?.success !== true || result?.id !== data.id) {
+      throw new Error("Pausa e auditoria da estratégia não foram confirmadas.");
+    }
+    return { success: true, id: data.id, status: "paused" as const };
+  });
