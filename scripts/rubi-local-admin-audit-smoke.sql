@@ -12,6 +12,8 @@ SELECT set_config('rubi.qa_product_id', :'product_id', true);
 
 CREATE TEMP TABLE rubi_qa_video_ids (video_id uuid PRIMARY KEY) ON COMMIT DROP;
 CREATE TEMP TABLE rubi_qa_bridge_video_ids (bridge_video_id uuid PRIMARY KEY) ON COMMIT DROP;
+GRANT ALL ON TABLE pg_temp.rubi_qa_video_ids TO service_role;
+GRANT ALL ON TABLE pg_temp.rubi_qa_bridge_video_ids TO service_role;
 
 DO $grants$
 BEGIN
