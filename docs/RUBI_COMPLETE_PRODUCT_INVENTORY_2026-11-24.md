@@ -992,3 +992,48 @@ Leitura estática da `main` em 2026-11-25, após a rodada aprovada da Sprint 307
 Para cada mutação administrativa: Owner permitido; anon/consumer/merchant/partner/non-owner negados; validação de payload; escopo do registro; rollback quando auditoria falha; concorrência; repetição idempotente; evento de auditoria com ator/ação/entidade/diff seguro; ausência de segredo/PII indevido no log; E2E da jornada real.
 
 **Classificação:** triagem de correções e upgrades para próximas sprints. Não concede ponto V1. A leitura estática não prova ausência de trigger quando não localizado em uma busca parcial; cada candidato precisa de inspeção de migrations/schema e teste no PostgreSQL descartável. Nenhuma alteração de runtime, migration, política RLS, segredo ou banco remoto foi feita nesta seção.
+
+
+## 23. Próxima sequência de sprints — metas mensuráveis, sem desviar sprint ativa
+
+A prioridade é fechar fundações transversais antes de multiplicar funcionalidades.
+
+### Sprint futura A — Master Governance Hardening (coverage + correções)
+**Meta:** 100% das mutações Owner identificadas e classificadas; 0 mutações administrativas sem gate server-side; evidência transacional para todas as operações críticas selecionadas.
+- Resolver e comprovar Referral Tiers, Brand Identity, Compliance Rules e pausa de orquestração.
+- Matriz de testes positiva Owner e negativa para anon, consumidor, lojista, parceiro e usuário autenticado não-Owner.
+- Rollback, concorrência, repetição, auditoria e diff seguro.
+- Aceite: matriz route/function/RPC/DB/audit/test integral, testes PostgreSQL descartáveis e E2E, sem alteração remota direta.
+
+### Sprint futura B — Integration Reliability (upgrade + coverage)
+**Meta:** nenhuma operação externa crítica fica sem estado reconciliável.
+- Outbox e estados/reconciliação de Telegram; idempotência e deduplicação.
+- Confirmar webhook/report, assinatura e política de repetição; nunca repetir automaticamente um envio cujo resultado seja desconhecido sem reconciliar.
+- Aceite: testes falha antes/depois da chamada externa, retry, concorrência e reconciliação; observabilidade de estado.
+
+### Sprint futura C — Commercial Attribution & Partner Checkout (coverage + upgrade)
+**Meta:** pedido pago reconciliado, atribuição explicável e comissão calculada a partir do ledger canônico.
+- Formalizar janela, origem, conflito entre touchpoints, compra futura, reativação, cupom, estorno/chargeback e comissão por produto vs portfólio.
+- Homologar checkout externo com evidência verificável, assinatura, deduplicação e reconciliação.
+- Aceite: percurso anônimo → vitrine → cadastro/login → checkout → evento confirmado → ledger → dashboard Partner e Master; testes negativos e estorno.
+
+### Sprint futura D — Consumer Retention & Stories Engine (coverage + upgrade)
+**Meta:** testar uma jornada completa de descoberta/retorno com controle do usuário e métricas de cohort.
+- Feed com elegibilidade primeiro (estado, autorização, preço/estoque, checkout, conteúdo e região), depois relevância, diversidade e frequência.
+- Stories e vídeos como descoberta demonstrável, produto contextual, favoritos/listas, alertas e pós-compra; convite afiliado separado, opt-in, frequência limitada e sem desbloqueio automático.
+- Aceite: eventos instrumentados; métricas D30/D60/D90, recompra, opt-out, reclamações e conversão; A/B com denominadores válidos; teste de controles e personalização.
+
+### Sprint futura E — Store Conversion & Margin Engine (coverage + upgrade)
+**Meta:** experimento de oferta com margem de contribuição rastreada, não apenas receita bruta.
+- Criativo, página, movimento, kits, order bump, upsell, preço, logística, devolução e custo de comissão/fee.
+- Aceite: métricas por produto/canal/cohort, testes de variantes, atribuição e cálculo de margem de contribuição reconciliável.
+
+### Sprint futura F — Business Expansion (coverage + upgrade)
+**Meta:** ciclo B2B demonstrável para lojista, com preço por volume e recompra.
+- Catálogo autorizado, preço de atacado, disponibilidade, pedidos, reposição, CRM e ferramentas digitais, segregando acesso e dados de consumidor.
+- Aceite: journey E2E lojista, isolamento, preço, pedido, reconciliação e experiência móvel.
+
+### Regras de execução
+- Sprints A/B são fundação prioritária; C é bloqueada por dependências do provedor/contrato de checkout; D/E/F avançam após gates de dados, atribuição e integridade.
+- Nenhuma sprint entra na main sem aprovação explícita; nenhuma integração de código altera score sem evidência.
+- Esta sequência é proposta e priorização, não cronograma nem afirmação de que recursos estão implementados. Revalidar dependências, branch/base, cobertura e testes ao iniciar cada sprint.
