@@ -99,9 +99,9 @@ begin
 end;
 $function$;
 
-revoke all on function public.rubi_create_strategy_orchestration_audited(text,text,integer,text,uuid[],uuid[],uuid[])
+revoke all on function public.rubi_create_strategy_orchestration_audited(text,text,integer,text,uuid[],uuid[],uuid)
   from public, anon, authenticated;
-grant execute on function public.rubi_create_strategy_orchestration_audited(text,text,integer,text,uuid[],uuid[],uuid[])
+grant execute on function public.rubi_create_strategy_orchestration_audited(text,text,integer,text,uuid[],uuid[],uuid)
   to service_role;
-comment on function public.rubi_create_strategy_orchestration_audited(text,text,integer,text,uuid[],uuid[],uuid[])
+comment on function public.rubi_create_strategy_orchestration_audited(text,text,integer,text,uuid[],uuid[],uuid)
   is 'Server-only Owner creation of orchestration and linked strategies/videos with one atomic minimal audit event.';
