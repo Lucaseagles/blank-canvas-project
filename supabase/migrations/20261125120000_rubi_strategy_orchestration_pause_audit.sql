@@ -1,12 +1,12 @@
 -- Sprint 308: atomically pause a strategy orchestration and record a minimal audit event.
 -- The server function passes the authenticated actor ID after requireOwnerRole.
--- Only service_role may execute this SECURITY DEFINER function.
+-- SECURITY INVOKER: service_role supplies the required table privileges and bypasses RLS.
 create or replace function public.rubi_pause_strategy_orchestration_audited(
   p_orchestration_id uuid,
   p_actor uuid
 ) returns jsonb
 language plpgsql
-security definer
+security invoker
 set search_path = ''
 as $function$
 declare
