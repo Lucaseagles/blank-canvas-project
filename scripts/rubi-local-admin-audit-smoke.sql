@@ -10,6 +10,17 @@ SELECT set_config('rubi.qa_master_id', :'master_id', true);
 SELECT set_config('rubi.qa_non_owner_id', :'non_owner_id', true);
 SELECT set_config('rubi.qa_product_id', :'product_id', true);
 
+-- The Story fixture belongs to the newer hub_products catalog. Bridge videos
+-- intentionally reference the legacy marketplace products catalog, so create
+-- a separate synthetic row here instead of crossing catalog identifiers.
+WITH legacy_product AS (
+  INSERT INTO public.products (id, title, current_price, status, slug)
+  VALUES (gen_random_uuid(), 'RUBI QA legacy bridge product', 19.90, 'active',
+    'rubi-qa-legacy-bridge-' || replace(gen_random_uuid()::text, '-', ''))
+  RETURNING id
+)
+SELECT set_config('rubi.qa_legacy_product_id', id::text, true) FROM legacy_product;
+
 CREATE TEMP TABLE rubi_qa_video_ids (video_id uuid PRIMARY KEY) ON COMMIT DROP;
 CREATE TEMP TABLE rubi_qa_bridge_video_ids (bridge_video_id uuid PRIMARY KEY) ON COMMIT DROP;
 GRANT ALL ON TABLE pg_temp.rubi_qa_video_ids TO service_role;
@@ -137,7 +148,7 @@ $video$;
 INSERT INTO pg_temp.rubi_qa_bridge_video_ids
 SELECT (public.rubi_manage_bridge_video_audited(
   'save', NULL,
-  jsonb_build_object('product_id', current_setting('rubi.qa_product_id')::uuid,
+  jsonb_build_object('product_id', current_setting('rubi.qa_legacy_product_id')::uuid,
     'title', 'RUBI QA audited bridge video', 'platform', 'youtube',
     'link', 'https://youtube.com/watch?v=rubi-qa-audit', 'is_active', true),
   current_setting('rubi.qa_master_id')::uuid
