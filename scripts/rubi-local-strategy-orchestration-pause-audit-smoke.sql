@@ -74,8 +74,13 @@ BEGIN
 END;
 $rollback$;
 
+-- Trigger DDL belongs to the migration/test owner, not service_role.
+RESET ROLE;
 DROP TRIGGER rubi_qa_reject_orchestration_audit ON public.admin_audit_log;
 DROP FUNCTION pg_temp.rubi_qa_reject_orchestration_audit();
+
+-- Re-enter the restricted executor role for all remaining RPC assertions.
+SET LOCAL ROLE service_role;
 
 -- A non-owner identity must be rejected even when supplied through service_role.
 DO $non_owner$
