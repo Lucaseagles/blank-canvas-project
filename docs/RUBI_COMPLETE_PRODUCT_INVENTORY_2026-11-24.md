@@ -704,3 +704,126 @@ getRubiMasterAuditIntegrityAdmin percorre os eventos acessíveis, falha se a pag
 - UI separa readable, has_data, authorized, mutation_verified, audit_verified e e2e_verified.
 
 **Nenhuma alteração de runtime ou banco remoto nesta rodada.** Este registro documenta o achado para correção numa sprint dedicada, evitando introduzir uma mudança de semântica no painel sem testes e sem atualizar seus consumidores.
+
+
+## 19. Flywheel comercial — aquisição, identidade, distribuição e monetização conectadas
+
+**Classificação:** upgrade-only / consolidação estratégica e critérios de aceitação; não concede ponto V1 nem declara os fluxos implementados. Nenhum runtime, schema ou dado remoto é alterado por esta seção.
+
+### 19.1 Princípio operacional
+
+Os cinco pilares são ativos comerciais distintos, conectados pelos quatro motores Tráfego, Base, Funil e Oferta. Cada pilar mantém público, permissões, catálogo e proposta de valor próprios; o ecossistema compartilha sinais autorizados, identidade resolvida, origem, catálogo elegível, mensuração e aprendizado.
+
+- **Eclipse:** aquisição, onboarding, preferências, relacionamento, retenção e indicação do consumidor.
+- **Achadinhos:** descoberta editorial e aquisição por conteúdo/ofertas externas; encaminha tráfego qualificado sem mascarar publicidade ou origem.
+- **Store:** marca própria e produtos autorizados de fornecedores; concentra oferta, margem, página, checkout, pós-venda e recompra.
+- **Partners:** rede de afiliados, experts, criadores e influenciadores; distribui produtos autorizados em vitrines e links atribuíveis.
+- **Business:** lojistas, atacado, cotação, abastecimento, reposição e futura esteira de serviços digitais.
+
+O ciclo completo é: **conteúdo/anúncio/parceiro → visita identificada → experiência anônima útil → cadastro opcional → perfil e preferências → recomendação contextual → oferta elegível → checkout → evidência de pedido/pagamento → comissão e conciliação → entrega/suporte → recompra/indicação → aprendizado por coorte**.
+
+O aplicativo coordena o ciclo, mas não substitui redes sociais, mídia paga, marketplaces, fornecedores, logística ou processadores de pagamento. O algoritmo recomenda e organiza; não é fonte de verdade financeira.
+
+### 19.2 Entrada anônima e conversão em conta sem fricção indevida
+
+A jornada deve reconhecer que uma pessoa pode chegar sem login, sem cadastro e sem conhecer a RUBI:
+
+1. Criar referência pseudônima de sessão/visita e registrar origem, campanha, parceiro, publicação e produto, quando presentes.
+2. Permitir explorar a oferta e entender produto, preço, condições, fornecedor, entrega e destino do checkout antes de exigir cadastro, salvo etapa realmente necessária.
+3. Apresentar convite contextual para criar conta quando houver benefício concreto (salvar favoritos, acompanhar pedido, manter preferências, receber alertas opt-in ou acessar histórico).
+4. Ao cadastrar, associar a sessão anônima à conta somente por mecanismo seguro, com política explícita de retenção e consentimento; não fundir dispositivos ou pessoas por inferência.
+5. Explicar por que a recomendação ou convite aparece, permitir dispensar e controlar preferências/canais.
+
+O cadastro não pode ser condição escondida para visualizar informação essencial, nem pode transformar um visitante em assinante, afiliado ou destinatário de marketing sem ação afirmativa.
+
+### 19.3 Atribuição de parceiro: duas dimensões que não podem ser confundidas
+
+A RUBI deve distinguir:
+
+- **Origem de aquisição do consumidor:** quem trouxe a pessoa para o ecossistema (first eligible touch, parceiro/campanha e janela de atribuição).
+- **Atribuição comercial do item/pedido:** qual link, vitrine, campanha e parceiro efetivamente originou a intenção de compra de cada item.
+
+Um consumidor adquirido por parceiro A pode, em outro momento, chegar organicamente ou por parceiro B. A regra comercial precisa definir se a comissão é de aquisição, de venda por item, recorrente por janela ou combinação contratual. Não conceder comissão vitalícia nem trocar o dono da aquisição silenciosamente. Preservar first-touch, last eligible touch e origem do item em campos distintos; aplicar regra versionada e visível no acordo.
+
+**Regra proposta para a vitrine individual:**
+- Parceiro aprovado recebe uma vitrine/URL estável e só pode conectar produtos para os quais tenha grant ativo.
+- Cada produto conectado gera referência individual parceiro + produto + campanha/publicação; link/QR leva à página de oferta da RUBI Store ou à página autorizada do marketplace.
+- O visitante pode explorar a página do produto e seguir para o checkout oficial; o token de atribuição deve sobreviver à navegação e ao cadastro por mecanismo server-side, sem depender apenas de parâmetro editável no navegador.
+- Se a compra contiver vários itens, atribuir comissão por linha elegível, não automaticamente sobre todo o carrinho. Itens sem grant, fora da campanha ou de outro canal seguem regra própria.
+- A dashboard do parceiro e o Shadow Master consomem o mesmo registro canônico de venda/linha atribuída, com estados pendente, não verificada, confirmada, revertida e paga; nunca criar dois créditos para o mesmo pedido.
+- Alteração de grant, percentual ou contrato não reescreve vendas passadas: guardar snapshot de regra, produto, parceiro, base de cálculo e percentual no momento aplicável.
+- Disputa entre primeiro toque, último toque, cupom, link direto e múltiplos parceiros deve ir para regra determinística e fila de revisão; não pagar duas comissões integrais pelo mesmo item sem contrato explícito.
+
+A janela de atribuição, prioridade entre sinais, elegibilidade de recompra e política de conflito são decisões comerciais que precisam ser configuradas e aceitas antes da ativação. Se o provedor não devolver identificador verificável, a venda permanece não verificada; clique, cadastro e redirect não autorizam pagamento de comissão.
+
+### 19.4 Checkout e economia unitária por canal
+
+A experiência de checkout deve preservar a origem sem simular que a RUBI processou o pagamento. A página mostra produto, vendedor/fornecedor, preço e moeda, frete/entrega quando confirmados, condições, política de troca e destino externo. O retorno só muda o estado mediante evidência verificável.
+
+Separar no financeiro:
+- venda própria RUBI e receita efetivamente recebida;
+- venda de fornecedor e margem contratual;
+- GMV/valor de pedido externo;
+- comissão de marketplace recebida pela RUBI;
+- comissão de parceiro devida, retida, paga ou revertida;
+- custo de produto, frete, taxas, mídia, reembolso e chargeback;
+- contribuição líquida por SKU, canal e campanha.
+
+A ambição de margem de 50% ou 100% é uma hipótese comercial, não um valor garantido. O painel deve calcular margem de contribuição real após custo do produto, taxas, impostos, frete subsidiado, mídia, comissão, devoluções e perdas. Percentuais de comissão precisam caber na margem e no contrato de cada SKU. Não prometer comissão ou lucro sobre preço bruto sem base de cálculo definida.
+
+### 19.5 Recomendação e distribuição sem canibalizar confiança
+
+O feed pode combinar conteúdo orgânico, produtos de marketplace e ofertas da Store, mas deve:
+- ordenar por adequação ao interesse declarado, qualidade, disponibilidade, preço total, confiança e desempenho comprovado;
+- identificar claramente conteúdo patrocinado, publicidade e links afiliados;
+- aplicar limites de frequência por usuário, sessão, campanha e SKU para evitar saturação;
+- manter diversidade e utilidade editorial, sem transformar toda interação em anúncio;
+- usar experimentos controlados e coortes para verificar se a exposição à Store aumenta contribuição e recompra sem piorar retenção, reclamações ou confiança;
+- evitar alegações falsas, urgência artificial, prova social fabricada e escassez sem fonte;
+- permitir controles de personalização e comunicação, inclusive opt-out.
+
+A oportunidade de recomendar produto próprio deve ser contextual e competitiva em valor total; não deve ocultar alternativas relevantes nem apresentar produto próprio como resultado orgânico quando for promoção.
+
+### 19.6 Evolução do consumidor para afiliado ou parceiro
+
+O convite para indicação/afiliado pode surgir após sinais de interesse e uso, mas a elegibilidade deve ser explicável e configurável. Requisitos mínimos:
+- convite não invasivo, dispensável, com limite de frequência e opção de não voltar a exibir;
+- adesão voluntária, termos, identificação do programa e explicação de comissão;
+- qualificação e aprovação antes de conceder grants, links ou acesso a dados;
+- trilha de onboarding, material autorizado, metas e regras transparentes;
+- possibilidade de revogar acesso e encerrar participação;
+- distinguir indicação casual, afiliado, expert, criador e parceiro comercial; não promover automaticamente um consumidor a parceiro.
+
+A progressão por metas não deve alterar comissão retroativamente e precisa de regra versionada, antifraude, cancelamentos e chargebacks.
+
+### 19.7 Business: jornada B2B própria, não uma cópia do varejo
+
+O lojista precisa de catálogo B2B, mínimo por SKU, preço progressivo, cotação, negociação, disponibilidade, frete, pedido, faturamento e reposição, com separação entre preço de varejo e custo confidencial. A expansão futura de sites, aplicativos, landing pages, anúncios e consultoria deve ser uma esteira de serviços contratáveis, com escopo, preço, capacidade, prazo, suporte e aceite próprios; não prometer desenvolvimento personalizado como benefício ilimitado de um plano.
+
+### 19.8 Métricas que provam ou refutam o flywheel
+
+Medir por coorte, canal, campanha, parceiro, SKU e perfil:
+- visitante anônimo → cadastro concluído → ativação útil;
+- origem preservada e qualidade da atribuição;
+- visualização → intenção → redirect → pedido reportado → pagamento confirmado → liquidação;
+- margem de contribuição após todos os custos;
+- comissão elegível → retida → paga/revertida;
+- recompra, indicação, retenção e LTV somente sobre pedidos válidos e reversões;
+- lojista qualificado → cotação → pedido pago → reposição;
+- exposição promocional versus retenção, descadastro, reclamação e frequência.
+
+Cada indicador precisa declarar fonte, denominador, janela, deduplicação, atualização e qualidade. Estado desconhecido não é zero. Resultado estimado não é venda confirmada.
+
+### 19.9 Gates antes de ativar a bola de neve
+
+1. Identidade anônima/autenticada e consentimento testados sem fusão indevida de usuários.
+2. Link/vitrine de parceiro, grants, token de visita e atribuição preservados entre navegação, cadastro e checkout.
+3. Regra comercial aprovada para first-touch, last eligible touch, atribuição por item, janela, conflito e recompra.
+4. Venda externa conciliada por sinal oficial ou revisão autorizada; comissão idempotente, reversível e auditável.
+5. Isolamento: parceiro vê somente sua vitrine, clientes/indicadores permitidos e extrato; lojista vê somente dados B2B autorizados; Owner mantém visão global privada.
+6. LGPD, transparência de publicidade/afiliado, opt-in, opt-out, retenção e direitos do titular validados.
+7. Limites de frequência, qualidade editorial, antifraude, suporte, logística e capacidade de atendimento operacionais.
+8. Experimentos demonstram contribuição incremental sem deteriorar confiança ou retenção.
+9. Shadow Master consegue pausar campanha, produto, parceiro, automação ou integração e reconciliar exceções com trilha de auditoria.
+
+**Decisão:** este flywheel passa a ser requisito de arquitetura e de aceite para a evolução integrada dos cinco pilares. É um plano de ativação por etapas, não uma afirmação de que todos os mecanismos já existem ou estão prontos para produção. Nenhuma alteração de runtime, migration, política RLS, segredo ou banco remoto foi executada nesta atualização documental.
