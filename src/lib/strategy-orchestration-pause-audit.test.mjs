@@ -126,3 +126,20 @@ test("plan and approval migrations use invoker privileges, lock state and write 
   assert.match(planMigration, /grant execute on function public\.rubi_approve_strategy_orchestration_audited/i);
   assert.doesNotMatch(planMigration, /security definer/i);
 });
+
+
+test("video picker and audited plan use only columns present in the videos schema", () => {
+  const source = readFileSync(new URL("./strategy-orchestrator.functions.ts", import.meta.url), "utf8");
+  const route = readFileSync(new URL("../routes/admin/strategy-orchestrator.tsx", import.meta.url), "utf8");
+  const migration = readFileSync(
+    new URL("../../supabase/migrations/20261125160000_rubi_strategy_orchestration_plan_approval_audit.sql", import.meta.url),
+    "utf8",
+  );
+  const videoQuery = source.slice(source.indexOf("export const getStrategyOrchestrationVideos"), source.indexOf("export const createStrategyOrchestration"));
+  assert.match(videoQuery, /select\("id,title,video_url,external_url,thumbnail_url"\)/);
+  assert.doesNotMatch(videoQuery, /select\([^)]*platform/);
+  assert.doesNotMatch(route.slice(route.indexOf("videos.map"), route.indexOf("videos.map") + 1800), /video\.platform/);
+  const selectedVideos = migration.slice(migration.indexOf("selected_videos as"), migration.indexOf("  select jsonb_build_object"));
+  assert.doesNotMatch(selectedVideos, /v\.platform/);
+  assert.doesNotMatch(migration.slice(migration.indexOf("'videos', coalesce"), migration.indexOf("'execution', jsonb_build_object")), /'platform',platform/);
+});
