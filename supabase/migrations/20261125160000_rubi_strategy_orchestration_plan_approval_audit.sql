@@ -50,7 +50,7 @@ begin
     where oi.orchestration_id = p_orchestration_id and s.is_active = true
   ),
   selected_videos as (
-    select v.id, v.title, v.video_url, v.external_url, v.thumbnail_url, v.platform, ov.position
+    select v.id, v.title, v.video_url, v.external_url, v.thumbnail_url, ov.position
     from public.strategy_orchestration_videos ov
     join public.videos v on v.id = ov.video_id
     where ov.orchestration_id = p_orchestration_id
@@ -75,7 +75,7 @@ begin
     'videos', coalesce((
       select jsonb_agg(jsonb_build_object(
         'id',id,'title',title,'video_url',video_url,'external_url',external_url,
-        'thumbnail_url',thumbnail_url,'platform',platform
+        'thumbnail_url',thumbnail_url
       ) order by position)
       from selected_videos
     ), '[]'::jsonb),
