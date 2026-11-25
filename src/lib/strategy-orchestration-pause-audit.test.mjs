@@ -46,3 +46,8 @@ test("RPC execution is restricted to service_role", () => {
   assert.match(migration, /revoke all on function public\.rubi_pause_strategy_orchestration_audited\(uuid, uuid\)[\s\S]*from public, anon, authenticated/i);
   assert.match(migration, /grant execute on function public\.rubi_pause_strategy_orchestration_audited\(uuid, uuid\)[\s\S]*to service_role/i);
 });
+
+test("pause RPC uses invoker privileges and does not escalate through SECURITY DEFINER", () => {
+  assert.match(migration, /security invoker/i);
+  assert.doesNotMatch(migration, /security definer/i);
+});
