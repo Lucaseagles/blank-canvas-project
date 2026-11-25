@@ -126,7 +126,7 @@ BEGIN
     RAISE EXCEPTION 'Native video delete did not persist';
   END IF;
   IF (SELECT count(*) FROM public.admin_audit_log
-      WHERE entity_type = 'video' AND entity_id = v_id
+      WHERE entity_type = 'video' AND entity_id = v_id::text
       AND action_type IN ('RUBI_VIDEO_CREATED','RUBI_VIDEO_STATUS_CHANGED','RUBI_VIDEO_DELETED')) <> 3 THEN
     RAISE EXCEPTION 'Native video lifecycle did not produce exactly three audit events';
   END IF;
@@ -157,7 +157,7 @@ BEGIN
     RAISE EXCEPTION 'Bridge-video delete did not persist';
   END IF;
   IF (SELECT count(*) FROM public.admin_audit_log
-      WHERE entity_type = 'bridge_video' AND entity_id = v_id
+      WHERE entity_type = 'bridge_video' AND entity_id = v_id::text
       AND action_type IN ('RUBI_BRIDGE_VIDEO_CREATED','RUBI_BRIDGE_VIDEO_DELETED')) <> 2 THEN
     RAISE EXCEPTION 'Bridge-video lifecycle did not produce exactly two audit events';
   END IF;
