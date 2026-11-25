@@ -1037,3 +1037,18 @@ A prioridade é fechar fundações transversais antes de multiplicar funcionalid
 - Sprints A/B são fundação prioritária; C é bloqueada por dependências do provedor/contrato de checkout; D/E/F avançam após gates de dados, atribuição e integridade.
 - Nenhuma sprint entra na main sem aprovação explícita; nenhuma integração de código altera score sem evidência.
 - Esta sequência é proposta e priorização, não cronograma nem afirmação de que recursos estão implementados. Revalidar dependências, branch/base, cobertura e testes ao iniciar cada sprint.
+
+
+## 24. Atualização de evidência — Sprint 307 (2026-11-25)
+
+A PR #308 / Sprint 307 teve o HEAD `44566d17b9d714953768e0a07b5fe36b4ef4fb33` validado com três workflows aprovados:
+
+- Hub V1 Integration QA — SUCCESS (run 45595135110).
+- Sprint 33 QA — SUCCESS (run 45595135246), incluindo TypeScript, ESLint, build e regressão da Sprint 307.
+- RUBI Local Authenticated E2E — Four Profiles — SUCCESS (run 45595134853), incluindo PostgreSQL descartável, grants das RPCs, negação de não-Owner, rollback atômico por falha de auditoria, ciclos native/bridge-video, concorrência em duas sessões e E2E autenticado mobile/desktop.
+
+Esta evidência fecha os gates de teste específicos da Sprint 307 para vídeo/bridge-video e a remoção do endpoint legado sem chamadas de compliance. Ela **não** conclui o inventário transversal de todas as mutações Master, não prova staging hospedado nem checkout/pagamento externo. PR #308 permanece Draft e não integrada no momento deste registro.
+
+A leitura estática da `main` usada na seção 22 continua sendo a base atual enquanto a PR #308 não for integrada. Os candidatos Referral Tiers, Brand Identity e pausa de Strategy Orchestration permanecem no backlog de governança; o endpoint `saveComplianceRule` só deixa de existir na branch da Sprint 307, não na `main` até a integração.
+
+**Classificação:** upgrade-only / atualização de evidência. Baseline V1 permanece 36,5/48 (76,0%) provisória; score por linha não reconciliado; pontos novos convertidos: 0.
