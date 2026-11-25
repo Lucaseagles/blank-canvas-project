@@ -51,3 +51,28 @@ test("pause RPC uses invoker privileges and does not escalate through SECURITY D
   assert.match(migration, /security invoker/i);
   assert.doesNotMatch(migration, /security definer/i);
 });
+
+
+test("create mutation uses audited server-side RPC and authenticated Owner actor", () => {
+  const createHandler = source.slice(source.indexOf("export const createStrategyOrchestration ="), source.indexOf("export const generateStrategyOrchestrationPlan ="));
+  assert.ok(createHandler.includes(".middleware([requireOwnerRole])"));
+  assert.ok(createHandler.includes("context.userId"));
+  assert.ok(createHandler.includes("p_actor: context.userId"));
+  assert.ok(createHandler.includes("rubi_create_strategy_orchestration_audited"));
+  assert.ok(!createHandler.includes('rpc("create_strategy_orchestration"'));
+});
+
+test("audited create migration validates references and writes one atomic audit event", () => {
+  const createMigration = readFileSync(
+    new URL("../../supabase/migrations/20261125143000_rubi_strategy_orchestration_create_audit.sql", import.meta.url),
+    "utf8",
+  );
+  assert.match(createMigration, /security invoker/i);
+  assert.match(createMigration, /Owner authorization required/);
+  assert.match(createMigration, /One or more selected strategies do not exist or are inactive/);
+  assert.match(createMigration, /One or more selected videos do not exist/);
+  assert.match(createMigration, /RUBI_STRATEGY_ORCHESTRATION_CREATED/);
+  assert.match(createMigration, /insert into public\.admin_audit_log/i);
+  assert.match(createMigration, /revoke all on function public\.rubi_create_strategy_orchestration_audited/i);
+  assert.match(createMigration, /grant execute on function public\.rubi_create_strategy_orchestration_audited/i);
+});
