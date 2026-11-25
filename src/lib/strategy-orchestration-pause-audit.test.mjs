@@ -76,3 +76,14 @@ test("audited create migration validates references and writes one atomic audit 
   assert.match(createMigration, /revoke all on function public\.rubi_create_strategy_orchestration_audited/i);
   assert.match(createMigration, /grant execute on function public\.rubi_create_strategy_orchestration_audited/i);
 });
+
+
+test("audited creation privileges target the exact seven-argument function signature", () => {
+  const createMigration = readFileSync(
+    new URL("../../supabase/migrations/20261125143000_rubi_strategy_orchestration_create_audit.sql", import.meta.url),
+    "utf8",
+  );
+  const signature = /rubi_create_strategy_orchestration_audited\(text,text,integer,text,uuid\[\],uuid\[\],uuid\)/;
+  assert.equal((createMigration.match(new RegExp(signature.source, "g")) || []).length, 3);
+  assert.doesNotMatch(createMigration, /rubi_create_strategy_orchestration_audited\(text,text,integer,text,uuid\[\],uuid\[\],uuid\[\]\)/);
+});
