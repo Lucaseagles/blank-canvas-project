@@ -221,6 +221,152 @@ RESET ROLE;
 DROP TRIGGER rubi_qa_reject_orchestration_create_audit ON public.admin_audit_log;
 DROP FUNCTION pg_temp.rubi_qa_reject_orchestration_create_audit();
 
+-- Plan generation: empty selection remains a draft and emits exactly one summary audit.
+CREATE TEMP TABLE rubi_qa_plan_ids (empty_id uuid NOT NULL, approval_id uuid NOT NULL) ON COMMIT DROP;
+INSERT INTO public.strategy_orchestrations(name, objective, status, priority, created_by)
+VALUES
+ ('RUBI QA audited plan empty', 'traffic', 'draft', 40, current_setting('rubi.qa_master_id')::uuid),
+ ('RUBI QA audited approval', 'conversion', 'ready', 40, current_setting('rubi.qa_master_id')::uuid);
+INSERT INTO pg_temp.rubi_qa_plan_ids
+SELECT
+ (SELECT id FROM public.strategy_orchestrations WHERE name='RUBI QA audited plan empty' ORDER BY created_at DESC LIMIT 1),
+ (SELECT id FROM public.strategy_orchestrations WHERE name='RUBI QA audited approval' ORDER BY created_at DESC LIMIT 1);
+UPDATE public.strategy_orchestrations
+SET plan = jsonb_build_object('strategies', jsonb_build_array(jsonb_build_object('id','qa-fixture')))
+WHERE id=(SELECT approval_id FROM pg_temp.rubi_qa_plan_ids);
+
+DO $plan_success$
+DECLARE v_id uuid; result jsonb;
+BEGIN
+  SELECT empty_id INTO STRICT v_id FROM pg_temp.rubi_qa_plan_ids;
+  result := public.rubi_generate_strategy_orchestration_plan_audited(
+    v_id, current_setting('rubi.qa_master_id')::uuid
+  );
+  IF jsonb_array_length(result->'strategies') <> 0 THEN
+    RAISE EXCEPTION 'Empty orchestration unexpectedly generated strategies';
+  END IF;
+  IF (SELECT status FROM public.strategy_orchestrations WHERE id=v_id) <> 'draft' THEN
+    RAISE EXCEPTION 'Empty plan must remain draft';
+  END IF;
+  IF (SELECT count(*) FROM public.admin_audit_log
+      WHERE entity_type='strategy_orchestration' AND entity_id=v_id::text
+        AND action_type='RUBI_STRATEGY_ORCHESTRATION_PLAN_GENERATED') <> 1 THEN
+    RAISE EXCEPTION 'Plan generation must create exactly one audit event';
+  END IF;
+END;
+$plan_success$;
+
+DO $plan_non_owner$
+DECLARE v_id uuid;
+BEGIN
+  SELECT empty_id INTO STRICT v_id FROM pg_temp.rubi_qa_plan_ids;
+  BEGIN
+    PERFORM public.rubi_generate_strategy_orchestration_plan_audited(
+      v_id, current_setting('rubi.qa_non_owner_id')::uuid
+    );
+    RAISE EXCEPTION 'RUBI_QA_EXPECTED_PLAN_NON_OWNER_REJECTION_NOT_RAISED';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM NOT LIKE '%Owner authorization required%' THEN RAISE; END IF;
+  END;
+END;
+$plan_non_owner$;
+
+-- Approval requires a non-empty generated plan and writes one atomic audit event.
+DO $approval_success$
+DECLARE v_id uuid; result jsonb;
+BEGIN
+  SELECT approval_id INTO STRICT v_id FROM pg_temp.rubi_qa_plan_ids;
+  result := public.rubi_approve_strategy_orchestration_audited(
+    v_id, current_setting('rubi.qa_master_id')::uuid
+  );
+  IF result->>'approved' IS DISTINCT FROM 'true' OR result->>'status' IS DISTINCT FROM 'approved' THEN
+    RAISE EXCEPTION 'Audited approval returned unexpected result';
+  END IF;
+  IF (SELECT status FROM public.strategy_orchestrations WHERE id=v_id) <> 'approved' THEN
+    RAISE EXCEPTION 'Approval status did not persist';
+  END IF;
+  IF (SELECT count(*) FROM public.admin_audit_log
+      WHERE entity_type='strategy_orchestration' AND entity_id=v_id::text
+        AND action_type='RUBI_STRATEGY_ORCHESTRATION_APPROVED') <> 1 THEN
+    RAISE EXCEPTION 'Approval must create exactly one audit event';
+  END IF;
+END;
+$approval_success$;
+
+-- Failed plan-audit insert must roll back both the generated plan and status.
+RESET ROLE;
+CREATE FUNCTION pg_temp.rubi_qa_reject_plan_audit()
+RETURNS trigger LANGUAGE plpgsql AS $trigger$
+BEGIN
+  IF NEW.action_type = 'RUBI_STRATEGY_ORCHESTRATION_PLAN_GENERATED' THEN
+    RAISE EXCEPTION 'RUBI_QA_FORCED_PLAN_AUDIT_FAILURE';
+  END IF;
+  RETURN NEW;
+END;
+$trigger$;
+CREATE TRIGGER rubi_qa_reject_plan_audit
+BEFORE INSERT ON public.admin_audit_log
+FOR EACH ROW EXECUTE FUNCTION pg_temp.rubi_qa_reject_plan_audit();
+SET LOCAL ROLE service_role;
+DO $plan_rollback$
+DECLARE v_id uuid; old_plan jsonb;
+BEGIN
+  SELECT empty_id INTO STRICT v_id FROM pg_temp.rubi_qa_plan_ids;
+  SELECT plan INTO old_plan FROM public.strategy_orchestrations WHERE id=v_id;
+  BEGIN
+    PERFORM public.rubi_generate_strategy_orchestration_plan_audited(
+      v_id, current_setting('rubi.qa_master_id')::uuid
+    );
+    RAISE EXCEPTION 'RUBI_QA_EXPECTED_PLAN_AUDIT_FAILURE_NOT_RAISED';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM NOT LIKE '%RUBI_QA_FORCED_PLAN_AUDIT_FAILURE%' THEN RAISE; END IF;
+  END;
+  IF (SELECT plan FROM public.strategy_orchestrations WHERE id=v_id) IS DISTINCT FROM old_plan THEN
+    RAISE EXCEPTION 'Plan survived failed audit insert';
+  END IF;
+END;
+$plan_rollback$;
+RESET ROLE;
+DROP TRIGGER rubi_qa_reject_plan_audit ON public.admin_audit_log;
+DROP FUNCTION pg_temp.rubi_qa_reject_plan_audit();
+
+-- Failed approval-audit insert must roll back the approved status.
+CREATE FUNCTION pg_temp.rubi_qa_reject_approval_audit()
+RETURNS trigger LANGUAGE plpgsql AS $trigger$
+BEGIN
+  IF NEW.action_type = 'RUBI_STRATEGY_ORCHESTRATION_APPROVED' THEN
+    RAISE EXCEPTION 'RUBI_QA_FORCED_APPROVAL_AUDIT_FAILURE';
+  END IF;
+  RETURN NEW;
+END;
+$trigger$;
+CREATE TRIGGER rubi_qa_reject_approval_audit
+BEFORE INSERT ON public.admin_audit_log
+FOR EACH ROW EXECUTE FUNCTION pg_temp.rubi_qa_reject_approval_audit();
+SET LOCAL ROLE service_role;
+DO $approval_rollback$
+DECLARE v_id uuid;
+BEGIN
+  SELECT approval_id INTO STRICT v_id FROM pg_temp.rubi_qa_plan_ids;
+  -- Revert the disposable fixture to a valid pre-approval state for this rollback proof.
+  UPDATE public.strategy_orchestrations SET status='ready' WHERE id=v_id;
+  BEGIN
+    PERFORM public.rubi_approve_strategy_orchestration_audited(
+      v_id, current_setting('rubi.qa_master_id')::uuid
+    );
+    RAISE EXCEPTION 'RUBI_QA_EXPECTED_APPROVAL_AUDIT_FAILURE_NOT_RAISED';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM NOT LIKE '%RUBI_QA_FORCED_APPROVAL_AUDIT_FAILURE%' THEN RAISE; END IF;
+  END;
+  IF (SELECT status FROM public.strategy_orchestrations WHERE id=v_id) <> 'ready' THEN
+    RAISE EXCEPTION 'Approval survived failed audit insert';
+  END IF;
+END;
+$approval_rollback$;
+RESET ROLE;
+DROP TRIGGER rubi_qa_reject_approval_audit ON public.admin_audit_log;
+DROP FUNCTION pg_temp.rubi_qa_reject_approval_audit();
+
 RESET ROLE;
 ROLLBACK;
-\echo 'PASS: pause and creation RPC grants, authorization, invalid-state rejection, atomic audit rollback and successful audited transitions.'
+\echo 'PASS: pause, creation, plan and approval RPC grants, authorization, state validation and atomic audit rollback/success.'
