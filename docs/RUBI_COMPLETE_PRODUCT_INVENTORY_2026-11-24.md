@@ -1052,3 +1052,34 @@ Esta evidência fecha os gates de teste específicos da Sprint 307 para vídeo/b
 A leitura estática da `main` usada na seção 22 continua sendo a base atual enquanto a PR #308 não for integrada. Os candidatos Referral Tiers, Brand Identity e pausa de Strategy Orchestration permanecem no backlog de governança; o endpoint `saveComplianceRule` só deixa de existir na branch da Sprint 307, não na `main` até a integração.
 
 **Classificação:** upgrade-only / atualização de evidência. Baseline V1 permanece 36,5/48 (76,0%) provisória; score por linha não reconciliado; pontos novos convertidos: 0.
+
+
+## 25. Sprint 308 — descoberta técnica da governança administrativa (2026-11-25)
+
+A inspeção da `main` confirmou três superfícies administrativas que merecem tratamento separado, sem presumir que o middleware Owner isoladamente equivale a auditoria atômica:
+
+### 25.1 Referral Tiers
+- Arquivo: `src/admin/referral/ReferralTiersAdmin.tsx`.
+- O componente executa leitura, INSERT, UPDATE e desativação diretamente pelo cliente Supabase em `referral_tiers`.
+- O payload de edição inclui nome/chave, mínimo de indicações, descrição, ícone, cor, status e ordem. A criação e edição precisam manter constraints do schema e evitar colisão de `tier_key`.
+- Próximo gate: revisar a migração canônica `20260907165700_restore_referral_tiers.sql`, políticas/RLS e todos os consumidores de tiers; desenhar operações server-side/atômicas de create, update e deactivate com audit log sanitizado. Não converter para RPC genérica sem cobrir criação e a chave de identidade.
+
+### 25.2 Brand Identity
+- Arquivo: `src/lib/brand-identity.functions.ts`.
+- `updateBrandIdentity` já usa `createServerFn` e `requireOwnerRole`, mas executa upsert direto via `supabaseAdmin` sem registro de auditoria atômico.
+- A tabela usa chave primária booleana singleton (`id = true`), portanto não é compatível com a RPC genérica atual, que recebe UUID e pressupõe coluna `id` UUID.
+- Próximo gate: RPC dedicada, verificação de Owner no servidor/DB, auditoria sem conteúdo sensível e prova de rollback se a auditoria falhar.
+
+### 25.3 Strategy Orchestration
+- Arquivo: `src/lib/strategy-orchestrator.functions.ts`.
+- A pausa é protegida por `requireOwnerRole`, mas faz UPDATE direto em `strategy_orchestrations` para status `ready/approved`.
+- Aprovação e criação já usam RPCs existentes; a pausa é o caminho inconsistente.
+- Próximo gate: inspecionar as funções SQL existentes e o modelo de auditoria antes de adicionar uma RPC dedicada ou extensão revisada. Preservar a transição condicional e tornar o resultado explícito quando o registro já não estiver em estado pausável.
+
+### 25.4 Limite da RPC genérica atual
+A allowlist de `rubi_update_admin_setting_audited` contém 15 fontes e recebe `p_id uuid`; não inclui `referral_tiers`, `brand_identity` nem `strategy_orchestrations`. Não ampliar essa função com nomes de tabela/campos arbitrários. Cada nova fonte exige migração revisada, constraints explícitas, autorização server-side e testes de rollback/concorrência adequados.
+
+### 25.5 Decisão e classificação
+- A descoberta foi feita por leitura estática da `main`; nenhum código de produto, migration, RLS, grant ou dado foi alterado nesta etapa.
+- Ordem recomendada: Strategy Orchestration (menor superfície e RPCs existentes), Brand Identity (singleton simples), Referral Tiers (CRUD completo e maior superfície).
+- Classificação: upgrade-only / descoberta técnica. Pontos V1 adicionados: 0. O critério 11.3 permanece sem pontuação adicional até inventário transversal e evidência de todos os caminhos administrativos.
