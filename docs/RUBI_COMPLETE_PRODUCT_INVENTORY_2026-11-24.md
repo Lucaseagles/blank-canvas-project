@@ -659,3 +659,48 @@ Head atual confirmado na consulta anterior: `2671680903737dff2c872912f70b2255870
 ### Política de decisão
 
 A integração só será recomendada quando os gates específicos do escopo forem satisfeitos. Não é necessário esperar 100% da matriz V1 para integrar toda sprint; porém não se deve integrar um PR cujo próprio critério de aceite ainda não esteja demonstrado. Nenhum merge foi executado nesta rodada.
+
+
+## 18. Auditoria do próprio mecanismo de auditoria administrativa (2026-11-24)
+
+**Classificação:** upgrade-only; achado P0 de confiabilidade do Admin Control Center. Não concede ponto V1.
+
+### 18.1 runAdminAudit mistura leitura GET com mutação e pode declarar conclusão sem trilha
+
+Arquivo: src/lib/admin-audit.functions.ts.
+
+- A função está declarada como createServerFn({ method: "GET" }), mas depois executa INSERT em admin_audit_log. Leitura/consulta que produz gravação não deve usar GET: clientes, caches e retries podem tratar GET como operação sem efeito.
+- A gravação do resultado é um INSERT direto, fora de RPC transacional auditada.
+- logError é retornado em auditLogWritten / auditLogError, mas a execução retorna normalmente mesmo se o log falhar. O painel pode apresentar auditoria executada sem trilha persistida, e a falha pode passar despercebida se a UI não der destaque explícito.
+- A verificação das tabelas e a gravação do evento não são atômicas. O registro deve indicar execução incompleta se não puder ser persistido; não afirmar sucesso auditável.
+
+**Correção proposta:** separar GET puro de leitura/health check de um POST explícito para iniciar auditoria. Persistir início/fim e resultado por RPC transacional auditada, com identificador da execução e estado started/completed/partial/failed; se a trilha obrigatória falhar, devolver erro/estado explícito e nunca sucesso silencioso. Não inserir snapshots com dados sensíveis.
+
+### 18.2 Registro de 24 tabelas não é inventário completo do aplicativo
+
+AUDIT_REGISTRY contém 24 definições estáticas. A verificação tableHealth executa SELECT count(*) e classifica:
+- erro de leitura como bug (para itens required) ou unavailable;
+- zero linhas como no_data;
+- uma ou mais linhas como functional.
+
+Isso mede acessibilidade de leitura e existência de registros, não integridade funcional. Uma tabela populada pode ter todas as mutações bloqueadas, RLS/grants errados, RPC ausente, audit log quebrado ou UI indisponível. Uma tabela vazia pode ser perfeitamente saudável. As 24 entradas não são prova de cobertura de todas as rotas, tabelas, views, RPCs, Storage ou filas.
+
+**Correção proposta:** renomear a dimensão para readability/dataPresence e introduzir checks independentes por contrato: (1) rota/tela existe; (2) server function/caller existe; (3) middleware/role exigida; (4) RPC/tabela/view/fila esperada; (5) RLS e grants por papel; (6) audit log atômico; (7) teste unitário/SQL/CI; (8) E2E persistido; (9) integração externa confirmada quando aplicável.
+
+Cada check deve usar estados pass, fail, no_data, not_applicable, not_measured, unavailable e conter evidência, data, origem e escopo. Não resumir presença de linha como funcional.
+
+### 18.3 Integridade dos logs existentes tem limite declarado corretamente
+
+getRubiMasterAuditIntegrityAdmin percorre os eventos acessíveis, falha se a paginação exceder limite e declara explicitamente: “Integridade dos registros existentes, sem garantia de cobertura de todas as mutações.” Esse disclaimer é correto e deve ser preservado. Ele verifica a consistência do que foi gravado; não pode provar que todas as ações administrativas produziram log.
+
+### 18.4 Aceite para encerrar este achado
+
+- GET sem efeitos colaterais; POST explícito para execução.
+- Execução com ID, estados e timestamps persistidos por caminho transacional.
+- Falha forçada na gravação de auditoria resulta em estado/erro inequívoco, nunca sucesso silencioso.
+- Teste de repetição/retry e concorrência de execuções.
+- Matriz completa gerada a partir de rotas + server functions + mutações/RPCs + objetos de banco, com exceções justificadas.
+- Testes negativos anônimo/consumer/merchant/partner/non-Owner para endpoints administrativos; Owner positivo.
+- UI separa readable, has_data, authorized, mutation_verified, audit_verified e e2e_verified.
+
+**Nenhuma alteração de runtime ou banco remoto nesta rodada.** Este registro documenta o achado para correção numa sprint dedicada, evitando introduzir uma mudança de semântica no painel sem testes e sem atualizar seus consumidores.
