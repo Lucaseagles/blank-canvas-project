@@ -48,6 +48,8 @@ test("SQL enforces Owner, row locks, atomic associations and audit writes", () =
   assert.doesNotMatch(sql, /nullif\(p_payload->>'status','draft'\)/);
   assert.match(sql, /revoke all on function public\.rubi_manage_video_audited/);
   assert.match(sql, /revoke all on function public\.rubi_manage_bridge_video_audited/);
+  assert.match(sql, /sanitize_admin_audit_value/);
+  assert.doesNotMatch(sql, /sanitize_admin_audit_json/);
   assert.match(sql, /to service_role/);
 });
 
@@ -75,4 +77,16 @@ test("compliance rules retain the audited settings write path without a legacy d
   assert.doesNotMatch(compliance, /export const saveComplianceRule/);
   assert.match(settings, /rubi_update_admin_setting_audited/);
   assert.match(migration, /when 'compliance_rules' then array\['rule_value','is_enforced','notes','source_url','reviewed_at'\]/);
+});
+
+
+test("disposable PostgreSQL concurrency proof exercises real row-lock serialization", () => {
+  const script = read("./rubi-local-admin-audit-concurrency.sh");
+  const workflow = read("../../.github/workflows/rubi-local-authenticated-e2e.yml");
+  assert.match(script, /FOR UPDATE/);
+  assert.match(script, /pg_sleep/);
+  assert.match(script, /session_a_pid/);
+  assert.match(script, /RUBI_VIDEO_STATUS_CHANGED/);
+  assert.match(script, /ordered_transitions/);
+  assert.match(workflow, /bash scripts\\/rubi-local-admin-audit-concurrency\\.sh/);
 });
