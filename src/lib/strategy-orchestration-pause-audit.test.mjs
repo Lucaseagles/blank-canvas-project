@@ -87,3 +87,42 @@ test("audited creation privileges target the exact seven-argument function signa
   assert.equal((createMigration.match(new RegExp(signature.source, "g")) || []).length, 3);
   assert.doesNotMatch(createMigration, /rubi_create_strategy_orchestration_audited\(text,text,integer,text,uuid\[\],uuid\[\],uuid\[\]\)/);
 });
+
+
+test("plan generation uses audited server RPC and authenticated Owner actor", () => {
+  const handler = source.slice(source.indexOf("export const generateStrategyOrchestrationPlan ="), source.indexOf("export const approveStrategyOrchestration ="));
+  assert.ok(handler.includes(".middleware([requireOwnerRole])"));
+  assert.ok(handler.includes("context.userId"));
+  assert.ok(handler.includes("p_actor: context.userId"));
+  assert.ok(handler.includes("rubi_generate_strategy_orchestration_plan_audited"));
+  assert.ok(!handler.includes('rpc("generate_strategy_orchestration_plan"'));
+});
+
+test("approval uses audited server RPC and requires a confirmed result", () => {
+  const handler = source.slice(source.indexOf("export const approveStrategyOrchestration ="), source.indexOf("export const pauseStrategyOrchestration ="));
+  assert.ok(handler.includes(".middleware([requireOwnerRole])"));
+  assert.ok(handler.includes("context.userId"));
+  assert.ok(handler.includes("p_actor: context.userId"));
+  assert.ok(handler.includes("rubi_approve_strategy_orchestration_audited"));
+  assert.ok(handler.includes("result?.approved !== true"));
+  assert.ok(!handler.includes('rpc("approve_strategy_orchestration"'));
+});
+
+test("plan and approval migrations use invoker privileges, lock state and write atomic audit", () => {
+  const planMigration = readFileSync(
+    new URL("../../supabase/migrations/20261125160000_rubi_strategy_orchestration_plan_approval_audit.sql", import.meta.url),
+    "utf8",
+  );
+  assert.match(planMigration, /rubi_generate_strategy_orchestration_plan_audited/i);
+  assert.match(planMigration, /rubi_approve_strategy_orchestration_audited/i);
+  assert.equal((planMigration.match(/security invoker/gi) || []).length, 2);
+  assert.equal((planMigration.match(/for update/gi) || []).length, 2);
+  assert.match(planMigration, /RUBI_STRATEGY_ORCHESTRATION_PLAN_GENERATED/);
+  assert.match(planMigration, /RUBI_STRATEGY_ORCHESTRATION_APPROVED/);
+  assert.match(planMigration, /insert into public\.admin_audit_log/);
+  assert.match(planMigration, /revoke all on function public\.rubi_generate_strategy_orchestration_plan_audited/i);
+  assert.match(planMigration, /revoke all on function public\.rubi_approve_strategy_orchestration_audited/i);
+  assert.match(planMigration, /grant execute on function public\.rubi_generate_strategy_orchestration_plan_audited/i);
+  assert.match(planMigration, /grant execute on function public\.rubi_approve_strategy_orchestration_audited/i);
+  assert.doesNotMatch(planMigration, /security definer/i);
+});
