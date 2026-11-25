@@ -81,7 +81,7 @@ test("compliance rules retain the audited settings write path without a legacy d
 
 
 test("disposable PostgreSQL concurrency proof exercises real row-lock serialization", () => {
-  const script = read("./rubi-local-admin-audit-concurrency.sh");
+  const script = read("../../scripts/rubi-local-admin-audit-concurrency.sh");
   const workflow = read("../../.github/workflows/rubi-local-authenticated-e2e.yml");
   assert.match(script, /FOR UPDATE/);
   assert.match(script, /pg_sleep/);
