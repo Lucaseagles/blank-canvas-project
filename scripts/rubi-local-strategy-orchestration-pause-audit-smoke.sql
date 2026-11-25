@@ -27,6 +27,7 @@ CREATE TEMP TABLE rubi_qa_orchestration_ids (
   success_id uuid NOT NULL,
   invalid_id uuid NOT NULL
 ) ON COMMIT DROP;
+GRANT ALL ON TABLE pg_temp.rubi_qa_orchestration_ids TO service_role;
 
 SET LOCAL ROLE service_role;
 INSERT INTO public.strategy_orchestrations(name, objective, status, priority, created_by)
