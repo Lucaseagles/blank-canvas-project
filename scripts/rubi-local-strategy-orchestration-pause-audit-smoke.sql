@@ -223,6 +223,7 @@ DROP FUNCTION pg_temp.rubi_qa_reject_orchestration_create_audit();
 
 -- Plan generation: empty selection remains a draft and emits exactly one summary audit.
 CREATE TEMP TABLE rubi_qa_plan_ids (empty_id uuid NOT NULL, approval_id uuid NOT NULL) ON COMMIT DROP;
+GRANT SELECT ON TABLE pg_temp.rubi_qa_plan_ids TO service_role;
 INSERT INTO public.strategy_orchestrations(name, objective, status, priority, created_by)
 VALUES
  ('RUBI QA audited plan empty', 'traffic', 'draft', 40, current_setting('rubi.qa_master_id')::uuid),
