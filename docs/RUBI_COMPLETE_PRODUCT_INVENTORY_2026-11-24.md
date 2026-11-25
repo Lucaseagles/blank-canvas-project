@@ -827,3 +827,70 @@ Cada indicador precisa declarar fonte, denominador, janela, deduplicação, atua
 9. Shadow Master consegue pausar campanha, produto, parceiro, automação ou integração e reconciliar exceções com trilha de auditoria.
 
 **Decisão:** este flywheel passa a ser requisito de arquitetura e de aceite para a evolução integrada dos cinco pilares. É um plano de ativação por etapas, não uma afirmação de que todos os mecanismos já existem ou estão prontos para produção. Nenhuma alteração de runtime, migration, política RLS, segredo ou banco remoto foi executada nesta atualização documental.
+
+
+## 20. Contratos operacionais do algoritmo e do ciclo de vida do consumidor
+
+Esta seção detalha como os requisitos do flywheel devem se comportar quando forem implementados. Não cria uma promessa de IA autônoma nem autoriza rastreamento oculto.
+
+### 20.1 Máquina de estados da pessoa e da conta
+
+Manter estados distintos, sem tratar cada visita como uma pessoa nova:
+
+- `anonymous_session`: sessão pseudônima com identificador próprio e prazo de retenção definido.
+- `known_visitor`: visitante com preferência/canal identificável por ação explícita, sem conta autenticada.
+- `registered_consumer`: conta criada e identidade autenticada.
+- `active_consumer`: consumidor que concluiu uma ação útil definida (por exemplo, preferência salva, favorito, pedido ou acompanhamento), não apenas abriu o app.
+- `referral_candidate`: consumidor que atende critérios configuráveis para receber convite de indicação; ainda não é afiliado.
+- `affiliate_applicant`: pessoa que aceitou se candidatar e iniciou onboarding.
+- `approved_partner`: candidatura aprovada, termos aceitos e grants ativos; só então recebe vitrine/link comercial.
+- `suspended_or_revoked`: acesso comercial suspenso/revogado, com links e grants tratados conforme política e histórico preservado para auditoria.
+
+As transições precisam ser explícitas, idempotentes e auditáveis. Não inferir que duas sessões/dispositivos pertencem à mesma pessoa sem autenticação ou mecanismo permitido. Uma conta pode ser consumidor e também parceiro aprovado, mas os papéis e permissões não se confundem; não criar contas duplicadas para representar a evolução.
+
+### 20.2 Contrato mínimo de evento e atribuição
+
+Eventos de aquisição e venda devem carregar, quando aplicável: `event_id` idempotente, `occurred_at`, `received_at`, `anonymous_session_id` ou `user_id`, `source`, `medium`, `campaign_id`, `partner_id`, `product_id`, `content_id`, `click_id`, `order_id`, `order_line_id`, `provider`, `evidence_reference`, `consent_context` e versão da regra de atribuição. Campos ausentes permanecem desconhecidos; não preencher por adivinhação.
+
+A origem da aquisição da conta deve ser congelada como snapshot da regra aplicável no cadastro, sem impedir que cada pedido/linha tenha atribuição comercial própria. A política comercial precisa definir, por canal e contrato, janela, prioridade de sinais, recompra, cupom, conflito, deduplicação e exceções. Mudança futura de política vale para eventos futuros, salvo ajuste formal e auditado.
+
+### 20.3 Decisão de recomendação: elegibilidade antes de ranking
+
+A recomendação deve seguir esta ordem, para não deixar o ranking promover algo que não pode ser vendido:
+
+1. **Elegibilidade:** produto ativo, grant/canal autorizado, disponibilidade e preço atual confirmados, destino de checkout válido, região/condições compatíveis e direitos de mídia válidos.
+2. **Segurança e confiança:** retirar produto suspenso, oferta expirada, alegação não aprovada, conteúdo denunciado ou item com divergência crítica.
+3. **Adequação:** combinar categoria/interesse declarado, contexto da página, busca, favoritos e comportamento permitido/consentido.
+4. **Valor total:** considerar preço, frete, prazo e condições somente quando os dados forem confiáveis; não comparar preço nominal de canais com custos diferentes.
+5. **Diversidade e frequência:** limitar repetição por SKU, marca, campanha e anunciante; evitar que a Store domine o feed por regra oculta.
+6. **Ordenação e experimento:** aplicar ranking explicável e experimentos controlados, com grupo de comparação e critérios de parada.
+7. **Explicação e controle:** identificar publicidade/afiliado, informar motivo contextual quando útil e oferecer controles de personalização e opt-out.
+
+Se não houver dados suficientes para comparar, usar ordenação editorial simples e segura; não inventar score de qualidade, conversão ou margem.
+
+### 20.4 Convite para afiliado sem dark pattern
+
+O convite deve usar sinais de uso úteis e configuráveis (ex.: consumo recorrente de conteúdo, compartilhamento voluntário ou interesse declarado), mas nunca inferir renda, vulnerabilidade ou atributos sensíveis. Deve respeitar limite de frequência, ser dispensável e não bloquear a experiência. O convite não altera comissão, não cria link e não libera produto. A pessoa só entra no programa após ação afirmativa, termos aceitos, análise e aprovação.
+
+### 20.5 Vitrine do parceiro e integridade financeira
+
+A conexão de produto na vitrine exige grant ativo, SKU elegível, percentual/base de comissão versionados, campanha válida e destino de compra homologado. O sistema deve rejeitar conexão inválida no servidor, mesmo que a interface permita tentativa.
+
+Para cada linha de pedido elegível, gerar no máximo um crédito de comissão por regra/beneficiário; guardar origem, regra, base, percentual, moeda, evidência e estado. Estorno/chargeback gera lançamento compensatório, nunca edição silenciosa do evento original. Dashboard do parceiro e Shadow Master leem o mesmo ledger canônico, com visões e permissões diferentes. O parceiro não pode alterar origem, pedido, base de cálculo, comissão ou estado financeiro.
+
+### 20.6 Observabilidade e critérios de sucesso do flywheel
+
+O painel deve expor, por coorte e canal, perdas entre etapas e qualidade dos dados: sessões anônimas elegíveis, cadastros atribuídos, ativação útil, convites exibidos/dispensados/aceitos, candidaturas, aprovações, vitrines com grants válidos, cliques, redirects, pedidos reportados, pagamentos verificados, comissões calculadas, reversões e recompra.
+
+Cada taxa declara numerador, denominador, janela, fonte, deduplicação e última atualização. Mostrar estados `unknown`, `stale`, `partial` e `error` quando apropriado; falha de consulta não pode aparecer como zero. Crescimento só é considerado saudável se contribuição líquida e recompra melhorarem sem piorar reclamações, cancelamentos, opt-out, retenção ou frequência excessiva.
+
+### 20.7 Ordem segura de implementação
+
+- **P0 — verdade e segurança:** identidade/consentimento, origem preservada, isolamento de parceiros, grants, ledger idempotente, confirmação de pagamento e reversões.
+- **P1 — conversão e experiência:** vitrine individual, páginas de oferta, feed com elegibilidade, convites controlados, painel de atribuição e reconciliação.
+- **P2 — otimização:** ranking personalizado, testes de incremento, progressão de metas, campanhas multicanal e automações de recompra.
+- **P3 — expansão B2B:** reposição inteligente, CRM comercial, serviços digitais e automações de lojistas.
+
+A ordem evita escalar aquisição antes de conseguir provar quem trouxe a venda, qual margem sobrou e qual comissão é devida.
+
+**Classificação:** complemento de especificação / upgrade-only. Não concede ponto V1. Requer mapeamento posterior contra implementação, schema, RLS/GRANT, testes e evidência de provedor antes de qualquer ativação em produção.
