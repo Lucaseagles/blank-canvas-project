@@ -894,3 +894,44 @@ Cada taxa declara numerador, denominador, janela, fonte, deduplicação e últim
 A ordem evita escalar aquisição antes de conseguir provar quem trouxe a venda, qual margem sobrou e qual comissão é devida.
 
 **Classificação:** complemento de especificação / upgrade-only. Não concede ponto V1. Requer mapeamento posterior contra implementação, schema, RLS/GRANT, testes e evidência de provedor antes de qualquer ativação em produção.
+
+
+## 21. Auditoria de implementação — vitrine, atribuição e entrada anônima
+
+Leitura estática da `main` em 2026-11-24, sem executar alterações no runtime:
+
+### 21.1 O que já existe no código
+
+- `/loja/$storeCode` apresenta vitrine pública de parceiro aprovado, com produtos ligados a referral links ativos, grants ativos, produto/fornecedor ativos e checkout aprovado.
+- `RubiPartnerStorefrontManager` expõe ao parceiro aprovado o endereço público da vitrine e ação de copiar/visualizar.
+- `getPublicRubiPartnerStorefront` não entrega checkout URL nem identificadores internos de perfil/grant ao navegador; cada produto expõe seu referral code próprio.
+- `/r/$code` recebe a indicação e encaminha para o pre-checkout. `resolvePartnerReferral` valida parceiro aprovado, grant, produto, checkout e, quando presente, vínculo da publicação/campanha.
+- `hub_partner_referral_visits` registra visita com token de navegação; repetição com o mesmo token usa upsert idempotente. A etapa de pre-checkout é registrada separadamente e só para visita validada recente.
+- Portal e extrato do parceiro consultam vendas confirmadas vinculadas aos links do próprio parceiro; o status financeiro soma repasses por venda e expõe pendências/sobrepagamentos.
+- O analytics já distingue identificador anônimo persistente, sessão e usuário autenticado; o funil Master agrega eventos sem retornar identificadores crus.
+- O pre-checkout tem recomendação de produtos relacionados e convite de cadastro para visitante sem login, com ação dispensável e telemetria.
+
+### 21.2 Limite crítico: vitrine pronta não significa checkout de parceiro liberado
+
+`getRubiCheckoutReadiness` valida produto, link, parceiro e grant. Para pedido com `partnerCode`, entretanto, retorna explicitamente `ready: false` até existir link oficial do provedor que preserve atribuição. O componente de pre-checkout não substitui isso por checkout direto do SKU — proteção correta contra perder a atribuição.
+
+Portanto, o caminho público vitrine → link de indicação → pre-checkout está codificado, mas **a conversão com checkout de parceiro ainda está bloqueada por integração/evidência externa**. Não declarar que todo parceiro já consegue cobrar pelo próprio checkout nem que cadastro via parceiro garante comissão em compras futuras.
+
+### 21.3 Duas experiências que precisam continuar distintas
+
+- **Convite de cadastro:** hoje o pre-checkout pode exibir convite ao visitante anônimo após atraso curto, com controle por sessão e opção de dispensar. Seu objetivo é conversão para conta.
+- **Convite para virar afiliado/parceiro:** é outro fluxo. A estratégia de convidar consumidores ativos após critérios de uso (por exemplo, percentual de jornada) precisa de regra própria, frequência, candidatura, termos, análise e aprovação. Não foi comprovado pelo convite de cadastro descrito acima.
+
+Também não confundir o programa de indicação entre consumidores (`referrals/referral_events`) com a atribuição comercial por produto (`hub_partner_referral_links/hub_partner_confirmed_sales`). São mecanismos distintos e não devem ser fundidos em uma única comissão ou origem.
+
+### 21.4 Gates de produto e testes para completar a experiência desejada
+
+1. Decidir formalmente a política de aquisição de conta versus atribuição de venda por SKU: first-touch, last eligible touch, janela, recompra, cupom, concorrência entre parceiros e troca de dispositivo.
+2. Homologar o provedor para checkout de parceiro com identificador verificável que sobreviva ao pagamento; validar webhook/relatório, assinatura, deduplicação, estorno e conciliação.
+3. Definir se uma compra posterior de qualquer produto da Store gera comissão de aquisição, comissão por item ou nenhuma comissão. Não presumir comissão global/vitalícia pelo simples cadastro via parceiro.
+4. Implementar o convite de afiliado como jornada separada do convite de cadastro, usando critérios transparentes e opt-out; provar que não aparece excessivamente nem libera acesso automaticamente.
+5. Testar ponta a ponta: visitante anônimo → vitrine de parceiro → produto → cadastro → login → retorno à oferta → checkout → evidência de pagamento → ledger → dashboard do parceiro e Shadow Master.
+6. Testar negativas: link/grant revogado, parceiro suspenso, produto inativo, checkout alterado, token reutilizado, visita expirada, publicação incompatível, pedido duplicado, cancelamento e chargeback.
+7. Definir se a atribuição pode persistir entre dispositivos somente após login e consentimento/base legal aplicável; não usar fingerprinting oculto.
+
+**Conclusão desta auditoria:** a infraestrutura de vitrine, referral por produto, visita e dashboard financeiro já tem componentes concretos. O elo mais importante ainda não fechado é o checkout externo de parceiro com atribuição verificável; a aquisição por parceiro e a comissão sobre compras futuras também precisam de uma política explícita. Classificação upgrade-only; nenhum ponto V1 concedido e nenhuma alteração de runtime/schema/banco remoto.
