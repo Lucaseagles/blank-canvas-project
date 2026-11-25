@@ -140,6 +140,87 @@ BEGIN
 END;
 $success$;
 
+-- Audited creation: success writes exactly one event with only safe summary fields.
+CREATE TEMP TABLE rubi_qa_created_orchestration (id uuid NOT NULL) ON COMMIT DROP;
+DO $create_success$
+DECLARE result jsonb; v_id uuid;
+BEGIN
+  result := public.rubi_create_strategy_orchestration_audited(
+    'RUBI QA audited creation', 'traffic', 40, 'disposable test',
+    '{}'::uuid[], '{}'::uuid[], current_setting('rubi.qa_master_id')::uuid
+  );
+  v_id := (result->>'id')::uuid;
+  IF result->>'status' IS DISTINCT FROM 'draft' THEN
+    RAISE EXCEPTION 'Audited creation returned unexpected status';
+  END IF;
+  INSERT INTO pg_temp.rubi_qa_created_orchestration VALUES (v_id);
+  IF (SELECT count(*) FROM public.admin_audit_log
+      WHERE entity_type='strategy_orchestration' AND entity_id=v_id::text
+        AND action_type='RUBI_STRATEGY_ORCHESTRATION_CREATED') <> 1 THEN
+    RAISE EXCEPTION 'Audited creation must create exactly one audit event';
+  END IF;
+  IF EXISTS (
+    SELECT 1 FROM public.admin_audit_log
+    WHERE entity_type='strategy_orchestration' AND entity_id=v_id::text
+      AND action_type='RUBI_STRATEGY_ORCHESTRATION_CREATED'
+      AND (new_value ? 'notes' OR new_value ? 'video_urls' OR new_value ? 'strategy_payload')
+  ) THEN
+    RAISE EXCEPTION 'Creation audit contains a forbidden detail field';
+  END IF;
+END;
+$create_success$;
+
+-- A non-owner actor must not create an orchestration even via service_role.
+DO $create_non_owner$
+BEGIN
+  BEGIN
+    PERFORM public.rubi_create_strategy_orchestration_audited(
+      'RUBI QA forbidden creation', 'traffic', 40, null,
+      '{}'::uuid[], '{}'::uuid[], current_setting('rubi.qa_non_owner_id')::uuid
+    );
+    RAISE EXCEPTION 'RUBI_QA_EXPECTED_CREATE_NON_OWNER_REJECTION_NOT_RAISED';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM NOT LIKE '%Owner authorization required%' THEN RAISE; END IF;
+  END;
+END;
+$create_non_owner$;
+
+-- Forced audit failure must roll back the orchestration and its linked records.
+RESET ROLE;
+CREATE FUNCTION pg_temp.rubi_qa_reject_orchestration_create_audit()
+RETURNS trigger LANGUAGE plpgsql AS $trigger$
+BEGIN
+  IF NEW.action_type = 'RUBI_STRATEGY_ORCHESTRATION_CREATED' THEN
+    RAISE EXCEPTION 'RUBI_QA_FORCED_ORCHESTRATION_CREATE_AUDIT_FAILURE';
+  END IF;
+  RETURN NEW;
+END;
+$trigger$;
+CREATE TRIGGER rubi_qa_reject_orchestration_create_audit
+BEFORE INSERT ON public.admin_audit_log
+FOR EACH ROW EXECUTE FUNCTION pg_temp.rubi_qa_reject_orchestration_create_audit();
+SET LOCAL ROLE service_role;
+DO $create_rollback$
+DECLARE result jsonb;
+BEGIN
+  BEGIN
+    result := public.rubi_create_strategy_orchestration_audited(
+      'RUBI QA creation rollback', 'engagement', 30, null,
+      '{}'::uuid[], '{}'::uuid[], current_setting('rubi.qa_master_id')::uuid
+    );
+    RAISE EXCEPTION 'RUBI_QA_EXPECTED_CREATE_AUDIT_FAILURE_NOT_RAISED';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM NOT LIKE '%RUBI_QA_FORCED_ORCHESTRATION_CREATE_AUDIT_FAILURE%' THEN RAISE; END IF;
+  END;
+  IF EXISTS (SELECT 1 FROM public.strategy_orchestrations WHERE name='RUBI QA creation rollback') THEN
+    RAISE EXCEPTION 'Creation survived failed audit insert';
+  END IF;
+END;
+$create_rollback$;
+RESET ROLE;
+DROP TRIGGER rubi_qa_reject_orchestration_create_audit ON public.admin_audit_log;
+DROP FUNCTION pg_temp.rubi_qa_reject_orchestration_create_audit();
+
 RESET ROLE;
 ROLLBACK;
-\echo 'PASS: pause RPC grants, non-owner rejection, invalid-state rejection, atomic audit rollback and successful audited transition.'
+\echo 'PASS: pause and creation RPC grants, authorization, invalid-state rejection, atomic audit rollback and successful audited transitions.'
