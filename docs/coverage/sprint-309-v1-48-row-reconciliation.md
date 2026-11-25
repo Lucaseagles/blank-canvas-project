@@ -58,7 +58,7 @@ A coluna “score Sprint 122” é a avaliação revisada histórica, não o sco
 | 10.4 | Compra paga e LTV reais | 0.0 | Depende de evidência comercial externa/financeira ou de pedido pago; código, clique e pré-checkout não bastam. |
 | 11.1 | Proteção server-side do Master | 1.0 | Revalidar contra a main atual e evidência pós-Sprint 122; não atribuir automaticamente o valor histórico. |
 | 11.2 | Gestão administrativa de catálogo | 1.0 | Revalidar contra a main atual e evidência pós-Sprint 122; não atribuir automaticamente o valor histórico. |
-| 11.3 | Auditoria administrativa completa | 0.5 | PR #308 testa remoção de bypass legado e workflows verdes; inventário DML exaustivo, execução SQL/rollback/concorrência em DB descartável ainda pendentes. |
+| 11.3 | Auditoria administrativa completa | 0.5 | PR #308 (HEAD 44566d17) aprovada nos três workflows; PostgreSQL descartável comprovou grants, negação de não-Owner, rollback atômico por falha de auditoria, ciclo native/bridge-video e concorrência com duas sessões. Inventário DML transversal de todas as mutações administrativas ainda pendente; sem ponto adicional nesta rodada. |
 | 11.4 | Múltiplos masters sem hardcode | 0.0 | Conflito de escopo: arquitetura aprovada mantém um Shadow Master privado. Não criar Masters adicionais; revisar formalmente a rubrica antes de pontuar. |
 | 12.1 | CI TypeScript lint build testes | 1.0 | Revalidar contra a main atual e evidência pós-Sprint 122; não atribuir automaticamente o valor histórico. |
 | 12.2 | Migrações e RLS protegidas | 1.0 | Revalidar contra a main atual e evidência pós-Sprint 122; não atribuir automaticamente o valor histórico. |
@@ -71,7 +71,7 @@ A coluna “score Sprint 122” é a avaliação revisada histórica, não o sco
 |---|---|---|
 | 02.4 Story E2E | PR #307 integrada; E2E local persistido com Story publicada → mesma página de produto → pré-checkout interno em mobile e desktop. Workflow E2E do PR #308 reportou 22/22, sem unexpected/skipped/flaky. | HTTPS staging autorizado, evidência hospedada e round-trip do provedor. O host `checkout.example.test` é sintético; não houve pagamento. |
 | 07.4 Biblioteca licenciada | Sprint 207 elevou formalmente o critério a 1,0 e a baseline a 36,5/48. | Não pontuar novamente. Operação ainda depende de ativos/licenças reais e revisão de uso comercial. |
-| 11.3 Auditoria administrativa | PR #308 no head `9e15f125ded8cba2320e86cb1b104c990508edbf`; Hub V1 QA, Sprint 33 QA e E2E concluídos com sucesso. O E2E executa migrações em Supabase local descartável; teste específico novo cobre remoção de caminhos legados de vídeo/compliance. | O teste novo é majoritariamente source-level. Ainda falta executar as RPCs relevantes em banco descartável, provocar falha de auditoria para provar rollback, concorrência/locking e terminar inventário exaustivo de DML administrativo. |
+| 11.3 Auditoria administrativa | PR #308 no HEAD `44566d17b9d714953768e0a07b5fe36b4ef4fb33`; Hub V1 QA, Sprint 33 QA e E2E concluídos com sucesso. O PostgreSQL local descartável comprovou grants das RPCs, negação server-side de não-Owner, rollback atômico quando a auditoria falha, ciclos native-video/bridge-video e concorrência/locking em duas sessões. | A prova cobre os caminhos de vídeo/compliance desta sprint, não todas as mutações Master. Falta concluir o inventário DML transversal (rota → função → RPC/tabela → RLS/GRANT → auditoria → teste) e validar os demais candidatos identificados na seção 22 do inventário. |
 | 12.3 Quatro perfis | E2E local autenticado cobre consumidor, lojista aprovado, parceiro aprovado e Shadow Master em mobile/desktop, inclusive negação de não-Owner. | Não confundir ambiente descartável com staging hospedado; falta revisão independente do pacote completo. |
 | 11.4 Masters delegáveis | A documentação histórica pontuou a capacidade técnica de delegação. | Decisão de produto atual é manter um Shadow Master privado e único. Não implementar segundo Master para satisfazer requisito obsoleto; formalizar exclusão/ajuste de escopo e tratar qualquer efeito na régua sem alterar a pontuação silenciosamente. |
 
@@ -117,3 +117,15 @@ O critério **11.4 — múltiplos Masters** conflita com a decisão arquitetural
 - `docs/coverage/sprint-301-v1-evidence-gap-register.md` — confirma que a distribuição atual dos 36,5 pontos não está disponível.
 - `docs/coverage/sprint-306-story-journey-e2e-readiness.md` — gates de Story, quatro perfis e checkout externo.
 - PR #308 — Sprint 307, auditoria de caminhos legados de vídeo/compliance.
+
+
+## Atualização de evidência — 2026-11-25 (PR #308 / Sprint 307)
+
+A rodada final da Sprint 307 foi confirmada no GitHub para o HEAD `44566d17b9d714953768e0a07b5fe36b4ef4fb33`:
+
+- Hub V1 Integration QA: SUCCESS (run 45595135110).
+- Sprint 33 QA: SUCCESS (run 45595135246), incluindo TypeScript, ESLint, build e regressão Sprint 307.
+- RUBI Local Authenticated E2E — Four Profiles: SUCCESS (run 45595134853), incluindo smoke PostgreSQL descartável, rollback por falha de auditoria, Owner isolation, concorrência em duas sessões e E2E autenticado mobile/desktop.
+- Os testes de rollback e concorrência comprovam o escopo de vídeo/bridge-video da Sprint 307; não certificam o inventário global de mutações administrativas.
+- Score permanece 36,5/48 (76,0%) como baseline agregada provisória; score por linha continua não reconciliado. Pontos novos convertidos: 0.
+- Classificação desta atualização: upgrade-only / atualização de evidência. PR #308 permanece Draft e não integrada.
