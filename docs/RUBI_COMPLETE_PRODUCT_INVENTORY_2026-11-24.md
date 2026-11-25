@@ -1095,3 +1095,29 @@ A leitura das migrations canônicas refinou o risco e evita classificar ausênci
 - O padrão de auditoria de vídeo mostra o modelo desejado: validação Owner, lock da linha, mutação e insert em `admin_audit_log` na mesma transação; falha do insert deve reverter a mutação. O payload de auditoria deve ser mínimo e sanitizado.
 
 **Revisão de escopo Sprint 308:** Strategy Orchestration passa a ser uma frente de auditoria das quatro mutações, não apenas da pausa. A prioridade permanece: (1) Strategy Orchestration, (2) Brand Identity, (3) Referral Tiers. Para cada frente, exigir testes de Owner/não-Owner, estado inválido/conflito concorrente, rollback quando auditoria falha, e confirmação de que nenhuma credencial ou dado privado é escrito no log. Nenhuma mudança de código ou banco foi feita nesta revisão documental.
+
+
+## 26. Sprint 308 — implementação inicial da pausa auditada (2026-11-25)
+
+PR #310 — `feat/sprint-308-strategy-orchestration-audit` — foi aberta em Draft contra `main`.
+
+### Implementado nesta entrega parcial
+- A operação `pauseStrategyOrchestration` deixou de executar UPDATE direto pelo cliente administrativo e agora chama `rubi_pause_strategy_orchestration_audited`.
+- A função SQL valida o ator informado pelo servidor contra `user_roles.role='owner'`, usa `FOR UPDATE`, permite somente estados `ready/approved`, altera o status e insere evento mínimo em `admin_audit_log` na mesma transação.
+- EXECUTE da RPC foi revogado de `public/anon/authenticated` e concedido apenas a `service_role`; a função server-side usa `requireOwnerRole` e transmite `context.userId`.
+- Se a inserção de auditoria falhar, a transação reverte a mudança de status.
+- Adicionados seis testes de contrato Node e smoke SQL para PostgreSQL descartável cobrindo privilégios, não-Owner, estado inválido, rollback por falha de auditoria e transição bem-sucedida.
+- O smoke SQL foi conectado ao workflow local authenticated E2E; nenhum banco remoto foi alterado.
+
+### Evidência CI observada
+- Sprint 33 QA — run 1789: SUCCESS, incluindo teste específico da pausa auditada, TypeScript, ESLint e build.
+- RUBI Local Authenticated E2E — run 194: IN_PROGRESS no momento desta atualização; inclui aplicação das migrations em Supabase descartável e smoke SQL de pausa.
+- Hub V1 Integration QA — run 760: IN_PROGRESS no momento desta atualização.
+
+### Limites ainda abertos
+- A prova PostgreSQL descartável de rollback, Owner/não-Owner, estado inválido e sucesso ainda aguarda conclusão do run 194; concorrência ainda requer evidência dedicada.
+- Criação, geração do plano e aprovação continuam sem auditoria transacional nesta PR.
+- Brand Identity e Referral Tiers permanecem pendentes.
+- PR #310 permanece Draft, não integrada.
+
+**Classificação:** implementação parcial / upgrade-only. Pontos V1 adicionados: 0. Não atribuir aumento de cobertura até concluir os quatro caminhos da Strategy Orchestration e os testes exigidos.
