@@ -115,6 +115,12 @@ jobs:
           supabase migration up --local
       - name: Seed isolated consumer, approved merchant and approved partner identities
         run: node scripts/rubi-local-auth-fixtures.mjs seed-profiles
+      - name: Verify Sprint 308 audited Strategy Orchestration pause on disposable PostgreSQL
+        run: |
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 \
+            -v master_id="$RUBI_QA_MASTER_USER_ID" \
+            -v non_owner_id="$RUBI_QA_CONSUMER_USER_ID" \
+            -f scripts/rubi-local-strategy-orchestration-pause-audit-smoke.sql
       - name: Seed disposable supplier, product, reviewed movement and private Story
         run: node scripts/rubi-local-story-fixture.mjs
       - name: Install PostgreSQL client for isolated worker smoke
