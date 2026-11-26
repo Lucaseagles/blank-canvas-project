@@ -15,7 +15,7 @@ test("all 15 registered settings sources have an explicit SQL allowlist, never a
  assert.doesNotMatch(sql,/security definer/i);
  const telegramMigration=read("../../supabase/migrations/20261126113000_rubi_telegram_config_atomic_audit.sql");
  assert.doesNotMatch(telegramMigration,/when 'telegram_config' then array/);
- assert.match(telegramMigration,/create or replace function public\\.rubi_update_admin_setting_audited/);
+ assert.ok(telegramMigration.includes("create or replace function public.rubi_update_admin_setting_audited("));
  assert.ok(server.includes('{ key: "telegram_config", label: "Telegram", category: "Integrações", table: "telegram_config", editable: [] }'));
 });
 test("atomic audit, owner-only service role and stale-write prevention",()=>{
