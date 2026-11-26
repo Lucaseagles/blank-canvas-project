@@ -88,6 +88,8 @@ jobs:
           NODE
       - name: Generate routes and build
         run: npm run build
+      - name: RUBI analytics privacy RLS and least-privilege regression
+        run: node --test src/lib/rubi-analytics-privacy-hardening.test.mjs
       - name: RUBI checkout validation security tests
         run: npm run test:rubi-checkout
       - name: RUBI organic campaign UTM tests
