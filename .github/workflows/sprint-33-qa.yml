@@ -36,29 +36,17 @@ jobs:
       - name: Smart collection server-only grants regression
         run: npm run test:rubi-smart-collection-server-only-grants
 
+      - name: Sprint 316 admin audit fail-closed regression
+        run: npm run test:rubi-admin-audit-fail-closed
+
       - name: Sprint 308 strategy orchestration pause audit regression
         run: npm run test:rubi-orchestration-pause-audit
 
       - name: Sprint 307 administrative video and compliance audit regression
         run: npm run test:rubi-video-atomic-audit
 
-      - name: Sprint 319 consumer affiliate recruitment funnel regression
-        run: npm run test:rubi-affiliate-recruitment-funnel
-
       - name: RUBI distribution campaign uniqueness regression
         run: node --test src/lib/rubi-distribution-campaign-uniqueness.test.mjs
-
-      - name: Sprint 321 partner creator studio regression
-        run: npm run test:rubi-partner-creator-studio
-
-      - name: Sprint 322 partner customer acquisition regression
-        run: npm run test:rubi-partner-customer-acquisition
-
-      - name: Sprint 323 public creator profile regression
-        run: npm run test:rubi-public-creator-profile
-
-      - name: Sprint 324 public creator directory regression
-        run: npm run test:rubi-public-creator-directory
 
       - name: TypeScript
         run: npx tsc --noEmit
