@@ -110,6 +110,8 @@ jobs:
         run: npm run test:rubi-movement
       - name: RUBI Movement variants tests
         run: npm run test:rubi-variants
+      - name: RUBI A/B sample size planning regression
+        run: node --experimental-strip-types --test src/lib/rubi-ab-sample-size.test.mjs
       - name: RUBI movement distribution tests
         run: npm run test:rubi-distribution
       - name: RUBI distribution campaign uniqueness regression
