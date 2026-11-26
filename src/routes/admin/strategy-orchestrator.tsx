@@ -141,7 +141,7 @@ function StrategyOrchestratorPage() {
 
                 <SelectionPanel title="Vídeos associados" icon={Video} count={form.videoIds.length} optional empty="Nenhum vídeo disponível.">
                   {videos.map((video: any) => <button type="button" key={video.id} onClick={() => toggleVideo(video.id)} className={`w-full rounded-xl border p-3 text-left transition ${form.videoIds.includes(video.id) ? "border-primary bg-primary/10 shadow-sm" : "hover:bg-muted/50"}`}>
-                    <div className="flex items-start gap-3"><div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${form.videoIds.includes(video.id) ? "bg-primary text-primary-foreground" : "bg-muted"}`}><Video className="h-4 w-4" /></div><div className="min-w-0"><div className="truncate text-xs font-black">{video.title || "Vídeo sem título"}</div><div className="mt-1 text-[10px] text-muted-foreground">{video.platform || "native"} · {video.video_url || video.external_url ? "link configurado" : "sem link"}</div></div></div>
+                    <div className="flex items-start gap-3"><div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${form.videoIds.includes(video.id) ? "bg-primary text-primary-foreground" : "bg-muted"}`}><Video className="h-4 w-4" /></div><div className="min-w-0"><div className="truncate text-xs font-black">{video.title || "Vídeo sem título"}</div><div className="mt-1 text-[10px] text-muted-foreground">{video.video_url || video.external_url ? "link configurado" : "sem link"}</div></div></div>
                   </button>)}
                 </SelectionPanel>
 
