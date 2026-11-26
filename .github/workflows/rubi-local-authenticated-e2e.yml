@@ -187,6 +187,13 @@ jobs:
           -v master_id="$RUBI_QA_MASTER_USER_ID"
           -v non_owner_id="$RUBI_QA_CONSUMER_USER_ID"
           -f scripts/rubi-local-telegram-config-audit-smoke.sql
+      - name: Prove RUBI Business quote admin audit and rollback on disposable PostgreSQL
+        run: >-
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1
+          -v master_id="$RUBI_QA_MASTER_USER_ID"
+          -v non_owner_id="$RUBI_QA_CONSUMER_USER_ID"
+          -v merchant_id="$RUBI_QA_MERCHANT_USER_ID"
+          -f scripts/rubi-local-business-quote-admin-audit-smoke.sql
       - name: Prove concurrent administrative video transitions serialize in disposable PostgreSQL
         run: |
           set -euo pipefail
