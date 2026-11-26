@@ -129,7 +129,13 @@ export const getAdminPartnerCreatorSubmissions=createServerFn({method:"GET"})
     .select("id,user_id,title,caption,content_source,source_platform,storage_path,external_url,status,submitted_at,commercial_profiles!inner(display_name,partner_type)")
     .eq("status",data.status).order("submitted_at",{ascending:true}).limit(100);
   if(error)throw new Error(error.message);
-  return rows??[];
+  return Promise.all((rows??[]).map(async(row:any)=>{
+    if(!row.storage_path)return {...row,playback_url:row.external_url??null};
+    const {data:signed,error:signedError}=await supabaseAdmin.storage.from(VIDEO_BUCKET)
+      .createSignedUrl(row.storage_path,60*60);
+    if(signedError||!signed?.signedUrl)throw new Error("Não foi possível preparar a prévia privada do conteúdo.");
+    return {...row,playback_url:signed.signedUrl};
+  }));
 });
 
 export const reviewPartnerCreatorSubmission=createServerFn({method:"POST"})
