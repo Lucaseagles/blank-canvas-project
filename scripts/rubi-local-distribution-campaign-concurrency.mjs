@@ -42,9 +42,9 @@ async function save(variantId){
 }
 const outcomes=await Promise.all([save(variantA),save(variantB)]);
 const successes=outcomes.filter(x=>!x.error);
-const conflicts=outcomes.filter(x=>x.error?.code==="23505");
+const conflicts=outcomes.filter(x=>x.error?.code==="P0001" && /Campaign label already in use by this product and channel/.test(x.error.message||""));
 assert.equal(successes.length,1,"Exactly one concurrent campaign claim must succeed.");
-assert.equal(conflicts.length,1,"The competing claim must fail with unique-conflict SQLSTATE 23505.");
+assert.equal(conflicts.length,1,"The competing claim must be rejected by the existing trigger with its exact collision error.");
 const saved=successes[0].data?.[0];
 assert.ok(saved?.plan_id,"Winning RPC must return the persisted plan identifier.");
 const rows=await required(db.from("rubi_movement_distribution").select("id,variant_id").eq("channel","instagram").eq("campaign",campaign),"Verify unique campaign row");
