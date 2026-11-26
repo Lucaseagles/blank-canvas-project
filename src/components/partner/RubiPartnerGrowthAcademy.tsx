@@ -24,7 +24,8 @@ type Lesson = {
 
 const commonLessons: Lesson[] = [
   {
-    id: "common:foundations",\n    title: "Comece pela base: como a Hub Eagles funciona",
+    id: "common:foundations",
+    title: "Comece pela base: como a Hub Eagles funciona",
     objective: "Entender os ambientes, as regras comerciais e o papel de cada parceiro.",
     content: [
       "Conheça o catálogo autorizado, o seu perfil, os canais oficiais e os limites do seu acesso.",
@@ -34,7 +35,8 @@ const commonLessons: Lesson[] = [
     exercise: "Revise seu perfil, identifique seu público e escolha um nicho principal para começar."
   },
   {
-    id: "common:product-offer",\n    title: "Produto, oferta e confiança",
+    id: "common:product-offer",
+    title: "Produto, oferta e confiança",
     objective: "Aprender a divulgar uma oferta completa, sem distorcer informações.",
     content: [
       "Criativo conquista atenção; página explica e dá contexto; movimento mantém a distribuição e a aprendizagem.",
@@ -44,7 +46,8 @@ const commonLessons: Lesson[] = [
     exercise: "Escolha um produto autorizado e escreva três benefícios comprováveis e uma limitação importante."
   },
   {
-    id: "common:content",\n    title: "Conteúdo que ajuda a decidir",
+    id: "common:content",
+    title: "Conteúdo que ajuda a decidir",
     objective: "Construir mensagens claras e úteis para o público certo.",
     content: [
       "Estruture o conteúdo em contexto, problema real, demonstração honesta, benefício verificável e chamada para ação.",
@@ -54,7 +57,8 @@ const commonLessons: Lesson[] = [
     exercise: "Crie um roteiro curto de 20 a 40 segundos com gancho, demonstração e CTA transparente."
   },
   {
-    id: "common:distribution",\n    title: "Distribuição, atribuição e métricas",
+    id: "common:distribution",
+    title: "Distribuição, atribuição e métricas",
     objective: "Saber de onde vem o resultado e o que cada indicador realmente significa.",
     content: [
       "Use o link individual da Hub Eagles e os materiais/campanhas liberados para sua conta.",
@@ -64,7 +68,8 @@ const commonLessons: Lesson[] = [
     exercise: "Publique uma peça autorizada, use seu link individual e acompanhe visitas e vendas confirmadas no portal."
   },
   {
-    id: "common:backstage",\n    title: "Backstage: campanhas, materiais e operação",
+    id: "common:backstage",
+    title: "Backstage: campanhas, materiais e operação",
     objective: "Usar as ferramentas internas sem perder controle de autorização e direitos.",
     content: [
       "Consulte oportunidades atribuídas ao seu perfil, confira canal permitido, licença, produto e prazo.",
@@ -74,7 +79,8 @@ const commonLessons: Lesson[] = [
     exercise: "Abra as oportunidades liberadas no portal e confira a validade e as regras do próximo material."
   },
   {
-    id: "common:network",\n    title: "Indicação e desenvolvimento de parceiros",
+    id: "common:network",
+    title: "Indicação e desenvolvimento de parceiros",
     objective: "Construir uma rede saudável, sem confundir convite com remuneração.",
     content: [
       "Você pode apresentar a Hub Eagles a profissionais e criadores que tenham aderência real ao ecossistema.",
@@ -90,7 +96,8 @@ const specializations: Record<string, { label: string; focus: string; lessons: L
     label: "Trilha Afiliado",
     focus: "Seleção de produtos, links individuais, conteúdo de conversão e leitura de vendas confirmadas.",
     lessons: [{
-      id: "affiliate:catalog-to-sale",\n    title: "Afiliado na prática: do catálogo à venda confirmada",
+      id: "affiliate:catalog-to-sale",
+    title: "Afiliado na prática: do catálogo à venda confirmada",
       objective: "Escolher ofertas relevantes e acompanhar a atribuição corretamente.",
       content: [
         "Comece com poucos produtos que combinem com o público; não divulgue todo o catálogo de uma vez.",
@@ -104,7 +111,8 @@ const specializations: Record<string, { label: string; focus: string; lessons: L
     label: "Trilha Nano e Microcriador",
     focus: "Confiança de comunidade, demonstração real, frequência sustentável e nicho bem definido.",
     lessons: [{
-      id: "micro_influencer:community",\n    title: "Cresça com comunidade, não com números vazios",
+      id: "micro_influencer:community",
+    title: "Cresça com comunidade, não com números vazios",
       objective: "Transformar proximidade e credibilidade em recomendações úteis.",
       content: [
         "A força do nano/microcriador está na relação com a comunidade e na consistência, não apenas no número de seguidores.",
@@ -118,7 +126,8 @@ const specializations: Record<string, { label: string; focus: string; lessons: L
     label: "Trilha Influenciador",
     focus: "Mídia kit, campanhas negociadas, entregáveis, direitos de uso e relatórios por canal.",
     lessons: [{
-      id: "influencer:campaigns",\n    title: "Campanhas profissionais e entregas negociadas",
+      id: "influencer:campaigns",
+    title: "Campanhas profissionais e entregas negociadas",
       objective: "Organizar parcerias com briefing, escopo e comprovação.",
       content: [
         "Apresente dados reais de audiência, alcance e engajamento; não infle métricas.",
@@ -132,7 +141,8 @@ const specializations: Record<string, { label: string; focus: string; lessons: L
     label: "Trilha Expert",
     focus: "Autoridade temática, educação, demonstração técnica e recomendações responsáveis.",
     lessons: [{
-      id: "expert:authority",\n    title: "Autoridade que educa e gera confiança",
+      id: "expert:authority",
+    title: "Autoridade que educa e gera confiança",
       objective: "Traduzir conhecimento especializado em orientação compreensível.",
       content: [
         "Explique critérios de escolha, limitações, adequação e cuidados relevantes do produto.",
@@ -264,7 +274,8 @@ export function RubiPartnerGrowthAcademy({ partnerType, links, visits, confirmed
             <span className="mt-2 block text-xs font-normal leading-5 text-muted-foreground">{lesson.objective}</span>
           </summary>
           <ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-6">{lesson.content.map(point => <li key={point}>{point}</li>)}</ul>
-          <p className="mt-4 rounded-xl bg-primary/5 p-3 text-sm"><strong>Missão prática:</strong> {lesson.exercise}</p>\n          {lessonCompletionControl(lesson)}
+          <p className="mt-4 rounded-xl bg-primary/5 p-3 text-sm"><strong>Missão prática:</strong> {lesson.exercise}</p>
+          {lessonCompletionControl(lesson)}
         </details>)}
       </div>
     </div>
@@ -276,7 +287,8 @@ export function RubiPartnerGrowthAcademy({ partnerType, links, visits, confirmed
       {track.lessons.map(lesson => <details key={lesson.title} className="rounded-xl border bg-background/80 p-4">
         <summary className="cursor-pointer font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">{lesson.title}<span className="mt-1 block text-xs font-normal text-muted-foreground">{lesson.objective}</span></summary>
         <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6">{lesson.content.map(point => <li key={point}>{point}</li>)}</ul>
-        <p className="mt-3 text-sm"><strong>Missão prática:</strong> {lesson.exercise}</p>\n        {lessonCompletionControl(lesson)}
+        <p className="mt-3 text-sm"><strong>Missão prática:</strong> {lesson.exercise}</p>
+        {lessonCompletionControl(lesson)}
       </details>)}
     </div>
 
