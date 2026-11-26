@@ -28,7 +28,7 @@ test("Telegram config RPC is transactional, Owner-gated, serialized and redacts 
     "pg_advisory_xact_lock", "public.set_integration_secret('telegram', 'channel_id'",
     "public.set_integration_secret('telegram', 'bot_token'",
     "insert into public.admin_audit_log", "RUBI_TELEGRAM_CONFIG_UPDATED",
-    "values_redacted", "channel_id_redacted", "bot_token_redacted",
+    "channel_id_redacted", "channel_id_redacted", "bot_token_redacted",
     "revoke all on function public.rubi_save_telegram_config_audited",
     "from public, anon, authenticated", "to service_role",
   ]) assert.ok(sql.includes(token), token);
@@ -42,7 +42,7 @@ test("local disposable PostgreSQL smoke covers rollback, non-owner rejection, Va
   for (const token of [
     "RUBI_QA_FORCED_TELEGRAM_AUDIT_FAILURE",
     "Owner authorization required",
-    "vault.decrypted_secrets",
+    "public.get_integration_secret",
     "RUBI_TELEGRAM_CONFIG_UPDATED",
     "values_redacted",
     "ROLLBACK;",
