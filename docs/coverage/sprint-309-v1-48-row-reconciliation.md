@@ -159,3 +159,22 @@ Também não foi localizada, nesta varredura inicial, uma política explícita d
 - Nenhum ponto V1 convertido nesta atualização.
 - Nenhuma migration aplicada ao Supabase remoto; nenhum dado real alterado.
 - Nenhuma das PRs #308, #310, #311 foi integrada neste corte; main preservada.
+
+
+### Detalhamento da varredura de writers — 2026-11-26
+
+A busca por gravações diretas e RPCs encontrou pelo menos estes caminhos ativos no código da main:
+
+| Origem | Evento / operação | Identidade | Observação de auditoria |
+|---|---|---|---|
+| `src/routes/__root.tsx` | `SESSION_START` via `track_event` | anonymous ID + session ID persistidos no navegador | Disparado no shell sem consultar preferência global de analytics. |
+| `src/components/PopupTimingController.tsx` | `POPUP_TIMING_TRIGGER` via `track_event` | session ID + anonymous ID | Registra gatilhos de entrada, produto, retorno, intenção de saída e tempo de navegação; sem verificação global de consentimento. |
+| `src/lib/analytics.ts` | eventos de descoberta e `OUTBOUND_CLICK` | user ID autenticado ou anonymous ID | Escritor canônico client-side; exclui Owner, mas não consulta opt-in/opt-out global. |
+| `src/lib/personalization.functions.ts` | view/click/favorite/video_start/video_complete | user ID validado por `verifyOptionalUser` | Grava evento e altera `user_interests`; isso afeta perfil comportamental e gamificação. Precisa de finalidade/consentimento próprios, não apenas toggle de analytics. |
+| `src/lib/social-cross-promo.functions.ts` | `FOLLOW_CLICK` | usuário autenticado | Server function grava via service-role; precisa verificar consentimento e minimização para telemetria de intenção. |
+
+A migration `20260908013417` marca um overload legado de `track_event` como SECURITY INVOKER quando presente e concede INSERT em `analytics_events` a anon/authenticated; `service_role` mantém privilégios amplos. A migration `20260826215127` restringe INSERT anônimo a `user_id IS NULL`, e a migration `20260822043757` cria política de INSERT autenticado com `auth.uid() = user_id`. Uma migration anterior concedeu SELECT/INSERT/UPDATE/DELETE a authenticated, mas os GRANTs não provam por si só que as operações de leitura/alteração sejam autorizadas por RLS; é necessário inspecionar o estado final completo de políticas e grants no schema efetivamente aplicado.
+
+A coluna `user_id` foi criada com `ON DELETE SET NULL` em `analytics_events`. Isso pode preservar registros desvinculados quando a conta é apagada, mas não resolve a anonimização de `anonymous_id`, session IDs, metadata ou outros identificadores. Não foi encontrada nesta busca uma política de retenção temporal nem fluxo explícito de exportação/exclusão seletiva de analytics. Tratar como pendência de verificação, não como prova de inexistência.
+
+**Próximo passo técnico obrigatório:** obter inventário final de políticas/RLS/grants e definição real da função track_event em uma instalação local descartável; listar todos os escritores por chamada; testar com usuário autenticado, anônimo, opt-out, revogação e falha do writer. Separar telemetria estritamente necessária à segurança/estabilidade de analytics opcional para marketing/personalização. Não apagar eventos nem mudar grants remotamente durante a auditoria.
