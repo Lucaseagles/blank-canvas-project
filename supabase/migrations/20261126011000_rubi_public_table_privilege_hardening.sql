@@ -7,9 +7,14 @@ REVOKE TRUNCATE, REFERENCES, TRIGGER, MAINTAIN
 ON ALL TABLES IN SCHEMA public
 FROM anon, authenticated;
 
--- Reset the postgres-owned public-table defaults explicitly. A partial REVOKE
--- can leave inherited/default ACL entries behind; rebuild the intended DML
--- surface so future public tables retain only normal RLS-gated operations.
+-- These capabilities were present in postgres-owned default ACLs at both
+-- public and storage scope. Global default revocation is required because
+-- schema-scoped ALTER DEFAULT PRIVILEGES cannot cancel global grants.
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres
+REVOKE TRUNCATE, REFERENCES, TRIGGER, MAINTAIN
+ON TABLES FROM anon, authenticated;
+
+-- Keep normal Data API DML on future public tables, subject to RLS.
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
 REVOKE ALL PRIVILEGES ON TABLES FROM anon, authenticated;
 
