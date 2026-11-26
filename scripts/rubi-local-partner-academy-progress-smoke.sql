@@ -1,4 +1,4 @@
-\\set ON_ERROR_STOP on
+\set ON_ERROR_STOP on
 begin;
 select set_config('rubi.test.partner_id', :'partner_id', true);
 select set_config('rubi.test.consumer_id', :'consumer_id', true);
