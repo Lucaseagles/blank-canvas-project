@@ -77,7 +77,10 @@ begin
  else
   select d.* into old_plan from public.rubi_movement_distribution d
    where d.id=p_id and d.variant_id=p_variant_id for update;
-  if not found or old_plan.revision is distinct from p_expected_revision then
+  if not found then
+   raise exception 'Distribution plan not found';
+  end if;
+  if p_expected_revision is null or old_plan.revision <> p_expected_revision then
    raise exception 'Distribution plan changed; reload before saving';
   end if;
   if p_channel is distinct from old_plan.channel then
