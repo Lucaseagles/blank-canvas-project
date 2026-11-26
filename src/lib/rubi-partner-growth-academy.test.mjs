@@ -91,8 +91,8 @@ test("individual lesson completion is persisted per approved partner and isolate
   assert.match(server, /allowedLessons\(String\(profile\.partner_type/);
   assert.match(server, /rpc\("rubi_get_partner_academy_progress"/);
   assert.match(server, /rpc\("rubi_set_partner_academy_lesson_completion"/);
-  assert.match(server, /\.delete\(\)\.eq\("commercial_profile_id",profile\.id\)/);
-  assert.match(server, /\.eq\("user_id",userId\)/);
+  assert.match(migration, /delete from public\.hub_partner_academy_progress/i);
+  assert.match(migration, /progress\.user_id=p_actor/);
   assert.match(migration, /enable row level security/i);
   assert.match(migration, /revoke all on public\.hub_partner_academy_progress from public, anon, authenticated/i);
   assert.match(migration, /grant all on public\.hub_partner_academy_progress to service_role/i);
