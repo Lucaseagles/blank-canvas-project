@@ -14,10 +14,10 @@ test("Telegram configuration writes metadata, Vault secrets and audit through on
   assert.ok(section.includes("p_is_active: data.isActive"));
   assert.ok(section.includes("p_bot_token: data.botToken ?? null"));
   assert.ok(section.includes("p_actor: context.userId"));
+  assert.ok(section.includes("hasToken: Boolean(result?.has_token)"));
   assert.ok(!section.includes(".from('telegram_config').insert("));
   assert.ok(!section.includes(".from('telegram_config').update("));
   assert.ok(!section.includes("set_integration_secret"));
-  assert.ok(section.includes("getIntegrationSecretServer"));
   const generic = read("./admin-settings.functions.ts");
   assert.ok(generic.includes('{ key: "telegram_config", label: "Telegram", category: "Integrações", table: "telegram_config", editable: [] }'));
   assert.ok(!generic.includes('editable: ["channel_id", "is_active"]'));
