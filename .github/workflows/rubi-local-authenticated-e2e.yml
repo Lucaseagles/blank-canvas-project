@@ -8,6 +8,8 @@ on:
       - "src/lib/**"
       - "scripts/rubi-local-auth-fixtures.mjs"
       - "scripts/rubi-local-authenticated.e2e.spec.mjs"
+      - "scripts/rubi-local-distribution-campaign-concurrency.mjs"
+      - "src/lib/rubi-distribution-campaign-uniqueness.test.mjs"
       - "scripts/rubi-local-story-fixture.mjs"
       - "scripts/rubi-local-smart-collection-grants-smoke.sql"
       - "scripts/rubi-local-story-offer.e2e.spec.mjs"
