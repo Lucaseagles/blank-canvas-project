@@ -16,6 +16,9 @@ test("Telegram configuration writes metadata, Vault secrets and audit through on
   assert.doesNotMatch(section, /\.from\(['"]telegram_config['"]\)\.(?:insert|update|upsert)/);
   assert.doesNotMatch(section, /set_integration_secret/);
   assert.ok(section.includes("getIntegrationSecretServer"));
+  const generic = read("./admin-settings.functions.ts");
+  assert.match(generic, /key: "telegram_config"[^\\n]*editable: \\[\\]/);
+  assert.doesNotMatch(generic, /key: "telegram_config"[^\\n]*editable: \\["channel_id", "is_active"\\]/);
 });
 
 test("Telegram config RPC is transactional, Owner-gated, serialized and redacts secret values", () => {
