@@ -1,7 +1,7 @@
 import { BookOpen, CheckCircle2, Circle, Compass, GraduationCap, Handshake, Target, TrendingUp } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
-type PartnerType = "affiliate" | "micro_influencer" | "influencer" | "expert" | string;
+type PartnerType = string;
 
 type Props = {
   partnerType: PartnerType;
@@ -81,6 +81,11 @@ const commonLessons: Lesson[] = [
 ];
 
 const specializations: Record<string, { label: string; focus: string; lessons: Lesson[] }> = {
+  default: {
+    label: "Trilha Geral de Parceiros",
+    focus: "Fundamentos da Hub Eagles, boas práticas, ferramentas autorizadas e evolução por resultados verificáveis.",
+    lessons: []
+  },
   affiliate: {
     label: "Trilha Afiliado",
     focus: "Seleção de produtos, links individuais, conteúdo de conversão e leitura de vendas confirmadas.",
@@ -146,7 +151,7 @@ function status(done: boolean) {
 }
 
 export function RubiPartnerGrowthAcademy({ partnerType, links, visits, confirmedSales }: Props) {
-  const track = specializations[partnerType] ?? specializations.affiliate;
+  const track = specializations[partnerType] ?? specializations.default;
   const milestones = [
     { label: "Primeiro link individual ativo", done: links > 0 },
     { label: "Primeira visita rastreada", done: visits > 0 },
