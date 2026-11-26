@@ -18,7 +18,7 @@ const audiences = [
   { id: "partner" as const, icon: Megaphone, title: "Quero divulgar e ganhar comissões", detail: "Campanhas e produtos elegíveis da Hub Eagles." },
 ];
 const partnerTypes: { id: PartnerType; title: string }[] = [
-  { id: "micro_influencer", title: "Nano ou microinfluenciador" }, { id: "influencer", title: "Influenciador" },
+  { id: "micro_influencer", title: "Nano ou microcriador" }, { id: "influencer", title: "Influenciador" },
   { id: "affiliate", title: "Afiliado" }, { id: "expert", title: "Expert" },
 ];
 
@@ -114,7 +114,7 @@ function CommercialOnboarding() {
             </label>
             <p className="sm:col-span-3 text-xs text-muted-foreground">O quiz orienta futuras cotações e reposições. Não confirma estoque, margem nem capacidade financeira.</p>
           </div>}
-          {audience === "partner" && <><div className="space-y-2"><p className="text-sm font-medium">Como você divulga?</p><div className="flex flex-wrap gap-2">{partnerTypes.map(type => <button type="button" key={type.id} onClick={() => setPartnerType(type.id)} className={`rounded-full border px-4 py-2 text-sm ${partnerType === type.id ? "border-primary bg-primary/15 text-primary" : "border-white/15"}`}>{type.title}</button>)}</div></div><label className="block space-y-2 text-sm font-medium">Seu @ do Instagram (opcional) <Input maxLength={100} value={instagram} onChange={e => setInstagram(e.target.value)} placeholder="@seuperfil"/></label></>}
+          {audience === "partner" && <><div className="space-y-2"><p className="text-sm font-medium">Qual é sua atuação principal?</p><p className="text-xs text-muted-foreground">Todos os perfis aprovados recebem a formação comum da Hub Eagles e uma especialização adequada à sua atuação.</p><div className="flex flex-wrap gap-2">{partnerTypes.map(type => <button type="button" key={type.id} onClick={() => setPartnerType(type.id)} className={`rounded-full border px-4 py-2 text-sm ${partnerType === type.id ? "border-primary bg-primary/15 text-primary" : "border-white/15"}`}>{type.title}</button>)}</div></div><div className="rounded-2xl border border-primary/20 bg-primary/[0.04] p-4 text-sm leading-6"><strong className="block">O que acontece depois da aprovação?</strong><p className="mt-1 text-muted-foreground">Você terá aulas práticas sobre ofertas, conteúdo, distribuição, atribuição, campanhas e desenvolvimento de parceiros. As metas acompanham links, visitas e vendas confirmadas; convite sozinho não gera comissão. O acesso a produtos, campanhas e condições comerciais continua sujeito às autorizações vigentes.</p></div><label className="block space-y-2 text-sm font-medium">Seu @ do Instagram (opcional) <Input maxLength={100} value={instagram} onChange={e => setInstagram(e.target.value)} placeholder="@seuperfil"/></label></>}
           {audience === "partner" && <div className="space-y-4 rounded-2xl border border-primary/15 bg-primary/[0.04] p-4">
             <h3 className="text-sm font-bold">Seu perfil profissional (opcional)</h3>
             <p className="text-xs text-muted-foreground">Não precisa saber vender na internet. Conte apenas sobre seu trabalho e as pessoas que acompanham seu conteúdo.</p>
