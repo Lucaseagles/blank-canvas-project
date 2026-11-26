@@ -24,7 +24,7 @@ test("each audience's quiz is stored with atomic preferences, pending approval a
  assert.match(onboarding,/completeRubiOnboarding/);
  assert.match(onboarding,/Quais categorias mais interessam/);
  assert.match(onboarding,/Com que frequência você repõe/);
- assert.match(onboarding,/Canal principal de conteúdo/);
+ assert.match(onboarding,/Selecione seu principal canal/);
  assert.doesNotMatch(onboarding,/\.from\("commercial_profiles"\)\.insert/);
  assert.doesNotMatch(api,/\.from\("commercial_profiles"\)\.insert/);
 });
