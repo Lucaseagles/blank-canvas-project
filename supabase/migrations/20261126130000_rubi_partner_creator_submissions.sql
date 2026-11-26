@@ -26,7 +26,7 @@ create table if not exists public.rubi_partner_creator_submissions (
     or
     (status='rejected' and reviewed_at is not null and reviewed_by is not null and video_id is null)
     or
-    (status='approved' and reviewed_at is not null and reviewed_by is not null and video_id is not null)
+    (status='approved' and reviewed_at is not null and reviewed_by is not null)
   )
 );
 
