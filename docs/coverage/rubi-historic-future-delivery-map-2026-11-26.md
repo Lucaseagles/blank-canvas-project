@@ -163,3 +163,36 @@ A lacuna de 11.3 agora é definida com mais rigor: inventário transversal exaus
 ### Pontuação
 
 O score carregado permanece **37.5/48 = 78.1%**, gap aritmético **10.5 pontos**. PR #346, PR #347 e a documentação Sprint 348 são upgrades/habilitadores e não adicionam pontos. A distribuição por critério permanece sob reconciliação; não estimar pontuação individual a partir do agregado.
+
+
+## 10. PR #350 — RUBI Business: auditoria atômica de cotação e follow-up
+
+**PR:** https://github.com/Lucaseagles/blank-canvas-project/pull/350  
+**Estado:** aberta, aguardando CI e validação PostgreSQL descartável.  
+**Classificação:** habilitador de cobertura + parcial candidata para 11.3. **+0 ponto V1 até todos os gates serem aprovados.**
+
+### Entrega implementada na branch
+- Status e resposta de cotação B2B passam a RPC Owner-only `rubi_update_business_quote_admin_audited`, em vez de UPDATE direto.
+- Conclusão de tarefa interna de follow-up passa a RPC Owner-only `rubi_complete_business_followup_admin_audited`.
+- Ambas fazem `FOR UPDATE`, verificam `updated_at` esperado e gravam `admin_audit_log` na mesma transação.
+- Falha no log reverte a alteração; smoke PostgreSQL injeta falha deliberada e verifica rollback.
+- Grants: execução apenas por `service_role`; anon/authenticated não executam as RPCs.
+- Texto privado da resposta do Master não é copiado para o audit log; registra-se presença/estado e metadados mínimos.
+- `responded_at` só é criado ao entrar efetivamente no status `responded`, preservando o primeiro timestamp.
+- UI envia a revisão renderizada para impedir sobrescrita silenciosa; a fila de follow-up usa a mesma proteção.
+- Follow-up continua sendo tarefa interna: nenhuma mensagem externa é enviada.
+
+### Evidência adicionada
+- `src/lib/rubi-business-quote-admin-atomic-audit.test.mjs`
+- `scripts/rubi-local-business-quote-admin-audit-smoke.sql`
+- Workflow `rubi-local-authenticated-e2e.yml) executa o smoke em Supabase local descartável com identidade Master, não-Owner e lojista aprovados.
+
+### Limite de aceite
+A PR cobre duas mutações específicas do RUBI Business. Não certifica o inventário de todas as mutações administrativas, nem substitui busca de bypass, testes de cada família, rollback/concorrência global, E2E completo e revisão de grants. O critério 11.3 não é declarado completo nesta entrega.
+
+### Próximos gates
+1. CI TypeScript/lint/build e regressão contratual aprovados.
+2. Migration aplicada no Supabase local descartável.
+3. Smoke comprova Owner positivo, não-Owner negativo, grants mínimos, rollback por falha de auditoria, stale-write e trilha de auditoria.
+4. Verificar se a coluna de revisão e o fixture merchant estão presentes no bootstrap completo.
+5. Reconciliar o inventário transversal antes de atribuir qualquer fração de 11.3.
