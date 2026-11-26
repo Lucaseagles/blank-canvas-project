@@ -42,6 +42,9 @@ jobs:
       - name: Sprint 307 administrative video and compliance audit regression
         run: npm run test:rubi-video-atomic-audit
 
+      - name: Sprint 318 referral tier atomic audit regression
+        run: npm run test:rubi-referral-tier-audit
+
       - name: Sprint 316 admin audit fail-closed regression
         run: npm run test:rubi-admin-audit-fail-closed
 
