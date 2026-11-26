@@ -1182,3 +1182,40 @@ A leitura do código da main identificou um gap a tratar antes de ampliar rastre
 - 12.3 tem evidência E2E local autenticada em quatro perfis, mas staging hospedado continua pendente; não converter ponto.
 - 11.4 continua em conflito com a decisão aprovada de Shadow Master único e privado; exige versionamento explícito da rubrica, sem criar outro Master.
 - Baseline agregada 36,5/48 permanece provisória; score por linha não reconciliado. Pontos novos: 0.
+
+
+## 28. Estado consolidado após integrações — 2026-11-26
+
+Esta seção é a referência operacional mais recente e prevalece sobre os estados anteriores preservados como histórico.
+
+### 28.1 Integrações confirmadas na main
+
+HEAD da `main`: `766f0f7b064f96916060779d5eb5a8bb87b57463`.
+
+| PR | Escopo | Merge commit | Estado |
+|---|---|---|---|
+| #313 | Smart Collection — gravações server-only | `fc25a5240e4b1e41f464b6ba8842c813e56698d2` | Integrada |
+| #311 | Atribuição transacional de campanhas orgânicas | `994c33110b568fb832ba5734269258c4ae25486b` | Integrada |
+| #312 | Privacidade de analytics e least privilege | `8435e7f0b7cc0b968dfb7b218e67de260f2b74b9` | Integrada |
+| #310 | Pausa auditada da Strategy Orchestration | `766f0f7b064f96916060779d5eb5a8bb87b57463` | Integrada |
+
+A PR #310 foi integrada por merge normal, com os três workflows obrigatórios aprovados no HEAD `d09b3b9ebf9299274f910a6485bcd4b6a2510c58`:
+- Hub V1 Integration QA: SUCCESS (95/95 etapas).
+- Sprint 33 QA: SUCCESS (15/15 etapas).
+- RUBI Local Authenticated E2E — Four Profiles: SUCCESS (34/34 etapas).
+
+O E2E executou Supabase local descartável, smokes de Smart Collection, analytics, pausa auditada e concorrência, além das jornadas autenticadas dos quatro perfis em mobile e desktop. Nenhuma migration foi aplicada ao Supabase remoto nesta validação.
+
+### 28.2 PRs ainda abertas
+
+- #308 / Sprint 307: continua aberta; não confundir com as quatro integrações acima.
+- #309 / inventário mestre: continua aberta e documental. Sua branch foi sincronizada com a main atual pelo merge commit `4b6b581e29c0f9770f9e9ad1aecc7bdf85ef8d10`, sem force e sem alteração de código de produto. O HEAD documental atualizado ainda precisa de validação após essa sincronização.
+
+### 28.3 Cobertura e decisão
+
+- Classificação: upgrade-only / governança e atualização de evidências.
+- Nenhum critério recebe ponto adicional nesta atualização.
+- A baseline agregada histórica de 36,5/48 (76,0%) permanece provisória; a distribuição autoritativa por linha ainda precisa ser reconciliada.
+- 11.3 permanece sem incremento até o inventário DML transversal de todas as mutações administrativas estar completo.
+- 12.3 permanece sem incremento até staging hospedado e revisão independente.
+- Não aplicar migrations ao Supabase remoto como parte desta atualização documental.
