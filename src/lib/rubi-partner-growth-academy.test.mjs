@@ -12,7 +12,7 @@ test("one shared academy includes the four approved partner profiles and common 
     assert.ok(academy.includes(type), "missing specialization: " + type);
     assert.ok(onboarding.includes(type), "missing onboarding option: " + type);
   }
-  assert.match(onboarding, /Nano ou microcriador/);
+  assert.match(onboarding, /Nano ou microinfluenciador/);
   assert.match(academy, /Formação para todos os parceiros/);
   assert.match(academy, /Trilha Geral de Parceiros/);
   assert.match(academy, /specializations\[partnerType\] \?\? specializations\.default/);
