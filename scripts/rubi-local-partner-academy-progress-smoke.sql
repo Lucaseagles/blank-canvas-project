@@ -1,0 +1,84 @@
+\set ON_ERROR_STOP on
+begin;
+select set_config('rubi.test.partner_id', :'partner_id', true);
+select set_config('rubi.test.consumer_id', :'consumer_id', true);
+
+do $academy$
+begin
+  if has_table_privilege('anon','public.hub_partner_academy_progress','SELECT')
+    or has_table_privilege('authenticated','public.hub_partner_academy_progress','SELECT')
+    or has_table_privilege('anon','public.hub_partner_academy_progress','INSERT')
+    or has_table_privilege('authenticated','public.hub_partner_academy_progress','INSERT') then
+    raise exception 'Client roles unexpectedly have direct academy progress table access';
+  end if;
+  if has_function_privilege('anon','public.rubi_get_partner_academy_progress(uuid)','EXECUTE')
+    or has_function_privilege('authenticated','public.rubi_get_partner_academy_progress(uuid)','EXECUTE')
+    or has_function_privilege('anon','public.rubi_set_partner_academy_lesson_completion(uuid,text,boolean)','EXECUTE')
+    or has_function_privilege('authenticated','public.rubi_set_partner_academy_lesson_completion(uuid,text,boolean)','EXECUTE') then
+    raise exception 'Client roles unexpectedly have academy progress RPC execution';
+  end if;
+  if not has_function_privilege('service_role','public.rubi_get_partner_academy_progress(uuid)','EXECUTE')
+    or not has_function_privilege('service_role','public.rubi_set_partner_academy_lesson_completion(uuid,text,boolean)','EXECUTE') then
+    raise exception 'service_role is missing academy progress RPC execution';
+  end if;
+end;
+$academy$;
+
+set local role service_role;
+select public.rubi_set_partner_academy_lesson_completion(current_setting('rubi.test.partner_id')::uuid,'common:foundations',true);
+select public.rubi_set_partner_academy_lesson_completion(current_setting('rubi.test.partner_id')::uuid,'common:foundations',true);
+do $academy$
+declare
+  v_count integer;
+  v_rpc_count integer;
+begin
+  select count(*) into v_count from public.hub_partner_academy_progress
+  where user_id=current_setting('rubi.test.partner_id')::uuid and lesson_key='common:foundations';
+  select count(*) into v_rpc_count from public.rubi_get_partner_academy_progress(current_setting('rubi.test.partner_id')::uuid)
+  where lesson_key='common:foundations';
+  if v_count<>1 or v_rpc_count<>1 then
+    raise exception 'Expected one persisted row and one readable RPC row; table %, RPC %',v_count,v_rpc_count;
+  end if;
+end;
+$academy$;
+do $academy$
+begin
+  begin
+    perform public.rubi_set_partner_academy_lesson_completion(current_setting('rubi.test.partner_id')::uuid,'expert:authority',true);
+    raise exception 'Affiliate was able to complete an expert-only lesson';
+  exception when raise_exception then
+    if sqlerrm='Affiliate was able to complete an expert-only lesson' then raise; end if;
+  end;
+end;
+$academy$;
+do $academy$
+declare
+  v_count integer;
+begin
+  select count(*) into v_count from public.hub_partner_academy_progress
+  where user_id=current_setting('rubi.test.partner_id')::uuid and lesson_key='expert:authority';
+  if v_count<>0 then raise exception 'Profile-specific lesson restriction failed'; end if;
+end;
+$academy$;
+do $academy$
+begin
+  begin
+    perform public.rubi_get_partner_academy_progress(current_setting('rubi.test.consumer_id')::uuid);
+    raise exception 'Consumer was able to read partner academy progress';
+  exception when raise_exception then
+    if sqlerrm='Consumer was able to read partner academy progress' then raise; end if;
+  end;
+end;
+$academy$;
+select public.rubi_set_partner_academy_lesson_completion(current_setting('rubi.test.partner_id')::uuid,'common:foundations',false);
+do $academy$
+declare
+  v_count integer;
+begin
+  select count(*) into v_count from public.hub_partner_academy_progress
+  where user_id=current_setting('rubi.test.partner_id')::uuid and lesson_key='common:foundations';
+  if v_count<>0 then raise exception 'Unchecking lesson did not remove persisted progress'; end if;
+end;
+$academy$;
+reset role;
+rollback;

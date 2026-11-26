@@ -1,9 +1,14 @@
 import { BookOpen, CheckCircle2, Circle, Compass, GraduationCap, Handshake, Target, TrendingUp } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { supabase } from "@/integrations/supabase/client";
+import { getMyRubiPartnerAcademyProgress, setMyRubiPartnerAcademyLessonCompletion } from "@/lib/rubi-partner-academy-progress.functions";
 import { Link } from "@tanstack/react-router";
 
 type PartnerType = string;
 
 type Props = {
+  commercialProfileId: string;
   partnerType: PartnerType;
   links: number;
   visits: number;
@@ -11,6 +16,7 @@ type Props = {
 };
 
 type Lesson = {
+  id: string;
   title: string;
   objective: string;
   content: string[];
@@ -19,6 +25,7 @@ type Lesson = {
 
 const commonLessons: Lesson[] = [
   {
+    id: "common:foundations",
     title: "Comece pela base: como a Hub Eagles funciona",
     objective: "Entender os ambientes, as regras comerciais e o papel de cada parceiro.",
     content: [
@@ -29,6 +36,7 @@ const commonLessons: Lesson[] = [
     exercise: "Revise seu perfil, identifique seu público e escolha um nicho principal para começar."
   },
   {
+    id: "common:product-offer",
     title: "Produto, oferta e confiança",
     objective: "Aprender a divulgar uma oferta completa, sem distorcer informações.",
     content: [
@@ -39,6 +47,7 @@ const commonLessons: Lesson[] = [
     exercise: "Escolha um produto autorizado e escreva três benefícios comprováveis e uma limitação importante."
   },
   {
+    id: "common:content",
     title: "Conteúdo que ajuda a decidir",
     objective: "Construir mensagens claras e úteis para o público certo.",
     content: [
@@ -49,6 +58,7 @@ const commonLessons: Lesson[] = [
     exercise: "Crie um roteiro curto de 20 a 40 segundos com gancho, demonstração e CTA transparente."
   },
   {
+    id: "common:distribution",
     title: "Distribuição, atribuição e métricas",
     objective: "Saber de onde vem o resultado e o que cada indicador realmente significa.",
     content: [
@@ -59,6 +69,7 @@ const commonLessons: Lesson[] = [
     exercise: "Publique uma peça autorizada, use seu link individual e acompanhe visitas e vendas confirmadas no portal."
   },
   {
+    id: "common:backstage",
     title: "Backstage: campanhas, materiais e operação",
     objective: "Usar as ferramentas internas sem perder controle de autorização e direitos.",
     content: [
@@ -69,6 +80,7 @@ const commonLessons: Lesson[] = [
     exercise: "Abra as oportunidades liberadas no portal e confira a validade e as regras do próximo material."
   },
   {
+    id: "common:network",
     title: "Indicação e desenvolvimento de parceiros",
     objective: "Construir uma rede saudável, sem confundir convite com remuneração.",
     content: [
@@ -85,7 +97,8 @@ const specializations: Record<string, { label: string; focus: string; lessons: L
     label: "Trilha Afiliado",
     focus: "Seleção de produtos, links individuais, conteúdo de conversão e leitura de vendas confirmadas.",
     lessons: [{
-      title: "Afiliado na prática: do catálogo à venda confirmada",
+      id: "affiliate:catalog-to-sale",
+    title: "Afiliado na prática: do catálogo à venda confirmada",
       objective: "Escolher ofertas relevantes e acompanhar a atribuição corretamente.",
       content: [
         "Comece com poucos produtos que combinem com o público; não divulgue todo o catálogo de uma vez.",
@@ -99,7 +112,8 @@ const specializations: Record<string, { label: string; focus: string; lessons: L
     label: "Trilha Nano e Microcriador",
     focus: "Confiança de comunidade, demonstração real, frequência sustentável e nicho bem definido.",
     lessons: [{
-      title: "Cresça com comunidade, não com números vazios",
+      id: "micro_influencer:community",
+    title: "Cresça com comunidade, não com números vazios",
       objective: "Transformar proximidade e credibilidade em recomendações úteis.",
       content: [
         "A força do nano/microcriador está na relação com a comunidade e na consistência, não apenas no número de seguidores.",
@@ -113,7 +127,8 @@ const specializations: Record<string, { label: string; focus: string; lessons: L
     label: "Trilha Influenciador",
     focus: "Mídia kit, campanhas negociadas, entregáveis, direitos de uso e relatórios por canal.",
     lessons: [{
-      title: "Campanhas profissionais e entregas negociadas",
+      id: "influencer:campaigns",
+    title: "Campanhas profissionais e entregas negociadas",
       objective: "Organizar parcerias com briefing, escopo e comprovação.",
       content: [
         "Apresente dados reais de audiência, alcance e engajamento; não infle métricas.",
@@ -127,7 +142,8 @@ const specializations: Record<string, { label: string; focus: string; lessons: L
     label: "Trilha Expert",
     focus: "Autoridade temática, educação, demonstração técnica e recomendações responsáveis.",
     lessons: [{
-      title: "Autoridade que educa e gera confiança",
+      id: "expert:authority",
+    title: "Autoridade que educa e gera confiança",
       objective: "Traduzir conhecimento especializado em orientação compreensível.",
       content: [
         "Explique critérios de escolha, limitações, adequação e cuidados relevantes do produto.",
@@ -145,7 +161,7 @@ function status(done: boolean) {
     : <Circle className="h-4 w-4 shrink-0 text-muted-foreground" aria-label="Pendente" />;
 }
 
-export function RubiPartnerGrowthAcademy({ partnerType, links, visits, confirmedSales }: Props) {
+export function RubiPartnerGrowthAcademy({ commercialProfileId, partnerType, links, visits, confirmedSales }: Props) {
   const track = specializations[partnerType] ?? {
     label: "Trilha Geral de Parceiros",
     focus: "Fundamentos da Hub Eagles, boas práticas, ferramentas autorizadas e evolução por resultados verificáveis.",
@@ -162,6 +178,44 @@ export function RubiPartnerGrowthAcademy({ partnerType, links, visits, confirmed
   const developmentStage = confirmedSales >= 5 ? "Consistência" : confirmedSales > 0 ? "Conversão" : visits >= 10 ? "Distribuição" : links > 0 ? "Ativação" : "Preparação";
   const completed = milestones.filter(item => item.done).length;
   const progress = Math.round((completed / milestones.length) * 100);
+  const loadAcademyProgress = useServerFn(getMyRubiPartnerAcademyProgress);
+  const saveLessonCompletion = useServerFn(setMyRubiPartnerAcademyLessonCompletion);
+  const queryClient = useQueryClient();
+  const academyProgressQuery = useQuery({
+    queryKey: ["rubi-partner-academy-progress", commercialProfileId, partnerType],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Entre novamente para salvar seu progresso.");
+      return loadAcademyProgress({ data: { accessToken: session.access_token } });
+    },
+    retry: false,
+    staleTime: 30_000
+  });
+  const completionMutation = useMutation({
+    mutationFn: async ({ lessonKey, completed }: { lessonKey: string; completed: boolean }) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Sua sessão expirou. Entre novamente.");
+      return saveLessonCompletion({ data: { accessToken: session.access_token, lessonKey, completed } });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["rubi-partner-academy-progress", commercialProfileId, partnerType] })
+  });
+  const completedLessonKeys = new Set(academyProgressQuery.data ?? []);
+  const allLessons = [...commonLessons, ...track.lessons];
+  const completedLessons = allLessons.filter(lesson => completedLessonKeys.has(lesson.id)).length;
+  const learningProgress = allLessons.length ? Math.round(completedLessons / allLessons.length * 100) : 0;
+  const lessonCompletionControl = (lesson: Lesson) => {
+    const done = completedLessonKeys.has(lesson.id);
+    return <button
+      type="button"
+      aria-pressed={done}
+      disabled={completionMutation.isPending || academyProgressQuery.isLoading || academyProgressQuery.isError}
+      onClick={() => completionMutation.mutate({ lessonKey: lesson.id, completed: !done })}
+      className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-xl border border-primary/25 bg-background px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      {done ? <CheckCircle2 className="h-4 w-4 text-primary" /> : <Circle className="h-4 w-4 text-muted-foreground" />}
+      {done ? "Aula concluída · desfazer" : "Marcar aula como concluída"}
+    </button>;
+  };
 
   return <section aria-label="Academia e crescimento de parceiros" className="hub-premium-surface space-y-6 rounded-3xl p-5 sm:p-7">
     <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -172,6 +226,27 @@ export function RubiPartnerGrowthAcademy({ partnerType, links, visits, confirmed
       </div>
       <span className="inline-flex w-fit items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary"><Compass className="h-3.5 w-3.5" /> {track.label}</span>
     </header>
+
+    <div className="space-y-3 rounded-2xl border border-primary/25 bg-background/70 p-4 sm:p-5">
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-wider text-primary">Formação individual</p>
+          <h3 className="text-lg font-black">Seu progresso nas aulas</h3>
+          <p className="mt-1 text-xs text-muted-foreground">Salvo na sua conta e separado das metas comerciais.</p>
+        </div>
+        <p className="text-2xl font-black tabular-nums">{academyProgressQuery.isLoading || academyProgressQuery.isError ? "—" : learningProgress + "%"}</p>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-muted" role="progressbar" aria-label="Progresso das aulas concluídas" aria-valuemin={0} aria-valuemax={100} aria-valuenow={academyProgressQuery.isError || academyProgressQuery.isLoading ? 0 : learningProgress}>
+        <div className="h-full rounded-full bg-primary transition-[width] duration-200" style={{ width: (academyProgressQuery.isError || academyProgressQuery.isLoading ? 0 : learningProgress) + "%" }} />
+      </div>
+      {academyProgressQuery.isLoading && <p role="status" className="text-xs text-muted-foreground">Carregando seu progresso salvo...</p>}
+      {academyProgressQuery.isError && <div role="alert" className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+        <span>Não foi possível carregar as aulas concluídas.</span>
+        <button type="button" onClick={() => void academyProgressQuery.refetch()} className="min-h-9 rounded-lg border px-3 font-semibold text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">Tentar novamente</button>
+      </div>}
+      {academyProgressQuery.data && <p className="text-xs text-muted-foreground">{completedLessons} de {allLessons.length} aulas concluídas nesta trilha.</p>}
+      {completionMutation.isError && <p role="alert" className="text-xs text-destructive">Não foi possível salvar essa alteração. Tente novamente.</p>}
+    </div>
 
     <div className="grid gap-3 sm:grid-cols-3">
       <div className="rounded-2xl border bg-background/70 p-4"><BookOpen className="mb-2 h-5 w-5 text-primary" /><p className="text-sm font-bold">Formação comum</p><p className="mt-1 text-xs text-muted-foreground">Fundamentos, oferta, conteúdo, distribuição, backstage e rede.</p></div>
@@ -201,6 +276,7 @@ export function RubiPartnerGrowthAcademy({ partnerType, links, visits, confirmed
           </summary>
           <ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-6">{lesson.content.map(point => <li key={point}>{point}</li>)}</ul>
           <p className="mt-4 rounded-xl bg-primary/5 p-3 text-sm"><strong>Missão prática:</strong> {lesson.exercise}</p>
+          {lessonCompletionControl(lesson)}
         </details>)}
       </div>
     </div>
@@ -213,6 +289,7 @@ export function RubiPartnerGrowthAcademy({ partnerType, links, visits, confirmed
         <summary className="cursor-pointer font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">{lesson.title}<span className="mt-1 block text-xs font-normal text-muted-foreground">{lesson.objective}</span></summary>
         <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6">{lesson.content.map(point => <li key={point}>{point}</li>)}</ul>
         <p className="mt-3 text-sm"><strong>Missão prática:</strong> {lesson.exercise}</p>
+        {lessonCompletionControl(lesson)}
       </details>)}
     </div>
 

@@ -105,7 +105,7 @@ function PartnerPortal() {
       <RubiPartnerStorefrontManager storeCode={profile.public_store_code ?? null} />
       <RubiLicensedPartnerCreatives />
       <RubiPartnerCampaignOpportunities />
-      <RubiPartnerGrowthAcademy partnerType={profile.partner_type ?? "affiliate"} links={statsQuery.data?.links ?? 0} visits={statsQuery.data?.visits ?? 0} confirmedSales={salesQuery.data?.sales ?? 0} />
+      <RubiPartnerGrowthAcademy commercialProfileId={profile.id} partnerType={profile.partner_type ?? "affiliate"} links={statsQuery.data?.links ?? 0} visits={statsQuery.data?.visits ?? 0} confirmedSales={salesQuery.data?.sales ?? 0} />
       <RubiPartnerCreatorStudio />
       <p className="text-sm text-muted-foreground">Bem-vindo, {profile.display_name}. {products.length} produtos autorizados.</p>
       <section aria-label="Rede de times RUBI Partners" className="space-y-3 rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 to-card p-5 sm:p-7">
