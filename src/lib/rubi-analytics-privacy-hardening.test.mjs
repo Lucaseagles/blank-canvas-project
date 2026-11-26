@@ -19,17 +19,19 @@ test("analytics events migration scopes personal reads and removes client mutati
   assert.match(sql, /WITH CHECK \(user_id IS NULL\)/i);
 });
 
-test("local PostgreSQL smoke checks RLS, anonymous restrictions and grants", async () => {
+test("local PostgreSQL smoke checks personal isolation, Owner read preservation, anonymous restrictions and grants", async () => {
   const sql = await readFile(smokePath, "utf8");
   for (const expected of [
     "relrowsecurity",
     "Users can view their own events",
+    "Admin view analytics",
+    "Owner analytics SELECT policy is missing or no longer Owner-scoped",
     "Users can insert their own events",
     "Anonymous events must be unattributed",
     "has_table_privilege('anon'",
     "has_table_privilege('authenticated'",
     "has_table_privilege('service_role'",
-    "analytics_events RLS, personal isolation and least-privilege smoke: PASS",
+    "Owner preservation and least-privilege smoke: PASS",
   ]) assert.ok(sql.includes(expected), `missing smoke assertion: ${expected}`);
 });
 
