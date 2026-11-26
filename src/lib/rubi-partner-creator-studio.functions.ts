@@ -66,6 +66,10 @@ export const createPartnerCreatorUploadUrl=createServerFn({method:"POST"})
     });
     if(updateError)throw new Error(updateError.message);
   }
+  const {data:existingUploads,error:uploadsError}=await supabaseAdmin.storage.from(VIDEO_BUCKET)
+    .list(`partner/${userId}`,{limit:50});
+  if(uploadsError)throw new Error(uploadsError.message);
+  if((existingUploads??[]).length>=50)throw new Error("Limite de 50 arquivos enviados/pendentes atingido. Solicite a limpeza de conteúdos antigos.");
   const path=`partner/${userId}/${crypto.randomUUID()}.${extension}`;
   const {data:signed,error}=await supabaseAdmin.storage.from(VIDEO_BUCKET).createSignedUploadUrl(path);
   if(error||!signed?.token)throw new Error(error?.message??"Não foi possível preparar o envio.");
@@ -103,8 +107,21 @@ export const submitPartnerCreatorContent=createServerFn({method:"POST"})
 .handler(async({data})=>{
   const {supabaseAdmin,userId,profile}=await verifiedPartner(data.accessToken);
   let externalUrl:string|null=null;
-  if(data.contentSource==="native_upload"&&!data.storagePath?.startsWith(`partner/${userId}/`))
-    throw new Error("O arquivo não pertence à sua conta.");
+  if(data.contentSource==="native_upload"){
+    const expectedPath=new RegExp("^partner/"+userId+"/[0-9a-f-]{36}\\.(mp4|webm)$","i");
+    if(!data.storagePath||!expectedPath.test(data.storagePath))
+      throw new Error("O caminho do arquivo não corresponde a um upload válido da sua conta.");
+    const fileName=data.storagePath.split("/").pop()!;
+    const {data:objects,error:storageError}=await supabaseAdmin.storage.from(VIDEO_BUCKET)
+      .list(`partner/${userId}`,{limit:50,search:fileName});
+    if(storageError)throw new Error(storageError.message);
+    const uploaded=(objects??[]).find((object:any)=>object.name===fileName);
+    if(!uploaded)throw new Error("O arquivo ainda não chegou ao armazenamento. Tente enviar novamente.");
+    const size=Number(uploaded.metadata?.size??0);
+    const mime=String(uploaded.metadata?.mimetype??"");
+    if(size<=0||size>VIDEO_MAX_BYTES||!VIDEO_MIME_TYPES.includes(mime as any))
+      throw new Error("O arquivo enviado não atende aos limites de formato e tamanho.");
+  }
   if(data.contentSource==="social_link")externalUrl=parseSocialUrl(data.externalUrl!,data.sourcePlatform as SocialPlatform);
   const {count,error:countError}=await (supabaseAdmin as any).from("rubi_partner_creator_submissions")
     .select("id",{count:"exact",head:true}).eq("user_id",userId).eq("status","pending");
