@@ -50,6 +50,8 @@ jobs:
 
       - name: Sprint 345 Telegram config and Vault atomic audit regression
         run: node --test src/lib/rubi-telegram-config-atomic-audit.test.mjs
+      - name: Generic admin settings allowlist regression
+        run: node --test src/lib/rubi-admin-setting-atomic-audit.test.mjs
 
       - name: Sprint 316 admin audit fail-closed regression
         run: npm run test:rubi-admin-audit-fail-closed
