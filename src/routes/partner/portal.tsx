@@ -15,6 +15,7 @@ import { RubiPartnerFinanceDashboard } from "@/components/partner/RubiPartnerFin
 import { RubiLicensedPartnerCreatives } from "@/components/partner/RubiLicensedPartnerCreatives";
 import { RubiPartnerCampaignOpportunities } from "@/components/partner/RubiPartnerCampaignOpportunities";
 import { RubiPartnerCreatorStudio } from "@/components/partner/RubiPartnerCreatorStudio";
+import { RubiPartnerCustomerAcquisitionCard } from "@/components/partner/RubiPartnerCustomerAcquisitionCard";
 import { RubiPartnerStorefrontManager } from "@/components/partner/RubiPartnerStorefrontManager";
 import { RubiStorefrontEntry } from "@/components/store/RubiStorefrontEntry";
 import { RubiConversionGuide } from "@/components/growth/RubiConversionGuide";
@@ -99,6 +100,7 @@ function PartnerPortal() {
       <p className="text-muted-foreground">Os produtos só são liberados após aprovação comercial.</p>
     </div>}
     {profile?.status === "approved" && <>
+      <RubiPartnerCustomerAcquisitionCard />
       <RubiPartnerStorefrontManager storeCode={profile.public_store_code ?? null} />
       <RubiLicensedPartnerCreatives />
       <RubiPartnerCampaignOpportunities />
