@@ -85,24 +85,27 @@ function V1AuditPage() {
         children.forEach(walk);
       };
       walk((mod as any).routeTree);
-      const adminPaths = [...ids]
-        .filter((path) => path === "/admin" || path.startsWith("/admin/"))
+      const routePaths = [...ids]
+        .filter((path) => path.startsWith("/"))
         .sort();
+      const adminPaths = routePaths.filter((path) => path === "/admin" || path.startsWith("/admin/"));
       adminRouteCount = adminPaths.length;
-      if (adminPaths.length === 0) {
+      if (routePaths.length === 0) {
         routeChecks.push({
-          id: "route:admin",
-          label: "Rotas administrativas",
+          id: "route:tree",
+          label: "Rotas do aplicativo",
           status: "FAIL",
-          evidence: "Nenhuma rota administrativa foi encontrada no routeTree.gen.",
+          evidence: "Nenhuma rota foi encontrada no routeTree.gen.",
         });
       } else {
-        for (const path of adminPaths) {
+        for (const path of routePaths) {
           routeChecks.push({
             id: `route:${path}`,
             label: `Rota ${path}`,
             status: "PASS",
-            evidence: "Rota administrativa descoberta automaticamente no routeTree.gen.",
+            evidence: adminPaths.includes(path)
+              ? "Rota administrativa descoberta automaticamente no routeTree.gen."
+              : "Rota descoberta automaticamente no routeTree.gen.",
           });
         }
       }
