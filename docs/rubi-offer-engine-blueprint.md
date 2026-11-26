@@ -1,6 +1,6 @@
 # RUBI Offer Engine — Oferta, Criativo, Página, Movimento e Medição
 
-Status: **proposta técnica aprovada para planejamento**, não implementação de produção. Data: 2026-11-10.
+Status: **arquitetura parcialmente implementada na main; Offer Engine completo ainda não concluído**. Data da especificação: 2026-11-10.
 
 ## Propósito
 Transformar cada produto aprovado no RUBI Store (inclusive os fornecidos pela Kairos) em uma campanha comercial coerente que conecte primeiro contato, página de venda, relacionamento e mensuração. Preservar preços oficiais, segurança do pré-checkout e atribuição existente. Não declarar compras externas confirmadas a partir de eventos de intenção.
@@ -55,3 +55,41 @@ Transformar cada produto aprovado no RUBI Store (inclusive os fornecidos pela Ka
 
 ## Prioridade comercial
 Pilotar 1–3 produtos com links oficiais aprovados e maior potencial de margem; comparar criativos e páginas em tráfego orgânico antes de expandir. Não prometer ganho de conversão sem dados.
+
+
+## Estado atualizado na main — 2026-11-26
+
+Esta seção prevalece sobre a classificação histórica de 10/11. O RUBI já possui componentes comerciais e de pré-checkout, mas isso não significa que o Offer Engine normalizado esteja completo.
+
+### Capacidades já presentes
+
+- Catálogo oficial por `hub_products`, página de produto e fluxo `RubiPreCheckout`.
+- `RubiAdminOfferPreview`: prévia privada de rascunho no Hub Catalog; não publica, não cria conta/pagamento/pedido e mantém ações inertes.
+- `RubiMovementLanding`, `RubiProductStories` e variantes de movimento conectam narrativa, conteúdo e o produto correspondente.
+- `getRubiCheckoutReadiness` revalida produto, fornecedor, preço e destino oficial no momento da continuação; o pré-checkout não confia apenas em dados carregados anteriormente.
+- A jornada Story → mesmo produto → pré-checkout interno foi comprovada em E2E local persistido: run `45750796298`, 22/22 testes, 11 cenários mobile/desktop, zero falhas/skips/flaky.
+
+### Limites funcionais atuais
+
+- Não foi localizada uma camada normalizada `rubi_offer_versions` ou `rubi_offer_events`; não criar essas tabelas sem justificar a lacuna em relação ao catálogo, Story e variantes de movimento existentes.
+- Parte do conteúdo de criativo/página já está em `rubi_movement_variants` (hook, script, headline, body, CTA, direitos e revisão). O blueprint deve evoluir a partir desse modelo, não duplicá-lo.
+- A prévia administrativa é privada e não equivale a uma versão publicada de oferta.
+- O CTA de pré-checkout gera intenção/saída para checkout, não pedido ou pagamento confirmado.
+- Para parceiro, `getRubiCheckoutReadiness` continua bloqueando o checkout enquanto não houver destino oficial e atribuição verificável; não há fallback silencioso para o checkout direto do SKU.
+- Publicação externa, mensagens, agendamento, eventos de compra, comissões e reconciliação dependem de integrações/contratos próprios e evidência verificável.
+- Métricas de clique, interesse e pré-checkout não podem ser promovidas a venda, receita ou conversão paga.
+
+### Arquitetura segura para a próxima fase
+
+1. Reutilizar `hub_products`, Story e `rubi_movement_variants` como base; modelar oferta/versão somente se houver necessidade real de ciclo de vida independente.
+2. Definir versão publicada, rollback e aprovação Owner com auditoria transacional antes de criar DDL.
+3. Preservar `getRubiCheckoutReadiness` como única porta de saída para checkout oficial e manter a trava de parceiro até integração comprovada.
+4. Separar eventos comportamentais, intenção externa, pedido, pagamento, comissão e liquidação.
+5. Implementar medição por canal/variante com fonte, amostra e período; não inventar CTR, retenção ou vendas.
+6. Exigir RLS/grants, testes negativos dos quatro perfis, rollback, TypeScript, lint, build e E2E antes de qualquer implementação de produção.
+
+### Classificação e cobertura
+
+- Esta atualização é upgrade de arquitetura/governança.
+- Nenhum ponto V1 novo reivindicado.
+- Os pesos editoriais 70/80/100 continuam metas de organização criativa, nunca probabilidades ou garantias de venda.
