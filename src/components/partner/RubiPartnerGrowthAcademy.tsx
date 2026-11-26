@@ -8,6 +8,7 @@ import { Link } from "@tanstack/react-router";
 type PartnerType = string;
 
 type Props = {
+  commercialProfileId: string;
   partnerType: PartnerType;
   links: number;
   visits: number;
@@ -160,7 +161,7 @@ function status(done: boolean) {
     : <Circle className="h-4 w-4 shrink-0 text-muted-foreground" aria-label="Pendente" />;
 }
 
-export function RubiPartnerGrowthAcademy({ partnerType, links, visits, confirmedSales }: Props) {
+export function RubiPartnerGrowthAcademy({ commercialProfileId, partnerType, links, visits, confirmedSales }: Props) {
   const track = specializations[partnerType] ?? {
     label: "Trilha Geral de Parceiros",
     focus: "Fundamentos da Hub Eagles, boas práticas, ferramentas autorizadas e evolução por resultados verificáveis.",
@@ -181,7 +182,7 @@ export function RubiPartnerGrowthAcademy({ partnerType, links, visits, confirmed
   const saveLessonCompletion = useServerFn(setMyRubiPartnerAcademyLessonCompletion);
   const queryClient = useQueryClient();
   const academyProgressQuery = useQuery({
-    queryKey: ["rubi-partner-academy-progress", partnerType],
+    queryKey: ["rubi-partner-academy-progress", commercialProfileId, partnerType],
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("Entre novamente para salvar seu progresso.");
@@ -196,7 +197,7 @@ export function RubiPartnerGrowthAcademy({ partnerType, links, visits, confirmed
       if (!session?.access_token) throw new Error("Sua sessão expirou. Entre novamente.");
       return saveLessonCompletion({ data: { accessToken: session.access_token, lessonKey, completed } });
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["rubi-partner-academy-progress", partnerType] })
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["rubi-partner-academy-progress", commercialProfileId, partnerType] })
   });
   const completedLessonKeys = new Set(academyProgressQuery.data ?? []);
   const allLessons = [...commonLessons, ...track.lessons];
