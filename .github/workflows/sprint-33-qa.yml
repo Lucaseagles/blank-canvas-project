@@ -36,6 +36,9 @@ jobs:
       - name: Smart collection server-only grants regression
         run: npm run test:rubi-smart-collection-server-only-grants
 
+      - name: Sprint 316 admin audit fail-closed regression
+        run: npm run test:rubi-admin-audit-fail-closed
+
       - name: Sprint 308 strategy orchestration pause audit regression
         run: npm run test:rubi-orchestration-pause-audit
 
