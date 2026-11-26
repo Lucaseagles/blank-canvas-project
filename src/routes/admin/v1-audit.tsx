@@ -43,7 +43,7 @@ async function tableCheck(table: string, label: string): Promise<Check> {
       .from(table as never)
       .select("*", { count: "exact", head: true });
     if (error) {
-      const permissionDenied = /permission denied|row.level security|not authorized|\\b401\\b|\\b403\\b/i.test(error.message);
+      const permissionDenied = /permission denied|row.level security|not authorized|401|403/i.test(error.message);
       return {
         id: `db:${table}`,
         label,
