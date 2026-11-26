@@ -12,7 +12,20 @@ async function callTelegram(token: string, method: string, body: Record<string, 
 
 export const getTelegramConfig = createServerFn({ method: "GET" }).middleware([requireOwnerRole]).handler(async () => { const { supabaseAdmin } = await import('@/integrations/supabase/client.server'); const config = await getConfig(supabaseAdmin); const { token, channelId } = await getTelegramCredentials(); return config ? { id: config.id, channel_id: channelId || config.channel_id, is_active: config.is_active, hasToken: Boolean(token) } : { id: null, channel_id: channelId, is_active: false, hasToken: Boolean(token) }; });
 
-export const saveTelegramConfig = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => ConfigSchema.parse(data)).handler(async ({ data }) => { const { supabaseAdmin } = await import('@/integrations/supabase/client.server'); const current = await getConfig(supabaseAdmin); const { error: configError } = current?.id ? await supabaseAdmin.from('telegram_config').update({ channel_id: data.channelId, is_active: data.isActive, bot_token_secret_ref: 'vault:telegram.bot_token', updated_at: new Date().toISOString() }).eq('id', current.id) : await supabaseAdmin.from('telegram_config').insert({ channel_id: data.channelId, is_active: data.isActive, bot_token_secret_ref: 'vault:telegram.bot_token' }); if (configError) throw configError; const { error: channelError } = await (supabaseAdmin as any).rpc('set_integration_secret', { p_platform_id: 'telegram', p_field_key: 'channel_id', p_value: data.channelId }); if (channelError) throw new Error(`Não foi possível salvar o Channel ID seguro: ${channelError.message}`); if (data.botToken) { const { error: tokenError } = await (supabaseAdmin as any).rpc('set_integration_secret', { p_platform_id: 'telegram', p_field_key: 'bot_token', p_value: data.botToken }); if (tokenError) throw new Error(`Não foi possível salvar o Bot Token seguro: ${tokenError.message}`); } return { success: true, hasToken: Boolean(data.botToken) || Boolean(await getIntegrationSecretServer('telegram', 'bot_token')) }; });
+export const saveTelegramConfig = createServerFn({ method: "POST" })
+  .middleware([requireOwnerRole])
+  .validator((data: unknown) => ConfigSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+    const { data: result, error } = await (supabaseAdmin as any).rpc('rubi_save_telegram_config_audited', {
+      p_channel_id: data.channelId,
+      p_is_active: data.isActive,
+      p_bot_token: data.botToken ?? null,
+      p_actor: context.userId,
+    });
+    if (error) throw new Error(`Não foi possível salvar e auditar a configuração do Telegram: ${error.message}`);
+    return { success: true, hasToken: Boolean(result?.has_token) };
+  });
 
 export const testTelegramConnection = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => MessageSchema.parse(data ?? {})).handler(async ({ data }) => { const { supabaseAdmin } = await import('@/integrations/supabase/client.server'); const config = await getConfig(supabaseAdmin); if (!config?.is_active) return { success: false, error: 'Telegram integration is inactive.' }; const { token, channelId } = await getTelegramCredentials(); if (!token || !channelId) return { success: false, error: 'Telegram Bot Token ou Channel ID não está configurado no Secure Hub.' }; try { const result = await callTelegram(token, 'sendMessage', { chat_id: channelId, text: data.message }); return { success: true, telegram_message_id: result.result?.message_id ?? null }; } catch (error) { return { success: false, error: error instanceof Error ? error.message : 'Telegram API request failed.' }; } });
 
