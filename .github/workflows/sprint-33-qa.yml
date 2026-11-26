@@ -36,6 +36,9 @@ jobs:
       - name: Smart collection server-only grants regression
         run: npm run test:rubi-smart-collection-server-only-grants
 
+      - name: RUBI distribution campaign uniqueness regression
+        run: node --test src/lib/rubi-distribution-campaign-uniqueness.test.mjs
+
       - name: TypeScript
         run: npx tsc --noEmit
 
