@@ -17,7 +17,7 @@ begin
   ) then raise exception 'Owner authorization required'; end if;
 
   if p_data is null or jsonb_typeof(p_data)<>'object'
-    or (select array_agg(k order by k) from jsonb_object_keys(p_data) k)
+    or (select array_agg(key order by key) from jsonb_object_keys(p_data) as keys(key))
        is distinct from array['color','display_order','icon','is_active','min_referrals','reward_description','tier_key','tier_name']::text[]
   then raise exception 'Invalid referral tier payload'; end if;
 
@@ -74,7 +74,7 @@ begin
     raise exception 'Referral tier id and patch are required';
   end if;
 
-  select array_agg(k order by k) into v_keys from jsonb_object_keys(p_patch) k;
+  select array_agg(key order by key) into v_keys from jsonb_object_keys(p_patch) as keys(key);
   foreach v_key in array v_keys loop
     if v_key not in ('tier_name','tier_key','min_referrals','reward_description','icon','color','is_active','display_order') then
       raise exception 'Unsupported referral tier field: %',v_key;
@@ -164,3 +164,10 @@ grant execute on function public.rubi_deactivate_referral_tier_audited(uuid,time
 comment on function public.rubi_create_referral_tier_audited(jsonb,uuid) is 'Owner-only referral tier create with strict payload validation and atomic sanitized audit.';
 comment on function public.rubi_update_referral_tier_audited(uuid,timestamptz,jsonb,uuid) is 'Owner-only referral tier update with optimistic concurrency and atomic sanitized audit.';
 comment on function public.rubi_deactivate_referral_tier_audited(uuid,timestamptz,uuid) is 'Owner-only soft deactivation with optimistic concurrency and atomic sanitized audit.';
+
+
+-- Remove the legacy authenticated Owner DML path. Owner mutations now pass
+-- through the server functions and the audited service_role RPCs only.
+drop policy if exists "Owners can manage referral tiers" on public.referral_tiers;
+revoke insert, update, delete, truncate, references, trigger
+  on public.referral_tiers from anon, authenticated;
