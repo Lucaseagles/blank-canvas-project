@@ -9,11 +9,13 @@ import { toast } from "sonner";
 import { Sparkles, ArrowRight, Mail, Lock, ShieldCheck } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { processReferral } from "@/lib/referral.functions";
+import { bindMyPartnerCustomerAcquisition } from "@/lib/rubi-partner-customer-acquisition.functions";
 import { z } from "zod";
 
 const authSearchSchema = z.object({
   ref: z.string().optional(),
   campaign_id: z.string().optional(),
+  partner_ref: z.string().uuid().optional(),
   returnTo: z.string().optional(),
   audience: z.enum(["consumer", "merchant", "partner"]).optional(),
 });
@@ -40,6 +42,7 @@ function LoginPage() {
   const navigate = useNavigate();
   const search = useSearch({ from: '/auth' });
   const trackReferral = useServerFn(processReferral);
+  const bindPartnerAcquisition = useServerFn(bindMyPartnerCustomerAcquisition);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +56,23 @@ function LoginPage() {
 
       if (error) throw error;
       
-      // If there's a referral code in the URL, process it
+      // Partner acquisition is a separate ledger from consumer-to-consumer referrals.
+      // Bind only after the authenticated identity is known; the server enforces first-touch.
+      if (search.partner_ref && data.user) {
+        try {
+          const acquisition = await bindPartnerAcquisition({
+            data: { accessToken: data.session?.access_token ?? "", code: search.partner_ref }
+          });
+          if (acquisition.bound && acquisition.status === "bound") {
+            toast.success("Convite de parceiro reconhecido. Bem-vindo à Hub Eagles.");
+          }
+        } catch (err) {
+          console.error("Partner acquisition binding failed:", err);
+          toast.warning("Sua conta foi acessada, mas não foi possível registrar a origem do convite. Você pode continuar usando o app.");
+        }
+      }
+
+      // Consumer-to-consumer referral tracking remains independent.
       if (search.ref && data.user) {
         console.log('Processing referral code:', search.ref);
         try {
@@ -106,6 +125,7 @@ function LoginPage() {
           </div>
         </CardHeader>
         <CardContent className="px-10 pb-12">
+          {search.partner_ref && <div className="mb-5 rounded-2xl border border-primary/20 bg-primary/5 p-4 text-sm leading-6">Você acessou por um convite de parceiro da Hub Eagles. Se esta conta ainda não tiver uma origem de aquisição, o convite poderá ficar vinculado por até 90 dias para compras elegíveis. Isso não altera preços nem garante comissão ou desconto.</div>}
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Protocolo: E-mail</Label>
@@ -162,7 +182,7 @@ function LoginPage() {
           <div className="mt-4 pt-8 border-t border-glass-border text-center space-y-4">
             <p className="text-sm text-muted-foreground font-medium">
               Novo operador?{" "}
-              <Link to="/register" search={{ ref: search.ref, campaign_id: search.campaign_id, returnTo: search.returnTo, audience: search.audience }} className="text-primary font-black uppercase tracking-tighter italic hover:underline">
+              <Link to="/register" search={{ ref: search.ref, campaign_id: search.campaign_id, partner_ref: search.partner_ref, returnTo: search.returnTo, audience: search.audience }} className="text-primary font-black uppercase tracking-tighter italic hover:underline">
                 Criar Identidade
               </Link>
             </p>

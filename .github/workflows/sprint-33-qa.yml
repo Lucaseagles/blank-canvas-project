@@ -51,6 +51,9 @@ jobs:
       - name: Sprint 321 partner creator studio regression
         run: npm run test:rubi-partner-creator-studio
 
+      - name: Sprint 322 partner customer acquisition regression
+        run: npm run test:rubi-partner-customer-acquisition
+
       - name: TypeScript
         run: npx tsc --noEmit
 
