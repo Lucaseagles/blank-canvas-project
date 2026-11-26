@@ -107,3 +107,24 @@ As entregas abaixo são planejadas, não PRs já criadas. A ordem pode mudar se 
 9. Próxima sequência de entregas, incluindo pelo menos as próximas cinco etapas.
 
 **Referência atual:** 37.5/48 = 78.1%. A próxima pontuação oficial só muda após reconciliação por linha e aceite de evidências. A meta é 100% com produto funcional, seguro, premium e comercialmente comprovável.
+
+
+## 7. Addendum de priorização — Telegram e entregas posteriores (2026-11-26)
+
+A PR #346 adiciona uma correção concreta de integridade à carteira de 11.3: configuração Telegram, referências Vault e auditoria em uma única transação, com remoção do editor genérico como caminho alternativo. A classificação permanece habilitador/cobertura candidata; não pontuar antes dos três workflows e do inventário transversal.
+
+**Nova entrega planejada 30 — Telegram outbound outbox e idempotência**
+- **Classificação:** upgrade + cobertura candidata 03.3 (não é cobertura completa de distribuição por si só).
+- **Problema:** `sendTelegramManual` envia primeiro ao Telegram e persiste depois. Se a persistência falhar após o provedor aceitar a mensagem, uma repetição pode duplicar o envio ou deixar o estado local incorreto.
+- **Aceite:** criar intenção/outbox antes do envio; chave de idempotência por intenção; estados `pending/sending/sent/unknown/failed`; armazenar o ID retornado pelo Telegram; reconciliar `unknown` antes de qualquer retry; erro de persistência não deve ser apresentado como prova de que o provedor não recebeu a mensagem.
+- **Limite:** não prometer exactly-once se a API externa não oferecer idempotência ou consulta confiável. `sent` significa aceitação confirmada pelo Telegram, não leitura pelo destinatário.
+- **Prova:** testes de retry/duplicidade, falha antes/depois do envio, concorrência e reconciliação; ambiente de teste autorizado, sem disparos para canais reais sem autorização.
+
+### Próximas cinco entregas após esta continuação
+1. Concluir PR #346 com CI e smoke PostgreSQL descartável; integrar somente se todos os gates passarem.
+2. Executar o inventário transversal 11.3, usando as lacunas históricas como candidatos e revalidando cada uma contra a main atual.
+3. Corrigir a outbox/idempotência de envio Telegram como entrega separada, sem misturar envio externo com configuração Vault.
+4. Revalidar 02.4 com o pacote Story → produto persistido local já disponível; manter staging hospedado como dependência explícita.
+5. Fechar o menor gap mensurável de Movement Engine (08.2–08.4) após reconciliação de evidências e denominadores.
+
+Este addendum é planejamento. Não altera a baseline V1 nem concede pontos.
