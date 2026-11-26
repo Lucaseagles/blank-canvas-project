@@ -37,6 +37,8 @@ test("Master funnel is Owner-only and counts real events with explicit conversio
  assert.match(server,/applicationFromCta/);
  assert.match(server,/Contagens de eventos, não pessoas únicas/);
  assert.match(ui,/Funil de consumidores para afiliados/);
+ assert.match(ui,/Abertura → clique no CTA/);
+ assert.doesNotMatch(ui,/Abertura → candidatura/);
  assert.match(route,/<RubiAffiliateRecruitmentFunnelAdmin \/>/);
 });
 
