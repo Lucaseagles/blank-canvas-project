@@ -17,37 +17,9 @@ export const getComplianceRules = createServerFn({ method: "GET" })
     return data || [];
   });
 
-export const saveComplianceRule = createServerFn({ method: "POST" })
-  .middleware([requireOwnerRole])
-  .validator((data: {
-    id?: string;
-    marketplace_id: string;
-    rule_key: string;
-    rule_value: any;
-    is_enforced: boolean;
-    notes?: string;
-    source_url?: string;
-  }) => z.object({
-    id: z.string().uuid().optional(),
-    marketplace_id: z.string().uuid(),
-    rule_key: z.string(),
-    rule_value: z.any(),
-    is_enforced: z.boolean(),
-    notes: z.string().optional(),
-    source_url: z.string().optional()
-  }).parse(data))
-  .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
-    const { error } = await supabaseAdmin
-      .from("compliance_rules" as any)
-      .upsert({
-        ...data,
-        reviewed_at: new Date().toISOString()
-      });
-    
-    if (error) throw error;
-    return { success: true };
-  });
+// Compliance configuration writes use the audited Owner settings registry
+// (rubi_update_admin_setting_audited). The former direct upsert endpoint had no
+// callers and bypassed the atomic administrative audit boundary.
 
 /** Validate the actual parsed hostname; substring matching accepts spoofed domains. */
 export function validateExternalAffiliateDestination(raw: string): { valid: boolean; violations: string[] } {
