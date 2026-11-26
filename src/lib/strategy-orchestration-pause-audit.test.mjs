@@ -151,6 +151,8 @@ test("legacy orchestration mutation RPCs and direct client DML are revoked", () 
     "utf8",
   );
   assert.ok(hardening.includes("revoke all on function public.create_strategy_orchestration"));
+  assert.ok(hardening.includes("create_strategy_orchestration(text, text, integer, text, uuid[])"));
+  assert.ok(hardening.includes("create_strategy_orchestration(text, text, integer, text, uuid[], uuid[])"));
   assert.ok(hardening.includes("revoke all on function public.generate_strategy_orchestration_plan"));
   assert.ok(hardening.includes("revoke all on function public.approve_strategy_orchestration"));
   assert.ok(hardening.includes("revoke all on table public.strategy_orchestrations"));
