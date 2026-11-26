@@ -16,10 +16,14 @@ export const updateBrandIdentity = createServerFn({ method: "POST" })
   .validator((input: unknown) => z.object({
     displayName: z.string().trim().min(2).max(80),
   }).parse(input))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await (supabaseAdmin as any).from("brand_identity")
-      .upsert({ id: true, display_name: data.displayName, updated_at: new Date().toISOString() }, { onConflict: "id" });
+    const { data: updated, error } = await (supabaseAdmin as any).rpc("rubi_update_brand_identity_audited", {
+      p_display_name: data.displayName,
+      p_actor: context.userId,
+    });
     if (error) throw error;
-    return { displayName: data.displayName };
+    const row = Array.isArray(updated) ? updated[0] : updated;
+    if (!row?.display_name) throw new Error("A identidade da marca não foi confirmada.");
+    return { displayName: String(row.display_name) };
   });
