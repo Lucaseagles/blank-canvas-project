@@ -31,12 +31,12 @@ begin
   where b.id=true
   for update;
 
-  insert into public.brand_identity(id,display_name,updated_at)
+  insert into public.brand_identity as target(id,display_name,updated_at)
   values (true,btrim(p_display_name),now())
   on conflict (id) do update
     set display_name=excluded.display_name,
         updated_at=excluded.updated_at
-  returning to_jsonb(brand_identity.*) into v_after;
+  returning to_jsonb(target.*) into v_after;
 
   insert into public.admin_audit_log(
     actor_user_id,actor_email,action_type,entity_type,entity_id,previous_value,new_value
