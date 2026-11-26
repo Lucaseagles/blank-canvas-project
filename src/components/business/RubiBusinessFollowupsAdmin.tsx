@@ -7,6 +7,7 @@ import { getHubBusinessFollowupsAdmin, completeHubBusinessFollowupAdmin } from "
 
 type QueueItem = {
   id: string;
+  updated_at: string;
   commercial_profile_id: string;
   created_at: string;
   followup_opt_in: boolean;
@@ -29,7 +30,7 @@ export function RubiBusinessFollowupsAdmin() {
     retry: false,
   });
   const mutation = useMutation({
-    mutationFn: (quoteId: string) => complete({ data: { quoteId } }),
+    mutationFn: (item: QueueItem) => complete({ data: { quoteId: item.id, expectedUpdatedAt: item.updated_at } }),
     onSuccess: () => {
       toast.success("Tarefa interna encerrada, sem envio de mensagem.");
       void client.invalidateQueries({ queryKey: ["rubi-business-followups-admin"] });
@@ -77,7 +78,7 @@ export function RubiBusinessFollowupsAdmin() {
               </p>
             </div>
             <Button type="button" size="sm" variant="outline" disabled={mutation.isPending}
-              onClick={() => mutation.mutate(item.id)}>Marcar tarefa interna concluída</Button>
+              onClick={() => mutation.mutate(item)}>Marcar tarefa interna concluída</Button>
           </div>
           <p className="text-xs text-muted-foreground">
             {item.requested_lines?.map(line => `${line.title} (${line.quantity} un.)`).join(" · ") || "Produtos indisponíveis"}
