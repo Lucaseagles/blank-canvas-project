@@ -8,7 +8,6 @@ BEGIN;
 
 SELECT set_config('rubi.qa_master_id', :'master_id', true);
 SELECT set_config('rubi.qa_non_owner_id', :'non_owner_id', true);
-SELECT set_config('rubi.qa_product_id', :'product_id', true);
 
 -- The Story fixture belongs to the newer hub_products catalog. Bridge videos
 -- intentionally reference the legacy marketplace products catalog, so create
