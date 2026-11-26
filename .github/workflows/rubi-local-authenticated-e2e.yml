@@ -113,10 +113,14 @@ jobs:
           find "$RUNNER_TEMP/rubi-deferred-migrations" -maxdepth 1 -type f -name '*.sql' -exec mv -t supabase/migrations -- {} +
           node scripts/consolidate-local-migration-versions.mjs
           supabase migration up --local
-      - name: Verify analytics personal-read policy and least-privilege grants
-        run: psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f scripts/rubi-local-analytics-privacy-smoke.sql
       - name: Seed isolated consumer, approved merchant and approved partner identities
         run: node scripts/rubi-local-auth-fixtures.mjs seed-profiles
+      - name: Verify analytics personal-read isolation and least-privilege grants
+        run: >-
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1
+          -v consumer_id="$RUBI_QA_CONSUMER_USER_ID"
+          -v merchant_id="$RUBI_QA_MERCHANT_USER_ID"
+          -f scripts/rubi-local-analytics-privacy-smoke.sql
       - name: Seed disposable supplier, product, reviewed movement and private Story
         run: node scripts/rubi-local-story-fixture.mjs
       - name: Install PostgreSQL client for isolated worker smoke
