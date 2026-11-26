@@ -29,3 +29,18 @@ test("audit dashboard is owner-only and exhaustively paginated, without claiming
  assert.match(panel,/Responsável ausente/);
  assert.match(dashboard,/RubiMasterAuditIntegrityPanel/);
 });
+
+test("V1 audit discovers every current admin route and does not mistake RLS denial for schema failure",()=>{
+ const audit=read("../routes/admin/v1-audit.tsx");
+ const tree=read("../routeTree.gen.ts");
+ assert.doesNotMatch(audit,/KNOWN_ROUTES/);
+ assert.match(audit,/const routePaths = \\[\\.\\.\\.ids\\]/);
+ assert.ok(audit.includes("replace(/\\/$/, \"\""));
+ assert.match(audit,/filter\(\(path\) => path === "\/admin" \|\| path\.startsWith\("\/admin\/"\)\)/);
+ assert.match(audit,/adminRouteCount = adminPaths\.length/);
+ assert.match(audit,/permission denied\|row\.level security\|not authorized\|401\|403/);
+ assert.match(audit,/status: permissionDenied \? "NOT MEASURED" : "FAIL"/);
+ assert.match(audit,/Linhas visíveis para esta sessão/);
+ assert.match(tree,/fullPath: '\/admin\/support'/);
+ assert.match(tree,/fullPath: '\/admin\/support-knowledge'/);
+});

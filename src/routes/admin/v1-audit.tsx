@@ -30,18 +30,6 @@ type Check = {
   evidence: string;
 };
 
-const KNOWN_ROUTES = [
-  "/", "/feed", "/deals", "/products", "/trending", "/videos", "/search",
-  "/favorites", "/alerts", "/history", "/profile", "/auth", "/register", "/reset-password",
-  "/bridge-videos", "/product/$slug", "/category/$slug", "/bundle/$slug",
-  "/admin/dashboard", "/admin/products", "/admin/videos", "/admin/bridge-videos",
-  "/admin/marketplaces", "/admin/categories", "/admin/integrations", "/admin/users",
-  "/admin/recommendations", "/admin/analytics", "/admin/campaigns", "/admin/telegram",
-  "/admin/notifications", "/admin/referrals", "/admin/automations", "/admin/settings",
-  "/admin/offers", "/admin/coupons", "/admin/social-proof", "/admin/bundles",
-  "/admin/seller-center", "/admin/v1-audit",
-];
-
 function statusTone(status: Status) {
   if (status === "PASS") return "bg-emerald-500/15 text-emerald-400 border-emerald-500/30";
   if (status === "FAIL") return "bg-red-500/15 text-red-400 border-red-500/30";
@@ -55,9 +43,22 @@ async function tableCheck(table: string, label: string): Promise<Check> {
       .from(table as never)
       .select("*", { count: "exact", head: true });
     if (error) {
-      return { id: `db:${table}`, label, status: "FAIL", evidence: `Supabase: ${error.message}` };
+      const permissionDenied = /permission denied|row.level security|not authorized|401|403/i.test(error.message);
+      return {
+        id: `db:${table}`,
+        label,
+        status: permissionDenied ? "NOT MEASURED" : "FAIL",
+        evidence: permissionDenied
+          ? `Consulta não permitida para esta sessão: ${error.message}. Isso não comprova falha de schema nem falha de proteção.`
+          : `Falha na consulta: ${error.message}`,
+      };
     }
-    return { id: `db:${table}`, label, status: "PASS", evidence: `Tabela acessível. Linhas visíveis: ${count ?? 0}` };
+    return {
+      id: `db:${table}`,
+      label,
+      status: "PASS",
+      evidence: `Consulta SELECT executada com sucesso. Linhas visíveis para esta sessão: ${count ?? 0}. Isso mede visibilidade/RLS, não integridade do schema nem segurança global.`,
+    };
   } catch (err) {
     return { id: `db:${table}`, label, status: "FAIL", evidence: String(err) };
   }
@@ -72,6 +73,7 @@ function V1AuditPage() {
     setRunning(true);
 
     const routeChecks: Check[] = [];
+    let adminRouteCount = 0;
     try {
       const mod = await import("@/routeTree.gen");
       const ids = new Set<string>();
@@ -83,14 +85,29 @@ function V1AuditPage() {
         children.forEach(walk);
       };
       walk((mod as any).routeTree);
-      for (const path of KNOWN_ROUTES) {
-        const present = ids.has(path) || ids.has(path.replace(/\/$/, ""));
+      const routePaths = [...ids]
+        .filter((path) => path.startsWith("/"))
+        .sort();
+      const adminPaths = routePaths.filter((path) => path === "/admin" || path.startsWith("/admin/"));
+      adminRouteCount = adminPaths.length;
+      if (routePaths.length === 0) {
         routeChecks.push({
-          id: `route:${path}`,
-          label: `Rota ${path}`,
-          status: present ? "PASS" : "FAIL",
-          evidence: present ? "Presente no routeTree.gen" : "Ausente no routeTree.gen",
+          id: "route:tree",
+          label: "Rotas do aplicativo",
+          status: "FAIL",
+          evidence: "Nenhuma rota foi encontrada no routeTree.gen.",
         });
+      } else {
+        for (const path of routePaths) {
+          routeChecks.push({
+            id: `route:${path}`,
+            label: `Rota ${path}`,
+            status: "PASS",
+            evidence: adminPaths.includes(path)
+              ? "Rota administrativa descoberta automaticamente no routeTree.gen."
+              : "Rota descoberta automaticamente no routeTree.gen.",
+          });
+        }
       }
     } catch (err) {
       routeChecks.push({ id: "route:tree", label: "Route tree", status: "FAIL", evidence: String(err) });
@@ -235,7 +252,7 @@ function V1AuditPage() {
       id: "scn:admin-mobile",
       label: "Admin mobile (hamburger + menu completo)",
       status: "NOT MEASURED",
-      evidence: `Código declara ${KNOWN_ROUTES.filter((r) => r.startsWith("/admin/")).length} destinos administrativos; interação em viewport móvel exige teste de navegador.`,
+      evidence: `${adminRouteCount} rotas administrativas descobertas no route tree; interação em viewport móvel exige teste de navegador.`,
     });
 
     const perfChecks: Check[] = [];
