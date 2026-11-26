@@ -35,7 +35,7 @@ test("local PostgreSQL smoke checks RLS, anonymous restrictions and grants", asy
 
 test("authenticated local E2E applies the analytics privacy smoke to disposable Supabase", async () => {
   const workflow = await readFile(workflowPath, "utf8");
-  assert.match(workflow, /Verify analytics personal-read policy and least-privilege grants[\s\S]*?scripts\/rubi-local-analytics-privacy-smoke\.sql/);
+  assert.match(workflow, /Verify analytics personal-read isolation and least-privilege grants[\s\S]*?scripts\/rubi-local-analytics-privacy-smoke\.sql/);
   assert.match(workflow, /supabase migration up --local/);
   assert.match(workflow, /Stop and discard local Supabase/);
 });
