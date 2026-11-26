@@ -16,6 +16,7 @@ on:
       - "rubi-local-playwright.config.mjs"
       - "supabase/migrations/**"
       - ".github/workflows/rubi-local-authenticated-e2e.yml"
+      - ".github/workflows/sprint-33-qa.yml"
   workflow_dispatch:
 
 permissions:
