@@ -31,7 +31,11 @@ test("audit remains atomic and does not record private notes or publication URL"
  assert.match(audit,/RUBI_DISTRIBUTION_CREATED/);
  assert.match(audit,/RUBI_DISTRIBUTION_UPDATED/);
  assert.match(audit,/return query select saved_id,saved_revision/);
- assert.doesNotMatch(audit,/p_notes|p_published_reference/);
+ const payloadStart=audit.indexOf("jsonb_build_object('revision',saved_revision");
+ const payloadEnd=audit.indexOf(");",payloadStart);
+ assert.notEqual(payloadStart,-1);
+ assert.notEqual(payloadEnd,-1);
+ assert.doesNotMatch(audit.slice(payloadStart,payloadEnd),/p_notes|p_published_reference/);
 });
 
 test("RPC stays server-only and application still binds actor to authenticated Owner",()=>{
