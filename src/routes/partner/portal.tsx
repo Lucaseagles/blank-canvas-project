@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { PartnerCreativeKit } from "@/components/partner/PartnerCreativeKit";
 import { RubiPartnerFinanceDashboard } from "@/components/partner/RubiPartnerFinanceDashboard";
 import { RubiLicensedPartnerCreatives } from "@/components/partner/RubiLicensedPartnerCreatives";
+import { RubiPartnerCampaignOpportunities } from "@/components/partner/RubiPartnerCampaignOpportunities";
 import { RubiPartnerStorefrontManager } from "@/components/partner/RubiPartnerStorefrontManager";
 import { RubiStorefrontEntry } from "@/components/store/RubiStorefrontEntry";
 import { RubiConversionGuide } from "@/components/growth/RubiConversionGuide";
@@ -99,6 +100,7 @@ function PartnerPortal() {
     {profile?.status === "approved" && <>
       <RubiPartnerStorefrontManager storeCode={profile.public_store_code ?? null} />
       <RubiLicensedPartnerCreatives />
+      <RubiPartnerCampaignOpportunities />
       <p className="text-sm text-muted-foreground">Bem-vindo, {profile.display_name}. {products.length} produtos autorizados.</p>
       <section aria-label="Rede de times RUBI Partners" className="space-y-3 rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 to-card p-5 sm:p-7">
         <p className="text-xs font-black uppercase tracking-widest text-primary">RUBI Partners · Rede de Criadores</p>
