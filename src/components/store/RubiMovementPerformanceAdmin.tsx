@@ -2,6 +2,7 @@ import {useQuery} from "@tanstack/react-query";
 import {useServerFn} from "@tanstack/react-start";
 import {Button} from "@/components/ui/button";
 import {RubiVideoRetentionAdmin} from "@/components/store/RubiVideoRetentionAdmin";
+import {RubiABSampleSizePlanner} from "@/components/store/RubiABSampleSizePlanner";
 import {getRubiMovementPerformanceAdmin} from "@/lib/rubi-movement-performance.functions";
 import {summarizeMovementVariants,assessRubiVariantDecisionReadiness,preflightRubiExperimentTraffic,summarizeRubiTrackingCoverage,type RubiMovementPerformanceRow} from "@/lib/rubi-movement-performance";
 
@@ -45,6 +46,7 @@ export function RubiMovementPerformanceAdmin({movementId}:{movementId:string}){
       <p className="text-xs text-muted-foreground">{trafficPreflight.observedVariants} variante(s) com eventos observados · {trafficPreflight.readyForDesign?"Dados tecnicamente aproveitáveis para planejar o experimento.":"Pendências para desenho do experimento."}</p>
       {trafficPreflight.blockers.map((reason,i)=><p key={i} className="text-xs text-muted-foreground">• {reason}</p>)}
      </aside>}
+    <RubiABSampleSizePlanner/>
     {comparison.length>0&&<section className="space-y-3 rounded-xl border bg-muted/20 p-3" aria-label="Comparativo observacional de variantes">
      <div><h5 className="font-bold">Comparativo de variantes (tráfego observado, não experimental)</h5>
       <p className="text-xs text-muted-foreground">Ordenado por visualizações observadas, não por desempenho vencedor. Campanhas sem dados e campanhas com atribuição ambígua são excluídas dos totais. Os dados agregados são limitados e não comprovam vendas, CTR nem teste A/B estatisticamente válido.</p></div>
