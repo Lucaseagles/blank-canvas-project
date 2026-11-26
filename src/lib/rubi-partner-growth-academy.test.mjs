@@ -39,6 +39,10 @@ test("execution progress derives only from actual portal link, visit and confirm
   assert.match(academy, /visits > 0/);
   assert.match(academy, /confirmedSales > 0/);
   assert.match(academy, /confirmedSales >= 5/);
+  assert.match(academy, /confirmedSales >= 10/);
+  assert.match(academy, /visits >= 10/);
+  assert.match(academy, /developmentStage/);
+  assert.match(academy, /Nível de desenvolvimento/);
   assert.match(academy, /não representa conclusão de curso/);
   assert.match(portal, /links=\{statsQuery\.data\?\.links \?\? 0\}/);
   assert.match(portal, /visits=\{statsQuery\.data\?\.visits \?\? 0\}/);
