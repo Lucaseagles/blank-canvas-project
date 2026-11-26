@@ -76,8 +76,8 @@ function CommercialOnboarding() {
   return <div className="min-h-screen bg-background px-4 py-28">
     <div className="mx-auto max-w-5xl space-y-10">
       <header className="text-center space-y-4"><div className="mx-auto inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-5 py-2 text-xs font-bold uppercase tracking-widest text-primary"><ShieldCheck size={15}/> Hub Eagles · Sua experiência</div>
-      <h1 className="text-4xl md:text-6xl font-black tracking-tight">O seu próximo passo começa <span className="text-primary">aqui.</span></h1>
-      <p className="text-muted-foreground">Escolha como deseja participar do nosso ecossistema. Cada experiência é personalizada para você.</p></header>
+      <h1 className="text-4xl md:text-6xl font-black tracking-tight">{audience === "consumer" ? <>Descubra mais. Encontre melhor. <span className="text-primary">Do seu jeito.</span></> : <>O seu próximo passo começa <span className="text-primary">aqui.</span></>}</h1>
+      <p className="text-muted-foreground">{audience === "consumer" ? "Crie seu espaço gratuito para salvar favoritos, escolher seus interesses e organizar sua descoberta de ofertas. Você continua no controle da sua compra." : "Escolha como deseja participar do nosso ecossistema. Cada experiência é personalizada para você."}</p></header>
       <form onSubmit={submit} className="space-y-7">
         <div className="grid gap-4 md:grid-cols-3">{audiences.map(item => <button type="button" key={item.id} onClick={() => setAudience(item.id)} aria-pressed={audience === item.id} className={`rounded-3xl border p-6 text-left transition-all hover:-translate-y-1 hover:shadow-xl ${audience === item.id ? "border-primary bg-primary/10 shadow-lg shadow-primary/10" : "border-white/10 bg-card/70"}`}><item.icon className="mb-6 h-9 w-9 text-primary"/><h2 className="text-xl font-bold">{item.title}</h2><p className="mt-3 text-sm text-muted-foreground">{item.detail}</p></button>)}</div>
         <div className="rounded-3xl border border-white/10 bg-card/70 p-6 md:p-8 space-y-5">
