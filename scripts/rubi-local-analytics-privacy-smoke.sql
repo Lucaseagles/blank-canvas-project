@@ -1,3 +1,6 @@
+\set ON_ERROR_STOP on
+BEGIN;
+
 DO $$
 DECLARE
   own_read_policy text;
@@ -55,4 +58,73 @@ BEGIN
 END
 $$;
 
-SELECT 'analytics_events privacy grants and RLS smoke: PASS' AS result;
+-- Seed disposable records with the local CI database owner, then exercise
+-- the actual RLS boundary under the same roles used by Supabase Data API.
+INSERT INTO public.analytics_events (user_id, event_type, metadata)
+VALUES
+  (:'consumer_id'::uuid, 'PRIVACY_SMOKE_OWN', '{"fixture":true}'::jsonb),
+  (:'merchant_id'::uuid, 'PRIVACY_SMOKE_OTHER', '{"fixture":true}'::jsonb);
+
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', :'consumer_id', true);
+
+DO $$
+DECLARE
+  own_count integer;
+  other_count integer;
+  cross_insert_denied boolean := false;
+BEGIN
+  SELECT count(*) INTO own_count
+  FROM public.analytics_events
+  WHERE event_type = 'PRIVACY_SMOKE_OWN';
+
+  SELECT count(*) INTO other_count
+  FROM public.analytics_events
+  WHERE event_type = 'PRIVACY_SMOKE_OTHER';
+
+  IF own_count <> 1 OR other_count <> 0 THEN
+    RAISE EXCEPTION 'Personal analytics SELECT boundary failed: own %, other %', own_count, other_count;
+  END IF;
+
+  INSERT INTO public.analytics_events (user_id, event_type, metadata)
+  VALUES (auth.uid(), 'PRIVACY_SMOKE_AUTH_INSERT', '{"fixture":true}'::jsonb);
+
+  BEGIN
+    INSERT INTO public.analytics_events (user_id, event_type, metadata)
+    VALUES (:'merchant_id'::uuid, 'PRIVACY_SMOKE_CROSS_INSERT', '{"fixture":true}'::jsonb);
+  EXCEPTION WHEN insufficient_privilege THEN
+    cross_insert_denied := true;
+  END;
+
+  IF NOT cross_insert_denied THEN
+    RAISE EXCEPTION 'Authenticated user inserted analytics for another user';
+  END IF;
+END
+$$;
+
+RESET ROLE;
+SET LOCAL ROLE anon;
+SELECT set_config('request.jwt.claim.sub', '', true);
+
+INSERT INTO public.analytics_events (user_id, event_type, metadata)
+VALUES (NULL, 'PRIVACY_SMOKE_ANON_INSERT', '{"fixture":true}'::jsonb);
+
+DO $$
+DECLARE
+  attributed_insert_denied boolean := false;
+BEGIN
+  BEGIN
+    INSERT INTO public.analytics_events (user_id, event_type, metadata)
+    VALUES (:'consumer_id'::uuid, 'PRIVACY_SMOKE_ANON_ATTRIBUTED', '{"fixture":true}'::jsonb);
+  EXCEPTION WHEN insufficient_privilege THEN
+    attributed_insert_denied := true;
+  END;
+
+  IF NOT attributed_insert_denied THEN
+    RAISE EXCEPTION 'Anonymous client inserted an attributed analytics event';
+  END IF;
+END
+$$;
+
+ROLLBACK;
+SELECT 'analytics_events RLS, personal isolation and least-privilege smoke: PASS' AS result;
