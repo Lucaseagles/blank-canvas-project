@@ -1219,3 +1219,24 @@ O E2E executou Supabase local descartável, smokes de Smart Collection, analytic
 - 11.3 permanece sem incremento até o inventário DML transversal de todas as mutações administrativas estar completo.
 - 12.3 permanece sem incremento até staging hospedado e revisão independente.
 - Não aplicar migrations ao Supabase remoto como parte desta atualização documental.
+
+
+## 29. Sprint 345 — configuração Telegram e Vault em transação única (2026-11-26)
+
+### Achado revalidado na main
+- `src/lib/telegram.functions.ts::saveTelegramConfig` gravava `telegram_config`, depois chamava `set_integration_secret` para Channel ID e, opcionalmente, Bot Token.
+- Uma falha intermediária podia deixar metadados e segredos divergentes; não havia um único evento de auditoria para a operação completa.
+- O editor genérico de configurações também expunha `telegram_config.channel_id` e `is_active`, criando um segundo caminho de escrita que não sincronizava o Vault.
+
+### Correção proposta na PR #346
+- Nova RPC `rubi_save_telegram_config_audited`: valida Owner no banco, serializa o singleton com advisory transaction lock, atualiza os segredos Vault e `telegram_config` na mesma transação e registra auditoria com valores redigidos.
+- O fluxo de servidor chama apenas essa RPC; o estado `hasToken` vem do resultado persistido da mesma operação.
+- O editor genérico passa a exibir Telegram como somente leitura.
+- A migration também substitui `rubi_update_admin_setting_audited` removendo Telegram da allowlist genérica, para que a proteção exista no banco já migrado e não dependa apenas da UI.
+- Smoke local previsto: falha forçada no insert de auditoria deve reverter config, referências Vault e valores secretos; não-Owner deve ser rejeitado; Owner deve gravar exatamente um evento; o payload de auditoria não pode conter Channel ID ou Bot Token; RPC genérica deve rejeitar `telegram_config`.
+
+### Classificação e limite
+- Classificação: **habilitador / cobertura candidata 11.3 + upgrade de consistência**.
+- Não concede ponto V1 por si só: fecha um domínio administrativo, mas o aceite 11.3 exige inventário completo de todas as mutações, ausência de bypass, Owner/actor, atomicidade, rollback e concorrência no banco descartável.
+- A PR #346 permanece sujeita aos três workflows obrigatórios. Nenhuma migration foi aplicada ao Supabase remoto.
+- Não confundir a configuração e coleta de métricas Telegram (esta sprint e a RPC de métrica já existente) com envio de mensagens. `sendTelegramManual` ainda merece uma frente separada de outbox/idempotência e reconciliação de estado incerto, porque o provedor externo pode aceitar uma mensagem antes de a persistência local concluir.
