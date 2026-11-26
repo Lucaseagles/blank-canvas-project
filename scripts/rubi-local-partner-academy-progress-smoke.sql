@@ -27,7 +27,7 @@ $academy$;
 set local role service_role;
 select public.rubi_set_partner_academy_lesson_completion(current_setting('rubi.test.partner_id')::uuid,'common:foundations',true);
 select public.rubi_set_partner_academy_lesson_completion(current_setting('rubi.test.partner_id')::uuid,'common:foundations',true);
-do $$
+do $academy$
 declare
   v_count integer;
 begin
@@ -36,7 +36,7 @@ begin
   if v_count<>1 then raise exception 'Idempotent completion should persist exactly one row; got %',v_count; end if;
 end;
 $academy$;
-do $$
+do $academy$
 begin
   begin
     perform public.rubi_set_partner_academy_lesson_completion(current_setting('rubi.test.partner_id')::uuid,'expert:authority',true);
@@ -46,7 +46,7 @@ begin
   end;
 end;
 $academy$;
-do $$
+do $academy$
 declare
   v_count integer;
 begin
@@ -55,7 +55,7 @@ begin
   if v_count<>0 then raise exception 'Profile-specific lesson restriction failed'; end if;
 end;
 $academy$;
-do $$
+do $academy$
 begin
   begin
     perform public.rubi_get_partner_academy_progress(current_setting('rubi.test.consumer_id')::uuid);
@@ -66,7 +66,7 @@ begin
 end;
 $academy$;
 select public.rubi_set_partner_academy_lesson_completion(current_setting('rubi.test.partner_id')::uuid,'common:foundations',false);
-do $$
+do $academy$
 declare
   v_count integer;
 begin
