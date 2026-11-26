@@ -56,7 +56,7 @@ begin
   if p_actor is null or not exists (
     select 1 from public.user_roles r where r.user_id=p_actor and r.role='owner'
   ) then raise exception 'Owner authorization required'; end if;
-  if p_decision not in ('approve','reject') then raise exception 'Invalid review decision'; end if;
+  if p_decision is null or p_decision not in ('approve','reject') then raise exception 'Invalid review decision'; end if;
   if char_length(coalesce(p_review_notes,''))>500 then raise exception 'Review note too long'; end if;
 
   select * into submission
