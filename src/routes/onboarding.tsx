@@ -45,7 +45,7 @@ function CommercialOnboarding() {
   const [merchantSegment,setMerchantSegment]=useState("other");
   const [restockFrequency,setRestockFrequency]=useState("unsure");
   const [batchSize,setBatchSize]=useState("unsure");
-  const [creatorChannel,setCreatorChannel]=useState("unspecified");
+  const [creatorChannel,setCreatorChannel]=useState("");
   useEffect(()=>{let active=true;void supabase.from("categories").select("id,name").eq("is_active",true).order("name").then(({data})=>{
    if(active)setCategories((data??[]).filter(c=>typeof c.name==="string") as Array<{id:string;name:string}>);
   });return()=>{active=false;};},[]);
@@ -157,6 +157,7 @@ function CommercialOnboarding() {
             </div>
             <label className="block space-y-2 text-sm font-medium">Onde pretende divulgar principalmente? <span className="text-destructive">*</span>
               <select required value={creatorChannel} onChange={e=>setCreatorChannel(e.target.value)} className="w-full rounded-xl border bg-background p-3 text-sm">
+                <option value="" disabled>Selecione seu principal canal</option>
                 <option value="unspecified">Prefiro não informar</option><option value="instagram">Instagram</option>
                 <option value="tiktok">TikTok</option><option value="youtube">YouTube</option>
                 <option value="whatsapp">WhatsApp</option><option value="other">Outro</option>
