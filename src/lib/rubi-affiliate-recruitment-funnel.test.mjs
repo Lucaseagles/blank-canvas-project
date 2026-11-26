@@ -7,7 +7,7 @@ test("consumer invitation records deduplicated impression, open, CTA, pause and 
  const popup=read("../components/profile/RubiAffiliateMiniInvite.tsx");
  for(const event of ["RUBI_AFFILIATE_INVITE_SHOWN","RUBI_AFFILIATE_INVITE_OPENED","RUBI_AFFILIATE_INVITE_CTA","RUBI_AFFILIATE_INVITE_PAUSED","RUBI_AFFILIATE_INVITE_OPTED_OUT"]) assert.ok(popup.includes(event),event);
  assert.match(popup,/sessionStorage/);
- assert.match(popup,/setCollapsed\(false\)/);
+ assert.match(popup,/const \[collapsed,setCollapsed\]=useState\(true\)/);\n const shownEffect=popup.slice(popup.indexOf("if(!query.data?.eligible||dismissed)return;"),popup.indexOf("},[sessionKey"));\n assert.doesNotMatch(shownEffect,/setCollapsed\\(false\\)/);\n assert.match(popup,/onClick=\\{\\(\\)=>\\{void trackEvent\\("RUBI_AFFILIATE_INVITE_OPENED"[\\s\\S]*?setCollapsed\\(false\\)/);\n assert.doesNotMatch(popup,/query\\.data\\.score\\}%/);
  assert.match(popup,/30\*86400000/);
  assert.match(popup,/rounded-full/);
  assert.match(popup,/Conheça o RUBI Indica/);
