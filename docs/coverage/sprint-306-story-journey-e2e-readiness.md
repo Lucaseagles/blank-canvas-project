@@ -61,3 +61,40 @@ Classification: **upgrade-only / evidence readiness**. No V1 point is awarded by
 ## Next dependency
 
 The next executable step is to obtain/confirm the authorized staging URL and isolated staging test identity/data. Until then, work is limited to local disposable tests and source review; do not claim the staging gate passed.
+
+
+## Atualização de evidência local — 2026-11-26
+
+Esta seção substitui a afirmação anterior de que o browser E2E não executava uma jornada Story → oferta com dados persistidos. A afirmação era correta no corte de 2026-11-23, mas ficou desatualizada após as sprints seguintes.
+
+### Prova agora disponível na main
+
+- PR #308 / Sprint 307 integrada na main: merge commit `908a35de4e992696e25f61b35b00777360f279d1`.
+- Run E2E: `45750796298`, HEAD validado `a878cbe4a4f584d959b73ce142f54f156573ce6a`.
+- Resultado: **22/22 testes esperados**, zero unexpected, zero skipped e zero flaky.
+- O relatório confirmou os **11 cenários obrigatórios em mobile e desktop**.
+- A jornada usou Supabase local descartável, identidades isoladas dos quatro perfis e fixture persistida de fornecedor, produto, movimento revisado e Story privada/aprovada; a execução validou o caminho Story → produto correspondente → pré-checkout interno.
+- Os smokes PostgreSQL cumulativos também passaram: grants/RLS de Smart Collection, isolamento e least privilege de analytics, Strategy Orchestration e vídeo/compliance com Owner/non-Owner, rollback atômico e concorrência.
+- Evidência E2E sanitizada foi gerada e enviada como artifact do run; o Supabase local foi encerrado ao final.
+
+### Atualização dos gates
+
+| Gate | Estado atualizado |
+|---|---|
+| G0 — implementação | **Passou** por revisão da main e validação do caminho atual |
+| G1 — comportamento | **Passou localmente** nos 22 testes autenticados e 11 cenários mobile/desktop |
+| G2 — persistência/segurança | **Passou no ambiente local descartável** para as migrations, fixtures e smokes executados; não equivale a staging hospedado |
+| G3 — jornada real | **Passou em ambiente local descartável**; HTTPS staging hospedado continua pendente |
+| G4 — prova externa | **Pendente**: checkout de teste pertencente ao provedor e round-trip/atribuição confirmada; nenhum pagamento ou comissão foi inferido |
+| G5 — pacote de evidência | Run e artifact sanitizado disponíveis; screenshots/revisão independente ainda precisam ser anexados se exigidos pelo aceite final |
+
+### Decisão de cobertura
+
+- Classificação: upgrade de evidência / avanço de prontidão, sem novo ponto.
+- Baseline carregada permanece **36,5/48 = 76,0%**.
+- O critério 02.4 não recebe crédito adicional nesta atualização: o teste local persistido está comprovado, mas o gate de staging HTTPS e a prova externa do provedor continuam pendentes.
+- Nenhum dado de produção foi usado ou alterado; nenhuma migration foi aplicada ao Supabase remoto.
+
+### Próximo passo
+
+Obter origem HTTPS de staging autorizada, identidades/dados descartáveis e checkout oficial de teste do provedor. Repetir a mesma jornada no staging, coletar round-trip e evidência de atribuição do provedor, sem confundir clique/interesse com venda ou pagamento.
