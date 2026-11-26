@@ -17,5 +17,5 @@ test("audit checklist uses an explicit mutation and does not retry the write aut
   assert.match(ui, /retry: false/);
   assert.match(ui, /initialRunStarted\.current/);
   assert.match(ui, /onClick=\{\(\) => mutate\(\)\}/);
-  assert.doesNotMatch(ui, /useQuery|refetch\(\)/);
+  assert.doesNotMatch(ui, /useQuery|refetch\(\)|isLoading/);
 });
