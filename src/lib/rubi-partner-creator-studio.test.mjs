@@ -38,7 +38,7 @@ test("partner submissions are private, bounded and never auto-published",()=>{
  assert.match(migration,/enable row level security/);
  assert.match(migration,/revoke all on public\.rubi_partner_creator_submissions from public, anon, authenticated/);
  assert.match(migration,/status text not null default 'pending'/);
- assert.match(migration,/status='draft'/);
+ assert.match(migration,/null,null,'draft',submission\\.storage_path/);
  assert.match(migration,/RUBI_PARTNER_CREATOR_SUBMISSION_APPROVED/);
 });
 
@@ -49,7 +49,7 @@ test("Owner moderation is audited and approval creates a draft, not a public vid
  assert.match(server,/rubi_review_partner_creator_submission/);
  assert.match(migration,/Owner authorization required/);
  assert.match(migration,/for update/);
- assert.match(migration,/status='draft'/);
+ assert.match(migration,/null,null,'draft',submission\\.storage_path/);
  assert.match(migration,/admin_audit_log/);
 });
 
