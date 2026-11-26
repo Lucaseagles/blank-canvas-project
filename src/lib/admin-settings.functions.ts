@@ -18,7 +18,7 @@ const SETTINGS_REGISTRY = [
   { key: "feature_flags", label: "Feature Flags", category: "Feature Flags", table: "feature_flags", editable: ["is_enabled"] },
   { key: "marketplaces", label: "Marketplaces", category: "Integrações", table: "marketplaces", editable: ["status", "api_status"] },
   { key: "whatsapp_config", label: "WhatsApp", category: "Integrações", table: "whatsapp_config", editable: ["business_account_id", "phone_number_id", "is_active", "public_phone_number"] },
-  { key: "telegram_config", label: "Telegram", category: "Integrações", table: "telegram_config", editable: ["channel_id", "is_active"] },
+  { key: "telegram_config", label: "Telegram", category: "Integrações", table: "telegram_config", editable: [] },
 ] as const;
 
 const SECRET_KEYS = new Set(["token", "access_token", "refresh_token", "api_key", "apikey", "secret", "password", "client_secret", "authorization", "bot_token", "service_role_key", "bot_token_secret_ref", "access_token_secret_ref", "api_config"]);
