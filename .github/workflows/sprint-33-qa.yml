@@ -48,6 +48,9 @@ jobs:
       - name: RUBI distribution campaign uniqueness regression
         run: node --test src/lib/rubi-distribution-campaign-uniqueness.test.mjs
 
+      - name: Sprint 321 partner creator studio regression
+        run: npm run test:rubi-partner-creator-studio
+
       - name: TypeScript
         run: npx tsc --noEmit
 
