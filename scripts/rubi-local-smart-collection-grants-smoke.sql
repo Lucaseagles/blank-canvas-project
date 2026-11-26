@@ -1,4 +1,4 @@
-\\set ON_ERROR_STOP on
+\set ON_ERROR_STOP on
 -- Disposable PostgreSQL privilege proof. No application data is read or changed.
 BEGIN;
 DO $$
