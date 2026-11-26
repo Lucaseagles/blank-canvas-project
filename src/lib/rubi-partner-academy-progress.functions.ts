@@ -33,9 +33,7 @@ export const getMyRubiPartnerAcademyProgress=createServerFn({method:"POST"})
  .validator((input:unknown)=>z.object({accessToken:z.string().min(20).max(8192)}).parse(input))
  .handler(async({data})=>{
   const {supabaseAdmin,userId,profile}=await verifiedApprovedPartner(data.accessToken);
-  const {data:rows,error}=await (supabaseAdmin as any).from("hub_partner_academy_progress")
-   .select("lesson_key").eq("commercial_profile_id",profile.id).eq("user_id",userId)
-   .order("completed_at",{ascending:true});
+  const {data:rows,error}=await (supabaseAdmin as any).rpc("rubi_get_partner_academy_progress",{p_actor:userId});
   if(error)throw new Error(error.message);
   const allowed=allowedLessons(String(profile.partner_type??""));
   return (rows??[]).map((row:{lesson_key:string})=>row.lesson_key).filter((key:string)=>allowed.has(key));
@@ -52,17 +50,9 @@ export const setMyRubiPartnerAcademyLessonCompletion=createServerFn({method:"POS
   const lessonKey=data.lessonKey;
   if(!allowedLessons(String(profile.partner_type??"")).has(lessonKey))
    throw new Error("Esta aula não pertence à trilha liberada para seu perfil.");
-  const table=(supabaseAdmin as any).from("hub_partner_academy_progress");
-  if(data.completed){
-   const {error}=await table.upsert({
-    commercial_profile_id:profile.id,user_id:userId,lesson_key:lessonKey,
-    completed_at:new Date().toISOString(),updated_at:new Date().toISOString()
-   },{onConflict:"commercial_profile_id,lesson_key"});
-   if(error)throw new Error(error.message);
-  }else{
-   const {error}=await table.delete().eq("commercial_profile_id",profile.id)
-    .eq("user_id",userId).eq("lesson_key",lessonKey);
-   if(error)throw new Error(error.message);
-  }
-  return {lessonKey,completed:data.completed};
+  const {data:result,error}=await (supabaseAdmin as any).rpc("rubi_set_partner_academy_lesson_completion",{
+   p_actor:userId,p_lesson_key:lessonKey,p_completed:data.completed
+  });
+  if(error)throw new Error(error.message);
+  return {lessonKey,completed:data.completed,result};
  });
