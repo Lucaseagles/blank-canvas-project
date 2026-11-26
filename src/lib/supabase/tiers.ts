@@ -12,6 +12,7 @@ export interface ReferralTier {
   color: string;
   is_active: boolean;
   display_order: number;
+  updated_at?: string | null;
 }
 
 export interface UserReferralStats {
