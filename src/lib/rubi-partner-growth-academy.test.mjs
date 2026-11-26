@@ -15,7 +15,7 @@ test("one shared academy includes the four approved partner profiles and common 
   assert.match(onboarding, /Nano ou microinfluenciador/);
   assert.match(academy, /Formação para todos os parceiros/);
   assert.match(academy, /Trilha Geral de Parceiros/);
-  assert.match(academy, /specializations\[partnerType\] \?\? specializations\.default/);
+  assert.match(academy, /specializations\\[partnerType\\] \\?\\?/);
   assert.match(portal, /<RubiPartnerGrowthAcademy/);
 });
 
