@@ -1,6 +1,6 @@
 # RUBI Movement Engine — Especificação por ângulo e público
 Data: 2026-11-10
-Estado: proposta em revisão; não implementada nem publicada.
+Estado: especificação em revisão; implementação parcial existe na main, mas o engine completo e a publicação automatizada não estão concluídos.
 
 ## Distinção fundamental
 Produto é um item de catálogo. Oferta é uma proposta específica. **Movimento** é um posicionamento narrativo organizado em torno de uma situação, necessidade, desejo legítimo ou identidade de público, capaz de sustentar criativos, página, canais e sequência de conteúdo. Não confundir com nome publicitário isolado, retenção de vídeo ou automação de mensagens.
@@ -54,3 +54,43 @@ Sprint 71: schema and admin CRUD for movements per product (no public exposure).
 Sprint 72: variant creative/page preview + manual publish guardrails.
 Sprint 73: channel distribution planning, UTM and partner-aware links.
 Sprint 74: attribution dashboard and experiment reporting; video retention only when channel exposes reliable data.
+
+
+## Estado da implementação na main — 2026-11-26
+
+Esta seção prevalece sobre a descrição histórica de 10/11. Parte do modelo já foi implementada; **não criar tabelas duplicadas** nem tratar o engine como totalmente pronto.
+
+### Componentes já existentes
+
+- `rubi_movements`: movimentos privados por produto, com público/posicionamento, evidência textual, estado e revisão.
+- `rubi_movement_variants`: variantes de criativo e página; já contém hook, roteiro, headline, body, CTA, notas de mídia/prova, confirmação de direitos, status e revisão.
+- `rubi_movement_distribution`: planos por variante/canal/campanha, estado planejado ou registro de publicação manual e referência informada.
+- CRUD/servidor: `src/lib/rubi-movements.functions.ts`, `rubi-movement-variants.functions.ts` e `rubi-movement-distribution.functions.ts`.
+- Escrita de variantes: RPC `rubi_mutate_variant_audited`, Owner verificado por `p_actor`, revisão otimista/row lock e auditoria transacional.
+- Performance: `src/lib/rubi-movement-performance.ts` e testes associados oferecem comparação descritiva por variante com limites para dados ambíguos.
+
+### Segurança e limites já verificados no código/migrations
+
+- As três tabelas existentes têm RLS habilitada e grants diretos revogados para `public`, `anon` e `authenticated`; as operações confiáveis passam por funções server-side/Owner.
+- A aprovação de Story exige movimento vinculado, produto correspondente e estado/revisão elegíveis.
+- Direitos de mídia e revisão são gates explícitos antes de promover variante.
+- `manually_published` e `published_reference` registram uma declaração de publicação manual com referência; não provam independentemente que a rede publicou ou entregou alcance.
+- Os registros de distribuição não alteram preço, checkout, comissão, estoque ou pedidos.
+
+### Lacunas reais — não declarar concluídas
+
+- Não foi localizada uma tabela independente `rubi_movement_metrics`; a medição atual é observacional/descritiva e depende dos eventos/fontes disponíveis.
+- Não há evidência de experimento A/B causal homologado nem de retenção de vídeo confiável de todos os provedores.
+- Não criar `rubi_movement_pages` apenas por seguir o desenho antigo: headline/body/CTA já vivem na variante. Uma separação futura exige justificar versionamento/rollback e migração.
+- Agendamento/publicação automática, disparos em redes ou mensagens, consentimento por canal e prova externa dependem de integrações e contratos específicos.
+- Compra confirmada e comissão só podem ser contabilizadas por retorno confiável do provedor ou reconciliação autorizada.
+
+### Próxima evolução segura
+
+1. Reauditar CRUD, RPC, RLS, grants e trilha de auditoria das três tabelas existentes.
+2. Fechar inventário de canais e consentimento antes de automação/disparos.
+3. Definir esquema de métricas com fonte, amostra, período e idempotência, sem inventar eventos.
+4. Validar publicação manual com referências verificáveis e manter separada da publicação confirmada pelo provedor.
+5. Só propor nova tabela/DDL quando a lacuna não puder ser coberta pelo modelo atual e houver teste de migração/rollback.
+
+**Classificação:** atualização de arquitetura e governança / upgrade-only. Nenhum ponto V1 novo é reivindicado nesta especificação.
