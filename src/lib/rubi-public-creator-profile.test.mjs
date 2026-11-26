@@ -29,7 +29,7 @@ test("public creator page connects published content to the partner's existing t
  assert.match(page,/getPublicRubiCreatorProfile/);
  assert.match(page,/getPublicRubiPartnerStorefront/);
  assert.match(page,/Creator Feed/);
- assert.match(page,/store\\.data\\?\\.products/);
+ assert.match(page,/store\.data\?\.products/);
  assert.match(page,/product\.referralCode/);
  assert.match(manager,/Perfil de criador/);
  assert.match(manager,/creator\/\$storeCode/);
