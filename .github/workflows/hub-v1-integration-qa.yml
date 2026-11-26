@@ -113,6 +113,9 @@ jobs:
         run: npm run test:rubi-distribution
       - name: RUBI distribution campaign uniqueness regression
         run: node --test src/lib/rubi-distribution-campaign-uniqueness.test.mjs
+
+      - name: RUBI analytics privacy RLS and least-privilege regression
+        run: node --test src/lib/rubi-analytics-privacy-hardening.test.mjs
       - name: RUBI movement performance tests
         run: npm run test:rubi-performance
       - name: RUBI movement audience evidence, review, attribution and controlled experiment contracts
