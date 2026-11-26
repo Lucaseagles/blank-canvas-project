@@ -10,7 +10,7 @@ test("consumer precheckout invitation is persuasive, optional and preserves the 
  assert.match(pre,/Escolha categorias de interesse/);
  assert.match(pre,/A conta é opcional/);
  assert.match(pre,/Continuar sem cadastro/);
- assert.match(pre,/returnTo, audience: undefined/);
+ assert.match(pre,/returnTo, audience: "consumer"/);
  assert.match(pre,/origin === "partner" \? partnerCode : undefined/);
  assert.match(pre,/seguir para a compra sem se cadastrar/);
  assert.match(pre,/window\.location\.assign\(url\.toString\(\)\)/);
@@ -24,6 +24,7 @@ test("consumer education explains concrete value without guaranteed benefits or 
  assert.match(guide,/não garante desconto ou benefício/);
  const onboarding=read("../routes/onboarding.tsx");
  assert.match(onboarding,/Quais categorias mais interessam a você/);
+ assert.match(onboarding,/Descubra mais\\. Encontre melhor/);
  assert.match(onboarding,/Você pode alterar depois no perfil/);
  assert.match(onboarding,/Perfil registrado!/);
 });
