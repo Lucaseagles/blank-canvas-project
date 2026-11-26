@@ -129,3 +129,33 @@ A rodada final da Sprint 307 foi confirmada no GitHub para o HEAD `44566d17b9d71
 - Os testes de rollback e concorrência comprovam o escopo de vídeo/bridge-video da Sprint 307; não certificam o inventário global de mutações administrativas.
 - Score permanece 36,5/48 (76,0%) como baseline agregada provisória; score por linha continua não reconciliado. Pontos novos convertidos: 0.
 - Classificação desta atualização: upgrade-only / atualização de evidência. PR #308 permanece Draft e não integrada.
+
+
+## Atualização consolidada — 2026-11-26
+
+Esta atualização prevalece sobre o estado de execução descrito nas notas históricas acima. As rodadas antigas foram mantidas para rastreabilidade.
+
+| PR | HEAD validado | Hub V1 | Sprint 33 | E2E quatro perfis | Estado |
+|---|---|---|---|---|---|
+| #308 / Sprint 307 | `44566d17b9d714953768e0a07b5fe36b4ef4fb33` | SUCCESS | SUCCESS | SUCCESS — 22/22 | Aberta, pronta para revisão, não integrada |
+| #310 / Sprint 308 | `17d1473ae7c637a7269fadc9c7da07b74d0a323b` | SUCCESS | SUCCESS | SUCCESS — 22/22 | Aberta, pronta para revisão, não integrada |
+| #311 / Sprint 309 | `21c17531694ff005222d47a4476873316a4c75f2` | SUCCESS | SUCCESS | SUCCESS | Aberta, pronta para revisão, não integrada |
+
+### Regras de pontuação após os novos testes
+- 11.3: PR #308 cobre vídeo/compliance, grants, Owner isolation, rollback e concorrência. O inventário de todas as mutações administrativas continua incompleto; score adicional = 0 por enquanto.
+- 12.3: E2E local em quatro perfis, 11 cenários em mobile/desktop e 22/22 testes aprovados nas PRs #308 e #310. Staging HTTPS/hospedado e evidência independente ainda faltam; score adicional = 0 por enquanto.
+- 11.4: manter Shadow Master único e privado. Não implementar múltiplos Masters para cumprir critério conflitante; formalizar revisão da rubrica.
+- 36,5/48 é baseline agregada histórica/provisória. Score atual por linha segue não reconciliado; não distribuir os 5 pontos de delta por inferência.
+
+### Nova lacuna de privacidade identificada
+A inspeção inicial da main encontrou gravação de `SESSION_START` no shell, `POPUP_TIMING_TRIGGER` e eventos comportamentais/personalização sem uma verificação comum de preferência global de analytics. Há opt-out de social proof e preferências de categorias, mas não foi localizado controle global de analytics nesta varredura. As políticas SQL encontradas protegem atribuição de usuário em eventos anônimos/autenticados, mas não substituem consentimento.
+
+Também não foi localizada, nesta varredura inicial, uma política explícita de retenção, exportação e exclusão seletiva de `analytics_events`. Isso permanece hipótese de auditoria a confirmar em todas as migrations, RPCs, workers e política publicada.
+
+**Próximo gate:** inventariar todos os escritores e dependências; mapear finalidade/base legal, transparência, opt-in/opt-out, retenção, exportação, anonimização/exclusão e efeitos em personalização/atribuição. Não implementar toggle isolado nem alterar RLS/tracking até fechar o mapa e os testes de regressão.
+
+### Decisão
+- Classificação: **upgrade-only / reconciliação documental**.
+- Nenhum ponto V1 convertido nesta atualização.
+- Nenhuma migration aplicada ao Supabase remoto; nenhum dado real alterado.
+- Nenhuma das PRs #308, #310, #311 foi integrada neste corte; main preservada.
