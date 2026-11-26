@@ -65,6 +65,7 @@ declare
   v_after public.referral_tiers%rowtype;
   v_keys text[];
   v_key text;
+  v_rows integer;
   v_assignments text:='';
 begin
   if p_actor is null or not exists (
@@ -104,7 +105,8 @@ begin
   v_assignments:=v_assignments||', updated_at=now()';
   execute format('update public.referral_tiers t set %s where t.id=$1 returning t.*',v_assignments)
     into v_after using p_id,p_patch;
-  if not found then raise exception 'Referral tier update did not persist'; end if;
+  get diagnostics v_rows = row_count;
+  if v_rows <> 1 then raise exception 'Referral tier update did not persist'; end if;
 
   insert into public.admin_audit_log(
     actor_user_id,actor_email,action_type,entity_type,entity_id,previous_value,new_value
