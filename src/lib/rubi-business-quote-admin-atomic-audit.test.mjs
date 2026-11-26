@@ -12,7 +12,7 @@ test("Owner quote status updates use the atomic audited RPC, not direct table DM
  assert.match(api,/updateHubBusinessQuoteAdmin[\s\S]*?\.middleware\(\[requireOwnerRole\]\)/);
  assert.match(api,/rubi_update_business_quote_admin_audited/);
  assert.doesNotMatch(api,/export const updateHubBusinessQuoteAdmin[\s\S]*?\.from\(["']hub_b2b_quote_requests["']\)[\s\S]*?\.update\(/);
- assert.match(api,/expectedUpdatedAt:z\.string\(\)\.datetime/);
+ assert.match(api,/expectedUpdatedAt:\s*z\.string\(\)\.datetime/);
 });
 
 test("Owner follow-up completion is atomic, audited and concurrency guarded",()=>{
