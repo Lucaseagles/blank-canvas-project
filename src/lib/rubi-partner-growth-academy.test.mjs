@@ -89,7 +89,8 @@ test("individual lesson completion is persisted per approved partner and isolate
   assert.match(server, /auth\.getUser\(accessToken\)/);
   assert.match(server, /eq\("audience","partner"\)\.eq\("status","approved"\)/);
   assert.match(server, /allowedLessons\(String\(profile\.partner_type/);
-  assert.match(server, /rpc\("rubi_get_partner_academy_progress"/);\n  assert.match(server, /rpc\("rubi_set_partner_academy_lesson_completion"/);
+  assert.match(server, /rpc\("rubi_get_partner_academy_progress"/);
+  assert.match(server, /rpc\("rubi_set_partner_academy_lesson_completion"/);
   assert.match(server, /\.delete\(\)\.eq\("commercial_profile_id",profile\.id\)/);
   assert.match(server, /\.eq\("user_id",userId\)/);
   assert.match(migration, /enable row level security/i);
@@ -99,5 +100,10 @@ test("individual lesson completion is persisted per approved partner and isolate
   assert.match(academy, /Marcar aula como concluída/);
   assert.match(academy, /Aula concluída · desfazer/);
   assert.match(academy, /rubi-partner-academy-progress/);
-  assert.match(academy, /Salvo na sua conta e separado das metas comerciais/);\n  const smoke = read("../../scripts/rubi-local-partner-academy-progress-smoke.sql");\n  assert.match(smoke, /has_table_privilege/);\n  assert.match(smoke, /has_function_privilege/);\n  assert.match(smoke, /Profile-specific lesson restriction failed/);\n  assert.match(smoke, /Unchecking lesson did not remove persisted progress/);
+  assert.match(academy, /Salvo na sua conta e separado das metas comerciais/);
+  const smoke = read("../../scripts/rubi-local-partner-academy-progress-smoke.sql");
+  assert.match(smoke, /has_table_privilege/);
+  assert.match(smoke, /has_function_privilege/);
+  assert.match(smoke, /Profile-specific lesson restriction failed/);
+  assert.match(smoke, /Unchecking lesson did not remove persisted progress/);
 });
