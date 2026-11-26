@@ -57,7 +57,8 @@
     "test:rubi-onboarding-quiz": "node --experimental-strip-types --test src/lib/rubi-onboarding-quiz.test.mjs",
     "test:rubi-consumer-personalization": "node --experimental-strip-types --test src/lib/rubi-feed-mix.test.mjs src/lib/rubi-unified-interest-ranking.test.mjs src/lib/rubi-audience-catalog-ranking.test.mjs",
     "test:rubi-story-offer-journey": "node --experimental-strip-types --test src/lib/rubi-story-offer-journey.test.mjs",
-    "test:rubi-content-notification-worker": "node --test src/lib/rubi-content-notification-worker-hardening.test.mjs"
+    "test:rubi-content-notification-worker": "node --test src/lib/rubi-content-notification-worker-hardening.test.mjs",
+    "test:rubi-smart-collection-server-only-grants": "node --test src/lib/rubi-smart-collection-server-only-grants.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
