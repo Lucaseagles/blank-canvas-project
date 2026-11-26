@@ -5,6 +5,7 @@ import {readFileSync} from "node:fs";
 const guard=readFileSync(new URL("../../supabase/migrations/20261113011000_rubi_campaign_identity_guard.sql",import.meta.url),"utf8");
 const audit=readFileSync(new URL("../../supabase/migrations/20261113080000_rubi_distribution_atomic_audit.sql",import.meta.url),"utf8");
 const server=readFileSync(new URL("./rubi-movement-distribution.functions.ts",import.meta.url),"utf8");
+const smoke=readFileSync(new URL("../../scripts/rubi-local-distribution-campaign-concurrency.mjs",import.meta.url),"utf8");
 
 test("existing database trigger serializes product/channel/campaign writes",()=>{
  assert.match(guard,/pg_advisory_xact_lock/);
@@ -37,4 +38,6 @@ test("server preflight remains defense in depth and never substitutes for databa
  assert.match(server,/Attribution must be unambiguous/);
  assert.match(server,/Identificador de campanha já utilizado/);
  assert.match(guard,/pg_advisory_xact_lock/);
+ assert.match(smoke,/x\.error\?\.code==="P0001"/);
+ assert.match(smoke,/Campaign label already in use by this product and channel/);
 });
