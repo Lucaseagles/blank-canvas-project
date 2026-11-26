@@ -56,6 +56,12 @@ jobs:
       - name: Sprint 316 admin audit fail-closed regression
         run: npm run test:rubi-admin-audit-fail-closed
 
+      - name: Admin audit POST mutation semantics regression
+        run: node --test src/lib/admin-audit-post-mutation.test.mjs
+
+      - name: Admin audit persisted result contract regression
+        run: node --test src/lib/admin-audit-run-persistence.test.mjs
+
       - name: Sprint 319 consumer affiliate recruitment funnel regression
         run: npm run test:rubi-affiliate-recruitment-funnel
 

@@ -1,5 +1,6 @@
+import { useEffect, useRef } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, CircleAlert, Database, ExternalLink, RefreshCw, ShieldAlert, TriangleAlert } from "lucide-react";
 import { runAdminAudit, type AuditItem, type AuditStatus } from "@/lib/admin-audit.functions";
 import { Badge } from "@/components/ui/badge";
@@ -42,11 +43,17 @@ function Item({ item }: { item: AuditItem }) {
 
 export function AuditChecklist() {
   const audit = useServerFn(runAdminAudit);
-  const { data, isLoading, isFetching, isError, refetch } = useQuery({
-    queryKey: ["admin-system-audit"],
-    queryFn: () => audit({ data: { includeOptional: true } }),
-    staleTime: 0,
+  const initialRunStarted = useRef(false);
+  const { data, isPending, isError, mutate } = useMutation({
+    mutationKey: ["admin-system-audit"],
+    mutationFn: () => audit({ data: { includeOptional: true } }),
+    retry: false,
   });
+  useEffect(() => {
+    if (initialRunStarted.current) return;
+    initialRunStarted.current = true;
+    mutate();
+  }, [mutate]);
 
   const items = data?.items ?? [];
   const grouped = items.reduce<Record<string, AuditItem[]>>((groups, item) => {
@@ -62,8 +69,8 @@ export function AuditChecklist() {
           <h2 className="text-2xl font-black tracking-tight">Checklist do sistema</h2>
           <p className="mt-1 text-sm text-muted-foreground">Banco, dados e pontos de administração verificados no servidor.</p>
         </div>
-        <Button onClick={() => refetch()} disabled={isFetching} className="rounded-xl font-bold uppercase tracking-wider">
-          <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
+        <Button onClick={() => mutate()} disabled={isPending} className="rounded-xl font-bold uppercase tracking-wider">
+          <RefreshCw className={`mr-2 h-4 w-4 ${isPending ? "animate-spin" : ""}`} />
           Re-auditar
         </Button>
       </div>
@@ -86,10 +93,10 @@ export function AuditChecklist() {
         </div>
       )}
 
-      {isLoading && <div role="status" className="rounded-2xl border border-border/60 p-8 text-center text-sm text-muted-foreground">Executando auditoria segura…</div>}
+      {isPending && <div role="status" className="rounded-2xl border border-border/60 p-8 text-center text-sm text-muted-foreground">Executando auditoria segura…</div>}
       {isError && <div role="alert" className="rounded-2xl border border-destructive/40 p-4 text-sm text-destructive">Não foi possível executar a auditoria. Nenhum resultado novo foi confirmado; tente novamente ou verifique os registros do servidor.</div>}
 
-      {!isLoading && Object.entries(grouped).map(([category, categoryItems]) => (
+      {!isPending && Object.entries(grouped).map(([category, categoryItems]) => (
         <section key={category} className="space-y-3">
           <h3 className="px-1 text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">{category}</h3>
           {categoryItems.map((item) => <Item key={item.key} item={item} />)}
