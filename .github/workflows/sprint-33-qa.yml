@@ -57,6 +57,9 @@ jobs:
       - name: Sprint 323 public creator profile regression
         run: npm run test:rubi-public-creator-profile
 
+      - name: Sprint 324 public creator directory regression
+        run: npm run test:rubi-public-creator-directory
+
       - name: TypeScript
         run: npx tsc --noEmit
 
