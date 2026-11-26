@@ -42,7 +42,7 @@ test("consumer affiliate recruitment reuses the existing onboarding and partner 
  const membership=read("./rubi-creator-team-members.functions.ts");
  const membershipSql=read("../../supabase/migrations/20261113210000_rubi_team_decisions_atomic_audit.sql");
  assert.match(popup,/partnerType:"affiliate"/);
- assert.match(onboarding,/id:"affiliate"/);
+ assert.match(onboarding,/id:\s*"affiliate"/);
  assert.match(membership,/commercial_profiles/);
  assert.match(membershipSql,/profile_status<>'approved'/);
  assert.doesNotMatch(popup,/commercial_profiles.*insert/);
