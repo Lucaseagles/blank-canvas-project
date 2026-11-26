@@ -17,7 +17,6 @@ type QuoteAdmin = {
   created_at: string;
   replenishment_of_quote_id: string | null;
   responded_at: string | null;
-  updated_at: string;
 };
 
 const labels: Record<string, string> = {
