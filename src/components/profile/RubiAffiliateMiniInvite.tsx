@@ -32,6 +32,7 @@ export function RubiAffiliateMiniInvite({userId,placement="right"}:{userId:strin
   try{
    if(window.sessionStorage.getItem(sessionKey)==="1")return;
    window.sessionStorage.setItem(sessionKey,"1");
+   setCollapsed(false);
    void trackEvent("RUBI_AFFILIATE_INVITE_SHOWN",{program:"rubi_indica",readiness_score:query.data?.score??0});
   }catch{/* Keep invitation available if browser storage is restricted. */}
  },[sessionKey,query.data?.score]);
