@@ -18,6 +18,7 @@ on:
       - "scripts/rubi-local-analytics-privacy-smoke.sql"
       - "scripts/rubi-local-strategy-orchestration-pause-audit-smoke.sql"
       - "scripts/rubi-local-strategy-orchestration-pause-concurrency.sh"
+      - "scripts/rubi-local-partner-academy-progress-smoke.sql"
       - "scripts/rubi-local-story-offer.e2e.spec.mjs"
       - "rubi-local-playwright.config.mjs"
       - "supabase/migrations/**"
@@ -131,6 +132,12 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y postgresql-client
           fi
+      - name: Verify partner academy progress isolation and profile-specific lessons
+        run: |
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 \
+            -v partner_id="$RUBI_QA_PARTNER_USER_ID" \
+            -v consumer_id="$RUBI_QA_CONSUMER_USER_ID" \
+            -f scripts/rubi-local-partner-academy-progress-smoke.sql
       - name: Verify smart collection client grants on disposable PostgreSQL
         run: psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f scripts/rubi-local-smart-collection-grants-smoke.sql
 
@@ -158,17 +165,16 @@ jobs:
             -v master_id="$RUBI_QA_MASTER_USER_ID" \
             -v non_owner_id="$RUBI_QA_CONSUMER_USER_ID" \
             -f scripts/rubi-local-admin-audit-smoke.sql
-      - name: Prove concurrent administrative video transitions serialize in disposable PostgreSQL
-        run: |
-          set -euo pipefail
-          bash scripts/rubi-local-admin-audit-concurrency.sh
-
       - name: Prove brand identity Owner authorization and atomic audit in disposable PostgreSQL
         run: >-
           psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1
           -v master_id="$RUBI_QA_MASTER_USER_ID"
           -v non_owner_id="$RUBI_QA_CONSUMER_USER_ID"
           -f scripts/rubi-local-brand-identity-audit-smoke.sql
+      - name: Prove concurrent administrative video transitions serialize in disposable PostgreSQL
+        run: |
+          set -euo pipefail
+          bash scripts/rubi-local-admin-audit-concurrency.sh
       - name: Seed disposable supplier, product, reviewed movement and private Story
         run: node scripts/rubi-local-story-fixture.mjs
       - name: Prove product/channel/campaign uniqueness under concurrent PostgreSQL transactions
