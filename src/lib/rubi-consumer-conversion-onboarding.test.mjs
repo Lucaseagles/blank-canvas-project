@@ -12,7 +12,7 @@ test("consumer precheckout invitation is persuasive, optional and preserves the 
  assert.match(pre,/Continuar sem cadastro/);
  assert.match(pre,/returnTo, audience: undefined/);
  assert.match(pre,/origin === "partner" \? partnerCode : undefined/);
- assert.match(pre,/Continue para a compra sem se cadastrar/);
+ assert.match(pre,/seguir para a compra sem se cadastrar/);
  assert.match(pre,/window\.location\.assign\(url\.toString\(\)\)/);
 });
 
