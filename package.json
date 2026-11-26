@@ -61,14 +61,7 @@
     "test:rubi-smart-collection-server-only-grants": "node --test src/lib/rubi-smart-collection-server-only-grants.test.mjs",
     "test:rubi-orchestration-pause-audit": "node --test src/lib/strategy-orchestration-pause-audit.test.mjs",
     "test:rubi-video-atomic-audit": "node --test src/lib/rubi-video-atomic-audit.test.mjs",
-    "test:rubi-affiliate-recruitment-funnel": "node --test src/lib/rubi-affiliate-recruitment-funnel.test.mjs",
-    "test:rubi-consumer-conversion": "node --test src/lib/rubi-consumer-conversion-onboarding.test.mjs",
-    "test:rubi-premium-hybrid": "node --test src/lib/rubi-premium-hybrid-performance.test.mjs",
-    "test:rubi-partner-growth-academy": "node --test src/lib/rubi-partner-growth-academy.test.mjs",
-    "test:rubi-partner-creator-studio": "node --test src/lib/rubi-partner-creator-studio.test.mjs",
-    "test:rubi-partner-customer-acquisition": "node --test src/lib/rubi-partner-customer-acquisition.test.mjs",
-    "test:rubi-public-creator-profile": "node --test src/lib/rubi-public-creator-profile.test.mjs",
-    "test:rubi-public-creator-directory": "node --test src/lib/rubi-public-creator-directory.test.mjs"
+    "test:rubi-brand-identity-audit": "node --test src/lib/brand-identity-atomic-audit.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
