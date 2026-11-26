@@ -40,6 +40,7 @@ export function RubiPartnerStorefrontManager({ storeCode }: { storeCode: string 
       <div className="flex shrink-0 flex-wrap gap-2">
         <Button type="button" onClick={() => void copy()}><Copy className="mr-2 h-4 w-4"/>{copied ? "Copiado" : "Copiar link"}</Button>
         <Button asChild type="button" variant="outline"><Link to="/loja/$storeCode" params={{ storeCode }}><ExternalLink className="mr-2 h-4 w-4"/>Visualizar</Link></Button>
+        <Button asChild type="button" variant="outline"><Link to="/creator/$storeCode" params={{ storeCode }}><ExternalLink className="mr-2 h-4 w-4"/>Perfil de criador</Link></Button>
       </div>
     </div> : <p className="mt-5 rounded-2xl border bg-background p-4 text-sm text-muted-foreground">Seu endereço público será disponibilizado após a atualização da base de cadastro e a aprovação do parceiro.</p>}
   </section>;
