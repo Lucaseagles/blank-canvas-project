@@ -28,7 +28,10 @@ begin
  if p_status is null or p_status not in ('planned','manually_published') then
   raise exception 'Invalid distribution status' using errcode='22023';
  end if;
- if char_length(coalesce(p_notes,''))>1500 or char_length(coalesce(p_published_reference,''))>500 then
+ if p_notes is null or p_published_reference is null then
+  raise exception 'Distribution notes and publication reference must be provided' using errcode='22023';
+ end if;
+ if char_length(p_notes)>1500 or char_length(p_published_reference)>500 then
   raise exception 'Distribution metadata exceeds allowed length' using errcode='22023';
  end if;
 
