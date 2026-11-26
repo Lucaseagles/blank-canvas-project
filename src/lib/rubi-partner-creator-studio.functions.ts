@@ -172,10 +172,18 @@ export const reviewPartnerCreatorSubmission=createServerFn({method:"POST"})
 }).parse(input))
 .handler(async({data,context})=>{
   const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
+  const {data:prior,error:priorError}=await (supabaseAdmin as any).from("rubi_partner_creator_submissions")
+    .select("storage_path").eq("id",data.submissionId).maybeSingle();
+  if(priorError)throw new Error(priorError.message);
   const {data:result,error}=await (supabaseAdmin as any).rpc("rubi_review_partner_creator_submission",{
     p_actor:context.userId,p_submission_id:data.submissionId,p_decision:data.decision,
     p_review_notes:data.reviewNotes??null
   });
   if(error)throw new Error(error.message);
-  return result;
+  let storageCleanupPending=false;
+  if(data.decision==="reject"&&prior?.storage_path){
+    const {error:cleanupError}=await supabaseAdmin.storage.from(VIDEO_BUCKET).remove([prior.storage_path]);
+    storageCleanupPending=Boolean(cleanupError);
+  }
+  return {...(result as Record<string,unknown>),storageCleanupPending};
 });
