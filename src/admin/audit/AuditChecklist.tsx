@@ -96,7 +96,7 @@ export function AuditChecklist() {
       {isPending && <div role="status" className="rounded-2xl border border-border/60 p-8 text-center text-sm text-muted-foreground">Executando auditoria segura…</div>}
       {isError && <div role="alert" className="rounded-2xl border border-destructive/40 p-4 text-sm text-destructive">Não foi possível executar a auditoria. Nenhum resultado novo foi confirmado; tente novamente ou verifique os registros do servidor.</div>}
 
-      {!isLoading && Object.entries(grouped).map(([category, categoryItems]) => (
+      {!isPending && Object.entries(grouped).map(([category, categoryItems]) => (
         <section key={category} className="space-y-3">
           <h3 className="px-1 text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">{category}</h3>
           {categoryItems.map((item) => <Item key={item.key} item={item} />)}
