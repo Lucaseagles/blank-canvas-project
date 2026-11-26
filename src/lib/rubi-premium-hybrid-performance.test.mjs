@@ -6,17 +6,17 @@ const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 
 test("global premium layer provides reusable low-cost surfaces and accessible focus", () => {
   const css = read("../styles.css");
-  assert.match(css, /\\.hub-premium-surface/);
-  assert.match(css, /\\.hub-interactive/);
-  assert.match(css, /:focus-visible/);
-  assert.match(css, /prefers-reduced-motion: reduce/);
-  assert.match(css, /backdrop-filter: none !important/);
+  assert.ok(css.includes(".hub-premium-surface"));
+  assert.ok(css.includes(".hub-interactive"));
+  assert.ok(css.includes(":focus-visible"));
+  assert.ok(css.includes("prefers-reduced-motion: reduce"));
+  assert.ok(css.includes("backdrop-filter: none !important"));
 });
 
 test("product cards avoid continuous scan and pulse effects and use restrained transitions", () => {
   const card = read("../components/product/ProductCard.tsx");
-  assert.doesNotMatch(card, /animate-scan/);
-  assert.doesNotMatch(card, /animate-pulse/);
-  assert.match(card, /duration-200 ease-out/);
-  assert.match(card, /group-hover:scale-\\[1\\.04\\]/);
+  assert.ok(!card.includes("animate-scan"));
+  assert.ok(!card.includes("animate-pulse"));
+  assert.ok(card.includes("duration-200 ease-out"));
+  assert.ok(card.includes("group-hover:scale-[1.04]"));
 });
