@@ -69,5 +69,10 @@ export const runAdminAudit = createServerFn({ method: "GET" })
       new_value: { stats, checked_items: items.length },
     });
 
-    return { items, stats, checkedAt, auditLogWritten: !logError, auditLogError: logError?.message ?? null };
+    if (logError) {
+      // A successful audit response must never conceal a missing audit trail.
+      throw new Error(`Não foi possível registrar a execução da auditoria administrativa: ${logError.message}`);
+    }
+
+    return { items, stats, checkedAt, auditLogWritten: true };
   });
