@@ -7,20 +7,21 @@ SELECT set_config('rubi.qa_merchant_id', :'merchant_id', true);
 CREATE TEMP TABLE rubi_qa_quote_ids (quote_id uuid PRIMARY KEY) ON COMMIT DROP;
 GRANT ALL ON TABLE pg_temp.rubi_qa_quote_ids TO service_role;
 
-INSERT INTO public.hub_b2b_quote_requests(
- commercial_profile_id,merchant_user_id,status,requested_lines,total_estimate,
- followup_opt_in,followup_interval_days,followup_due_at
+WITH inserted AS (
+ INSERT INTO public.hub_b2b_quote_requests(
+  commercial_profile_id,merchant_user_id,status,requested_lines,total_estimate,
+  followup_opt_in,followup_interval_days,followup_due_at
+ )
+ SELECT cp.id,current_setting('rubi.qa_merchant_id')::uuid,'requested',
+  '[{"productId":"00000000-0000-4000-8000-000000000001","title":"RUBI QA B2B quote","quantity":2,"unitPrice":10,"total":20}]'::jsonb,
+  20,true,14,clock_timestamp()+interval '14 days'
+ FROM public.commercial_profiles cp
+ WHERE cp.user_id=current_setting('rubi.qa_merchant_id')::uuid
+  AND cp.audience='merchant' AND cp.status='approved'
+ LIMIT 1
+ RETURNING id
 )
-SELECT cp.id, current_setting('rubi.qa_merchant_id')::uuid, 'requested',
- '[{"productId":"00000000-0000-4000-8000-000000000001","title":"RUBI QA B2B quote","quantity":2,"unitPrice":10,"total":20}]'::jsonb,
- 20,true,14,clock_timestamp()+interval '14 days'
-FROM public.commercial_profiles cp
-WHERE cp.user_id=current_setting('rubi.qa_merchant_id')::uuid
- AND cp.audience='merchant' AND cp.status='approved'
-LIMIT 1
-RETURNING id INTO TEMP TABLE rubi_qa_quote_seed;
-INSERT INTO pg_temp.rubi_qa_quote_ids SELECT id FROM rubi_qa_quote_seed;
-DROP TABLE rubi_qa_quote_seed;
+INSERT INTO pg_temp.rubi_qa_quote_ids(quote_id) SELECT id FROM inserted;
 
 DO $grants$
 BEGIN
