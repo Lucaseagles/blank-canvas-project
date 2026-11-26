@@ -4,7 +4,7 @@ import {readFileSync} from "node:fs";
 const read=p=>readFileSync(new URL(p,import.meta.url),"utf8");
 const sql=read("../../supabase/migrations/20261113123000_rubi_admin_setting_atomic_audit.sql");
 const server=read("./admin-settings.functions.ts");
-test("all 15 settings sources have an explicit SQL allowlist, never arbitrary table selection",()=>{
+test("all 14 editable settings sources have an explicit SQL allowlist, never arbitrary table selection",()=>{
  const sources=["personalization_weights","feed_mix_config","banners","social_proof_config","popup_rules",
   "ab_experiments","automation_rules","app_points_config","badges","missions",
   "compliance_rules","feature_flags","marketplaces","whatsapp_config"];
@@ -14,7 +14,7 @@ test("all 15 settings sources have an explicit SQL allowlist, never arbitrary ta
  assert.match(sql,/if permitted is null then raise exception/);
  assert.doesNotMatch(sql,/security definer/i);
  assert.doesNotMatch(sql,/when 'telegram_config' then array/);
- assert.match(server,/key: "telegram_config"[^\\n]*editable: \\[\\]/);
+ assert.ok(server.includes('{ key: "telegram_config", label: "Telegram", category: "Integrações", table: "telegram_config", editable: [] }'));
 });
 test("atomic audit, owner-only service role and stale-write prevention",()=>{
  assert.match(sql,/for update/);
