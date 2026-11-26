@@ -26,10 +26,10 @@ const schema=z.object({
   !["weekly","monthly","quarterly","unsure"].includes(d.answers["restock_frequency"]??"")||
   !["1_4","5_9","10_29","30_plus","unsure"].includes(d.answers["batch_size"]??"")))
   ctx.addIssue({code:"custom",message:"Responda às perguntas do lojista"});
- if(d.audience==="partner"&&(!d.partnerType||!["professional","creator","both","unspecified"].includes(d.answers["creator_background"]??"")||
+ if(d.audience==="partner"&&(!d.partnerType||(d.answers["niche"]??"").trim().length<2||!["professional","creator","both","unspecified"].includes(d.answers["creator_background"]??"")||
   (d.partnerType==="micro_influencer"?!["nano","micro"].includes(d.answers["creator_tier"]??""):d.answers["creator_tier"]!==undefined)||
   !["under_1000","1000_10000","10000_100000","over_100000","unspecified"].includes(d.answers["audience_range"]??"")||
-  !["instagram","tiktok","youtube","whatsapp","other","unspecified"].includes(d.answers["channel"]??"")))
+  !["instagram","tiktok","youtube","whatsapp","other"].includes(d.answers["channel"]??"")))
   ctx.addIssue({code:"custom",message:"Responda às perguntas do parceiro"});
  if(new Set(d.categoryIds).size!==d.categoryIds.length)ctx.addIssue({code:"custom",message:"Categoria repetida"});
 });
