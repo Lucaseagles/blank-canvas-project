@@ -16,6 +16,7 @@ on:
       - "scripts/rubi-local-story-fixture.mjs"
       - "scripts/rubi-local-smart-collection-grants-smoke.sql"
       - "scripts/rubi-local-analytics-privacy-smoke.sql"
+      - "scripts/rubi-local-public-table-privilege-hardening-smoke.sql"
       - "scripts/rubi-local-strategy-orchestration-pause-audit-smoke.sql"
       - "scripts/rubi-local-strategy-orchestration-pause-concurrency.sh"
       - "scripts/rubi-local-partner-academy-progress-smoke.sql"
@@ -147,6 +148,9 @@ jobs:
           -v consumer_id="$RUBI_QA_CONSUMER_USER_ID"
           -v merchant_id="$RUBI_QA_MERCHANT_USER_ID"
           -f scripts/rubi-local-analytics-privacy-smoke.sql
+
+      - name: Verify public table privilege hardening and future defaults
+        run: psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f scripts/rubi-local-public-table-privilege-hardening-smoke.sql
       - name: Verify Sprint 308 audited Strategy Orchestration pause on disposable PostgreSQL
         run: |
           psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 \
