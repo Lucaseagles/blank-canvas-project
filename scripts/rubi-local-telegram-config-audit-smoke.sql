@@ -9,7 +9,9 @@ SELECT
   (SELECT coalesce(jsonb_agg(to_jsonb(t) ORDER BY t.id), '[]'::jsonb) FROM public.telegram_config t) AS config_rows,
   (SELECT coalesce(jsonb_agg(to_jsonb(c) ORDER BY c.platform_id), '[]'::jsonb)
    FROM public.integration_credentials c WHERE c.platform_id='telegram') AS credential_rows,
-  (SELECT count(*) FROM vault.secrets) AS vault_secret_count;
+  (SELECT count(*) FROM vault.secrets) AS vault_secret_count,
+  public.get_integration_secret('telegram','channel_id') AS channel_secret,
+  public.get_integration_secret('telegram','bot_token') AS bot_secret;
 GRANT SELECT ON TABLE pg_temp.rubi_qa_telegram_before TO service_role;
 
 CREATE FUNCTION pg_temp.rubi_qa_reject_telegram_config_audit()
@@ -45,7 +47,9 @@ BEGIN
     OR (SELECT coalesce(jsonb_agg(to_jsonb(c) ORDER BY c.platform_id), '[]'::jsonb)
         FROM public.integration_credentials c WHERE c.platform_id='telegram')
       IS DISTINCT FROM v_before.credential_rows
-    OR (SELECT count(*) FROM vault.secrets) IS DISTINCT FROM v_before.vault_secret_count THEN
+    OR (SELECT count(*) FROM vault.secrets) IS DISTINCT FROM v_before.vault_secret_count
+    OR public.get_integration_secret('telegram','channel_id') IS DISTINCT FROM v_before.channel_secret
+    OR public.get_integration_secret('telegram','bot_token') IS DISTINCT FROM v_before.bot_secret THEN
     RAISE EXCEPTION 'Telegram config or Vault state survived failed audit insert';
   END IF;
 END;
@@ -102,6 +106,17 @@ BEGIN
   ) THEN
     RAISE EXCEPTION 'Telegram audit contains a secret or channel identifier';
   END IF;
+  BEGIN
+    PERFORM public.rubi_update_admin_setting_audited(
+      'telegram_config', v_config_id::uuid,
+      jsonb_build_object('channel_id','rubi-qa-generic-bypass'),
+      jsonb_build_object('channel_id','rubi-qa-success-channel'),
+      current_setting('rubi.qa_master_id')::uuid
+    );
+    RAISE EXCEPTION 'RUBI_QA_EXPECTED_GENERIC_TELEGRAM_WRITE_REJECTION_NOT_RAISED';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM NOT LIKE '%Unknown configuration source%' THEN RAISE; END IF;
+  END;
 END;
 $success$;
 
