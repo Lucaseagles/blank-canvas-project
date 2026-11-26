@@ -29,7 +29,7 @@ test("local PostgreSQL smoke checks RLS, anonymous restrictions and grants", asy
     "has_table_privilege('anon'",
     "has_table_privilege('authenticated'",
     "has_table_privilege('service_role'",
-    "analytics_events privacy grants and RLS smoke: PASS",
+    "analytics_events RLS, personal isolation and least-privilege smoke: PASS",
   ]) assert.ok(sql.includes(expected), `missing smoke assertion: ${expected}`);
 });
 
