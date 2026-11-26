@@ -30,10 +30,15 @@ select public.rubi_set_partner_academy_lesson_completion(current_setting('rubi.t
 do $academy$
 declare
   v_count integer;
+  v_rpc_count integer;
 begin
   select count(*) into v_count from public.hub_partner_academy_progress
   where user_id=current_setting('rubi.test.partner_id')::uuid and lesson_key='common:foundations';
-  if v_count<>1 then raise exception 'Idempotent completion should persist exactly one row; got %',v_count; end if;
+  select count(*) into v_rpc_count from public.rubi_get_partner_academy_progress(current_setting('rubi.test.partner_id')::uuid)
+  where lesson_key='common:foundations';
+  if v_count<>1 or v_rpc_count<>1 then
+    raise exception 'Expected one persisted row and one readable RPC row; table %, RPC %',v_count,v_rpc_count;
+  end if;
 end;
 $academy$;
 do $academy$
