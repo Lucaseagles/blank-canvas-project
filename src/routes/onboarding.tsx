@@ -18,7 +18,7 @@ const audiences = [
   { id: "partner" as const, icon: Megaphone, title: "Quero divulgar e ganhar comissões", detail: "Campanhas e produtos elegíveis da Hub Eagles." },
 ];
 const partnerTypes: { id: PartnerType; title: string }[] = [
-  { id: "micro_influencer", title: "Nano ou microcriador" }, { id: "influencer", title: "Influenciador" },
+  { id: "micro_influencer", title: "Nano ou microinfluenciador" }, { id: "influencer", title: "Influenciador" },
   { id: "affiliate", title: "Afiliado" }, { id: "expert", title: "Expert" },
 ];
 
