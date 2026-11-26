@@ -12,6 +12,7 @@ import { z } from "zod";
 const registerSearchSchema = z.object({
   ref: z.string().optional(),
   campaign_id: z.string().optional(),
+  partner_ref: z.string().uuid().optional(),
   returnTo: z.string().optional(),
   audience: z.enum(["consumer", "merchant", "partner"]).optional(),
 });
@@ -74,7 +75,7 @@ function RegisterPage() {
         // Forward ref to login if present
         navigate({ 
           to: "/auth",
-          search: { ref: search.ref, campaign_id: search.campaign_id, returnTo: search.returnTo, audience: search.audience }
+          search: { ref: search.ref, campaign_id: search.campaign_id, partner_ref: search.partner_ref, returnTo: search.returnTo, audience: search.audience }
         });
 
       }
@@ -106,6 +107,7 @@ function RegisterPage() {
           </div>
         </CardHeader>
         <CardContent className="px-10 pb-12">
+          {search.partner_ref && <div className="mb-5 rounded-2xl border border-primary/20 bg-primary/5 p-4 text-sm leading-6">Você chegou por um convite de parceiro da Hub Eagles. Se concluir seu cadastro, a origem do convite poderá ficar vinculada por até 90 dias para compras elegíveis. Isso não altera o preço dos produtos nem garante comissão ou desconto.</div>}
           <form onSubmit={handleRegister} className="space-y-5">
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Alias: Nome de Exibição</Label>
@@ -170,7 +172,7 @@ function RegisterPage() {
           <div className="mt-8 pt-8 border-t border-glass-border text-center space-y-4">
             <p className="text-sm text-muted-foreground font-medium">
               Já registrado?{" "}
-              <Link to="/auth" search={{ ref: search.ref, campaign_id: search.campaign_id, returnTo: search.returnTo }} className="text-primary font-black uppercase tracking-tighter italic hover:underline">
+              <Link to="/auth" search={{ ref: search.ref, campaign_id: search.campaign_id, partner_ref: search.partner_ref, returnTo: search.returnTo }} className="text-primary font-black uppercase tracking-tighter italic hover:underline">
                 Engajar Login
               </Link>
             </p>
