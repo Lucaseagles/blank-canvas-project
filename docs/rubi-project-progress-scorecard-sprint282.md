@@ -245,3 +245,55 @@ Sempre publicar separadamente:
 - dependências, riscos e intervalo de esforço restante.
 
 Nenhuma porcentagem pode mudar sem evidência nova e identificável.
+
+
+## 12. Atualização consolidada após integrações — 2026-11-26
+
+Esta seção atualiza o corte histórico de 20/11 sem apagar a fotografia anterior. HEAD da main neste corte: `8bb050f5121f07eaa3884271cdca774caafbc323`.
+
+### 12.1 Integrações recentes confirmadas
+
+| PR | Entrega | Estado |
+|---|---|---|
+| #313 | Smart Collection: gravações administrativas server-only | Integrada |
+| #311 | Atribuição transacional de campanhas orgânicas | Integrada |
+| #312 | Privacidade de analytics e privilégios mínimos | Integrada |
+| #310 | Strategy Orchestration: pausa e ciclo auditado | Integrada |
+| #309 | Inventário completo e reconciliação documental | Integrada |
+| #308 | Auditoria administrativa de vídeo/compliance, rollback e concorrência | Integrada |
+| #306 | Atualização de prontidão do Story → oferta | Integrada |
+
+A PR #304 foi encerrada como supersedida pela #310, pois seus RPCs antigos foram substituídos por funções auditadas server-only na main. Não deve ser contada como entrega adicional.
+
+### 12.2 Evidência técnica mais recente
+
+**PR #308 / Sprint 307**, validada antes do merge:
+- Hub V1 Integration QA: SUCCESS, 95/95 etapas.
+- Sprint 33 QA: SUCCESS, 16/16 etapas.
+- RUBI Local Authenticated E2E: SUCCESS, 22/22 testes esperados; 11 cenários obrigatórios em mobile e desktop; zero unexpected, skipped ou flaky.
+- Supabase local descartável: smokes de Smart Collection, analytics, Strategy Orchestration e vídeo/compliance aprovados. O smoke de vídeo comprovou grants, Owner/non-Owner, rollback quando a auditoria falha, ciclo native-video/bridge-video e concorrência serializada.
+- Artifact E2E sanitizado gerado; o ambiente local foi encerrado ao final.
+
+**PR #310 / Sprint 308** também entrou na main com Hub V1, Sprint 33 e E2E aprovados no HEAD validado; seus smokes cobriram criação, plano, aprovação e pausa auditada da Strategy Orchestration, rollback e concorrência.
+
+### 12.3 Métricas que permanecem separadas
+
+- **Cobertura técnica V1:** baseline provisória preservada em **36,5/48 = 76,0%**. Nenhum ponto novo foi atribuído pelas integrações desta rodada; a distribuição autoritativa por linha ainda precisa ser reconciliada.
+- **Estratégias 11×:** recontagem direta de `src/lib/rubi-growth-11x.ts` na main atual confirma **14/35 code-observed (40,0%)**, **18/35 execution-plan (51,4%)** e **3/35 external-blocker (8,6%)**. Esses estados não equivalem a execução comercial.
+- **Upgrades:** sete PRs recentes integradas nesta trilha, mas isso não é o denominador global de tarefas únicas. O programa global continua não quantificável até consolidar e deduplicar U1–U8.
+- **Sprints:** as entregas recentes 307–310 foram integradas por PRs #308, #310, #311 e #313; PRs documentais #306 e #309 atualizam evidências, não são novos pontos de funcionalidade.
+- **Operação comercial:** continua sem percentual confiável de receita, vendas pagas, entregas ou recompra. Nenhuma dessas métricas foi inferida dos testes locais.
+
+### 12.4 Gaps externos e de produção que permanecem
+
+- Staging HTTPS autorizado e identidades/dados descartáveis ainda são necessários para fechar o gate hospedado do critério 02.4.
+- Checkout de teste do provedor e round-trip/atribuição confirmada permanecem pendentes; interesse/clique não é venda.
+- Migrations recentes foram integradas ao repositório; a validação ocorreu em Supabase local descartável. **Não declarar que foram aplicadas ao Supabase remoto** sem execução e evidência próprias.
+- Homologação financeira isolada, integrações externas, operação por coortes e resultados comerciais continuam separados da cobertura técnica.
+
+### 12.5 Classificação e decisão
+
+- Atualização do scorecard: **upgrade-only / governança e evidência**.
+- Pontos V1 adicionais nesta atualização: **0**.
+- A baseline de 36,5/48 não é reauditoria linha a linha e não deve ser apresentada como scorecard atual definitivo.
+- Não há data conclusiva de conclusão até reconciliar os 48 critérios, fechar o denominador U1–U8 e obter as dependências externas necessárias.
