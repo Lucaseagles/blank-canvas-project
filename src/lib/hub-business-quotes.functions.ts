@@ -173,31 +173,24 @@ export const updateHubBusinessQuoteAdmin = createServerFn({ method: "POST" })
   .middleware([requireOwnerRole])
   .validator((input: unknown) => z.object({
     quoteId: z.string().uuid(),
+    expectedUpdatedAt: z.string().datetime({ offset: true }),
     status: z.enum(["requested", "reviewing", "responded", "closed"]),
     ownerNote: z.string().trim().max(500),
   }).parse(input))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: existing, error: lookupError } = await (supabaseAdmin as any)
-      .from("hub_b2b_quote_requests").select("id,status,owner_note,responded_at").eq("id", data.quoteId).maybeSingle();
-    if (lookupError) throw lookupError;
-    if (!existing) throw new Error("Cotação não encontrada.");
-    if (data.status === "responded" && !data.ownerNote.trim()) throw new Error("Registre uma resposta comercial antes de marcar como respondida.");
-    if (existing.status === "closed" && data.status !== "closed")
-      throw new Error("Solicitação encerrada. Não é possível reabri-la.");
-    const { error } = await (supabaseAdmin as any)
-      .from("hub_b2b_quote_requests")
-      .update({
-        status: data.status,
-        owner_note: data.ownerNote,
-        updated_at: new Date().toISOString(),
-        // First response is a server-side timestamp, never the time of a mere
-        // status change. Preserve it after follow-ups or closure.
-        responded_at: existing.responded_at || (data.ownerNote.trim() ? new Date().toISOString() : null),
-      })
-      .eq("id", data.quoteId);
-    if (error) throw error;
-    return { success: true };
+    if (data.status === "responded" && !data.ownerNote.trim())
+      throw new Error("Registre uma resposta comercial antes de marcar como respondida.");
+    const { data: updated, error } = await (supabaseAdmin as any).rpc("rubi_update_business_quote_admin_audited", {
+      p_quote_id: data.quoteId,
+      p_expected_updated_at: data.expectedUpdatedAt,
+      p_status: data.status,
+      p_owner_note: data.ownerNote,
+      p_actor: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    if (!updated) throw new Error("Cotação não atualizada.");
+    return { success: true, updatedAt: updated.updated_at };
   });
 
 /** Merchant may revoke optional follow-up at any time for their own quote. */
@@ -243,15 +236,18 @@ export const getHubBusinessFollowupsAdmin = createServerFn({ method: "GET" })
 /** Owner marks internal follow-up as handled; does NOT claim contact was sent. */
 export const completeHubBusinessFollowupAdmin = createServerFn({ method: "POST" })
   .middleware([requireOwnerRole])
-  .validator((input: unknown) => z.object({ quoteId: z.string().uuid() }).parse(input))
-  .handler(async ({ data }) => {
+  .validator((input: unknown) => z.object({
+    quoteId: z.string().uuid(),
+    expectedUpdatedAt: z.string().datetime({ offset: true }),
+  }).parse(input))
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: updated, error } = await (supabaseAdmin as any)
-      .from("hub_b2b_quote_requests")
-      .update({ followup_completed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
-      .eq("id", data.quoteId).eq("followup_opt_in", true)
-      .is("followup_completed_at", null).select("id").maybeSingle();
-    if (error) throw error;
+    const { data: updated, error } = await (supabaseAdmin as any).rpc("rubi_complete_business_followup_admin_audited", {
+      p_quote_id: data.quoteId,
+      p_expected_updated_at: data.expectedUpdatedAt,
+      p_actor: context.userId,
+    });
+    if (error) throw new Error(error.message);
     if (!updated) throw new Error("Acompanhamento indisponível ou já encerrado.");
-    return { success: true };
+    return { success: true, updatedAt: updated.updated_at };
   });
