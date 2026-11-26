@@ -5,6 +5,7 @@ const read=(path)=>readFileSync(new URL(path,import.meta.url),"utf8");
 const api=read("./hub-business-quotes.functions.ts");
 const migration=read("../../supabase/migrations/20261126123000_rubi_business_quote_admin_atomic_audit.sql");
 const quoteUi=read("../components/business/RubiBusinessQuotesAdmin.tsx");
+const smoke=read("../../scripts/rubi-local-business-quote-admin-audit-smoke.sql");
 const followupUi=read("../components/business/RubiBusinessFollowupsAdmin.tsx");
 
 test("Owner quote status updates use the atomic audited RPC, not direct table DML",()=>{
@@ -35,6 +36,10 @@ test("both SQL functions lock rows, enforce Owner, redact note values and audit 
  assert.match(migration,/Business follow-up changed; reload before completing/);
  assert.match(migration,/values_redacted/);
  assert.doesNotMatch(migration,/p_owner_note\s*,\s*'owner_note'/);
+});
+
+test("local PostgreSQL smoke proves rollback, Owner rejection, grants and lifecycle",()=>{
+ for(const token of ["RUBI_QA_FORCED_BUSINESS_QUOTE_AUDIT_FAILURE","rubi_update_business_quote_admin_audited","rubi_complete_business_followup_admin_audited","RUBI_QA_EXPECTED_STALE_BUSINESS_QUOTE_REJECTION_NOT_RAISED","private QA reply text","ROLLBACK;"]) assert.ok(smoke.includes(token),token);
 });
 
 test("quote UI passes the version it rendered to prevent stale overwrite",()=>{
