@@ -185,7 +185,7 @@ O score carregado permanece **37.5/48 = 78.1%**, gap aritmético **10.5 pontos**
 ### Evidência adicionada
 - `src/lib/rubi-business-quote-admin-atomic-audit.test.mjs`
 - `scripts/rubi-local-business-quote-admin-audit-smoke.sql`
-- Workflow `rubi-local-authenticated-e2e.yml) executa o smoke em Supabase local descartável com identidade Master, não-Owner e lojista aprovados.
+- Workflow `rubi-local-authenticated-e2e.yml` executa o smoke em Supabase local descartável com identidade Master, não-Owner e lojista aprovados.
 
 ### Limite de aceite
 A PR cobre duas mutações específicas do RUBI Business. Não certifica o inventário de todas as mutações administrativas, nem substitui busca de bypass, testes de cada família, rollback/concorrência global, E2E completo e revisão de grants. O critério 11.3 não é declarado completo nesta entrega.
