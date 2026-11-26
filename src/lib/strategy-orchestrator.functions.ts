@@ -44,37 +44,85 @@ export const getStrategyOrchestrationVideos = createServerFn({ method: "GET" })
     const supabase = await db();
     const { data, error } = await supabase
       .from("videos")
-      .select("id,title,platform,video_url,external_url,thumbnail_url")
+      .select("id,title,video_url,external_url,thumbnail_url")
       .order("created_at", { ascending: false })
       .limit(100);
     if (error) throw error;
     return data ?? [];
   });
 
-export const createStrategyOrchestration = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ name: z.string().trim().min(2).max(160), objective: Objective, priority: z.number().int().min(0).max(100), notes: z.string().trim().max(1000).optional().nullable(), strategy_ids: z.array(z.string().uuid()).max(50), video_ids: z.array(z.string().uuid()).max(100).default([]) }).parse(data)).handler(async ({ data }) => {
-  const supabase = await db();
-  const { data: id, error } = await supabase.rpc("create_strategy_orchestration", { p_name: data.name, p_objective: data.objective, p_priority: data.priority, p_notes: data.notes ?? null, p_strategy_ids: data.strategy_ids, p_video_ids: data.video_ids });
-  if (error) throw error;
-  return { id: id as string };
-});
+export const createStrategyOrchestration = createServerFn({ method: "POST" })
+  .middleware([requireOwnerRole])
+  .validator((data: unknown) => z.object({
+    name: z.string().trim().min(2).max(160),
+    objective: Objective,
+    priority: z.number().int().min(0).max(100),
+    notes: z.string().trim().max(1000).optional().nullable(),
+    strategy_ids: z.array(z.string().uuid()).max(50),
+    video_ids: z.array(z.string().uuid()).max(100).default([]),
+  }).parse(data))
+  .handler(async ({ data, context }) => {
+    const supabase = await db();
+    const { data: result, error } = await supabase.rpc("rubi_create_strategy_orchestration_audited", {
+      p_name: data.name,
+      p_objective: data.objective,
+      p_priority: data.priority,
+      p_notes: data.notes ?? null,
+      p_strategy_ids: data.strategy_ids,
+      p_video_ids: data.video_ids,
+      p_actor: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    if (typeof result?.id !== "string") {
+      throw new Error("Criação e auditoria da estratégia não foram confirmadas.");
+    }
+    return { id: result.id as string };
+  });
 
-export const generateStrategyOrchestrationPlan = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data)).handler(async ({ data }) => {
-  const supabase = await db();
-  const { data: plan, error } = await supabase.rpc("generate_strategy_orchestration_plan", { p_orchestration_id: data.id });
-  if (error) throw error;
-  return plan as any;
-});
+export const generateStrategyOrchestrationPlan = createServerFn({ method: "POST" })
+  .middleware([requireOwnerRole])
+  .validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const supabase = await db();
+    const { data: plan, error } = await supabase.rpc("rubi_generate_strategy_orchestration_plan_audited", {
+      p_orchestration_id: data.id,
+      p_actor: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    if (!plan || typeof plan !== "object" || !Array.isArray(plan.strategies)) {
+      throw new Error("Geração e auditoria do plano não foram confirmadas.");
+    }
+    return plan as any;
+  });
 
-export const approveStrategyOrchestration = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data)).handler(async ({ data }) => {
-  const supabase = await db();
-  const { data: approved, error } = await supabase.rpc("approve_strategy_orchestration", { p_orchestration_id: data.id });
-  if (error) throw error;
-  return { approved: Boolean(approved) };
-});
+export const approveStrategyOrchestration = createServerFn({ method: "POST" })
+  .middleware([requireOwnerRole])
+  .validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const supabase = await db();
+    const { data: result, error } = await supabase.rpc("rubi_approve_strategy_orchestration_audited", {
+      p_orchestration_id: data.id,
+      p_actor: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    if (result?.approved !== true || result?.id !== data.id || result?.status !== "approved") {
+      throw new Error("Aprovação e auditoria da estratégia não foram confirmadas.");
+    }
+    return { approved: true };
+  });
 
-export const pauseStrategyOrchestration = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data)).handler(async ({ data }) => {
-  const supabase = await db();
-  const { error } = await supabase.from("strategy_orchestrations").update({ status: "paused", updated_at: new Date().toISOString() }).eq("id", data.id).in("status", ["ready", "approved"]);
-  if (error) throw error;
-  return { success: true };
-});
+export const pauseStrategyOrchestration = createServerFn({ method: "POST" })
+  .middleware([requireOwnerRole])
+  .validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const supabase = await db();
+    const { data: result, error } = await supabase.rpc("rubi_pause_strategy_orchestration_audited", {
+      p_orchestration_id: data.id,
+      p_actor: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    if (result?.success !== true || result?.id !== data.id) {
+      throw new Error("Pausa e auditoria da estratégia não foram confirmadas.");
+    }
+    return { success: true, id: data.id, status: "paused" as const };
+  });
