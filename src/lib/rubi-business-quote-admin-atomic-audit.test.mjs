@@ -11,14 +11,18 @@ const followupUi=read("../components/business/RubiBusinessFollowupsAdmin.tsx");
 test("Owner quote status updates use the atomic audited RPC, not direct table DML",()=>{
  assert.match(api,/updateHubBusinessQuoteAdmin[\s\S]*?\.middleware\(\[requireOwnerRole\]\)/);
  assert.match(api,/rubi_update_business_quote_admin_audited/);
- assert.doesNotMatch(api,/export const updateHubBusinessQuoteAdmin[\s\S]*?\.from\(["']hub_b2b_quote_requests["']\)[\s\S]*?\.update\(/);
+ const updateBlock=api.split("export const updateHubBusinessQuoteAdmin")[1]?.split("\nexport const ")[0] ?? "";
+ assert.ok(updateBlock.includes("rubi_update_business_quote_admin_audited"));
+ assert.doesNotMatch(updateBlock,/\.from\(["\x27]hub_b2b_quote_requests["\x27]\)[\s\S]*?\.update\(/);
  assert.match(api,/expectedUpdatedAt:\s*z\.string\(\)\.datetime/);
 });
 
 test("Owner follow-up completion is atomic, audited and concurrency guarded",()=>{
  assert.match(api,/rubi_complete_business_followup_admin_audited/);
- assert.doesNotMatch(api,/export const completeHubBusinessFollowupAdmin[\s\S]*?\.from\(["']hub_b2b_quote_requests["']\)[\s\S]*?\.update\(/);
- assert.match(followupUi,/expectedUpdatedAt:item\.updated_at/);
+ const completeBlock=api.split("export const completeHubBusinessFollowupAdmin")[1]?.split("\nexport const ")[0] ?? "";
+ assert.ok(completeBlock.includes("rubi_complete_business_followup_admin_audited"));
+ assert.doesNotMatch(completeBlock,/\.from\(["\x27]hub_b2b_quote_requests["\x27]\)[\s\S]*?\.update\(/);
+ assert.match(followupUi,/expectedUpdatedAt:\s*item\.updated_at/);
  assert.match(followupUi,/updated_at/);
 });
 
