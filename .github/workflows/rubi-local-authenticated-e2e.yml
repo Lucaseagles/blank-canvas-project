@@ -1,6 +1,7 @@
 name: RUBI Local Authenticated E2E — Four Profiles
 
 # Revalidate Sprint 307 together with the current main security regressions after branch synchronization.
+# Validate Sprint 307 against the latest documentation and security baseline on main.
 
 on:
   pull_request:
