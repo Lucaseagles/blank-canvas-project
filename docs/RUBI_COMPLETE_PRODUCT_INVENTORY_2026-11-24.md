@@ -1150,3 +1150,35 @@ Para o HEAD corretivo `79bc6c882377b57ac7d9ffb9e7076c4241c0444a`:
 - RUBI Local Authenticated E2E — run 195: IN_PROGRESS; Supabase local já iniciou com sucesso e aguarda a etapa de aplicação das migrations/execução do smoke corrigido.
 
 O smoke PostgreSQL ainda não foi declarado aprovado. Manter a PR #310 em Draft até o run 195 concluir e a concorrência receber prova dedicada.
+
+
+## 27. Atualização consolidada — 2026-11-26
+
+Esta seção prevalece sobre notas históricas anteriores que descrevem PRs como Draft ou workflows ainda em execução. As notas antigas foram preservadas como histórico das rodadas de correção.
+
+### PRs e evidências mais recentes
+- **PR #308 / Sprint 307:** HEAD `44566d17b9d714953768e0a07b5fe36b4ef4fb33`; Hub V1 QA, Sprint 33 QA e RUBI Local Authenticated E2E concluídos com SUCCESS. E2E: 22/22, 11 jornadas em mobile/desktop, sem falhas/skips/flaky; smoke PostgreSQL comprovou grants, Owner/non-Owner, rollback de auditoria, ciclos native/bridge-video e concorrência em duas sessões. PR aberta, não integrada, pronta para revisão.
+- **PR #310 / Sprint 308:** HEAD `17d1473ae7c637a7269fadc9c7da07b74d0a323b`; os três workflows obrigatórios SUCCESS. Smoke PostgreSQL comprovou autorização, estados, rollback atômico e concorrência serializada; E2E 22/22, 11 jornadas mobile/desktop, zero falhas/skips/flaky. PR aberta, não integrada, pronta para revisão.
+- **PR #311 / Sprint 309:** HEAD `21c17531694ff005222d47a4476873316a4c75f2`; os três workflows obrigatórios SUCCESS. Teste concorrente de produto/canal/campanha: uma gravação vence, uma recebe P0001, uma linha persistida e um evento de auditoria. PR aberta, não integrada, pronta para revisão.
+- **PR #309:** este próprio inventário/reconciliação continua em Draft até esta atualização documental ser revisada. Nenhuma PR foi integrada neste corte; a main permanece inalterada por estas PRs.
+
+### 27.1 Auditoria inicial de privacidade e analytics
+
+A leitura do código da main identificou um gap a tratar antes de ampliar rastreamento:
+- `src/routes/__root.tsx` cria/guarda identificador anônimo persistente e de sessão e envia `SESSION_START` via RPC no carregamento do shell, sem verificar uma preferência global de analytics.
+- `src/components/PopupTimingController.tsx` também envia `POPUP_TIMING_TRIGGER` via RPC.
+- `src/lib/analytics.ts` grava eventos comportamentais e IDs de sessão/anônimo; não consulta consentimento global. A função exclui a conta Owner do tracking client-side, mas isso não substitui preferência/consentimento dos demais usuários.
+- `src/lib/personalization.functions.ts` registra ações de comportamento em `analytics_events` e atualiza pontuação de interesse por categoria; a verificação encontrada é de identidade opcional, não de opt-in de analytics.
+- O perfil expõe preferências de categoria/marketplace e opt-out de social proof, não foi localizado nesta varredura um controle global de analytics/behavioral tracking.
+- As migrations iniciais e posteriores mostram políticas distintas para eventos autenticados e anônimos. A política para anônimos exige `user_id IS NULL`; o caminho autenticado exige correspondência do usuário. Isso reduz spoofing de identidade, mas não constitui controle de consentimento.
+- A busca inicial não localizou política/rotina explícita de retenção, exportação ou exclusão seletiva de eventos analytics. Isso é “não localizado nesta varredura”, não prova de inexistência no ambiente remoto.
+
+**Decisão:** não desligar tracking, não adicionar toggle apenas visual e não alterar RLS/migrations nesta atualização. Próximo passo é inventariar todos os escritores (client, RPC, server/service-role e workers), eventos necessários por finalidade, dependências de feed/atribuição/segurança, política publicada, base legal/consentimento, retenção, exportação, anonimização e exclusão. Depois desenhar opt-in/opt-out com comportamento server-side consistente e testes de regressão. A revisão jurídica da política LGPD deve ser independente da implementação técnica.
+
+### 27.2 Classificação e score
+
+- Atualização documental e de evidências: **upgrade-only**.
+- 11.3 recebe evidência mais forte nos caminhos cobertos por PR #308, mas o inventário DML transversal ainda não está completo; não converter ponto.
+- 12.3 tem evidência E2E local autenticada em quatro perfis, mas staging hospedado continua pendente; não converter ponto.
+- 11.4 continua em conflito com a decisão aprovada de Shadow Master único e privado; exige versionamento explícito da rubrica, sem criar outro Master.
+- Baseline agregada 36,5/48 permanece provisória; score por linha não reconciliado. Pontos novos: 0.
