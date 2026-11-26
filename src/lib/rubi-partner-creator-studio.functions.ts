@@ -52,10 +52,20 @@ export const createPartnerCreatorUploadUrl=createServerFn({method:"POST"})
   const extension=data.contentType==="video/mp4"?"mp4":"webm";
   if(data.fileName.split(".").pop()?.toLowerCase()!==extension)throw new Error("A extensão não corresponde ao formato do vídeo.");
   const bucket=await supabaseAdmin.storage.getBucket(VIDEO_BUCKET);
-  if(bucket.error)throw new Error("O armazenamento privado de vídeos não está disponível.");
-  if(bucket.data.public||bucket.data.file_size_limit!==VIDEO_MAX_BYTES||
-    JSON.stringify([...(bucket.data.allowed_mime_types??[])].sort())!==JSON.stringify([...VIDEO_MIME_TYPES].sort()))
-    throw new Error("O armazenamento de vídeos precisa de ajuste administrativo antes de receber conteúdo de parceiros.");
+  if(bucket.error){
+    const missing=bucket.error.statusCode==="404"||/not found|does not exist/i.test(bucket.error.message);
+    if(!missing)throw new Error(bucket.error.message);
+    const {error:createError}=await supabaseAdmin.storage.createBucket(VIDEO_BUCKET,{
+      public:false,fileSizeLimit:VIDEO_MAX_BYTES,allowedMimeTypes:[...VIDEO_MIME_TYPES]
+    });
+    if(createError)throw new Error(createError.message);
+  }else if(bucket.data.public||bucket.data.file_size_limit!==VIDEO_MAX_BYTES||
+    JSON.stringify([...(bucket.data.allowed_mime_types??[])].sort())!==JSON.stringify([...VIDEO_MIME_TYPES].sort())){
+    const {error:updateError}=await supabaseAdmin.storage.updateBucket(VIDEO_BUCKET,{
+      public:false,fileSizeLimit:VIDEO_MAX_BYTES,allowedMimeTypes:[...VIDEO_MIME_TYPES]
+    });
+    if(updateError)throw new Error(updateError.message);
+  }
   const path=`partner/${userId}/${crypto.randomUUID()}.${extension}`;
   const {data:signed,error}=await supabaseAdmin.storage.from(VIDEO_BUCKET).createSignedUploadUrl(path);
   if(error||!signed?.token)throw new Error(error?.message??"Não foi possível preparar o envio.");
