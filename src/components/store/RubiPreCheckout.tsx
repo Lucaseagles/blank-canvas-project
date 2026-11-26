@@ -263,7 +263,7 @@ export function RubiPreCheckout({ product, returnTo, partnerCode, visitToken, pu
           <p className="text-xs leading-5 text-muted-foreground">A conta é opcional. Você pode seguir para a compra sem se cadastrar; pagamento, frete e entrega continuam sendo confirmados no checkout oficial do fornecedor.</p>
           <DialogFooter className="flex-col gap-2 sm:flex-col">
             <Button asChild className="w-full">
-              <Link to="/auth" onClick={() => trackInviteAction("continue_to_auth")} search={{ returnTo, audience: undefined, ref: undefined, campaign_id: undefined, partner_ref: origin === "partner" ? partnerCode : undefined }}>
+              <Link to="/auth" onClick={() => trackInviteAction("continue_to_auth")} search={{ returnTo, audience: "consumer", ref: undefined, campaign_id: undefined, partner_ref: origin === "partner" ? partnerCode : undefined }}>
                 Entrar ou criar minha conta
               </Link>
             </Button>
