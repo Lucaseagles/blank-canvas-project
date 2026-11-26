@@ -102,7 +102,7 @@ begin
     v_assignments:=v_assignments||case when v_assignments='' then '' else ', ' end||
       format('%I=(jsonb_populate_record(null::public.referral_tiers,$2)).%I',v_key,v_key);
   end loop;
-  v_assignments:=v_assignments||', updated_at=now()';
+  v_assignments:=v_assignments||', updated_at=clock_timestamp()';
   execute format('update public.referral_tiers t set %s where t.id=$1 returning t.*',v_assignments)
     into v_after using p_id,p_patch;
   get diagnostics v_rows = row_count;
@@ -142,7 +142,7 @@ begin
   end if;
   if not v_before.is_active then raise exception 'Referral tier is already inactive'; end if;
 
-  update public.referral_tiers set is_active=false,updated_at=now()
+  update public.referral_tiers set is_active=false,updated_at=clock_timestamp()
   where id=p_id returning * into v_after;
 
   insert into public.admin_audit_log(
