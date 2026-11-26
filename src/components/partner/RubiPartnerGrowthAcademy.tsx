@@ -154,9 +154,12 @@ export function RubiPartnerGrowthAcademy({ partnerType, links, visits, confirmed
   const milestones = [
     { label: "Primeiro link individual ativo", done: links > 0 },
     { label: "Primeira visita rastreada", done: visits > 0 },
+    { label: "Dez visitas rastreadas", done: visits >= 10 },
     { label: "Primeira venda confirmada", done: confirmedSales > 0 },
-    { label: "Cinco vendas confirmadas", done: confirmedSales >= 5 }
+    { label: "Cinco vendas confirmadas", done: confirmedSales >= 5 },
+    { label: "Dez vendas confirmadas", done: confirmedSales >= 10 }
   ];
+  const developmentStage = confirmedSales >= 5 ? "Consistência" : confirmedSales > 0 ? "Conversão" : visits >= 10 ? "Distribuição" : links > 0 ? "Ativação" : "Preparação";
   const completed = milestones.filter(item => item.done).length;
   const progress = Math.round((completed / milestones.length) * 100);
 
@@ -178,14 +181,14 @@ export function RubiPartnerGrowthAcademy({ partnerType, links, visits, confirmed
 
     <div className="space-y-3 rounded-2xl border bg-background/70 p-4 sm:p-5">
       <div className="flex flex-wrap items-end justify-between gap-2">
-        <div><p className="text-xs font-bold uppercase tracking-wider text-primary">Missões de execução</p><h3 className="text-lg font-black">Seu progresso comercial</h3></div>
+        <div><p className="text-xs font-bold uppercase tracking-wider text-primary">Missões de execução</p><h3 className="text-lg font-black">Seu progresso comercial</h3><p className="mt-1 text-xs text-muted-foreground">Nível de desenvolvimento: <strong className="text-foreground">{developmentStage}</strong></p></div>
         <p className="text-2xl font-black tabular-nums">{progress}%</p>
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-muted" role="progressbar" aria-label="Progresso das missões comerciais verificadas" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><div className="h-full rounded-full bg-primary transition-[width] duration-200" style={{ width: progress + "%" }} /></div>
       <ul className="grid gap-2 sm:grid-cols-2">
         {milestones.map(item => <li key={item.label} className="flex items-start gap-2 text-sm">{status(item.done)}<span>{item.label}</span></li>)}
       </ul>
-      <p className="text-xs leading-5 text-muted-foreground">Progresso calculado somente com dados disponíveis no portal. Não representa conclusão de curso, aprovação de bônus, mudança automática de comissão ou promessa de renda.</p>
+      <p className="text-xs leading-5 text-muted-foreground">Níveis de desenvolvimento são marcos de aprendizagem e execução, não faixas de comissão. Progresso calculado somente com dados disponíveis no portal; não representa conclusão de curso, aprovação de bônus, mudança automática de comissão ou promessa de renda.</p>
     </div>
 
     <div className="space-y-3">
