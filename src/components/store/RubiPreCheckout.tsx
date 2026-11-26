@@ -249,25 +249,25 @@ export function RubiPreCheckout({ product, returnTo, partnerCode, visitToken, pu
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Heart aria-hidden="true" className="h-5 w-5 text-primary" /> Faça parte da RUBI
+              <Heart aria-hidden="true" className="h-5 w-5 text-primary" /> Sua experiência RUBI começa aqui
             </DialogTitle>
             <DialogDescription>
-              Encontre outras opções para o que você procura, acompanhe ofertas da RUBI e descubra produtos de acordo com seus interesses.
-              Criar sua conta é gratuito e opcional: você pode continuar explorando sem cadastro.
+              Crie gratuitamente seu espaço para descobrir ofertas com mais organização e receber uma experiência cada vez mais alinhada ao que você procura. Leva poucos passos e você pode voltar a esta oferta.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2 rounded-xl border p-4 text-sm">
-            <p>Encontre alternativas e produtos relacionados ao que você veio buscar.</p>
-            <p>Salve seus interesses e consulte recursos disponíveis no seu perfil, como favoritos e recomendações.</p>
-            <p>Volte à oferta atual após entrar ou se cadastrar.</p>
+          <div className="grid gap-3 rounded-xl border p-4 text-sm">
+            <div className="flex gap-3"><Heart aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-primary" /><p><strong>Guarde o que chamou sua atenção.</strong><br /><span className="text-muted-foreground">Salve produtos favoritos para encontrá-los novamente.</span></p></div>
+            <div className="flex gap-3"><ShoppingBag aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-primary" /><p><strong>Descubra do seu jeito.</strong><br /><span className="text-muted-foreground">Escolha categorias de interesse e explore recomendações, vídeos e ofertas relacionadas.</span></p></div>
+            <div className="flex gap-3"><ShieldCheck aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-primary" /><p><strong>Tenha sua jornada organizada.</strong><br /><span className="text-muted-foreground">Acesse seu perfil e acompanhe os recursos disponíveis sem precisar recomeçar sua descoberta.</span></p></div>
           </div>
+          <p className="text-xs leading-5 text-muted-foreground">A conta é opcional. Você pode seguir para a compra sem se cadastrar; pagamento, frete e entrega continuam sendo confirmados no checkout oficial do fornecedor.</p>
           <DialogFooter className="flex-col gap-2 sm:flex-col">
             <Button asChild className="w-full">
               <Link to="/auth" onClick={() => trackInviteAction("continue_to_auth")} search={{ returnTo, audience: undefined, ref: undefined, campaign_id: undefined, partner_ref: origin === "partner" ? partnerCode : undefined }}>
                 Entrar ou criar minha conta
               </Link>
             </Button>
-            <Button className="w-full" variant="outline" onClick={() => setInviteOpen(false)}>Agora não, continuar vendo o produto</Button>
+            <Button className="w-full" variant="outline" onClick={() => setInviteOpen(false)}>Continuar sem cadastro</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
