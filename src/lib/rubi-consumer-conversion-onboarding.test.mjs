@@ -24,7 +24,7 @@ test("consumer education explains concrete value without guaranteed benefits or 
  assert.match(guide,/não garante desconto ou benefício/);
  const onboarding=read("../routes/onboarding.tsx");
  assert.match(onboarding,/Quais categorias mais interessam a você/);
- assert.match(onboarding,/Descubra mais\\. Encontre melhor/);
+ assert.match(onboarding,/Descubra mais\. Encontre melhor/);
  assert.match(onboarding,/Você pode alterar depois no perfil/);
  assert.match(onboarding,/Perfil registrado!/);
 });
