@@ -34,6 +34,8 @@ test("V1 audit discovers every current admin route and does not mistake RLS deni
  const audit=read("../routes/admin/v1-audit.tsx");
  const tree=read("../routeTree.gen.ts");
  assert.doesNotMatch(audit,/KNOWN_ROUTES/);
+ assert.match(audit,/const routePaths = \\[\\.\\.\\.ids\\]/);
+ assert.ok(audit.includes(String.raw`replace(/\\/$/, "")`));
  assert.match(audit,/filter\(\(path\) => path === "\/admin" \|\| path\.startsWith\("\/admin\/"\)\)/);
  assert.match(audit,/adminRouteCount = adminPaths\.length/);
  assert.match(audit,/permission denied\|row\.level security\|not authorized\|401\|403/);
