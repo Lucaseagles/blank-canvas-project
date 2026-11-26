@@ -117,6 +117,8 @@ jobs:
         run: node scripts/rubi-local-auth-fixtures.mjs seed-profiles
       - name: Seed disposable supplier, product, reviewed movement and private Story
         run: node scripts/rubi-local-story-fixture.mjs
+      - name: Prove product/channel/campaign uniqueness under concurrent PostgreSQL transactions
+        run: node scripts/rubi-local-distribution-campaign-concurrency.mjs
       - name: Install PostgreSQL client for isolated worker smoke
         run: |
           if ! command -v psql >/dev/null 2>&1; then
