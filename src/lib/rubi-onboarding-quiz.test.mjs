@@ -28,3 +28,20 @@ test("each audience's quiz is stored with atomic preferences, pending approval a
  assert.doesNotMatch(onboarding,/\.from\("commercial_profiles"\)\.insert/);
  assert.doesNotMatch(api,/\.from\("commercial_profiles"\)\.insert/);
 });
+
+test("premium partner onboarding explains differentiated affiliate, nano/micro, influencer and expert journeys",()=>{
+ const onboarding=read("../routes/onboarding.tsx");
+ const validator=read("./rubi-onboarding-quiz.functions.ts");
+ const invite=read("../components/profile/RubiAffiliateMiniInvite.tsx");
+ for(const label of ["Afiliado","Nano ou microcriador","Influenciador","Expert / especialista"])
+  assert.ok(onboarding.includes(label),"missing partner journey: "+label);
+ assert.match(onboarding,/Sua experiência Hub Eagles/);
+ assert.match(onboarding,/O que você encontrará na sua dashboard/);
+ assert.match(onboarding,/creator_tier:creatorTier/);
+ assert.match(onboarding,/creator_tier/);
+ assert.match(validator,/creator_tier/);
+ assert.match(onboarding,/não há mínimo de seguidores/);
+ assert.match(invite,/to="\/onboarding"/);
+ assert.match(invite,/partnerType:"affiliate"/);
+ assert.doesNotMatch(invite,/followers|follower_count|minimumFollowers/i);
+});
