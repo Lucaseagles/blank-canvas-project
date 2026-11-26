@@ -128,7 +128,7 @@ A rodada final da Sprint 307 foi confirmada no GitHub para o HEAD `44566d17b9d71
 - RUBI Local Authenticated E2E — Four Profiles: SUCCESS (run 45595134853), incluindo smoke PostgreSQL descartável, rollback por falha de auditoria, Owner isolation, concorrência em duas sessões e E2E autenticado mobile/desktop.
 - Os testes de rollback e concorrência comprovam o escopo de vídeo/bridge-video da Sprint 307; não certificam o inventário global de mutações administrativas.
 - Score permanece 36,5/48 (76,0%) como baseline agregada provisória; score por linha continua não reconciliado. Pontos novos convertidos: 0.
-- Classificação desta atualização: upgrade-only / atualização de evidência. PR #308 permanece Draft e não integrada.
+- Classificação desta atualização: upgrade-only / atualização de evidência. PR #308 permanece aberta, não Draft, pronta para revisão e não integrada (estado confirmado no GitHub em 2026-11-26).
 
 
 ## Atualização consolidada — 2026-11-26
@@ -200,3 +200,23 @@ Projeto consultado: `heartful-helper-box` / `akfvkjarpgocdsieuvvq`, estado ACTIV
 **Outro bloqueio de transparência:** `src/components/layout/Footer.tsx` mostra links “Política de Privacidade”, “Termos de Serviço” e “Configurações de Cookies”, mas os três usam `href="#"`. Não são destinos funcionais nem um mecanismo de consentimento. Não foi localizada uma rota de política publicada nesta varredura.
 
 **Conclusão atualizada:** a auditoria saiu da hipótese baseada apenas em migrations e confirmou o estado efetivo de RLS/grants/RPC no Supabase conectado. Ainda não foi executada alteração alguma. Próxima implementação deve ser isolada em branch/PR: correção de leitura pessoal apenas se testes confirmarem, redução least-privilege dos grants, e centro de privacidade com categorias e persistência server-side depois de fechar base legal/finalidades. Não aplicar alterações diretamente ao projeto conectado.
+
+
+## Estado de revisão confirmado — 2026-11-26 (consulta GitHub)
+
+Esta seção substitui qualquer status operacional anterior que tenha ficado desatualizado. O conteúdo histórico acima foi preservado para rastreabilidade.
+
+| PR | Estado atual consultado | Mergeable | Revisões humanas registradas | Decisão |
+|---|---|---|---|---|
+| #308 / Sprint 307 | Aberta, pronta para revisão, não Draft | true | Nenhuma | Testes técnicos verdes; aguarda revisão |
+| #309 / inventário mestre | Aberta, pronta para revisão, não Draft | true | Nenhuma | PR documental; check `qa` SUCCESS no HEAD `43d5e262657c27d1fdc6cfb9bc952f9ed901d2bc` |
+| #310 / Sprint 308 | Aberta, pronta para revisão, não Draft | true | Nenhuma | Testes técnicos verdes; aguarda revisão |
+| #311 / Sprint 309 | Aberta, pronta para revisão, não Draft | true | Nenhuma | Testes técnicos verdes; aguarda revisão |
+| #312 / analytics privacy | Aberta, pronta para revisão, não Draft | true | Nenhuma | Hub V1, Sprint 33 e E2E quatro perfis SUCCESS no HEAD `bf4fc9414c61ab6c321ef405ab4254122f43896b`; aguarda revisão |
+
+### Limites da evidência
+- O check `qa` da PR #309 passou com TypeScript, ESLint, build e regressão documental. Como o diff é somente Markdown, não houve execução dos workflows E2E/Hub V1 neste HEAD; os testes citados para #308, #310, #311 e #312 pertencem aos respectivos commits, não ao commit documental #309.
+- `mergeable=true` é estado de merge calculado pelo GitHub, não substitui aprovação humana nem confirma que todas as regras de proteção foram satisfeitas.
+- Nenhuma dessas PRs foi integrada nesta consulta. A branch `main` permaneceu inalterada.
+
+**Classificação:** upgrade-only / atualização de governança. Nenhum ponto V1 adicional reivindicado.
