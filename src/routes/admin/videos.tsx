@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { getAdminVideos, getAdminVideoFormOptions, createVideoUploadUrl, discardVideoUpload, saveVideo, deleteVideo, setVideoStatus } from "@/lib/video.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -185,7 +185,10 @@ function AdminVideosContent() {
           </div>
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <Button asChild className="h-12 px-8 font-black uppercase tracking-tighter italic gap-2 rounded-2xl shadow-2xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"><a href="/admin/videos/new"><Plus className="w-4 h-4" />New Video</a></Button>
+            <Button type="button" onClick={() => { setEditingVideo(null); setSelectedVideoFile(null); setIsDialogOpen(true); }} className="h-12 px-8 font-black uppercase tracking-tighter italic gap-2 rounded-2xl shadow-2xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"><Plus className="w-4 h-4" />New Video</Button>
+          <Button asChild type="button" variant="outline" className="h-12 px-5 rounded-2xl">
+            <a href="/admin/videos/new">New Bridge Video</a>
+          </Button>
             <DialogContent className="bg-glass-fallback border-glass-border backdrop-blur-2xl text-foreground max-w-md rounded-[2.5rem] shadow-2xl">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-black tracking-tighter">
