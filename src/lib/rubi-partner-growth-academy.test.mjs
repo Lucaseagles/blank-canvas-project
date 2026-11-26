@@ -72,3 +72,32 @@ test("all three onboarding audiences share the premium responsive and accessible
   assert.match(styles, /prefers-reduced-motion: reduce/);
   assert.match(styles, /@media \(max-width: 640px\)/);
 });
+
+test("individual lesson completion is persisted per approved partner and isolated by profile", () => {
+  const academy = read("../components/partner/RubiPartnerGrowthAcademy.tsx");
+  const server = read("./rubi-partner-academy-progress.functions.ts");
+  const migration = read("../../supabase/migrations/20261126150000_rubi_partner_academy_progress.sql");
+  for (const lessonKey of [
+    "common:foundations", "common:product-offer", "common:content",
+    "common:distribution", "common:backstage", "common:network",
+    "affiliate:catalog-to-sale", "micro_influencer:community",
+    "influencer:campaigns", "expert:authority"
+  ]) {
+    assert.ok(academy.includes(lessonKey), "missing stable lesson key " + lessonKey);
+    assert.ok(server.includes(lessonKey), "server does not allow lesson key " + lessonKey);
+  }
+  assert.match(server, /auth\.getUser\(accessToken\)/);
+  assert.match(server, /eq\("audience","partner"\)\.eq\("status","approved"\)/);
+  assert.match(server, /allowedLessons\(String\(profile\.partner_type/);
+  assert.match(server, /onConflict:"commercial_profile_id,lesson_key"/);
+  assert.match(server, /\.delete\(\)\.eq\("commercial_profile_id",profile\.id\)/);
+  assert.match(server, /\.eq\("user_id",userId\)/);
+  assert.match(migration, /enable row level security/i);
+  assert.match(migration, /revoke all on public\.hub_partner_academy_progress from public, anon, authenticated/i);
+  assert.match(migration, /grant all on public\.hub_partner_academy_progress to service_role/i);
+  assert.match(migration, /unique \(commercial_profile_id, lesson_key\)/i);
+  assert.match(academy, /Marcar aula como concluída/);
+  assert.match(academy, /Aula concluída · desfazer/);
+  assert.match(academy, /rubi-partner-academy-progress/);
+  assert.match(academy, /Salvo na sua conta e separado das metas comerciais/);
+});
