@@ -35,7 +35,8 @@ begin
  select v.* into verified_variant from public.rubi_movement_variants v where v.id=p_variant_id for share;
  if not found then raise exception 'Variant not found'; end if;
  select m.product_id into v_product_id from public.rubi_movements m where m.id=verified_variant.movement_id for share;
- if not found or v_product_id is null then raise exception 'Movement product not found'; end if;
+ if not found then raise exception 'Movement not found'; end if;
+ if v_product_id is null then raise exception 'Movement product not found'; end if;
 
  if p_status='manually_published' and (verified_variant.status <> 'review' or char_length(btrim(coalesce(p_published_reference,'')))<8) then
   raise exception 'Reviewed variant and publication reference required';
