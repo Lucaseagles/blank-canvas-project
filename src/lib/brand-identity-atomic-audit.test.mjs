@@ -28,5 +28,8 @@ test("brand identity audit payload records metadata only, not the brand name", (
   const audit = migration.slice(migration.indexOf("insert into public.admin_audit_log"));
   assert.match(audit, /changed_fields/);
   assert.match(audit, /values_redacted/);
-  assert.doesNotMatch(audit, /p_display_name|v_before->>|v_after->>/);
+  assert.doesNotMatch(audit, /p_display_name/);
+  assert.match(audit, /display_name_changed/);
+  assert.match(audit, /is distinct from/);
+  assert.doesNotMatch(audit, /jsonb_build_object\(['"]display_name['"],\s*(?:v_before|v_after)/);
 });
