@@ -152,8 +152,8 @@ function CommercialOnboarding() {
           {audience !== "consumer" && <label className="block space-y-2 text-sm font-medium">Conte sobre sua atuação (opcional) <Input maxLength={500} value={notes} onChange={e => setNotes(e.target.value)} placeholder={audience === "merchant" ? "Segmento, cidade, volume de compra..." : "Nichos, público, canais e experiência..."}/></label>}
           <p className="text-xs text-muted-foreground">O cadastro não libera automaticamente preços exclusivos, campanhas ou comissões. O acesso depende de aprovação comercial.</p>
           <Button type="submit" size="lg" disabled={busy} className="w-full rounded-2xl font-bold">{busy ? "Salvando..." : "Continuar com meu perfil"}<ArrowRight className="ml-2 h-4 w-4"/></Button>
-        </div>
+        </section>
       </form>
     </div>
-  </div>;
+  </main>;
 }
