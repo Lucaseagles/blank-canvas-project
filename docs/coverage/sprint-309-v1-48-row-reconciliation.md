@@ -250,3 +250,74 @@ Para a #310, os três workflows obrigatórios passaram no HEAD validado: Hub V1 
 - Nenhum ponto novo convertido.
 - Baseline agregada 36,5/48 (76,0%) continua apenas como referência provisória, sem distribuição autoritativa por linha.
 - Não somar evidência de PRs integradas como pontos automáticos; cada critério exige correspondência explícita com a rubrica e prova integral.
+
+
+## Estado consolidado pós-integrações — 2026-11-26
+
+Esta seção é o estado operacional vigente e **prevalece sobre todas as tabelas de status anteriores**. As notas antigas foram preservadas como histórico dos respectivos cortes.
+
+### Main e integrações
+
+HEAD atual da main: `4859840370e9cca46670cb6581c3587c8a7ae369`.
+
+| PR | Escopo | Estado |
+|---|---|---|
+| #313 | Smart Collection — gravações server-only | Integrada |
+| #312 | Privacidade de analytics e least privilege | Integrada |
+| #311 | Unicidade transacional de campanhas orgânicas | Integrada |
+| #310 | Strategy Orchestration — ciclo auditado | Integrada |
+| #309 | Inventário mestre / reconciliação documental | Integrada |
+| #308 | Vídeo/compliance — bypass legado, rollback e concorrência | Integrada |
+| #306 | Readiness Story → oferta, com E2E local atualizado | Integrada |
+| #286 | Scorecard geral atualizado | Integrada |
+| #71 | Especificação Movement Engine reconciliada com implementação atual | Integrada |
+| #68 | Blueprint Offer Engine reconciliado com pré-checkout atual | Integrada |
+
+PR #304 foi encerrada como supersedida por #310. PRs #4 e #6–#11 foram encerradas como já incorporadas à main: comparação GitHub mostrou zero commits exclusivos e as rotas/funções/migrations correspondentes continuam presentes. A fila consultada ficou com **zero PRs abertas**.
+
+### CI pós-integração
+
+- PR #308 / HEAD `a878cbe4a4f584d959b73ce142f54f156573ce6a`: Hub V1 SUCCESS (95/95 etapas); Sprint 33 SUCCESS (16/16); E2E SUCCESS (22/22 testes, 11 cenários mobile/desktop, zero unexpected/skipped/flaky). O smoke de vídeo/compliance passou com Owner/non-Owner, grants, rollback por falha de auditoria e concorrência.
+- PR #310: Hub V1, Sprint 33 e E2E aprovados no HEAD validado; ciclo Strategy Orchestration auditado, rollback e concorrência cobertos.
+- PR #306, #309, #286, #71 e #68: Sprint 33 QA passou em cada HEAD documental atualizado.
+- Main no HEAD `4859840370e9cca46670cb6581c3587c8a7ae369`: Sprint 33 QA SUCCESS (16/16 etapas).
+
+As execuções PostgreSQL/E2E mencionadas usaram Supabase local descartável. **Nenhuma migration foi aplicada ao Supabase remoto** nesta sequência.
+
+### Decisão da matriz V1
+
+- Baseline agregada preservada: **36,5/48 = 76,0%**, com gap aritmético de 11,5 pontos.
+- Score atual por linha: **continua não reconciliado**. Não redistribuir os cinco pontos de diferença entre 31,5/48 (Sprint 122) e 36,5/48 (Sprint 207) por inferência.
+- Pontos novos prontos para conversão: **0/11,5** nesta rodada.
+- Classificação: **upgrade-only / hardening / atualização de evidência**.
+
+### Critérios com evidência melhorada, mas sem conversão
+
+| Critério | Evidência atual na main | Por que não soma ponto nesta rodada |
+|---|---|---|
+| 02.4 — Jornada Story E2E | E2E local persistido: Story → mesmo produto → pré-checkout interno, 22/22 testes e 11 cenários mobile/desktop. | Ainda falta staging HTTPS autorizado, evidência hospedada e round-trip de provedor quando aplicável. Host de teste é sintético; nenhum pagamento ocorreu. |
+| 11.3 — Auditoria administrativa completa | PRs #308, #310, #312 e #313 ampliam auditoria, grants mínimos, rollback e concorrência em caminhos específicos. | Ainda falta inventário DML transversal e exaustivo de todas as mutações Master, com rota → server function → RPC/tabela → grants/RLS → log → teste negativo/rollback. |
+| 12.3 — E2E quatro perfis | Quatro perfis isolados, mobile/desktop, jornadas persistidas e negação de não-Owner aprovadas no Supabase local descartável. | Staging hospedado e revisão independente do pacote de evidências continuam pendentes. |
+| 07.4 — Biblioteca de ativos licenciados | Já incluído como 1,0 na baseline histórica de 36,5/48. | Não recontar. Ativos/licenças reais e uso comercial não reabrem automaticamente o ponto técnico. |
+| 11.4 — Múltiplos Masters | A arquitetura atual preserva um Shadow Master único e privado. | Conflito de escopo: não criar Masters adicionais para satisfazer rubrica obsoleta. Formalizar exclusão/ajuste da régua sem alterar pontuação silenciosamente. |
+
+### Gaps ainda dependentes de evidência externa/financeira
+
+- 01.4 / 10.4: compra paga, reversão e coortes/LTV reais.
+- 03.4 / 06.4: venda externa atribuída e comissão confirmada por fonte oficial.
+- 04.4: checkout oficial, webhook/retorno confiável, idempotência e reconciliação.
+- 05.4: pedido B2B pago, frete e auditoria de ponta a ponta.
+- 09.3 / 09.4: bump e upsell efetivamente cobrados e confirmados pelo provedor.
+- 12.4: pedido pago, repasse, estorno e conciliação completos.
+
+Clique, interesse, redirect, fixture local, pré-checkout e linha interna de pedido não substituem essas provas.
+
+### Próxima onda de cobertura (não apenas upgrades)
+
+1. Fechar o inventário DML de 11.3 em todos os módulos e validar cada caminho no PostgreSQL descartável.
+2. Reauditar 08.2/08.3/08.4/10.3: separar validação de público, comparação descritiva, teste A/B causal e retenção real.
+3. Reauditar 03.3: distinguir plano de distribuição, publicação manual declarada e publicação/entrega confirmada pelo canal.
+4. Reauditar 01.3 com preferências, consentimento e finalidade de personalização.
+5. Preparar staging HTTPS autorizado e checkout de teste oficial; sem isso, manter os gates externos bloqueados.
+
+**Conclusão:** a main ficou mais segura e as evidências locais ficaram substancialmente melhores, mas a pontuação permanece 36,5/48 como baseline agregada provisória. Nenhum ponto novo foi convertido e não há data de 100% defensável antes da reconciliação por linha e das provas externas.
