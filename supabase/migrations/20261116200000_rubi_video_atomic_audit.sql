@@ -30,7 +30,7 @@ begin
     delete from public.videos where id=p_id;
     insert into public.admin_audit_log(actor_user_id,actor_email,action_type,entity_type,entity_id,previous_value,new_value)
     values(p_actor,null,'RUBI_VIDEO_DELETED','video',p_id,
-      public.sanitize_admin_audit_json(to_jsonb(old_row)),'{}'::jsonb);
+      public.sanitize_admin_audit_value(to_jsonb(old_row)),'{}'::jsonb);
     return jsonb_build_object('id',p_id);
   end if;
 
@@ -106,8 +106,8 @@ begin
   insert into public.admin_audit_log(actor_user_id,actor_email,action_type,entity_type,entity_id,previous_value,new_value)
   values(p_actor,null,case when p_id is null then 'RUBI_VIDEO_CREATED' else 'RUBI_VIDEO_UPDATED' end,
     'video',new_id,
-    case when p_id is null then '{}'::jsonb else public.sanitize_admin_audit_json(to_jsonb(old_row)) end,
-    public.sanitize_admin_audit_json(jsonb_build_object(
+    case when p_id is null then '{}'::jsonb else public.sanitize_admin_audit_value(to_jsonb(old_row)) end,
+    public.sanitize_admin_audit_value(jsonb_build_object(
       'title',p_payload->>'title','status',p_payload->>'status',
       'storage_path',p_payload->>'storage_path','external_url',p_payload->>'external_url',
       'duration_seconds',p_payload->>'duration_seconds','category_id',p_payload->>'category_id',
@@ -146,7 +146,7 @@ begin
     delete from public.bridge_videos where id=p_id;
     insert into public.admin_audit_log(actor_user_id,actor_email,action_type,entity_type,entity_id,previous_value,new_value)
     values(p_actor,null,'RUBI_BRIDGE_VIDEO_DELETED','bridge_video',p_id,
-      public.sanitize_admin_audit_json(to_jsonb(old_row)),'{}'::jsonb);
+      public.sanitize_admin_audit_value(to_jsonb(old_row)),'{}'::jsonb);
     return jsonb_build_object('id',p_id);
   end if;
 
@@ -180,8 +180,8 @@ begin
   insert into public.admin_audit_log(actor_user_id,actor_email,action_type,entity_type,entity_id,previous_value,new_value)
   values(p_actor,null,case when p_id is null then 'RUBI_BRIDGE_VIDEO_CREATED' else 'RUBI_BRIDGE_VIDEO_UPDATED' end,
     'bridge_video',new_id,
-    case when p_id is null then '{}'::jsonb else public.sanitize_admin_audit_json(to_jsonb(old_row)) end,
-    public.sanitize_admin_audit_json(jsonb_build_object('product_id',v_product_id,'title',p_payload->>'title',
+    case when p_id is null then '{}'::jsonb else public.sanitize_admin_audit_value(to_jsonb(old_row)) end,
+    public.sanitize_admin_audit_value(jsonb_build_object('product_id',v_product_id,'title',p_payload->>'title',
       'subtitle',p_payload->>'subtitle','thumbnail',p_payload->>'thumbnail','platform',p_payload->>'platform',
       'link',p_payload->>'link','is_active',(p_payload->>'is_active')::boolean)));
   return jsonb_build_object('id',new_id);

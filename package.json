@@ -59,7 +59,8 @@
     "test:rubi-story-offer-journey": "node --experimental-strip-types --test src/lib/rubi-story-offer-journey.test.mjs",
     "test:rubi-content-notification-worker": "node --test src/lib/rubi-content-notification-worker-hardening.test.mjs",
     "test:rubi-smart-collection-server-only-grants": "node --test src/lib/rubi-smart-collection-server-only-grants.test.mjs",
-    "test:rubi-orchestration-pause-audit": "node --test src/lib/strategy-orchestration-pause-audit.test.mjs"
+    "test:rubi-orchestration-pause-audit": "node --test src/lib/strategy-orchestration-pause-audit.test.mjs",
+    "test:rubi-video-atomic-audit": "node --test src/lib/rubi-video-atomic-audit.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

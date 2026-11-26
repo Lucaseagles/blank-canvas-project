@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 
 test("video create/update and product associations use one audited RPC", () => {
@@ -48,5 +48,45 @@ test("SQL enforces Owner, row locks, atomic associations and audit writes", () =
   assert.doesNotMatch(sql, /nullif\(p_payload->>'status','draft'\)/);
   assert.match(sql, /revoke all on function public\.rubi_manage_video_audited/);
   assert.match(sql, /revoke all on function public\.rubi_manage_bridge_video_audited/);
+  assert.match(sql, /sanitize_admin_audit_value/);
+  assert.doesNotMatch(sql, /sanitize_admin_audit_json/);
   assert.match(sql, /to service_role/);
+});
+
+
+test("legacy native editor is retired while audited native and bridge entry points remain usable", () => {
+  const createRoute = read("../routes/admin/videos.new.tsx");
+  const editRoute = read("../routes/admin/videos.$id.edit.tsx");
+  const adminVideos = read("../routes/admin/videos.tsx");
+  assert.match(createRoute, /BridgeVideoForm/);
+  assert.match(createRoute, /navigate\(\{ to: "\/admin\/videos" \}\)/);
+  assert.ok(editRoute.includes('redirect({ to: "/admin/videos" })'));
+  assert.match(adminVideos, /setIsDialogOpen\(true\)/);
+  assert.match(adminVideos, /saveVideoFn\(\{ data \}\)/);
+  assert.match(adminVideos, /New Bridge Video/);
+  assert.equal(existsSync(new URL("../admin/videos/NativeVideoForm.tsx", import.meta.url)), false);
+  assert.equal(existsSync(new URL("../admin/videos/VideoForm.tsx", import.meta.url)), false);
+  assert.equal(existsSync(new URL("./supabase/videos.ts", import.meta.url)), false);
+  assert.equal(existsSync(new URL("./supabase/external-videos.ts", import.meta.url)), false);
+});
+
+test("compliance rules retain the audited settings write path without a legacy direct upsert", () => {
+  const compliance = read("./compliance.functions.ts");
+  const settings = read("./admin-settings.functions.ts");
+  const migration = read("../../supabase/migrations/20261113123000_rubi_admin_setting_atomic_audit.sql");
+  assert.doesNotMatch(compliance, /export const saveComplianceRule/);
+  assert.match(settings, /rubi_update_admin_setting_audited/);
+  assert.match(migration, /when 'compliance_rules' then array\['rule_value','is_enforced','notes','source_url','reviewed_at'\]/);
+});
+
+
+test("disposable PostgreSQL concurrency proof exercises real row-lock serialization", () => {
+  const script = read("../../scripts/rubi-local-admin-audit-concurrency.sh");
+  const workflow = read("../../.github/workflows/rubi-local-authenticated-e2e.yml");
+  assert.match(script, /FOR UPDATE/);
+  assert.match(script, /pg_sleep/);
+  assert.match(script, /session_a_pid/);
+  assert.match(script, /RUBI_VIDEO_STATUS_CHANGED/);
+  assert.match(script, /ordered_transitions/);
+  assert.ok(workflow.includes("bash scripts/rubi-local-admin-audit-concurrency.sh"));
 });

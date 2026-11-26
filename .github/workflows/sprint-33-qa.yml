@@ -39,6 +39,9 @@ jobs:
       - name: Sprint 308 strategy orchestration pause audit regression
         run: npm run test:rubi-orchestration-pause-audit
 
+      - name: Sprint 307 administrative video and compliance audit regression
+        run: npm run test:rubi-video-atomic-audit
+
       - name: RUBI distribution campaign uniqueness regression
         run: node --test src/lib/rubi-distribution-campaign-uniqueness.test.mjs
 
