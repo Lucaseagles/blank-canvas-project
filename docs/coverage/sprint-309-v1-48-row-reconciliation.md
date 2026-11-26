@@ -220,3 +220,33 @@ Esta seção substitui qualquer status operacional anterior que tenha ficado des
 - Nenhuma dessas PRs foi integrada nesta consulta. A branch `main` permaneceu inalterada.
 
 **Classificação:** upgrade-only / atualização de governança. Nenhum ponto V1 adicional reivindicado.
+
+
+## Estado operacional atualizado — 2026-11-26
+
+Esta seção prevalece sobre as tabelas de estado anteriores, que registram o corte histórico de 2026-11-25/26 antes das integrações finais.
+
+### PRs integradas na main
+
+HEAD atual da main: `766f0f7b064f96916060779d5eb5a8bb87b57463`.
+
+| PR | Escopo | Merge commit | Estado |
+|---|---|---|---|
+| #313 | Smart Collection — gravações server-only | `fc25a5240e4b1e41f464b6ba8842c813e56698d2` | Integrada |
+| #311 | Campanhas orgânicas — unicidade transacional | `994c33110b568fb832ba5734269258c4ae25486b` | Integrada |
+| #312 | Privacidade de analytics e privilégios mínimos | `8435e7f0b7cc0b968dfb7b218e67de260f2b74b9` | Integrada |
+| #310 | Strategy Orchestration — pausa auditada | `766f0f7b064f96916060779d5eb5a8bb87b57463` | Integrada |
+
+Para a #310, os três workflows obrigatórios passaram no HEAD validado: Hub V1 95/95, Sprint 33 15/15 e E2E quatro perfis 34/34, sem falhas.
+
+### PRs abertas
+
+- #308 / Sprint 307: aberta; ainda não integrada.
+- #309 / inventário e reconciliação: esta própria PR; aberta, somente documental. A branch foi sincronizada com a main pelo merge commit `4b6b581e29c0f9770f9e9ad1aecc7bdf85ef8d10`; a validação do novo HEAD é necessária antes de qualquer merge.
+
+### Score e classificação
+
+- Classificação: upgrade-only / governança e atualização documental.
+- Nenhum ponto novo convertido.
+- Baseline agregada 36,5/48 (76,0%) continua apenas como referência provisória, sem distribuição autoritativa por linha.
+- Não somar evidência de PRs integradas como pontos automáticos; cada critério exige correspondência explícita com a rubrica e prova integral.
