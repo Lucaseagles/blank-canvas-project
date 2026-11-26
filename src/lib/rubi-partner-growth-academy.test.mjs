@@ -98,8 +98,8 @@ test("individual lesson completion is persisted per approved partner and isolate
   assert.match(migration, /grant all on public\.hub_partner_academy_progress to service_role/i);
   assert.match(migration, /unique \(commercial_profile_id, lesson_key\)/i);
   assert.match(migration, /security definer/i);
-  assert.match(migration, /revoke all on function public\\.rubi_get_partner_academy_progress/i);
-  assert.match(migration, /grant execute on function public\\.rubi_set_partner_academy_lesson_completion[^;]*to service_role/i);
+  assert.ok(migration.includes("revoke all on function public.rubi_get_partner_academy_progress"));
+  assert.ok(migration.includes("grant execute on function public.rubi_set_partner_academy_lesson_completion(uuid,text,boolean) to service_role"));
   assert.match(academy, /Marcar aula como concluída/);
   assert.match(academy, /Aula concluída · desfazer/);
   assert.match(academy, /rubi-partner-academy-progress/);
