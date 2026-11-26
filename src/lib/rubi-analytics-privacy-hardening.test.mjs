@@ -31,7 +31,7 @@ test("local PostgreSQL smoke checks personal isolation, Owner read preservation,
     "has_table_privilege('anon'",
     "has_table_privilege('authenticated'",
     "has_table_privilege('service_role'",
-    "Owner preservation and least-privilege smoke: PASS",
+    "analytics_events RLS, Owner preservation, personal isolation and least-privilege smoke: PASS",
   ]) assert.ok(sql.includes(expected), `missing smoke assertion: ${expected}`);
 });
 
