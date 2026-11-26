@@ -103,6 +103,8 @@ test("individual lesson completion is persisted per approved partner and isolate
   assert.match(academy, /Marcar aula como concluída/);
   assert.match(academy, /Aula concluída · desfazer/);
   assert.match(academy, /rubi-partner-academy-progress/);
+  assert.match(academy, /queryKey: \["rubi-partner-academy-progress", commercialProfileId, partnerType\]/);
+  assert.match(portal, /<RubiPartnerGrowthAcademy commercialProfileId=\{profile\.id\}/);
   assert.match(academy, /Salvo na sua conta e separado das metas comerciais/);
   const smoke = read("../../scripts/rubi-local-partner-academy-progress-smoke.sql");
   assert.match(smoke, /has_table_privilege/);
