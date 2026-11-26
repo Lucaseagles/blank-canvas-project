@@ -233,7 +233,7 @@ export function RubiPartnerGrowthAcademy({ partnerType, links, visits, confirmed
           <h3 className="text-lg font-black">Seu progresso nas aulas</h3>
           <p className="mt-1 text-xs text-muted-foreground">Salvo na sua conta e separado das metas comerciais.</p>
         </div>
-        <p className="text-2xl font-black tabular-nums">{academyProgressQuery.isLoading ? "—" : learningProgress + "%"}</p>
+        <p className="text-2xl font-black tabular-nums">{academyProgressQuery.isLoading || academyProgressQuery.isError ? "—" : learningProgress + "%"}</p>
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-muted" role="progressbar" aria-label="Progresso das aulas concluídas" aria-valuemin={0} aria-valuemax={100} aria-valuenow={academyProgressQuery.isError || academyProgressQuery.isLoading ? 0 : learningProgress}>
         <div className="h-full rounded-full bg-primary transition-[width] duration-200" style={{ width: (academyProgressQuery.isError || academyProgressQuery.isLoading ? 0 : learningProgress) + "%" }} />
