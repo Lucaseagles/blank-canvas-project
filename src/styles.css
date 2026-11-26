@@ -269,6 +269,11 @@
 }
 
 
+/* Shared premium onboarding shell: restrained decoration, no blur or continuous animation. */
+.hub-onboarding-shell {
+  background-image: radial-gradient(ellipse at 50% 0%, oklch(0.62 0.16 255 / 0.10), transparent 58%);
+}
+
 /* Hub Eagles hybrid experience layer: premium surfaces without expensive motion. */
 :root {
   --hub-motion-fast: 160ms;

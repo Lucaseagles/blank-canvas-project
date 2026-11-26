@@ -180,6 +180,8 @@ jobs:
         run: npm run test:rubi-consumer-conversion
       - name: Hub Eagles premium hybrid motion and accessibility contracts
         run: npm run test:rubi-premium-hybrid
+      - name: RUBI partner shared academy and verified growth missions
+        run: npm run test:rubi-partner-growth-academy
       - name: RUBI Story to official offer journey contract tests
         run: npm run test:rubi-story-offer-journey
       - name: RUBI privileged content notification worker hardening regression

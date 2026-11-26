@@ -73,14 +73,14 @@ function CommercialOnboarding() {
     } catch (error) { toast.error(error instanceof Error ? error.message : "Não foi possível concluir o cadastro."); }
     finally { setBusy(false); }
   };
-  return <div className="min-h-screen bg-background px-4 py-28">
-    <div className="mx-auto max-w-5xl space-y-10">
-      <header className="text-center space-y-4"><div className="mx-auto inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-5 py-2 text-xs font-bold uppercase tracking-widest text-primary"><ShieldCheck size={15}/> Hub Eagles · Sua experiência</div>
+  return <main className="hub-onboarding-shell min-h-screen bg-background px-4 py-20 sm:py-24">
+    <div className="mx-auto max-w-5xl space-y-8 sm:space-y-10">
+      <header className="mx-auto max-w-3xl space-y-4 text-center"><div className="mx-auto inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-5 py-2 text-xs font-bold uppercase tracking-widest text-primary"><ShieldCheck size={15}/> Hub Eagles · Sua experiência</div>
       <h1 className="text-4xl md:text-6xl font-black tracking-tight">{audience === "consumer" ? <>Descubra mais. Encontre melhor. <span className="text-primary">Do seu jeito.</span></> : <>O seu próximo passo começa <span className="text-primary">aqui.</span></>}</h1>
       <p className="text-muted-foreground">{audience === "consumer" ? "Crie seu espaço gratuito para salvar favoritos, escolher seus interesses e organizar sua descoberta de ofertas. Você continua no controle da sua compra." : "Escolha como deseja participar do nosso ecossistema. Cada experiência é personalizada para você."}</p></header>
-      <form onSubmit={submit} className="space-y-7">
-        <div className="grid gap-4 md:grid-cols-3">{audiences.map(item => <button type="button" key={item.id} onClick={() => setAudience(item.id)} aria-pressed={audience === item.id} className={`rounded-3xl border p-6 text-left transition-all hover:-translate-y-1 hover:shadow-xl ${audience === item.id ? "border-primary bg-primary/10 shadow-lg shadow-primary/10" : "border-white/10 bg-card/70"}`}><item.icon className="mb-6 h-9 w-9 text-primary"/><h2 className="text-xl font-bold">{item.title}</h2><p className="mt-3 text-sm text-muted-foreground">{item.detail}</p></button>)}</div>
-        <div className="rounded-3xl border border-white/10 bg-card/70 p-6 md:p-8 space-y-5">
+      <form onSubmit={submit} className="space-y-6 sm:space-y-7">
+        <div className="grid gap-4 md:grid-cols-3">{audiences.map(item => <button type="button" key={item.id} onClick={() => setAudience(item.id)} aria-pressed={audience === item.id} className={`hub-premium-surface hub-interactive min-h-[156px] rounded-3xl p-5 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring sm:p-6 ${audience === item.id ? "border-primary/60 bg-primary/10 shadow-lg shadow-primary/10" : "hover:border-primary/35 hover:shadow-lg"}`}><item.icon className="mb-6 h-9 w-9 text-primary"/><h2 className="text-xl font-bold">{item.title}</h2><p className="mt-3 text-sm text-muted-foreground">{item.detail}</p></button>)}</div>
+        <section className="hub-premium-surface rounded-3xl p-5 sm:p-7 md:p-8 space-y-5">
           <h2 className="text-xl font-bold">Conte um pouco sobre você</h2>
           <label className="block space-y-2 text-sm font-medium">Seu nome ou nome profissional <Input required minLength={2} maxLength={120} value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Como podemos chamar você?"/></label>
           {audience === "consumer" && <div className="space-y-3 rounded-2xl border border-primary/20 p-4">
@@ -114,7 +114,7 @@ function CommercialOnboarding() {
             </label>
             <p className="sm:col-span-3 text-xs text-muted-foreground">O quiz orienta futuras cotações e reposições. Não confirma estoque, margem nem capacidade financeira.</p>
           </div>}
-          {audience === "partner" && <><div className="space-y-2"><p className="text-sm font-medium">Como você divulga?</p><div className="flex flex-wrap gap-2">{partnerTypes.map(type => <button type="button" key={type.id} onClick={() => setPartnerType(type.id)} className={`rounded-full border px-4 py-2 text-sm ${partnerType === type.id ? "border-primary bg-primary/15 text-primary" : "border-white/15"}`}>{type.title}</button>)}</div></div><label className="block space-y-2 text-sm font-medium">Seu @ do Instagram (opcional) <Input maxLength={100} value={instagram} onChange={e => setInstagram(e.target.value)} placeholder="@seuperfil"/></label></>}
+          {audience === "partner" && <><div className="space-y-2"><p className="text-sm font-medium">Qual é sua atuação principal?</p><p className="text-xs text-muted-foreground">Todos os perfis aprovados recebem a formação comum da Hub Eagles e uma especialização adequada à sua atuação.</p><div className="flex flex-wrap gap-2">{partnerTypes.map(type => <button type="button" key={type.id} onClick={() => setPartnerType(type.id)} className={`rounded-full border px-4 py-2 text-sm ${partnerType === type.id ? "border-primary bg-primary/15 text-primary" : "border-white/15"}`}>{type.title}</button>)}</div></div><div className="rounded-2xl border border-primary/20 bg-primary/[0.04] p-4 text-sm leading-6"><strong className="block">O que acontece depois da aprovação?</strong><p className="mt-1 text-muted-foreground">Você terá aulas práticas sobre ofertas, conteúdo, distribuição, atribuição, campanhas e desenvolvimento de parceiros. As metas acompanham links, visitas e vendas confirmadas; convite sozinho não gera comissão. O acesso a produtos, campanhas e condições comerciais continua sujeito às autorizações vigentes.</p></div><label className="block space-y-2 text-sm font-medium">Seu @ do Instagram (opcional) <Input maxLength={100} value={instagram} onChange={e => setInstagram(e.target.value)} placeholder="@seuperfil"/></label></>}
           {audience === "partner" && <div className="space-y-4 rounded-2xl border border-primary/15 bg-primary/[0.04] p-4">
             <h3 className="text-sm font-bold">Seu perfil profissional (opcional)</h3>
             <p className="text-xs text-muted-foreground">Não precisa saber vender na internet. Conte apenas sobre seu trabalho e as pessoas que acompanham seu conteúdo.</p>
@@ -152,8 +152,8 @@ function CommercialOnboarding() {
           {audience !== "consumer" && <label className="block space-y-2 text-sm font-medium">Conte sobre sua atuação (opcional) <Input maxLength={500} value={notes} onChange={e => setNotes(e.target.value)} placeholder={audience === "merchant" ? "Segmento, cidade, volume de compra..." : "Nichos, público, canais e experiência..."}/></label>}
           <p className="text-xs text-muted-foreground">O cadastro não libera automaticamente preços exclusivos, campanhas ou comissões. O acesso depende de aprovação comercial.</p>
           <Button type="submit" size="lg" disabled={busy} className="w-full rounded-2xl font-bold">{busy ? "Salvando..." : "Continuar com meu perfil"}<ArrowRight className="ml-2 h-4 w-4"/></Button>
-        </div>
+        </section>
       </form>
     </div>
-  </div>;
+  </main>;
 }
