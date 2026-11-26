@@ -1,7 +1,9 @@
 \\set ON_ERROR_STOP on
 begin;
+select set_config('rubi.test.partner_id', :'partner_id', true);
+select set_config('rubi.test.consumer_id', :'consumer_id', true);
 
-do $$
+do $
 begin
   if has_table_privilege('anon','public.hub_partner_academy_progress','SELECT')
     or has_table_privilege('authenticated','public.hub_partner_academy_progress','SELECT')
@@ -23,21 +25,21 @@ end;
 $$;
 
 set local role service_role;
-select public.rubi_set_partner_academy_lesson_completion(:'partner_id'::uuid,'common:foundations',true);
-select public.rubi_set_partner_academy_lesson_completion(:'partner_id'::uuid,'common:foundations',true);
+select public.rubi_set_partner_academy_lesson_completion(current_setting('rubi.test.partner_id')::uuid,'common:foundations',true);
+select public.rubi_set_partner_academy_lesson_completion(current_setting('rubi.test.partner_id')::uuid,'common:foundations',true);
 do $$
 declare
   v_count integer;
 begin
   select count(*) into v_count from public.hub_partner_academy_progress
-  where user_id=:'partner_id'::uuid and lesson_key='common:foundations';
+  where user_id=current_setting('rubi.test.partner_id')::uuid and lesson_key='common:foundations';
   if v_count<>1 then raise exception 'Idempotent completion should persist exactly one row; got %',v_count; end if;
 end;
 $$;
 do $$
 begin
   begin
-    perform public.rubi_set_partner_academy_lesson_completion(:'partner_id'::uuid,'expert:authority',true);
+    perform public.rubi_set_partner_academy_lesson_completion(current_setting('rubi.test.partner_id')::uuid,'expert:authority',true);
     raise exception 'Affiliate was able to complete an expert-only lesson';
   exception when raise_exception then
     if sqlerrm='Affiliate was able to complete an expert-only lesson' then raise; end if;
@@ -49,27 +51,27 @@ declare
   v_count integer;
 begin
   select count(*) into v_count from public.hub_partner_academy_progress
-  where user_id=:'partner_id'::uuid and lesson_key='expert:authority';
+  where user_id=current_setting('rubi.test.partner_id')::uuid and lesson_key='expert:authority';
   if v_count<>0 then raise exception 'Profile-specific lesson restriction failed'; end if;
 end;
 $$;
 do $$
 begin
   begin
-    perform public.rubi_get_partner_academy_progress(:'consumer_id'::uuid);
+    perform public.rubi_get_partner_academy_progress(current_setting('rubi.test.consumer_id')::uuid);
     raise exception 'Consumer was able to read partner academy progress';
   exception when raise_exception then
     if sqlerrm='Consumer was able to read partner academy progress' then raise; end if;
   end;
 end;
 $$;
-select public.rubi_set_partner_academy_lesson_completion(:'partner_id'::uuid,'common:foundations',false);
+select public.rubi_set_partner_academy_lesson_completion(current_setting('rubi.test.partner_id')::uuid,'common:foundations',false);
 do $$
 declare
   v_count integer;
 begin
   select count(*) into v_count from public.hub_partner_academy_progress
-  where user_id=:'partner_id'::uuid and lesson_key='common:foundations';
+  where user_id=current_setting('rubi.test.partner_id')::uuid and lesson_key='common:foundations';
   if v_count<>0 then raise exception 'Unchecking lesson did not remove persisted progress'; end if;
 end;
 $$;
