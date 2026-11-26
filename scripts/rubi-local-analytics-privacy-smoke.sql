@@ -67,6 +67,7 @@ VALUES
 
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub', :'consumer_id', true);
+SELECT set_config('rubi.smoke.merchant_id', :'merchant_id', true);
 
 DO $$
 DECLARE
@@ -91,7 +92,7 @@ BEGIN
 
   BEGIN
     INSERT INTO public.analytics_events (user_id, event_type, metadata)
-    VALUES (:'merchant_id'::uuid, 'PRIVACY_SMOKE_CROSS_INSERT', '{"fixture":true}'::jsonb);
+    VALUES (current_setting('rubi.smoke.merchant_id')::uuid, 'PRIVACY_SMOKE_CROSS_INSERT', '{"fixture":true}'::jsonb);
   EXCEPTION WHEN insufficient_privilege THEN
     cross_insert_denied := true;
   END;
@@ -115,7 +116,7 @@ DECLARE
 BEGIN
   BEGIN
     INSERT INTO public.analytics_events (user_id, event_type, metadata)
-    VALUES (:'consumer_id'::uuid, 'PRIVACY_SMOKE_ANON_ATTRIBUTED', '{"fixture":true}'::jsonb);
+    VALUES (current_setting('request.jwt.claim.sub')::uuid, 'PRIVACY_SMOKE_ANON_ATTRIBUTED', '{"fixture":true}'::jsonb);
   EXCEPTION WHEN insufficient_privilege THEN
     attributed_insert_denied := true;
   END;
