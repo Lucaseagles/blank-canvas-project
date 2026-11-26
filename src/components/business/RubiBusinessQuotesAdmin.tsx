@@ -7,6 +7,7 @@ import { getHubBusinessQuotesAdmin, updateHubBusinessQuoteAdmin } from "@/lib/hu
 
 type QuoteAdmin = {
   id: string;
+  updated_at: string;
   commercial_profile_id: string;
   status: string;
   total_estimate: number;
@@ -28,14 +29,14 @@ const money = (n: number) => Number(n).toLocaleString("pt-BR", { style: "currenc
 
 function QuoteAdminItem({ quote, update }: {
   quote: QuoteAdmin;
-  update: (id: string, status: "requested" | "reviewing" | "responded" | "closed", note: string) => Promise<void>;
+  update: (id: string, expectedUpdatedAt: string, status: "requested" | "reviewing" | "responded" | "closed", note: string) => Promise<void>;
 }) {
   const [status, setStatus] = useState<"requested" | "reviewing" | "responded" | "closed">(quote.status as "requested" | "reviewing" | "responded" | "closed");
   const [note, setNote] = useState(quote.owner_note ?? "");
   const [saving, setSaving] = useState(false);
   const save = async () => {
     setSaving(true);
-    try { await update(quote.id, status, note); } finally { setSaving(false); }
+    try { await update(quote.id, quote.updated_at, status, note); } finally { setSaving(false); }
   };
   return <article className="space-y-3 rounded-xl border p-4">
     <div className="flex flex-wrap items-center justify-between gap-3">
@@ -85,7 +86,7 @@ export function RubiBusinessQuotesAdmin() {
   const client = useQueryClient();
   const quotes = useQuery({ queryKey: ["admin-hub-business-quotes"], queryFn: () => load(), staleTime: 60_000 });
   const mutation = useMutation({
-    mutationFn: (values: { quoteId: string; status: "requested" | "reviewing" | "responded" | "closed"; ownerNote: string }) =>
+    mutationFn: (values: { quoteId: string; expectedUpdatedAt: string; status: "requested" | "reviewing" | "responded" | "closed"; ownerNote: string }) =>
       save({ data: values }),
     onSuccess: () => { toast.success("Atendimento atualizado."); void client.invalidateQueries({ queryKey: ["admin-hub-business-quotes"] }); },
     onError: (error) => toast.error(error instanceof Error ? error.message : "Não foi possível atualizar a cotação."),
@@ -106,7 +107,7 @@ export function RubiBusinessQuotesAdmin() {
     {quotes.data?.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma solicitação de cotação registrada.</p>}
     {quotes.data && quotes.data.length > 0 && <div className="max-h-[620px] space-y-3 overflow-y-auto">
       {(quotes.data as QuoteAdmin[]).map(quote => <QuoteAdminItem key={quote.id} quote={quote}
-        update={async (id, status, note) => { await mutation.mutateAsync({ quoteId: id, status, ownerNote: note }); }} />)}
+        update={async (id, expectedUpdatedAt, status, note) => { await mutation.mutateAsync({ quoteId: id, expectedUpdatedAt, status, ownerNote: note }); }} />)}
       {quotes.data.length === 100 && <p className="text-xs text-muted-foreground">Exibindo as 100 solicitações mais recentes. Paginação ficará para uma etapa específica.</p>}
     </div>}
   </section>;
