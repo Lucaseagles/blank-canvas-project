@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RubiPartnerCreatorReviewQueue } from "@/components/partner/RubiPartnerCreatorReviewQueue";
 
 export const Route = createFileRoute("/admin/videos")({
   component: AdminVideosPage,
@@ -167,6 +168,7 @@ function AdminVideosContent() {
 
   return (
     <div className="container mx-auto py-12 px-4 max-w-7xl space-y-8 pb-safe">
+      <RubiPartnerCreatorReviewQueue />
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-2">
           <Badge className="bg-primary/10 text-primary border-primary/20 font-bold px-3">Management</Badge>
