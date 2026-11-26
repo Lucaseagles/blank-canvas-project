@@ -3,7 +3,7 @@ begin;
 select set_config('rubi.test.partner_id', :'partner_id', true);
 select set_config('rubi.test.consumer_id', :'consumer_id', true);
 
-do $
+do $academy$
 begin
   if has_table_privilege('anon','public.hub_partner_academy_progress','SELECT')
     or has_table_privilege('authenticated','public.hub_partner_academy_progress','SELECT')
@@ -22,7 +22,7 @@ begin
     raise exception 'service_role is missing academy progress RPC execution';
   end if;
 end;
-$$;
+$academy$;
 
 set local role service_role;
 select public.rubi_set_partner_academy_lesson_completion(current_setting('rubi.test.partner_id')::uuid,'common:foundations',true);
@@ -35,7 +35,7 @@ begin
   where user_id=current_setting('rubi.test.partner_id')::uuid and lesson_key='common:foundations';
   if v_count<>1 then raise exception 'Idempotent completion should persist exactly one row; got %',v_count; end if;
 end;
-$$;
+$academy$;
 do $$
 begin
   begin
@@ -45,7 +45,7 @@ begin
     if sqlerrm='Affiliate was able to complete an expert-only lesson' then raise; end if;
   end;
 end;
-$$;
+$academy$;
 do $$
 declare
   v_count integer;
@@ -54,7 +54,7 @@ begin
   where user_id=current_setting('rubi.test.partner_id')::uuid and lesson_key='expert:authority';
   if v_count<>0 then raise exception 'Profile-specific lesson restriction failed'; end if;
 end;
-$$;
+$academy$;
 do $$
 begin
   begin
@@ -64,7 +64,7 @@ begin
     if sqlerrm='Consumer was able to read partner academy progress' then raise; end if;
   end;
 end;
-$$;
+$academy$;
 select public.rubi_set_partner_academy_lesson_completion(current_setting('rubi.test.partner_id')::uuid,'common:foundations',false);
 do $$
 declare
@@ -74,6 +74,6 @@ begin
   where user_id=current_setting('rubi.test.partner_id')::uuid and lesson_key='common:foundations';
   if v_count<>0 then raise exception 'Unchecking lesson did not remove persisted progress'; end if;
 end;
-$$;
+$academy$;
 reset role;
 rollback;
