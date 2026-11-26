@@ -75,6 +75,7 @@ test("all three onboarding audiences share the premium responsive and accessible
 
 test("individual lesson completion is persisted per approved partner and isolated by profile", () => {
   const academy = read("../components/partner/RubiPartnerGrowthAcademy.tsx");
+  const portal = read("../routes/partner/portal.tsx");
   const server = read("./rubi-partner-academy-progress.functions.ts");
   const migration = read("../../supabase/migrations/20261126150000_rubi_partner_academy_progress.sql");
   for (const lessonKey of [
