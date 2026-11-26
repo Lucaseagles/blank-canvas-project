@@ -163,3 +163,33 @@ A lacuna de 11.3 agora é definida com mais rigor: inventário transversal exaus
 ### Pontuação
 
 O score carregado permanece **37.5/48 = 78.1%**, gap aritmético **10.5 pontos**. PR #346, PR #347 e a documentação Sprint 348 são upgrades/habilitadores e não adicionam pontos. A distribuição por critério permanece sob reconciliação; não estimar pontuação individual a partir do agregado.
+
+
+## 9. Atualização da carteira — PR #349 (2026-11-26)
+
+**PR:** https://github.com/Lucaseagles/blank-canvas-project/pull/349  
+**Estado no registro:** aberta, CI em execução; não integrada.  
+**Classificação:** upgrade + habilitador de experimento para 08.3 / 10.3. **+0 ponto V1.**
+
+### Entrega proposta
+- Estimador de tamanho amostral para duas proporções independentes, braços de mesmo tamanho, alfa bilateral de 5% e poder de 80%.
+- Entrada por taxa-base observada e efeito mínimo detectável em pontos percentuais.
+- Validação fail-closed para valores inválidos e impossíveis.
+- Interface incorporada ao diagnóstico de desempenho do Shadow Master.
+- Testes de monotonicidade, cenários de taxa-base, premissas e entradas inválidas.
+- Teste integrado ao workflow Hub V1 QA.
+
+### Limite da evidência
+O estimador é uma ferramenta de planejamento, não implementa por si só alocação causal, cálculo de significância, regra de parada, análise de perdas ou confirmação de compra paga. Os eventos atuais de visualização e intenção de saída permanecem métricas observacionais. Não declarar vencedor A/B com base nesses eventos.
+
+### Próximos gates de 08.3 / 10.3
+1. Revisar taxa-base com denominador adequado e janela temporal definida.
+2. Definir unidade de randomização e persistência do braço por visitante/experimento/revisão.
+3. Instrumentar exposição válida e deduplicada, incluindo falha e retry.
+4. Definir métrica primária, janela, efeito mínimo detectável e plano de análise antes do início.
+5. Atingir amostra planejada sem interrupção oportunista; registrar perdas e desvios.
+6. Fazer análise estatística apropriada e revisão antes de qualquer decisão de vencedor.
+7. Manter conversão paga, margem, estorno e LTV separados de intenção de checkout até haver confirmação do provedor.
+
+### Pontuação
+A matriz permanece em **37.5/48 = 78.1%**, com **10.5 pontos** aritméticos restantes. PR #349 não muda o score; a distribuição individual dos 48 critérios continua sob reconciliação.
