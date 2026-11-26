@@ -7,13 +7,15 @@ const server=read("./admin-settings.functions.ts");
 test("all 14 editable settings sources have an explicit SQL allowlist, never arbitrary table selection",()=>{
  const sources=["personalization_weights","feed_mix_config","banners","social_proof_config","popup_rules",
   "ab_experiments","automation_rules","app_points_config","badges","missions",
-  "compliance_rules","feature_flags","marketplaces","whatsapp_config"];
+  "compliance_rules","feature_flags","marketplaces","whatsapp_config","telegram_config"];
  for(const name of sources)assert.match(sql,new RegExp("when '"+name+"' then array"));
  assert.match(sql,/if not k=any\(permitted\)/);
  assert.match(sql,/format\('%I = \(jsonb_populate_record/);
  assert.match(sql,/if permitted is null then raise exception/);
  assert.doesNotMatch(sql,/security definer/i);
- assert.doesNotMatch(sql,/when 'telegram_config' then array/);
+ const telegramMigration=read("../../supabase/migrations/20261126113000_rubi_telegram_config_atomic_audit.sql");
+ assert.doesNotMatch(telegramMigration,/when 'telegram_config' then array/);
+ assert.match(telegramMigration,/create or replace function public\\.rubi_update_admin_setting_audited/);
  assert.ok(server.includes('{ key: "telegram_config", label: "Telegram", category: "Integrações", table: "telegram_config", editable: [] }'));
 });
 test("atomic audit, owner-only service role and stale-write prevention",()=>{
