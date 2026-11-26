@@ -143,3 +143,22 @@ test("video picker and audited plan use only columns present in the videos schem
   assert.doesNotMatch(selectedVideos, /v\.platform/);
   assert.doesNotMatch(migration.slice(migration.indexOf("'videos', coalesce"), migration.indexOf("'execution', jsonb_build_object")), /'platform',platform/);
 });
+
+
+test("legacy orchestration mutation RPCs and direct client DML are revoked", () => {
+  const hardening = readFileSync(
+    new URL("../../supabase/migrations/20261125170000_rubi_strategy_orchestration_close_legacy_writes.sql", import.meta.url),
+    "utf8",
+  );
+  assert.ok(hardening.includes("revoke all on function public.create_strategy_orchestration"));
+  assert.ok(hardening.includes("revoke all on function public.generate_strategy_orchestration_plan"));
+  assert.ok(hardening.includes("revoke all on function public.approve_strategy_orchestration"));
+  assert.ok(hardening.includes("revoke all on table public.strategy_orchestrations"));
+  assert.ok(hardening.includes("grant select on table public.strategy_orchestrations"));
+  const smoke = readFileSync(
+    new URL("../../scripts/rubi-local-strategy-orchestration-pause-audit-smoke.sql", import.meta.url),
+    "utf8",
+  );
+  assert.ok(smoke.includes("Legacy Strategy Orchestration mutation RPC remains executable"));
+  assert.ok(smoke.includes("retain direct Strategy Orchestration write privileges"));
+});
