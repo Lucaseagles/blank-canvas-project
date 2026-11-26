@@ -58,3 +58,17 @@ test("academy is available only inside the approved partner portal and does not 
   assert.doesNotMatch(academy, /update\(|insert\(|upsert\(/);
   assert.doesNotMatch(academy, /commissionPercent|payout|setCommission/);
 });
+
+
+test("all three onboarding audiences share the premium responsive and accessible shell", () => {
+  const onboarding = read("../routes/onboarding.tsx");
+  const styles = read("../styles.css");
+  assert.match(onboarding, /hub-onboarding-shell/);
+  assert.match(onboarding, /hub-premium-surface hub-interactive/);
+  assert.match(onboarding, /aria-pressed=\{audience === item\.id\}/);
+  assert.match(onboarding, /focus-visible:outline/);
+  for (const audience of ['consumer', 'merchant', 'partner']) assert.ok(onboarding.includes('id: "' + audience + '"'));
+  assert.match(styles, /\.hub-onboarding-shell/);
+  assert.match(styles, /prefers-reduced-motion: reduce/);
+  assert.match(styles, /@media \(max-width: 640px\)/);
+});
