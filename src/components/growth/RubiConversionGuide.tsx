@@ -5,12 +5,12 @@ import { CheckCircle2, ChevronDown, ChevronUp, Lightbulb, ShieldCheck } from "lu
 type Audience="consumer"|"merchant"|"partner";
 const guides:Record<Audience,{heading:string;intro:string;steps:{title:string;detail:string}[];note:string}>={
  consumer:{
-  heading:"Escolha com confiança",intro:"Compare opções e conheça as condições antes de decidir.",
+  heading:"Mais descoberta, menos procura",intro:"A RUBI reúne ofertas, vídeos e uma jornada de compra organizada para você encontrar opções que façam sentido.",
   steps:[
-   {title:"Descubra algo útil",detail:"Explore vídeos, lançamentos e ofertas relacionadas às categorias de seu interesse."},
-   {title:"Confira a oferta",detail:"Leia características, condições, prazo verdadeiro de campanhas e avaliações com origem identificada."},
-   {title:"Decida no checkout oficial",detail:"Confira o valor final, entrega e pagamento no fornecedor antes de concluir."}],
-  note:"Abrir uma oferta ou visualizar uma página não equivale a uma compra. Criar conta para explorar a RUBI é opcional."
+   {title:"Encontre o que combina com você",detail:"Explore produtos, vídeos e seleções por categoria. Escolha seus interesses para orientar recomendações quando estiver disponível."},
+   {title:"Compare antes de decidir",detail:"Veja detalhes, preço anunciado e condições da oferta. Confira frete, prazo e valor final no checkout oficial do fornecedor."},
+   {title:"Continue de onde parou",detail:"Com uma conta gratuita, você pode salvar favoritos, organizar preferências e acessar seu perfil em outras visitas. O cadastro é opcional."}],
+  note:"Você pode explorar e comprar sem criar conta. O cadastro não altera o preço, não reserva estoque e não garante desconto ou benefício que não esteja anunciado."
  },
  merchant:{
   heading:"Seu caminho para comprar melhor",intro:"Organize uma cotação e facilite sua próxima reposição sem perder o controle dos custos.",
