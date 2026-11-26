@@ -12,6 +12,7 @@ on:
       - "src/lib/rubi-distribution-campaign-uniqueness.test.mjs"
       - "scripts/rubi-local-story-fixture.mjs"
       - "scripts/rubi-local-smart-collection-grants-smoke.sql"
+      - "scripts/rubi-local-analytics-privacy-smoke.sql"
       - "scripts/rubi-local-story-offer.e2e.spec.mjs"
       - "rubi-local-playwright.config.mjs"
       - "supabase/migrations/**"
