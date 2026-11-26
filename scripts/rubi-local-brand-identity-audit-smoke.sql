@@ -1,4 +1,4 @@
-\\set ON_ERROR_STOP on
+\set ON_ERROR_STOP on
 BEGIN;
 SELECT set_config('rubi.qa_master_id', :'master_id', true);
 SELECT set_config('rubi.qa_non_owner_id', :'non_owner_id', true);
