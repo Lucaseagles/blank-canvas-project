@@ -21,8 +21,11 @@ on:
       - 'src/routes/hub-product.$productId.tsx'
       - 'src/hooks/useWebPush.ts'
       - 'src/routes/hub-product.$productId.tsx'
+      - 'scripts/rubi-local-distribution-campaign-concurrency.mjs'
+      - 'src/lib/rubi-distribution-campaign-uniqueness.test.mjs'
       - 'src/routes/r/**'
       - '.github/workflows/hub-v1-integration-qa.yml'
+      - '.github/workflows/sprint-33-qa.yml'
   workflow_dispatch:
 
 permissions:
@@ -108,6 +111,8 @@ jobs:
         run: npm run test:rubi-variants
       - name: RUBI movement distribution tests
         run: npm run test:rubi-distribution
+      - name: RUBI distribution campaign uniqueness regression
+        run: node --test src/lib/rubi-distribution-campaign-uniqueness.test.mjs
       - name: RUBI movement performance tests
         run: npm run test:rubi-performance
       - name: RUBI movement audience evidence, review, attribution and controlled experiment contracts

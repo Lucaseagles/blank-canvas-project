@@ -8,12 +8,15 @@ on:
       - "src/lib/**"
       - "scripts/rubi-local-auth-fixtures.mjs"
       - "scripts/rubi-local-authenticated.e2e.spec.mjs"
+      - "scripts/rubi-local-distribution-campaign-concurrency.mjs"
+      - "src/lib/rubi-distribution-campaign-uniqueness.test.mjs"
       - "scripts/rubi-local-story-fixture.mjs"
       - "scripts/rubi-local-smart-collection-grants-smoke.sql"
       - "scripts/rubi-local-story-offer.e2e.spec.mjs"
       - "rubi-local-playwright.config.mjs"
       - "supabase/migrations/**"
       - ".github/workflows/rubi-local-authenticated-e2e.yml"
+      - ".github/workflows/sprint-33-qa.yml"
   workflow_dispatch:
 
 permissions:
@@ -126,6 +129,8 @@ jobs:
         run: psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f scripts/rubi-local-smart-collection-grants-smoke.sql
       - name: Seed disposable supplier, product, reviewed movement and private Story
         run: node scripts/rubi-local-story-fixture.mjs
+      - name: Prove product/channel/campaign uniqueness under concurrent PostgreSQL transactions
+        run: node scripts/rubi-local-distribution-campaign-concurrency.mjs
       - name: Exercise privileged notification worker against hostile temp relation
         run: |
           set -euo pipefail
