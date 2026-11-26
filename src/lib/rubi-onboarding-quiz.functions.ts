@@ -46,5 +46,12 @@ export const completeRubiOnboarding=createServerFn({method:"POST"})
   });
   if(error)throw error;
   if(!rows?.[0]?.saved_id)throw new Error("O cadastro e as preferências não foram confirmados.");
+  if(data.audience==="partner"&&data.partnerType==="affiliate"){
+   try{await (supabaseAdmin as any).from("analytics_events").insert({
+    user_id:auth.user.id,event_type:"RUBI_AFFILIATE_APPLICATION_SUBMITTED",
+    event_name:"RUBI_AFFILIATE_APPLICATION_SUBMITTED",
+    metadata:{program:"rubi_indica",source:"consumer_affiliate_onboarding"}
+   });}catch{/* Funnel telemetry must never block a valid onboarding submission. */}
+  }
   return {id:String(rows[0].saved_id)};
  });

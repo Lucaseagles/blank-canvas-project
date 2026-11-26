@@ -3,6 +3,7 @@ import {useQuery} from "@tanstack/react-query";
 import {useServerFn} from "@tanstack/react-start";
 import {Link} from "@tanstack/react-router";
 import {Sparkles} from "lucide-react";
+import {trackEvent} from "@/lib/analytics";
 import {supabase} from "@/integrations/supabase/client";
 import {getMyRubiAffiliateInvitation} from "@/lib/rubi-affiliate-invitation.functions";
 
@@ -25,16 +26,27 @@ export function RubiAffiliateMiniInvite({userId,placement="right"}:{userId:strin
    return load({data:{accessToken:session.access_token}});
   },enabled:!!userId,staleTime:60_000,retry:false,refetchOnWindowFocus:true
  });
+ const sessionKey="rubi-affiliate-invite-shown-"+userId;
+ useEffect(()=>{
+  if(!query.data?.eligible||dismissed)return;
+  try{
+   if(window.sessionStorage.getItem(sessionKey)==="1")return;
+   window.sessionStorage.setItem(sessionKey,"1");
+   setCollapsed(false);
+   void trackEvent("RUBI_AFFILIATE_INVITE_SHOWN",{program:"rubi_indica",readiness_score:query.data.score??0});
+  }catch{/* Keep invitation available if browser storage is restricted. */}
+ },[sessionKey,query.data?.eligible,query.data?.score,dismissed]);
  if(!query.data?.eligible||dismissed)return null;
  const dismiss=(forever:boolean)=>{
   try{window.localStorage.setItem(key,forever?"never":String(Date.now()+30*86400000));}
   catch{/* private mode: hide for current session */}
+  void trackEvent(forever?"RUBI_AFFILIATE_INVITE_OPTED_OUT":"RUBI_AFFILIATE_INVITE_PAUSED",{program:"rubi_indica",readiness_score:query.data?.score??0});
   setDismissed(true);
  };
  return <aside aria-label="Convite opcional para afiliados"
   className={`fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] ${placement==="left"?"left-3":"right-3"} z-[60]`}>
   {collapsed?<button type="button" aria-label="Conheça o RUBI Indica" title="Conheça o RUBI Indica"
-    onClick={()=>setCollapsed(false)}
+    onClick={()=>{void trackEvent("RUBI_AFFILIATE_INVITE_OPENED",{program:"rubi_indica",readiness_score:query.data?.score??0});setCollapsed(false);}}
     className="flex h-12 w-12 items-center justify-center rounded-full border border-primary/40 bg-card/95 text-primary shadow-xl shadow-black/20 backdrop-blur-lg transition hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary">
     <Sparkles className="h-5 w-5"/>
     <span className="sr-only">Convite para conhecer o programa de afiliados RUBI</span>
@@ -49,7 +61,7 @@ export function RubiAffiliateMiniInvite({userId,placement="right"}:{userId:strin
      Conheça o programa e candidate-se para receber comissão por vendas confirmadas. Não precisa comprar nem ter muitos seguidores.
     </p>
     <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
-     <Link to="/onboarding" search={{audience:"partner",returnTo:"/partner/portal",partnerType:"affiliate"}}
+     <Link onClick={()=>void trackEvent("RUBI_AFFILIATE_INVITE_CTA",{program:"rubi_indica",readiness_score:query.data?.score??0})} to="/onboarding" search={{audience:"partner",returnTo:"/partner/portal",partnerType:"affiliate"}}
       className="rounded-lg bg-primary px-3 py-2 font-semibold text-primary-foreground">Conhecer programa</Link>
      <button type="button" onClick={()=>dismiss(false)} className="text-muted-foreground underline">Pausar 30 dias</button>
      <button type="button" onClick={()=>dismiss(true)} className="text-muted-foreground underline">Não mostrar</button>
