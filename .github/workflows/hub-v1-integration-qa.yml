@@ -23,6 +23,7 @@ on:
       - 'src/routes/hub-product.$productId.tsx'
       - 'scripts/rubi-local-distribution-campaign-concurrency.mjs'
       - 'src/lib/rubi-distribution-campaign-uniqueness.test.mjs'
+      - 'scripts/rubi-local-analytics-privacy-smoke.sql'
       - 'src/routes/r/**'
       - '.github/workflows/hub-v1-integration-qa.yml'
       - '.github/workflows/sprint-33-qa.yml'
