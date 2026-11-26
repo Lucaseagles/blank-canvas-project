@@ -263,7 +263,7 @@ export function RubiPreCheckout({ product, returnTo, partnerCode, visitToken, pu
           </div>
           <DialogFooter className="flex-col gap-2 sm:flex-col">
             <Button asChild className="w-full">
-              <Link to="/auth" onClick={() => trackInviteAction("continue_to_auth")} search={{ returnTo, audience: undefined, ref: undefined, campaign_id: undefined }}>
+              <Link to="/auth" onClick={() => trackInviteAction("continue_to_auth")} search={{ returnTo, audience: undefined, ref: undefined, campaign_id: undefined, partner_ref: origin === "partner" ? partnerCode : undefined }}>
                 Entrar ou criar minha conta
               </Link>
             </Button>
