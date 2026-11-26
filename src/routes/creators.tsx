@@ -1,4 +1,9 @@
 import {createFileRoute,Link} from "@tanstack/react-router";
+import {useQuery} from "@tanstack/react-query";
+import {useServerFn} from "@tanstack/react-start";
+import {useMemo,useState} from "react";
+import {Input} from "@/components/ui/input";
+import {getPublicRubiCreatorDirectory} from "@/lib/rubi-public-creator-directory.functions";
 import {ArrowRight,BadgeCheck,BookOpen,Clapperboard,Handshake,ShieldCheck,Users} from "lucide-react";
 import {Button} from "@/components/ui/button";
 
@@ -12,6 +17,13 @@ const niches=[
 ];
 
 function RubiCreatorsLanding(){
+ const loadDirectory=useServerFn(getPublicRubiCreatorDirectory);
+ const [search,setSearch]=useState("");
+ const directory=useQuery({queryKey:["public-rubi-creator-directory"],queryFn:()=>loadDirectory(),retry:false});
+ const creators=useMemo(()=>{
+  const query=search.trim().toLocaleLowerCase("pt-BR");
+  return (directory.data??[]).filter((creator:any)=>!query||creator.displayName.toLocaleLowerCase("pt-BR").includes(query)||(creator.partnerType??"").toLocaleLowerCase("pt-BR").includes(query));
+ },[directory.data,search]);
  return <main className="min-h-screen bg-background px-4 pb-24 pt-28">
   <div className="mx-auto max-w-6xl space-y-14">
    <header className="mx-auto max-w-4xl space-y-6 text-center">
@@ -45,6 +57,22 @@ function RubiCreatorsLanding(){
      {niches.map(niche=><div key={niche.name} className="rounded-2xl border bg-card p-5"><p className="font-black">{niche.name}</p><p className="mt-2 text-xs leading-5 text-muted-foreground">{niche.detail}</p></div>)}
     </div>
     <p className="text-xs leading-5 text-muted-foreground">Produtos e alegações de saúde exigem revisão específica e respeito às regras profissionais. Os times ainda estão em fase de formação.</p>
+   </section>
+
+   <section aria-label="Descubra criadores RUBI" className="space-y-5">
+    <div className="flex flex-wrap items-end justify-between gap-3">
+     <div className="space-y-1"><p className="text-xs font-black uppercase tracking-widest text-primary">Creator Discovery</p><h2 className="text-3xl font-black">Descubra criadores e suas vitrines</h2><p className="max-w-2xl text-sm leading-6 text-muted-foreground">Explore perfis públicos de parceiros aprovados, veja conteúdos publicados e encontre produtos selecionados por cada criador.</p></div>
+     <div className="w-full sm:max-w-xs"><Input value={search} onChange={event=>setSearch(event.target.value)} placeholder="Buscar criador ou tipo de parceria" aria-label="Buscar criador"/></div>
+    </div>
+    {directory.isLoading&&<p role="status" className="text-sm text-muted-foreground">Carregando criadores...</p>}
+    {directory.isError&&<div role="alert" className="rounded-2xl border p-4 text-sm">Não foi possível carregar os perfis agora.</div>}
+    {!directory.isLoading&&!directory.isError&&creators.length===0&&<p className="rounded-2xl border border-dashed p-6 text-sm text-muted-foreground">{search?"Nenhum criador corresponde à busca.":"Novos criadores serão apresentados aqui quando seus perfis estiverem disponíveis."}</p>}
+    {!!creators.length&&<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+     {creators.map((creator:any)=><article key={creator.storeCode} className="space-y-4 rounded-3xl border bg-card p-5">
+      <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-widest text-primary">Parceiro Hub Eagles</p><h3 className="mt-2 text-xl font-black">{creator.displayName}</h3>{creator.partnerType&&<p className="mt-1 text-xs text-muted-foreground">{creator.partnerType}</p>}</div><span className="rounded-full border px-2.5 py-1 text-xs font-semibold">{creator.publishedVideoCount} vídeos</span></div>
+      <div className="flex flex-wrap gap-2"><Button asChild size="sm"><Link to="/creator/$storeCode" params={{storeCode:creator.storeCode}}>Ver perfil</Link></Button><Button asChild size="sm" variant="outline"><Link to="/loja/$storeCode" params={{storeCode:creator.storeCode}}>Ver vitrine</Link></Button></div>
+     </article>)}
+    </div>}
    </section>
 
    <section aria-label="O que você pode encontrar no programa" className="grid gap-6 rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 to-card p-6 md:grid-cols-[1.3fr_1fr] md:p-9">
