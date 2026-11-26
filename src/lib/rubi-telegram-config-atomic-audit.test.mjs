@@ -9,7 +9,7 @@ test("Telegram configuration writes metadata, Vault secrets and audit through on
   const end = api.indexOf("\nexport const testTelegramConnection", start);
   assert.ok(start >= 0 && end > start, "saveTelegramConfig boundaries must exist");
   const section = api.slice(start, end);
-  assert.ok(section.includes('rpc("rubi_save_telegram_config_audited"'));
+  assert.ok(section.includes("rpc('rubi_save_telegram_config_audited'"));
   assert.ok(section.includes("p_channel_id: data.channelId"));
   assert.ok(section.includes("p_is_active: data.isActive"));
   assert.ok(section.includes("p_bot_token: data.botToken ?? null"));
