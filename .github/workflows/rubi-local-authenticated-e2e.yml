@@ -166,15 +166,11 @@ jobs:
             -v non_owner_id="$RUBI_QA_CONSUMER_USER_ID" \
             -f scripts/rubi-local-admin-audit-smoke.sql
       - name: Prove referral tier Owner authorization, atomic audit and rollback in disposable PostgreSQL
-        run: |
-          set -euo pipefail
-          test -n "${SUPABASE_DB_URL:-}"
-          test -n "${RUBI_QA_MASTER_USER_ID:-}"
-          test -n "${RUBI_QA_CONSUMER_USER_ID:-}"
-          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 \\
-            -v master_id="$RUBI_QA_MASTER_USER_ID" \\
-            -v non_owner_id="$RUBI_QA_CONSUMER_USER_ID" \\
-            -f scripts/rubi-local-referral-tier-audit-smoke.sql
+        run: >-
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1
+          -v master_id="$RUBI_QA_MASTER_USER_ID"
+          -v non_owner_id="$RUBI_QA_CONSUMER_USER_ID"
+          -f scripts/rubi-local-referral-tier-audit-smoke.sql
       - name: Prove concurrent administrative video transitions serialize in disposable PostgreSQL
         run: |
           set -euo pipefail
