@@ -178,3 +178,25 @@ A migration `20260908013417` marca um overload legado de `track_event` como SECU
 A coluna `user_id` foi criada com `ON DELETE SET NULL` em `analytics_events`. Isso pode preservar registros desvinculados quando a conta é apagada, mas não resolve a anonimização de `anonymous_id`, session IDs, metadata ou outros identificadores. Não foi encontrada nesta busca uma política de retenção temporal nem fluxo explícito de exportação/exclusão seletiva de analytics. Tratar como pendência de verificação, não como prova de inexistência.
 
 **Próximo passo técnico obrigatório:** obter inventário final de políticas/RLS/grants e definição real da função track_event em uma instalação local descartável; listar todos os escritores por chamada; testar com usuário autenticado, anônimo, opt-out, revogação e falha do writer. Separar telemetria estritamente necessária à segurança/estabilidade de analytics opcional para marketing/personalização. Não apagar eventos nem mudar grants remotamente durante a auditoria.
+
+
+### Verificação somente leitura no Supabase conectado — 2026-11-26
+
+Projeto consultado: `heartful-helper-box` / `akfvkjarpgocdsieuvvq`, estado ACTIVE_HEALTHY, PostgreSQL 17.6. A consulta foi estritamente SELECT a catálogos de metadados e privilégios; nenhum dado de usuário foi consultado ou alterado.
+
+**Políticas RLS efetivamente presentes em `public.analytics_events`:**
+- SELECT: `Admin view analytics`, role authenticated, predicate `has_role(auth.uid(),'owner')`.
+- INSERT: `Users can insert their own events`, authenticated, `auth.uid() = user_id`.
+- INSERT: `Anonymous events must be unattributed`, anon, `user_id IS NULL`.
+- Não há política SELECT para o próprio usuário comum, nem UPDATE/DELETE para usuário comum.
+- RLS está habilitada. O catálogo efetivo não contém a política histórica ampla `Anyone can insert analytics_events`; a policy final é restrita por role e identidade.
+
+**Privilégios de tabela efetivos:** `anon` e `authenticated` ainda aparecem com SELECT/INSERT/UPDATE/DELETE e outros privilégios de tabela no catálogo de grants. RLS limita as linhas/ações efetivamente autorizadas; ainda assim, os grants amplos para anon são excesso de privilégio e merecem redução explícita, testada em instalação local antes de qualquer migration.
+
+**RPC `track_event`:** duas assinaturas coexistem no projeto conectado, ambas SECURITY INVOKER e ambas executáveis por anon/authenticated/service_role. A função não bypassa RLS; a proteção depende das políticas e grants da tabela. As assinaturas aceitam IDs de sessão/anônimo e metadados fornecidos pelo cliente, portanto payloads continuam observações não confiáveis e devem ser minimizados/validados.
+
+**Impacto funcional a corrigir/testar:** o código client-side em `src/routes/history.tsx`, `src/components/product/ContinueBrowsing.tsx` e `src/components/profile/ProfileStorefront.tsx` consulta eventos do próprio usuário diretamente. A policy SELECT efetiva só permite Owner. Isso sugere que histórico/atividade do usuário comum não consegue ler esses eventos via Data API, mesmo quando o SELECT é filtrado por `auth.uid()`. Antes de abrir uma policy própria, verificar se os componentes têm tratamento de erro/empty state e se o desenho de privacidade permite histórico pessoal. A policy correta, caso confirmada, deve permitir apenas `auth.uid() = user_id`, nunca acesso entre usuários.
+
+**Outro bloqueio de transparência:** `src/components/layout/Footer.tsx` mostra links “Política de Privacidade”, “Termos de Serviço” e “Configurações de Cookies”, mas os três usam `href="#"`. Não são destinos funcionais nem um mecanismo de consentimento. Não foi localizada uma rota de política publicada nesta varredura.
+
+**Conclusão atualizada:** a auditoria saiu da hipótese baseada apenas em migrations e confirmou o estado efetivo de RLS/grants/RPC no Supabase conectado. Ainda não foi executada alteração alguma. Próxima implementação deve ser isolada em branch/PR: correção de leitura pessoal apenas se testes confirmarem, redução least-privilege dos grants, e centro de privacidade com categorias e persistência server-side depois de fechar base legal/finalidades. Não aplicar alterações diretamente ao projeto conectado.
