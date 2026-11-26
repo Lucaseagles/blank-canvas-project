@@ -231,7 +231,7 @@ test("Creator inbound page recruits transparently without bypassing approval",()
  assert.match(onboarding,/niche:creatorNiche\.trim\(\)/);
  assert.match(onboarding,/audience_range:audienceRange/);
  assert.match(onboarding,/Profissional do meu nicho/);
- assert.match(onboarding,/Nano ou microinfluenciador/);
+ assert.match(onboarding,/Nano ou microcriador/);
  assert.match(onboarding,/completeQuiz\(\{data:/);
  assert.doesNotMatch(landing,/createMyPartnerReferralLink|saveHubPartnerAgreement|hub_partner_product_grants/);
 });
