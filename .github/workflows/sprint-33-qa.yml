@@ -33,6 +33,9 @@ jobs:
       - name: Sprint 287 product status audit regression
         run: npm run test:rubi-product-status-audit
 
+      - name: Smart collection server-only grants regression
+        run: npm run test:rubi-smart-collection-server-only-grants
+
       - name: TypeScript
         run: npx tsc --noEmit
 
