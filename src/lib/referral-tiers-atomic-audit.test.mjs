@@ -39,7 +39,7 @@ test("referral tier RPCs enforce Owner, optimistic concurrency, atomic sanitized
 test("migration keeps consumer tier reads while removing legacy authenticated Owner writes", () => {
   const migration = read("../../supabase/migrations/20260907165700_restore_referral_tiers.sql");
   assert.match(migration, /Anyone can read active referral tiers/);
-  assert.match(migration, /using\s*\(\s*is_active\s*=\s*true\s*\)//i);
+  assert.match(migration, /using\s*\(\s*is_active\s*=\s*true\s*\)/i);
   const audit = read("../../supabase/migrations/20261126100000_rubi_referral_tiers_atomic_audit.sql");
   assert.match(audit, /drop policy if exists "Owners can manage referral tiers"/);
   assert.match(audit, /revoke insert, update, delete, truncate, references, trigger\s+on public\.referral_tiers from anon, authenticated/i);
