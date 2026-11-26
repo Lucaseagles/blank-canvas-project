@@ -125,6 +125,7 @@ function LoginPage() {
           </div>
         </CardHeader>
         <CardContent className="px-10 pb-12">
+          {search.partner_ref && <div className="mb-5 rounded-2xl border border-primary/20 bg-primary/5 p-4 text-sm leading-6">Você acessou por um convite de parceiro da Hub Eagles. Se esta conta ainda não tiver uma origem de aquisição, o convite poderá ficar vinculado por até 90 dias para compras elegíveis. Isso não altera preços nem garante comissão ou desconto.</div>}
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Protocolo: E-mail</Label>
