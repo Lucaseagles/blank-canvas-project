@@ -4,6 +4,7 @@ BEGIN;
 DO $$
 DECLARE
   own_read_policy text;
+  owner_read_policy text;
   authenticated_insert_policy text;
   anonymous_insert_policy text;
 BEGIN
@@ -17,6 +18,16 @@ BEGIN
     AND policyname = 'Users can view their own events' AND cmd = 'SELECT';
   IF own_read_policy IS NULL OR own_read_policy NOT ILIKE '%auth.uid()%user_id%' THEN
     RAISE EXCEPTION 'Missing user-scoped analytics SELECT policy: %', own_read_policy;
+  END IF;
+
+  -- The new personal-read boundary must not remove the existing Owner report access.
+  SELECT qual INTO owner_read_policy
+  FROM pg_policies
+  WHERE schemaname = 'public' AND tablename = 'analytics_events'
+    AND policyname = 'Admin view analytics' AND cmd = 'SELECT';
+  IF owner_read_policy IS NULL OR owner_read_policy NOT ILIKE '%has_role%'
+     OR owner_read_policy NOT ILIKE '%owner%' THEN
+    RAISE EXCEPTION 'Owner analytics SELECT policy is missing or no longer Owner-scoped: %', owner_read_policy;
   END IF;
 
   SELECT with_check INTO authenticated_insert_policy
@@ -129,4 +140,4 @@ END
 $$;
 
 ROLLBACK;
-SELECT 'analytics_events RLS, personal isolation and least-privilege smoke: PASS' AS result;
+SELECT 'analytics_events RLS, Owner preservation, personal isolation and least-privilege smoke: PASS' AS result;
