@@ -46,7 +46,7 @@ begin
     case when v_before is null then 'RUBI_BRAND_IDENTITY_CREATED' else 'RUBI_BRAND_IDENTITY_UPDATED' end,
     'brand_identity',
     'true',
-    jsonb_build_object('display_name_changed', v_before is distinct from v_after, 'values_redacted', true),
+    jsonb_build_object('display_name_changed', (v_before->>'display_name') is distinct from (v_after->>'display_name'), 'values_redacted', true),
     jsonb_build_object('changed_fields', jsonb_build_array('display_name'), 'values_redacted', true)
   );
 
