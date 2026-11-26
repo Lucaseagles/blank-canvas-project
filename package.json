@@ -61,7 +61,8 @@
     "test:rubi-smart-collection-server-only-grants": "node --test src/lib/rubi-smart-collection-server-only-grants.test.mjs",
     "test:rubi-orchestration-pause-audit": "node --test src/lib/strategy-orchestration-pause-audit.test.mjs",
     "test:rubi-video-atomic-audit": "node --test src/lib/rubi-video-atomic-audit.test.mjs",
-    "test:rubi-affiliate-recruitment-funnel": "node --test src/lib/rubi-affiliate-recruitment-funnel.test.mjs"
+    "test:rubi-affiliate-recruitment-funnel": "node --test src/lib/rubi-affiliate-recruitment-funnel.test.mjs",
+    "test:rubi-partner-creator-studio": "node --test src/lib/rubi-partner-creator-studio.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
