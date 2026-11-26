@@ -193,3 +193,17 @@ O estimador é uma ferramenta de planejamento, não implementa por si só aloca�
 
 ### Pontuação
 A matriz permanece em **37.5/48 = 78.1%**, com **10.5 pontos** aritméticos restantes. PR #349 não muda o score; a distribuição individual dos 48 critérios continua sob reconciliação.
+
+
+### Revisão técnica adicional — A/B controlado já existente na base
+
+A inspeção da `main` confirmou que o experimento controlado não precisa ser reconstruído do zero. Já existem:
+- migration `20261114090000_rubi_movement_controlled_ab.sql`, com experimento por movimento, alocação 50/50, revisão de fonte, trava por SKU, escrita auditada e acesso restrito;
+- `assignRubiABArm`, atribuição determinística por identificador aleatório de visitante e revisão do experimento;
+- `getRubiActiveMovementAB`, que serve somente variantes revisadas e falha fechado quando checkout, fornecedor ou revisões não conferem;
+- `recordRubiABExposureOnce` e eventos `RUBI_AB_EXPOSURE` / `RUBI_AB_CTA`;
+- bloqueios explícitos contra tratar clique ou intenção como compra paga.
+
+**Correção de escopo:** a PR #349 adiciona planejamento amostral ao mecanismo existente. Não reivindica criar alocação A/B, persistência de experimento ou exposição. O que continua faltando para análise conclusiva é comprovar deduplicação/qualidade do denominador em produção controlada, definir métrica primária e janela antes do teste, registrar perdas/desvios e executar análise estatística válida; compras pagas continuam dependendo de confirmação oficial do checkout.
+
+**Impacto na matriz:** PR #349 continua classificada como upgrade + habilitador, +0 ponto até os gates de 08.3 / 10.3 serem demonstrados.
