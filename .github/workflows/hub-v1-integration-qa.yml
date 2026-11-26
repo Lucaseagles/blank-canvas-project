@@ -108,6 +108,8 @@ jobs:
         run: npm run test:rubi-variants
       - name: RUBI movement distribution tests
         run: npm run test:rubi-distribution
+      - name: RUBI distribution campaign uniqueness regression
+        run: node --test src/lib/rubi-distribution-campaign-uniqueness.test.mjs
       - name: RUBI movement performance tests
         run: npm run test:rubi-performance
       - name: RUBI movement audience evidence, review, attribution and controlled experiment contracts
