@@ -15,6 +15,7 @@ type Props = {
 };
 
 type Lesson = {
+  id: string;
   title: string;
   objective: string;
   content: string[];
