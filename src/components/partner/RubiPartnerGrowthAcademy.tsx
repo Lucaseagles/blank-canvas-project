@@ -1,4 +1,4 @@
-import { BookOpen, CheckCircle2, Circle, Compass, GraduationCap, Handshake, Megaphone, Target, TrendingUp } from "lucide-react";
+import { BookOpen, CheckCircle2, Circle, Compass, GraduationCap, Handshake, Target, TrendingUp } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
 type PartnerType = "affiliate" | "micro_influencer" | "influencer" | "expert" | string;
