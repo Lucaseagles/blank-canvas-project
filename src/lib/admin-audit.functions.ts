@@ -43,7 +43,7 @@ async function tableHealth(supabaseAdmin: any, definition: AuditDefinition): Pro
   return { status: "functional", detail: `${count} registro(s) disponível(is).` };
 }
 
-export const runAdminAudit = createServerFn({ method: "GET" })
+export const runAdminAudit = createServerFn({ method: "POST" })
   .middleware([requireOwnerRole])
   .validator((data: unknown) => AuditInputSchema.parse(data ?? {}))
   .handler(async ({ data, context }) => {
