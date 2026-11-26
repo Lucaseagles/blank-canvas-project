@@ -13,12 +13,15 @@ export const getPublicRubiCreatorDirectory=createServerFn({method:"GET"})
   const rows=(profiles??[]).filter((profile:any)=>typeof profile.public_store_code==="string"&&/^[a-f0-9]{12}$/i.test(profile.public_store_code));
   if(!rows.length)return [];
   const {data:published,error:publishedError}=await db.from("rubi_partner_creator_submissions")
-   .select("commercial_profile_id,videos!inner(id,status)")
+   .select("commercial_profile_id,videos!inner(id,status,scheduled_for)")
    .in("commercial_profile_id",rows.map((profile:any)=>profile.id))
-   .eq("status","approved").eq("videos.status","published").limit(500);
+   .eq("status","approved").eq("videos.status","published").limit(501);
   if(publishedError)throw publishedError;
+  if((published??[]).length>=501)return [];
   const counts=new Map<string,number>();
   for(const item of published??[]){
+   const video=Array.isArray(item.videos)?item.videos[0]:item.videos;
+   if(!video||video.status!=="published"||(video.scheduled_for&&new Date(video.scheduled_for).getTime()>Date.now()))continue;
    counts.set(item.commercial_profile_id,(counts.get(item.commercial_profile_id)??0)+1);
   }
   return rows.map((profile:any)=>({
