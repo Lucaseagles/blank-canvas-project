@@ -31,10 +31,11 @@ BEGIN
   IF EXISTS (
     SELECT 1
     FROM pg_default_acl d
-    JOIN pg_namespace n ON n.oid = d.defaclnamespace
+    LEFT JOIN pg_namespace n ON n.oid = d.defaclnamespace
     CROSS JOIN LATERAL aclexplode(d.defaclacl) a
     JOIN pg_roles r ON r.oid = a.grantee
-    WHERE n.nspname = 'public'
+    WHERE d.defaclrole = 'postgres'::regrole
+      AND (d.defaclnamespace IS NULL OR n.nspname = 'public')
       AND d.defaclobjtype = 'r'
       AND r.rolname IN ('anon', 'authenticated')
       AND a.privilege_type IN ('TRUNCATE', 'REFERENCES', 'TRIGGER', 'MAINTAIN')
