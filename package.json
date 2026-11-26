@@ -61,6 +61,7 @@
     "test:rubi-smart-collection-server-only-grants": "node --test src/lib/rubi-smart-collection-server-only-grants.test.mjs",
     "test:rubi-orchestration-pause-audit": "node --test src/lib/strategy-orchestration-pause-audit.test.mjs",
     "test:rubi-video-atomic-audit": "node --test src/lib/rubi-video-atomic-audit.test.mjs",
+    "test:rubi-referral-tier-audit": "node --test src/lib/referral-tiers-atomic-audit.test.mjs",
     "test:rubi-brand-identity-audit": "node --test src/lib/brand-identity-atomic-audit.test.mjs",
     "test:rubi-admin-audit-fail-closed": "node --test src/lib/admin-audit-fail-closed.test.mjs",
     "test:rubi-affiliate-recruitment-funnel": "node --test src/lib/rubi-affiliate-recruitment-funnel.test.mjs",
