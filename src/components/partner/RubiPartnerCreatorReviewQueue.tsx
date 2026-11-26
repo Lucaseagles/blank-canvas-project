@@ -17,7 +17,8 @@ export function RubiPartnerCreatorReviewQueue(){
  const mutation=useMutation({
   mutationFn:({id,decision}:{id:string;decision:"approve"|"reject"})=>review({data:{submissionId:id,decision,reviewNotes:notes[id]??""}}),
   onSuccess:(_result,variables)=>{
-   toast.success(variables.decision==="approve"?"Conteúdo aprovado como rascunho.":"Conteúdo recusado.");
+   if((_result as any)?.storageCleanupPending)toast.warning("Decisão registrada; a limpeza do arquivo recusado ficou pendente.");
+   else toast.success(variables.decision==="approve"?"Conteúdo aprovado como rascunho.":"Conteúdo recusado.");
    void queryClient.invalidateQueries({queryKey:["admin-partner-creator-submissions"]});
    void queryClient.invalidateQueries({queryKey:["admin-videos"]});
   },
