@@ -79,7 +79,7 @@ function V1AuditPage() {
       const ids = new Set<string>();
       const walk = (node: any) => {
         if (!node) return;
-        if (node.fullPath) ids.add(node.fullPath.replace(/\\/$/, "") || "/");
+        if (node.fullPath) ids.add(node.fullPath.replace(/\/$/, "") || "/");
         if (node.id) ids.add(node.id);
         const children = node.children ? Object.values(node.children) : [];
         children.forEach(walk);
