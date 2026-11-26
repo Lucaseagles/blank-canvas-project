@@ -106,6 +106,15 @@ BEGIN
   ) THEN
     RAISE EXCEPTION 'Telegram audit contains a secret or channel identifier';
   END IF;
+  IF EXISTS (
+    SELECT 1 FROM public.admin_audit_log
+    WHERE action_type='RUBI_TELEGRAM_CONFIG_UPDATED' AND entity_id=v_config_id
+      AND (coalesce(previous_value->>'values_redacted','false') <> 'true'
+        OR coalesce(new_value->>'channel_id_redacted','false') <> 'true'
+        OR coalesce(new_value->>'bot_token_redacted','false') <> 'true')
+  ) THEN
+    RAISE EXCEPTION 'Telegram audit is missing explicit redaction markers';
+  END IF;
   BEGIN
     PERFORM public.rubi_update_admin_setting_audited(
       'telegram_config', v_config_id::uuid,
