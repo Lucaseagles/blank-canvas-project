@@ -169,7 +169,13 @@ comment on function public.rubi_save_distribution_audited(uuid,uuid,integer,text
  else
   select d.* into old_plan from public.rubi_movement_distribution d
    where d.id=p_id and d.variant_id=p_variant_id for update;
-  if not found or old_plan.revision is distinct from p_expected_revision then
+  if not found then
+   raise exception 'Distribution plan not found';
+  end if;
+  if p_expected_revision is null then
+   raise exception 'Expected revision is required';
+  end if;
+  if old_plan.revision <> p_expected_revision then
    raise exception 'Distribution plan changed; reload before saving';
   end if;
   if p_channel is distinct from old_plan.channel then
