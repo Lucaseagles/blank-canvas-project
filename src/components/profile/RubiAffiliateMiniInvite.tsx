@@ -26,16 +26,17 @@ export function RubiAffiliateMiniInvite({userId,placement="right"}:{userId:strin
    return load({data:{accessToken:session.access_token}});
   },enabled:!!userId,staleTime:60_000,retry:false,refetchOnWindowFocus:true
  });
- if(!query.data?.eligible||dismissed)return null;
  const sessionKey="rubi-affiliate-invite-shown-"+userId;
  useEffect(()=>{
+  if(!query.data?.eligible||dismissed)return;
   try{
    if(window.sessionStorage.getItem(sessionKey)==="1")return;
    window.sessionStorage.setItem(sessionKey,"1");
    setCollapsed(false);
-   void trackEvent("RUBI_AFFILIATE_INVITE_SHOWN",{program:"rubi_indica",readiness_score:query.data?.score??0});
+   void trackEvent("RUBI_AFFILIATE_INVITE_SHOWN",{program:"rubi_indica",readiness_score:query.data.score??0});
   }catch{/* Keep invitation available if browser storage is restricted. */}
- },[sessionKey,query.data?.score]);
+ },[sessionKey,query.data?.eligible,query.data?.score,dismissed]);
+ if(!query.data?.eligible||dismissed)return null;
  const dismiss=(forever:boolean)=>{
   try{window.localStorage.setItem(key,forever?"never":String(Date.now()+30*86400000));}
   catch{/* private mode: hide for current session */}
