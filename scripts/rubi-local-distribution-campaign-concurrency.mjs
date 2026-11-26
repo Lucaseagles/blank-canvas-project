@@ -50,6 +50,7 @@ assert.ok(saved?.plan_id,"Winning RPC must return the persisted plan identifier.
 const rows=await required(db.from("rubi_movement_distribution").select("id,variant_id").eq("channel","instagram").eq("campaign",campaign),"Verify unique campaign row");
 assert.equal(rows.length,1,"Exactly one distribution row may own a product/channel/campaign key.");
 assert.equal(rows[0].id,saved.plan_id,"Persisted row must match winning RPC result.");
-const audit=await required(db.from("admin_audit_log").select("id",{count:"exact",head:true})
- .eq("entity_id",saved.plan_id).eq("action_type","RUBI_DISTRIBUTION_CREATED"),"Verify atomic audit event");
-assert.equal(audit,undefined);
+const {count:auditCount,error:auditError}=await db.from("admin_audit_log").select("id",{count:"exact",head:true})
+ .eq("entity_id",saved.plan_id).eq("action_type","RUBI_DISTRIBUTION_CREATED");
+if(auditError)throw new Error("Verify atomic audit event: "+auditError.message);
+assert.equal(auditCount,1,"Winning transaction must persist exactly one matching audit event.");
