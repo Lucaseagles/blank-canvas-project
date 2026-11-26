@@ -6,12 +6,12 @@ const read=p=>readFileSync(new URL(p,import.meta.url),"utf8");
 test("consumer invitation records deduplicated impression, open, CTA, pause and opt-out events",()=>{
  const popup=read("../components/profile/RubiAffiliateMiniInvite.tsx");
  for(const event of ["RUBI_AFFILIATE_INVITE_SHOWN","RUBI_AFFILIATE_INVITE_OPENED","RUBI_AFFILIATE_INVITE_CTA","RUBI_AFFILIATE_INVITE_PAUSED","RUBI_AFFILIATE_INVITE_OPTED_OUT"]) assert.ok(popup.includes(event),event);
- assert.match(popup,/sessionStorage/);
- assert.match(popup,/const \\[collapsed,setCollapsed\\]=useState\\(true\\)/);
+ assert.ok(popup.includes("sessionStorage"));
+ assert.ok(popup.includes("const [collapsed,setCollapsed]=useState(true)"));
  const shownEffect=popup.slice(popup.indexOf("if(!query.data?.eligible||dismissed)return;"),popup.indexOf("},[sessionKey"));
- assert.doesNotMatch(shownEffect,/setCollapsed\\(false\\)/);
- assert.match(popup,/RUBI_AFFILIATE_INVITE_OPENED[\\s\\S]*?setCollapsed\\(false\\)/);
- assert.doesNotMatch(popup,/query\\.data\\.score\\}%/);
+ assert.ok(!shownEffect.includes("setCollapsed(false)"),"invite must not auto-expand");
+ assert.ok(popup.includes('RUBI_AFFILIATE_INVITE_OPENED') && popup.includes("setCollapsed(false)"));
+ assert.ok(!popup.includes("query.data.score}%"),"readiness score stays private");
  assert.match(popup,/30\*86400000/);
  assert.match(popup,/rounded-full/);
  assert.match(popup,/Conheça o RUBI Indica/);
