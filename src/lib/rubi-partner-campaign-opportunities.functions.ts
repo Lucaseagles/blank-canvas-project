@@ -58,7 +58,8 @@ export const getMyRubiCampaignOpportunities=createServerFn({method:"POST"})
   const planById=new Map<string,any>((plans.data??[]).map((p:any)=>[p.id,p]));
   const movementById=new Map<string,any>((movements.data??[]).map((m:any)=>[m.id,m]));
   const variantById=new Map<string,any>((variants.data??[]).map((v:any)=>[v.id,v]));
-  const candidates=(assignments.data??[]).flatMap((a:any)=>{
+  type CampaignOpportunityCandidate={assignmentId:string;team:any;plan:any;movement:any;variant:any;product:any};
+  const candidates:CampaignOpportunityCandidate[]=(assignments.data??[]).flatMap((a:any):CampaignOpportunityCandidate[]=>{
    const team=teamById.get(a.team_id),plan=planById.get(a.campaign_plan_id);
    const movement=movementById.get(a.movement_id),variant=variantById.get(a.variant_id);
    if(!team||!membershipsByTeam.has(a.team_id)||!plan||!movement||!variant||
@@ -67,7 +68,7 @@ export const getMyRubiCampaignOpportunities=createServerFn({method:"POST"})
    return [{assignmentId:a.id,team,plan,movement,variant,product:productById.get(plan.product_id)}];
   });
   if(!candidates.length)return {items:[],partial:false};
-  const variantIds=[...new Set(candidates.map(x=>x.variant.id))];
+  const variantIds=[...new Set<string>(candidates.map((candidate:CampaignOpportunityCandidate)=>String(candidate.variant.id)))];
   const now=new Date().toISOString();
   const {data:licenses,error:licenseError}=await db.from("rubi_creative_licenses")
    .select("variant_id,approved_variant_revision,permitted_channels,permitted_audiences,valid_until")
@@ -80,7 +81,7 @@ export const getMyRubiCampaignOpportunities=createServerFn({method:"POST"})
    const old=licenseByVariant.get(license.variant_id);
    if(!old||new Date(license.valid_until)>new Date(old.valid_until))licenseByVariant.set(license.variant_id,license);
   }
-  const items=candidates.flatMap(({assignmentId,team,plan,movement,variant,product})=>{
+  const items=candidates.flatMap(({assignmentId,team,plan,movement,variant,product}:CampaignOpportunityCandidate)=>{
    const license=licenseByVariant.get(variant.id);
    if(!license||license.approved_variant_revision!==variant.revision)return [];
    const permitted=(license.permitted_channels??[]).filter((c:string)=>channels.includes(c as any));
