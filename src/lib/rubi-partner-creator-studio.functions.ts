@@ -155,7 +155,7 @@ export const reviewPartnerCreatorSubmission=createServerFn({method:"POST"})
 }).parse(input))
 .handler(async({data,context})=>{
   const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
-  const {data:result,error}=await supabaseAdmin.rpc("rubi_review_partner_creator_submission",{
+  const {data:result,error}=await (supabaseAdmin as any).rpc("rubi_review_partner_creator_submission",{
     p_actor:context.userId,p_submission_id:data.submissionId,p_decision:data.decision,
     p_review_notes:data.reviewNotes??null
   });
