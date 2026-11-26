@@ -1,4 +1,4 @@
-\\set ON_ERROR_STOP on
+\set ON_ERROR_STOP on
 -- Executed by the authenticated local E2E workflow against disposable PostgreSQL.
 BEGIN;
 
