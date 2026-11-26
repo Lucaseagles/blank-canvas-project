@@ -32,7 +32,6 @@ export function RubiAffiliateMiniInvite({userId,placement="right"}:{userId:strin
   try{
    if(window.sessionStorage.getItem(sessionKey)==="1")return;
    window.sessionStorage.setItem(sessionKey,"1");
-   setCollapsed(false);
    void trackEvent("RUBI_AFFILIATE_INVITE_SHOWN",{program:"rubi_indica",readiness_score:query.data.score??0});
   }catch{/* Keep invitation available if browser storage is restricted. */}
  },[sessionKey,query.data?.eligible,query.data?.score,dismissed]);
@@ -52,7 +51,7 @@ export function RubiAffiliateMiniInvite({userId,placement="right"}:{userId:strin
     <span className="sr-only">Convite para conhecer o programa de afiliados RUBI</span>
    </button>:<div className="w-[min(260px,calc(100vw-24px))] rounded-2xl border border-primary/30 bg-card/95 p-3 text-card-foreground shadow-2xl backdrop-blur-xl">
     <div className="flex items-center justify-between gap-2">
-     <strong className="text-[11px]">RUBI Indica · {query.data.score}%</strong>
+     <strong className="text-[11px]">RUBI Indica</strong>
      <button type="button" aria-label="Recolher convite" className="rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
       onClick={()=>setCollapsed(true)}>−</button>
     </div>
