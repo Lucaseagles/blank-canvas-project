@@ -126,6 +126,8 @@ jobs:
         run: psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f scripts/rubi-local-smart-collection-grants-smoke.sql
       - name: Seed disposable supplier, product, reviewed movement and private Story
         run: node scripts/rubi-local-story-fixture.mjs
+      - name: Prove product/channel/campaign uniqueness under concurrent PostgreSQL transactions
+        run: node scripts/rubi-local-distribution-campaign-concurrency.mjs
       - name: Exercise privileged notification worker against hostile temp relation
         run: |
           set -euo pipefail
