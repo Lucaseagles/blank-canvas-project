@@ -281,6 +281,8 @@ jobs:
         run: node --test src/lib/rubi-experience-popup-atomic-audit.test.mjs
       - name: RUBI Social Proof legacy audit-boundary regression
         run: node --test src/lib/rubi-social-proof-audit-boundary.test.mjs
+      - name: RUBI Business quote admin atomic audit regression
+        run: node --test src/lib/rubi-business-quote-admin-atomic-audit.test.mjs
 
       - name: TypeScript
         run: npx tsc --noEmit
