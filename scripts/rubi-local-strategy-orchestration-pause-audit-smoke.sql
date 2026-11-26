@@ -10,7 +10,9 @@ SELECT set_config('rubi.qa_non_owner_id', :'non_owner_id', true);
 DO $grants$
 BEGIN
   -- Legacy mutation RPCs and direct authenticated DML must be closed.
-  IF has_function_privilege('authenticated', 'public.create_strategy_orchestration(text,text,integer,text,uuid[],uuid[])', 'EXECUTE')
+  IF has_function_privilege('authenticated', 'public.create_strategy_orchestration(text,text,integer,text,uuid[])', 'EXECUTE')
+    OR has_function_privilege('service_role', 'public.create_strategy_orchestration(text,text,integer,text,uuid[])', 'EXECUTE')
+    OR has_function_privilege('authenticated', 'public.create_strategy_orchestration(text,text,integer,text,uuid[],uuid[])', 'EXECUTE')
     OR has_function_privilege('service_role', 'public.create_strategy_orchestration(text,text,integer,text,uuid[],uuid[])', 'EXECUTE')
     OR has_function_privilege('authenticated', 'public.generate_strategy_orchestration_plan(uuid)', 'EXECUTE')
     OR has_function_privilege('service_role', 'public.generate_strategy_orchestration_plan(uuid)', 'EXECUTE')
@@ -18,9 +20,15 @@ BEGIN
     OR has_function_privilege('service_role', 'public.approve_strategy_orchestration(uuid)', 'EXECUTE') THEN
     RAISE EXCEPTION 'Legacy Strategy Orchestration mutation RPC remains executable';
   END IF;
-  IF has_table_privilege('authenticated', 'public.strategy_orchestrations', 'INSERT,UPDATE,DELETE')
-    OR has_table_privilege('authenticated', 'public.strategy_orchestration_items', 'INSERT,UPDATE,DELETE')
-    OR has_table_privilege('authenticated', 'public.strategy_orchestration_videos', 'INSERT,UPDATE,DELETE') THEN
+  IF has_table_privilege('authenticated', 'public.strategy_orchestrations', 'INSERT')
+    OR has_table_privilege('authenticated', 'public.strategy_orchestrations', 'UPDATE')
+    OR has_table_privilege('authenticated', 'public.strategy_orchestrations', 'DELETE')
+    OR has_table_privilege('authenticated', 'public.strategy_orchestration_items', 'INSERT')
+    OR has_table_privilege('authenticated', 'public.strategy_orchestration_items', 'UPDATE')
+    OR has_table_privilege('authenticated', 'public.strategy_orchestration_items', 'DELETE')
+    OR has_table_privilege('authenticated', 'public.strategy_orchestration_videos', 'INSERT')
+    OR has_table_privilege('authenticated', 'public.strategy_orchestration_videos', 'UPDATE')
+    OR has_table_privilege('authenticated', 'public.strategy_orchestration_videos', 'DELETE') THEN
     RAISE EXCEPTION 'Authenticated clients retain direct Strategy Orchestration write privileges';
   END IF;
   IF NOT has_function_privilege('service_role',
