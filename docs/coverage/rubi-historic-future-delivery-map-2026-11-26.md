@@ -128,3 +128,38 @@ A PR #346 adiciona uma correção concreta de integridade à carteira de 11.3: c
 5. Fechar o menor gap mensurável de Movement Engine (08.2–08.4) após reconciliação de evidências e denominadores.
 
 Este addendum é planejamento. Não altera a baseline V1 nem concede pontos.
+
+
+## 8. Atualização histórica — PR #346, #347 e Sprint 348 (2026-11-26)
+
+### Entregas concluídas e removidas da fila de implementação
+
+| Entrega | Resultado | Estado | Pontuação |
+|---|---|---|---:|
+| PR #346 — Telegram config + Vault | Configuração, referências secretas e audit transacional | Integrada à main em `ff9994e212a0d6adfa079f5871ed3acb12fd1268` | +0 |
+| PR #347 — execução da auditoria administrativa | GET → POST; UI com mutation explícita e retry automático desligado; regressões adicionadas ao Sprint 33 QA | Integrada à main em `4e9dcda0ce5e5ac61b5a8b1be41a4efd0d371df3` | +0 |
+| Sprint 348 — reconciliação híbrida | Atualiza evidências históricas, retira achados já resolvidos da fila e define os gates reais restantes de 11.3 | Documentação nesta PR | +0 |
+
+A PR #347 foi integrada após os três workflows obrigatórios passarem no HEAD `c5f8b357bb18a849fbcbcae3b1ba6b9b50066b78`: Hub V1 Integration QA, Sprint 33 QA e RUBI Local Authenticated E2E — Four Profiles.
+
+### Correção da fila administrativa
+
+O inventário histórico de 24/11 deve ser lido junto às migrations e smokes posteriores. Referral Tiers, Brand Identity, Strategy Orchestration, Compliance settings, Marketplace CRUD/credenciais/status, Telegram metric/config e a execução POST do checklist têm implementações auditadas e/ou provas locais específicas na main. Esses itens não devem voltar à fila de implementação sem nova evidência de regressão. Permanecem na suíte de regressão.
+
+A lacuna de 11.3 agora é definida com mais rigor: inventário transversal exaustivo de todas as mutações, busca de bypass, matriz negativa por papel, rollback real, concorrência/idempotência, redaction e E2E administrativo. A execução do checklist registra o próprio evento `ADMIN_AUDIT_RUN`; não prova, por si só, que todas as mutações do produto estejam auditadas.
+
+### Sequência futura revisada
+
+1. Inventário completo de mutações → server functions → RPC/DML → RLS/GRANT → audit → testes.
+2. Testes negativos por papel para as famílias ainda não cobertas.
+3. Rollback e concorrência em PostgreSQL descartável para as mutações ainda sem prova real.
+4. Reavaliação formal de 11.3; atribuir parcial ou completa apenas conforme rubrica e evidências.
+5. Reavaliar 02.4 com a evidência E2E local do Sprint 307; staging HTTPS e prova de checkout externo continuam pendentes.
+6. Movement Engine: contratos de público/ângulo, experimentos A/B e métricas com denominadores confiáveis.
+7. Outbox Telegram e distribuição multicanal; nunca declarar entrega externa sem confirmação do conector.
+8. Atribuição e comissões, checkout, bump/upsell, B2B, payouts, estornos, recompra e LTV com provas oficiais.
+9. Reconciliar as 48 linhas e certificar 100% somente após o aceite de cada critério.
+
+### Pontuação
+
+O score carregado permanece **37.5/48 = 78.1%**, gap aritmético **10.5 pontos**. PR #346, PR #347 e a documentação Sprint 348 são upgrades/habilitadores e não adicionam pontos. A distribuição por critério permanece sob reconciliação; não estimar pontuação individual a partir do agregado.
