@@ -23,13 +23,30 @@ create policy "Owners can view compliance rules"
   on public.compliance_rules for select to authenticated
   using (public.has_role((select auth.uid()), 'owner'::public.app_role));
 
-drop policy if exists feature_flags_owner_all on public.feature_flags;
-create policy feature_flags_owner_select
-  on public.feature_flags for select to authenticated
-  using (exists (
-    select 1 from public.user_roles ur
-    where ur.user_id = (select auth.uid()) and ur.role = 'owner'::public.app_role
-  ));
+do $feature_flags$
+begin
+  -- feature_flags exists in the connected project but is absent from the versioned
+  -- migration bootstrap. Harden it only when the relation is present; never invent it.
+  if to_regclass('public.feature_flags') is not null then
+    execute 'drop policy if exists feature_flags_owner_all on public.feature_flags';
+    execute $policy$
+      create policy feature_flags_owner_select
+        on public.feature_flags for select to authenticated
+        using (exists (
+          select 1 from public.user_roles ur
+          where ur.user_id = (select auth.uid()) and ur.role = 'owner'::public.app_role
+        ))
+    $policy$;
+    execute 'revoke all privileges on table public.feature_flags from public, anon, authenticated';
+    execute 'grant select on table public.feature_flags to authenticated';
+    execute 'grant all privileges on table public.feature_flags to service_role';
+    execute $comment$
+      comment on table public.feature_flags is
+        'Admin Settings: Owner reads only; mutations must use rubi_update_admin_setting_audited.'
+    $comment$;
+  end if;
+end
+$feature_flags$;
 
 drop policy if exists "Admins can manage feed mix config" on public.feed_mix_config;
 create policy "Owners can view feed mix config"
