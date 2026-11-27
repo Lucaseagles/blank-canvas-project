@@ -24,22 +24,22 @@ export function isValidRubiPublicationReference(channel:RubiOrganicChannel,refer
  const path=url.pathname;
  switch(channel){
   case "instagram":
-   return ["instagram.com","www.instagram.com"].includes(host)&&/^\\/(p|reel)\\/[A-Za-z0-9_-]+\\/?$/.test(path);
+   return ["instagram.com","www.instagram.com"].includes(host)&&/^\/(p|reel)\/[A-Za-z0-9_-]+\/?$/.test(path);
   case "tiktok":
-   return ["tiktok.com","www.tiktok.com","m.tiktok.com"].includes(host)&&/^\\/@[A-Za-z0-9._]+\\/video\\/[0-9]+\\/?$/.test(path);
+   return ["tiktok.com","www.tiktok.com","m.tiktok.com"].includes(host)&&/^\/@[A-Za-z0-9._]+\/video\/[0-9]+\/?$/.test(path);
   case "youtube":
    return ["youtube.com","www.youtube.com"].includes(host)&&(
-    /^\\/shorts\\/[A-Za-z0-9_-]{6,}\\/?$/.test(path)&&!url.search||
+    /^\/shorts\/[A-Za-z0-9_-]{6,}\/?$/.test(path)&&!url.search||
     path==="/watch"&&/^[A-Za-z0-9_-]{6,}$/.test(url.searchParams.get("v")??"")
-   )||host==="youtu.be"&&/^\\/[A-Za-z0-9_-]{6,}\\/?$/.test(path);
+   )||host==="youtu.be"&&/^\/[A-Za-z0-9_-]{6,}\/?$/.test(path);
   case "facebook":
    return ["facebook.com","www.facebook.com","m.facebook.com"].includes(host)&&
-    (/\\/(posts|videos|reel)\\/[A-Za-z0-9_-]+\\/?$/.test(path)||/^\\/watch\\/?$/.test(path)&&url.searchParams.has("v"));
+    (/\/(posts|videos|reel)\/[A-Za-z0-9_-]+\/?$/.test(path)||/^\/watch\/?$/.test(path)&&url.searchParams.has("v"));
   case "pinterest":
-   return ["pinterest.com","www.pinterest.com"].includes(host)&&/^\\/pin\\/[0-9]+\\/?$/.test(path);
+   return ["pinterest.com","www.pinterest.com"].includes(host)&&/^\/pin\/[0-9]+\/?$/.test(path);
   case "telegram":
    return ["t.me","telegram.me"].includes(host)&&
-    (/^\\/[A-Za-z0-9_]{5,}\\/[0-9]+\\/?$/.test(path)||/^\\/c\\/[0-9]+\\/[0-9]+\\/?$/.test(path));
+    (/^\/[A-Za-z0-9_]{5,}\/[0-9]+\/?$/.test(path)||/^\/c\/[0-9]+\/[0-9]+\/?$/.test(path));
   case "whatsapp":
    return false;
  }
