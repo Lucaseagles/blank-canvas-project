@@ -80,17 +80,3 @@ export async function logShare(userId: string, referralCode: string, platform: S
   const { error } = await shareDb.from("share_history").insert({ user_id: userId, referral_code: referralCode, platform, format });
   if (error) throw error;
 }
-
-export async function updateShareTemplate(id: string, values: Pick<ShareTemplate, "caption_template" | "max_length" | "hashtags" | "is_active">): Promise<void> {
-  const { error } = await shareDb.from("share_templates").update({ ...values, updated_at: new Date().toISOString() }).eq("id", id);
-  if (error) throw error;
-}
-
-export async function updateShareCardConfig(config: ShareCardConfig): Promise<void> {
-  const style = { primary_color: config.primary_color, secondary_color: config.secondary_color, text_color: config.text_color, background: config.background, accent_color: config.accent_color };
-  const texts = { title: config.title, subtitle: config.subtitle, cta: config.cta, reward_label: config.reward_label };
-  for (const [configKey, configValue] of [["card_style", style], ["card_texts", texts]] as const) {
-    const { error } = await shareDb.from("share_card_config").update({ config_value: configValue, updated_at: new Date().toISOString() }).eq("config_key", configKey);
-    if (error) throw error;
-  }
-}
