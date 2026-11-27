@@ -277,6 +277,8 @@ jobs:
         run: node --test src/lib/video-content-dml-hardening.test.mjs
       - name: Sprint 362 system-owned and legacy table DML hardening regression
         run: node --test src/lib/system-owned-legacy-dml-hardening.test.mjs
+      - name: Sprint 362 marketplace server-only writes regression
+        run: node --test src/lib/marketplace-server-only-writes.test.mjs
       - name: Sprint 362 Share Studio atomic audit regression
         run: node --test src/lib/share-studio-atomic-audit.test.mjs
       - name: RUBI editorial session journey UUID regression
