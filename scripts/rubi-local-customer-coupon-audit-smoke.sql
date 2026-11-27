@@ -112,7 +112,7 @@ begin
   select updated_at into v_updated from public.customer_coupons where id=v_coupon_id;
   perform public.rubi_manage_customer_coupon_audited('delete',v_coupon_id,'{}'::jsonb,v_master,v_updated);
   select count(*) into v_count from public.admin_audit_log
-    where entity_type='customer_coupon' and entity_id=v_coupon_id
+    where entity_type='customer_coupon' and entity_id=v_coupon_id::text
       and action_type in ('RUBI_CUSTOMER_COUPON_CREATED','RUBI_CUSTOMER_COUPON_STATUS_CHANGED','RUBI_CUSTOMER_COUPON_DELETED');
   if v_count <> 3 then raise exception 'Expected exactly three coupon audit events, found %',v_count; end if;
 end $$;
