@@ -2,19 +2,13 @@
 begin;
 select set_config('rubi.qa.master_id', :'master_id', true);
 select set_config('rubi.qa.non_owner_id', :'non_owner_id', true);
-select set_config('rubi.qa.marketplace_id', (select id::text from public.marketplaces order by created_at limit 1), true);
+select set_config('rubi.qa.marketplace_id', coalesce((select id::text from public.marketplaces order by created_at limit 1),'00000000-0000-0000-0000-000000000000'), true);
 
 do $$
-declare
-  v_marketplace uuid := current_setting('rubi.qa.marketplace_id')::uuid;
-  v_master uuid := current_setting('rubi.qa.master_id')::uuid;
-  v_non_owner uuid := current_setting('rubi.qa.non_owner_id')::uuid;
-  v_result jsonb;
-  v_coupon_id uuid;
-  v_updated timestamptz;
-  v_count integer;
 begin
-  if v_marketplace is null then raise exception 'RUBI_QA marketplace fixture is required'; end if;
+  if current_setting('rubi.qa.marketplace_id')::uuid = '00000000-0000-0000-0000-000000000000'::uuid then
+    raise exception 'RUBI_QA marketplace fixture is required';
+  end if;
   if has_function_privilege('authenticated','public.rubi_manage_customer_coupon_audited(text,uuid,jsonb,uuid,timestamptz)','EXECUTE')
      or has_function_privilege('anon','public.rubi_manage_customer_coupon_audited(text,uuid,jsonb,uuid,timestamptz)','EXECUTE')
      or not has_function_privilege('service_role','public.rubi_manage_customer_coupon_audited(text,uuid,jsonb,uuid,timestamptz)','EXECUTE') then
@@ -25,23 +19,28 @@ begin
      or has_table_privilege('authenticated','public.customer_coupons','DELETE') then
     raise exception 'Browser role still has direct customer coupon DML';
   end if;
+end $$;
 
-  delete from public.customer_coupons where code = 'RUBI-QA-ATOMIC-COUPON';
+create function pg_temp.rubi_qa_reject_coupon_audit() returns trigger
+language plpgsql as $trigger$
+begin
+  if new.action_type like 'RUBI_CUSTOMER_COUPON_%' then
+    raise exception 'RUBI_QA_FORCED_COUPON_AUDIT_FAILURE';
+  end if;
+  return new;
+end;
+$trigger$;
+create trigger rubi_qa_reject_coupon_audit
+before insert on public.admin_audit_log
+for each row execute function pg_temp.rubi_qa_reject_coupon_audit();
 
-  create function pg_temp.rubi_qa_reject_coupon_audit() returns trigger
-  language plpgsql as $trigger$
-  begin
-    if new.action_type like 'RUBI_CUSTOMER_COUPON_%' then
-      raise exception 'RUBI_QA_FORCED_COUPON_AUDIT_FAILURE';
-    end if;
-    return new;
-  end;
-  $trigger$;
-  create trigger rubi_qa_reject_coupon_audit
-  before insert on public.admin_audit_log
-  for each row execute function pg_temp.rubi_qa_reject_coupon_audit();
-
-  set local role service_role;
+set local role service_role;
+do $$
+declare
+  v_marketplace uuid := current_setting('rubi.qa.marketplace_id')::uuid;
+  v_master uuid := current_setting('rubi.qa.master_id')::uuid;
+  v_count integer;
+begin
   begin
     perform public.rubi_manage_customer_coupon_audited(
       'create', null,
@@ -58,16 +57,27 @@ begin
   end;
   select count(*) into v_count from public.customer_coupons where code='RUBI-QA-ATOMIC-COUPON';
   if v_count <> 0 then raise exception 'Coupon mutation survived failed audit insert'; end if;
-  reset role;
+end $$;
+reset role;
+drop trigger rubi_qa_reject_coupon_audit on public.admin_audit_log;
 
-  drop trigger rubi_qa_reject_coupon_audit on public.admin_audit_log;
-  set local role service_role;
+set local role service_role;
+do $$
+declare
+  v_marketplace uuid := current_setting('rubi.qa.marketplace_id')::uuid;
+  v_master uuid := current_setting('rubi.qa.master_id')::uuid;
+  v_non_owner uuid := current_setting('rubi.qa.non_owner_id')::uuid;
+  v_result jsonb;
+  v_coupon_id uuid;
+  v_updated timestamptz;
+  v_count integer;
+begin
   begin
     perform public.rubi_manage_customer_coupon_audited(
       'create', null,
       jsonb_build_object(
         'marketplace_id',v_marketplace,'code','RUBI-QA-ATOMIC-COUPON',
-        'description','successful probe','discount_type','percentage','discount_value',10,
+        'description','non-owner probe','discount_type','percentage','discount_value',10,
         'valid_from',now(),'valid_until',null,'is_active',true,'product_id',null,
         'category_id',null,'max_uses',null
       ), v_non_owner, null
@@ -105,6 +115,6 @@ begin
     where entity_type='customer_coupon' and entity_id=v_coupon_id
       and action_type in ('RUBI_CUSTOMER_COUPON_CREATED','RUBI_CUSTOMER_COUPON_STATUS_CHANGED','RUBI_CUSTOMER_COUPON_DELETED');
   if v_count <> 3 then raise exception 'Expected exactly three coupon audit events, found %',v_count; end if;
-  reset role;
 end $$;
+reset role;
 rollback;
