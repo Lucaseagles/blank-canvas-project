@@ -5,7 +5,7 @@ Close the browser-execution gap for three audited SECURITY DEFINER functions.
 
 - `append_admin_audit`: keep authenticated EXECUTE because its body derives the actor from `auth.uid()` and enforces Owner. Remove PUBLIC/anon.
 - `get_eligible_benefit_popup`: server-only. The server resolves the authenticated user and calls via service_role; browser execution would permit arbitrary `p_user_id` probing.
-- `audit_marketplace_mutation`: trigger-only; remove direct browser EXECUTE while preserving its attached PostgreSQL trigger.
+- `audit_marketplace_mutation`: trigger-only function signature remains in the schema but is not attached to a non-internal trigger in the current disposable migration lineage; remove direct browser EXECUTE without inventing a trigger attachment.
 
 ## Catalog finding — marketplace trigger function
 
