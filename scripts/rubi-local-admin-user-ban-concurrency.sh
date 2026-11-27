@@ -8,22 +8,28 @@ set -euo pipefail
 master_id="$RUBI_QA_MASTER_USER_ID"
 target_id="$RUBI_QA_CONSUMER_USER_ID"
 
-# The database is disposable. Start from a known state and count only events
-# produced by this concurrency probe.
+# This script is independently executable: the previous audit smoke is rolled
+# back by design, so it must provision its own disposable profiles row.
 psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -v target_id="$target_id" <<'SQL'
-UPDATE public.profiles
-   SET is_banned = false
- WHERE user_id = :'target_id'::uuid;
+INSERT INTO public.profiles (user_id, display_name, is_banned)
+VALUES (:'target_id'::uuid, 'RUBI QA Consumidor', false)
+ON CONFLICT (user_id) DO NOTHING;
 SQL
 
-before="$(psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -At   -v master_id="$master_id" -v target_id="$target_id"   -c "select count(*) from public.admin_audit_log
-       where actor_user_id = :'master_id'::uuid
-         and action_type = 'USER_BAN_STATUS_CHANGED'
-         and entity_type = 'profiles'
-         and entity_id = :'target_id';")"
+before="$(psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -At \
+  -v master_id="$master_id" -v target_id="$target_id" <<'SQL'
+SELECT count(*)
+  FROM public.admin_audit_log
+ WHERE actor_user_id = :'master_id'::uuid
+   AND action_type = 'USER_BAN_STATUS_CHANGED'
+   AND entity_type = 'profiles'
+   AND entity_id = :'target_id';
+SQL
+)"
 
 run_mutation() {
-  psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1     -v master_id="$master_id" -v target_id="$target_id" <<'SQL'
+  psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 \
+    -v master_id="$master_id" -v target_id="$target_id" <<'SQL'
 BEGIN;
 SET LOCAL ROLE service_role;
 SELECT pg_sleep(0.2);
@@ -42,13 +48,24 @@ pid_b=$!
 wait "$pid_a" || { cat /tmp/rubi-user-ban-concurrency-a.log; exit 1; }
 wait "$pid_b" || { cat /tmp/rubi-user-ban-concurrency-b.log; exit 1; }
 
-after="$(psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -At   -v master_id="$master_id" -v target_id="$target_id"   -c "select count(*) from public.admin_audit_log
-       where actor_user_id = :'master_id'::uuid
-         and action_type = 'USER_BAN_STATUS_CHANGED'
-         and entity_type = 'profiles'
-         and entity_id = :'target_id';")"
+after="$(psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -At \
+  -v master_id="$master_id" -v target_id="$target_id" <<'SQL'
+SELECT count(*)
+  FROM public.admin_audit_log
+ WHERE actor_user_id = :'master_id'::uuid
+   AND action_type = 'USER_BAN_STATUS_CHANGED'
+   AND entity_type = 'profiles'
+   AND entity_id = :'target_id';
+SQL
+)"
 
-state="$(psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -At   -v target_id="$target_id"   -c "select is_banned from public.profiles where user_id = :'target_id'::uuid;")"
+state="$(psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -At \
+  -v target_id="$target_id" <<'SQL'
+SELECT is_banned
+  FROM public.profiles
+ WHERE user_id = :'target_id'::uuid;
+SQL
+)"
 
 expected=$((before + 1))
 if [[ "$after" -ne "$expected" ]]; then
