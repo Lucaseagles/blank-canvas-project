@@ -39,8 +39,12 @@ const {data:movement,error:movementError}=await db.from("rubi_movements")
  .select("id,revision").eq("id",movementId).maybeSingle();
 if(movementError)throw new Error("Could not verify disposable movement revision: "+movementError.message);
 if(!movement||!Number.isInteger(Number(movement.revision)))throw new Error("Disposable audience evidence movement has no valid revision.");
+const {data:product,error:productError}=await db.from("hub_products").select("title").eq("id",productId).maybeSingle();
+if(productError||!product?.title)throw new Error("Could not resolve the local QA product title for the Master UI journey.");
 await appendFile(envFile,
  "RUBI_QA_AUDIENCE_REVIEW_MOVEMENT_ID="+movement.id+"\n"+
- "RUBI_QA_AUDIENCE_REVIEW_REVISION="+movement.revision+"\n",
+ "RUBI_QA_AUDIENCE_REVIEW_REVISION="+movement.revision+"\n"+
+ "RUBI_QA_AUDIENCE_REVIEW_PRODUCT_TITLE="+product.title.replace(/[\r\n]/g," ")+"\n"+
+ "RUBI_QA_AUDIENCE_REVIEW_MOVEMENT_NAME=RUBI QA — revisão de evidência\n",
  {encoding:"utf8",mode:0o600});
 process.stdout.write("Disposable audience-evidence review movement created in local Supabase; no production data used.\n");
