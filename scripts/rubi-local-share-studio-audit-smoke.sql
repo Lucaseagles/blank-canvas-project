@@ -65,13 +65,33 @@ select set_config('request.jwt.claims',jsonb_build_object('sub',current_setting(
 do $owner_dml$
 begin
   begin
+    execute 'insert into public.share_templates default values';
+    raise exception 'RUBI_QA_EXPECTED_SHARE_TEMPLATE_INSERT_DENIAL_NOT_RAISED';
+  exception when insufficient_privilege then null;
+  end;
+  begin
     update public.share_templates set caption_template=caption_template where id=current_setting('rubi.qa.template_id')::uuid;
     raise exception 'RUBI_QA_EXPECTED_SHARE_TEMPLATE_UPDATE_DENIAL_NOT_RAISED';
   exception when insufficient_privilege then null;
   end;
   begin
+    delete from public.share_templates where id=current_setting('rubi.qa.template_id')::uuid;
+    raise exception 'RUBI_QA_EXPECTED_SHARE_TEMPLATE_DELETE_DENIAL_NOT_RAISED';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    execute 'insert into public.share_card_config default values';
+    raise exception 'RUBI_QA_EXPECTED_SHARE_CARD_INSERT_DENIAL_NOT_RAISED';
+  exception when insufficient_privilege then null;
+  end;
+  begin
     update public.share_card_config set config_value=config_value where config_key='card_style';
     raise exception 'RUBI_QA_EXPECTED_SHARE_CARD_UPDATE_DENIAL_NOT_RAISED';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    delete from public.share_card_config where config_key='card_style';
+    raise exception 'RUBI_QA_EXPECTED_SHARE_CARD_DELETE_DENIAL_NOT_RAISED';
   exception when insufficient_privilege then null;
   end;
 end
@@ -163,15 +183,17 @@ begin
   end if;
   if (select count(*) from public.admin_audit_log
       where actor_user_id=current_setting('rubi.qa.master_id')::uuid
-        and entity_type in ('share_templates','share_card_config')
+        and ((entity_type='share_templates' and entity_id=current_setting('rubi.qa.template_id'))
+          or (entity_type='share_card_config' and entity_id in ('card_style','card_texts')))
         and action_type in ('RUBI_SHARE_TEMPLATE_UPDATED','RUBI_SHARE_CARD_CONFIG_UPDATED')) <> 3 then
     raise exception 'Expected exactly three sanitized Share Studio audit events';
   end if;
   if exists(select 1 from public.admin_audit_log
     where actor_user_id=current_setting('rubi.qa.master_id')::uuid
-      and entity_type in ('share_templates','share_card_config')
-      and (coalesce(previous_value,'{}'::jsonb)||coalesce(new_value,'{}'::jsonb))::text
-        ilike '%RUBI QA successful caption%') then
+      and ((entity_type='share_templates' and entity_id=current_setting('rubi.qa.template_id'))
+        or (entity_type='share_card_config' and entity_id in ('card_style','card_texts')))
+      and ((coalesce(previous_value,'{}'::jsonb)||coalesce(new_value,'{}'::jsonb))::text
+        ilike '%RUBI QA successful caption%' or (coalesce(previous_value,'{}'::jsonb)||coalesce(new_value,'{}'::jsonb))::text ilike '%112233%' or (coalesce(previous_value,'{}'::jsonb)||coalesce(new_value,'{}'::jsonb))::text ilike '%QA title%')) then
     raise exception 'Share Studio audit contains caption content';
   end if;
 end
