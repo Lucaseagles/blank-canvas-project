@@ -3,6 +3,9 @@ BEGIN;
 CREATE TEMP TABLE rubi_qa_refresh_actor(master_id uuid, non_owner_id uuid) ON COMMIT DROP;
 INSERT INTO rubi_qa_refresh_actor VALUES (:'master_id'::uuid, :'non_owner_id'::uuid);
 GRANT SELECT ON rubi_qa_refresh_actor TO service_role;
+CREATE TEMP TABLE rubi_qa_refresh_snapshot(id uuid PRIMARY KEY, row_data jsonb) ON COMMIT DROP;
+INSERT INTO rubi_qa_refresh_snapshot SELECT id,to_jsonb(a) FROM public.opportunity_alerts a;
+GRANT SELECT ON rubi_qa_refresh_snapshot TO service_role;
 
 CREATE FUNCTION pg_temp.rubi_qa_reject_refresh_audit()
 RETURNS trigger LANGUAGE plpgsql AS $trigger$
@@ -31,9 +34,9 @@ $grants$;
 
 SET LOCAL ROLE service_role;
 DO $rollback$
-DECLARE v_before bigint; v_after bigint;
+DECLARE v_before bigint; v_after bigint; v_changed bigint;
 BEGIN
-  SELECT count(*) INTO v_before FROM public.opportunity_alerts;
+  SELECT count(*) INTO v_before FROM rubi_qa_refresh_snapshot;
   BEGIN
     PERFORM public.rubi_refresh_opportunity_alerts_audited((SELECT master_id FROM rubi_qa_refresh_actor));
     RAISE EXCEPTION 'RUBI_QA_EXPECTED_REFRESH_AUDIT_FAILURE_NOT_RAISED';
@@ -41,8 +44,12 @@ BEGIN
     IF SQLERRM NOT LIKE '%RUBI_QA_FORCED_REFRESH_AUDIT_FAILURE%' THEN RAISE; END IF;
   END;
   SELECT count(*) INTO v_after FROM public.opportunity_alerts;
-  IF v_after IS DISTINCT FROM v_before THEN
-    RAISE EXCEPTION 'Refresh data survived failed audit';
+  SELECT count(*) INTO v_changed
+  FROM rubi_qa_refresh_snapshot s
+  FULL JOIN public.opportunity_alerts a ON a.id=s.id
+  WHERE s.id IS NULL OR a.id IS NULL OR s.row_data IS DISTINCT FROM to_jsonb(a);
+  IF v_after IS DISTINCT FROM v_before OR v_changed<>0 THEN
+    RAISE EXCEPTION 'Refresh data survived failed audit (rows %, expected %, changed %)',v_after,v_before,v_changed;
   END IF;
 END;
 $rollback$;
