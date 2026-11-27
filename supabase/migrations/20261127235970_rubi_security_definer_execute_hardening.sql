@@ -11,7 +11,9 @@ GRANT EXECUTE ON FUNCTION public.append_admin_audit(text, text, text, jsonb, jso
 -- Trigger-only function: it is invoked by the existing marketplace trigger and
 -- is not an API operation. Revoke direct execution from every API role.
 REVOKE ALL ON FUNCTION public.audit_marketplace_mutation()
-  FROM PUBLIC, anon, authenticated, service_role;
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.audit_marketplace_mutation()
+  TO service_role;
 
 -- The application calls this through supabaseAdmin after resolving the current
 -- authenticated user server-side. Do not let API clients choose another user_id.
@@ -30,7 +32,7 @@ BEGIN
 
   IF has_function_privilege('anon', 'public.audit_marketplace_mutation()', 'EXECUTE')
      OR has_function_privilege('authenticated', 'public.audit_marketplace_mutation()', 'EXECUTE')
-     OR has_function_privilege('service_role', 'public.audit_marketplace_mutation()', 'EXECUTE') THEN
+     OR NOT has_function_privilege('service_role', 'public.audit_marketplace_mutation()', 'EXECUTE') THEN
     RAISE EXCEPTION 'marketplace trigger function must not be directly executable by API roles';
   END IF;
 
