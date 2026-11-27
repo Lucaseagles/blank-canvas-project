@@ -38,6 +38,9 @@ on:
       - "scripts/rubi-local-manual-trending-audit-smoke.sql"
       - "scripts/rubi-local-admin-audit-catalog.sql"
       - "scripts/rubi-local-user-data-rls-hardening-smoke.sql"
+      - "scripts/rubi-local-definer-function-grants-smoke.sql"
+      - "supabase/migrations/20261128010000_rubi_definer_function_execute_grants.sql"
+      - "src/lib/rubi-definer-function-execute-grants.test.mjs"
       - "supabase/migrations/20261127235900_rubi_user_data_rls_policy_hardening.sql"
       - "src/lib/rubi-user-data-rls-hardening.test.mjs"
       - "src/lib/rubi-admin-audit-catalog.test.mjs"
@@ -206,6 +209,9 @@ jobs:
           -v consumer_id="$RUBI_QA_CONSUMER_USER_ID"
           -v merchant_id="$RUBI_QA_MERCHANT_USER_ID"
           -f scripts/rubi-local-user-data-rls-hardening-smoke.sql
+
+      - name: Verify SECURITY DEFINER EXECUTE grants for browser and server roles
+        run: psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f scripts/rubi-local-definer-function-grants-smoke.sql
 
       - name: Verify public table privilege hardening and future defaults
         run: psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f scripts/rubi-local-public-table-privilege-hardening-smoke.sql
