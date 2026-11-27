@@ -60,7 +60,7 @@ async function sendTelegramWithOutbox(
   }
 
   if (!response.ok || payload?.ok !== true) {
-    const { error } = await supabaseAdmin.rpc("rubi_finalize_telegram_send_audited", {
+    const { error } = await (supabaseAdmin as any).rpc("rubi_finalize_telegram_send_audited", {
       p_message_id: operation.message_id,
       p_status: "failed",
       p_provider_message_id: null,
@@ -73,7 +73,7 @@ async function sendTelegramWithOutbox(
 
   const providerMessageId = payload?.result?.message_id;
   if (providerMessageId === undefined || providerMessageId === null) {
-    const { error } = await supabaseAdmin.rpc("rubi_finalize_telegram_send_audited", {
+    const { error } = await (supabaseAdmin as any).rpc("rubi_finalize_telegram_send_audited", {
       p_message_id: operation.message_id,
       p_status: "unknown",
       p_provider_message_id: null,
@@ -84,7 +84,7 @@ async function sendTelegramWithOutbox(
     return { success: false, status: "unknown", telegram_message_id: null, error: "O Telegram retornou uma resposta sem identificador. O envio foi bloqueado para evitar duplicidade." };
   }
 
-  const { error: finalizeError } = await supabaseAdmin.rpc("rubi_finalize_telegram_send_audited", {
+  const { error: finalizeError } = await (supabaseAdmin as any).rpc("rubi_finalize_telegram_send_audited", {
     p_message_id: operation.message_id,
     p_status: "sent",
     p_provider_message_id: String(providerMessageId),
