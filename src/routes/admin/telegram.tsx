@@ -25,11 +25,33 @@ function TelegramAdmin() {
   const [token, setToken] = useState("");
   const [productId, setProductId] = useState("");
   const [message, setMessage] = useState("");
+  const [sendOperationKey, setSendOperationKey] = useState(() => crypto.randomUUID());
+  const [testOperationKey, setTestOperationKey] = useState(() => crypto.randomUUID());
   const { data: config, isLoading, isError, refetch } = useQuery({ queryKey: ["telegram-config"], queryFn: () => getCfg({ data: undefined }) });
   const saveMutation = useMutation({ mutationFn: (v: { channelId: string; isActive: boolean; botToken?: string | null }) => saveCfg({ data: v }), onSuccess: () => { qc.invalidateQueries({ queryKey: ["telegram-config"] }); setToken(""); toast.success("Telegram salvo com segurança."); }, onError: e => toast.error(e.message) });
-  const testMutation = useMutation({ mutationFn: () => test({ data: {} }), onSuccess: r => r.success ? toast.success("Mensagem de teste enviada.") : toast.error(r.error || "Falha na conexão Telegram."), onError: e => toast.error(e.message) });
+  const testMutation = useMutation({
+    mutationFn: () => test({ data: { operationKey: testOperationKey } }),
+    onSuccess: r => {
+      if (r.status === "sent") { toast.success("Mensagem de teste enviada."); setTestOperationKey(crypto.randomUUID()); }
+      else toast.error(r.error || "Falha na conexão Telegram.");
+    },
+    onError: e => toast.error(e.message),
+  });
   const composeMutation = useMutation({ mutationFn: () => compose({ data: { productId } }), onSuccess: r => r.message ? setMessage(r.message) : toast.error(r.error || "Produto não encontrado."), onError: e => toast.error(e.message) });
-  const sendMutation = useMutation({ mutationFn: () => send({ data: { productId, message } }), onSuccess: r => r.success ? (toast.success("Mensagem enviada."), setMessage("")) : toast.error(r.error || "Mensagem não enviada."), onError: e => toast.error(e.message) });
+  const sendMutation = useMutation({
+    mutationFn: () => send({ data: { operationKey: sendOperationKey, productId, message } }),
+    onSuccess: r => {
+      if (r.status === "sent") {
+        toast.success("Mensagem enviada e auditada.");
+        setMessage("");
+        setSendOperationKey(crypto.randomUUID());
+      } else {
+        toast.error(r.error || "Mensagem não enviada.");
+        if (r.status === "failed") setSendOperationKey(crypto.randomUUID());
+      }
+    },
+    onError: e => toast.error(e.message),
+  });
   return <div className="container mx-auto max-w-6xl space-y-8 px-4 py-10">
     <header><Badge className="mb-3">Owner Only</Badge><h1 className="flex items-center gap-3 text-4xl font-black uppercase italic tracking-tighter"><Bot/>Telegram Core</h1><p className="mt-2 text-sm text-muted-foreground">Configuração real, secrets protegidos e operações do canal Telegram.</p></header>
     {isError && <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-4 text-sm">Não foi possível carregar a configuração. <Button variant="outline" size="sm" className="ml-2" onClick={() => refetch()}>Tentar novamente</Button></div>}
@@ -42,8 +64,8 @@ function TelegramAdmin() {
       </form></CardContent></Card>
       <Card className="rounded-3xl"><CardHeader><CardTitle><Send className="mr-2 inline h-5 w-5"/>Envio manual</CardTitle></CardHeader><CardContent className="space-y-5">
         <div><Label>Product ID</Label><div className="flex flex-col gap-2 sm:flex-row"><Input value={productId} onChange={e => setProductId(e.target.value.trim())} placeholder="UUID do produto"/><Button type="button" variant="outline" disabled={!productId || composeMutation.isPending} onClick={() => composeMutation.mutate()}><Zap className="mr-2 h-4 w-4"/>Compor</Button></div></div>
-        <div><Label>Mensagem</Label><Textarea value={message} onChange={e => setMessage(e.target.value)} maxLength={4000} rows={9} placeholder="Mensagem Telegram em HTML"/><p className="mt-1 text-right text-xs text-muted-foreground">{message.length}/4000</p></div>
-        <Button type="button" disabled={!productId || !message.trim() || sendMutation.isPending || !config?.is_active} onClick={() => sendMutation.mutate()}><Send className="mr-2 h-4 w-4"/>{sendMutation.isPending ? "Enviando…" : "Enviar"}</Button>
+        <div><Label>Mensagem</Label><Textarea value={message} onChange={e => setMessage(e.target.value)} maxLength={4000} rows={9} placeholder="Mensagem Telegram em HTML"/><p className="mt-1 text-right text-xs text-muted-foreground">{message.length}/4000</p><p className="mt-2 text-xs text-muted-foreground">Envios com resultado indeterminado ficam bloqueados para evitar duplicidade. Confirme o estado no histórico antes de criar uma nova operação.</p></div>
+        <Button type="button" disabled={!productId || !message.trim() || sendMutation.isPending || !config?.is_active || sendMutation.data?.status === "unknown" || sendMutation.data?.status === "sending"} onClick={() => sendMutation.mutate()}><Send className="mr-2 h-4 w-4"/>{sendMutation.isPending ? "Enviando…" : sendMutation.data?.status === "unknown" || sendMutation.data?.status === "sending" ? "Aguardando reconciliação" : "Enviar"}</Button>
       </CardContent></Card>
     </div>
   </div>;
