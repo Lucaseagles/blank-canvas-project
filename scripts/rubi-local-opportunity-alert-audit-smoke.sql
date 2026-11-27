@@ -35,6 +35,16 @@ BEGIN
 END;
 $grants$;
 
+DO $read_rpc_grants$
+BEGIN
+  IF has_function_privilege('anon','public.get_opportunity_alerts(text)','EXECUTE')
+     OR has_function_privilege('authenticated','public.get_opportunity_alerts(text)','EXECUTE')
+     OR NOT has_function_privilege('service_role','public.get_opportunity_alerts(text)','EXECUTE') THEN
+    RAISE EXCEPTION 'Opportunity SECURITY DEFINER read RPC grants are not restricted to service_role';
+  END IF;
+END
+$read_rpc_grants$;
+
 DO $table_grants$
 BEGIN
   IF has_table_privilege('anon','public.opportunity_alerts','SELECT')
