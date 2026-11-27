@@ -98,6 +98,12 @@ jobs:
       - name: Sprint 324 public creator directory regression
         run: npm run test:rubi-public-creator-directory
 
+      - name: Sprint 362 Social Sharing Studio atomic audit regression
+        run: node --test src/lib/share-studio-atomic-audit.test.mjs
+
+      - name: Sprint 362 Marketplace server-only writes regression
+        run: node --test src/lib/marketplace-server-only-writes.test.mjs
+
       - name: TypeScript
         run: npx tsc --noEmit
 
