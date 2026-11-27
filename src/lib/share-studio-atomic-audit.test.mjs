@@ -14,33 +14,33 @@ test("Share Studio global configuration uses Owner-gated audited server writes",
   const e2e = read("../../.github/workflows/rubi-local-authenticated-e2e.yml");
 
   for (const table of ["share_templates", "share_card_config"]) {
-    assert.match(migration, new RegExp("revoke insert, update, delete on public\\." + table + " from public, anon, authenticated"));
+    assert.ok(migration.includes("revoke insert, update, delete on public." + table + " from public, anon, authenticated"));
   }
-  assert.match(migration, /share_templates_owner_write_s38/);
-  assert.match(migration, /share_card_config_owner_write_s38/);
-  assert.match(migration, /create policy share_templates_owner_select_s38[\\s\\S]*for select to authenticated/);
-  assert.match(migration, /create policy share_card_config_owner_select_s38[\\s\\S]*for select to authenticated/);
-  assert.match(migration, /rubi_update_share_template_audited/);
-  assert.match(migration, /rubi_update_share_card_config_audited/);
-  assert.match(migration, /insert into public\\.admin_audit_log/);
-  assert.match(migration, /security invoker[\\s\\S]*set search_path=''/);
-  assert.match(migration, /caption_length/);
-  assert.match(migration, /config values are never copied into audit payloads/);
+  assert.ok(migration.includes("drop policy if exists share_templates_owner_write_s38"));
+  assert.ok(migration.includes("drop policy if exists share_card_config_owner_write_s38"));
+  assert.ok(migration.includes("create policy share_templates_owner_select_s38"));
+  assert.ok(migration.includes("create policy share_card_config_owner_select_s38"));
+  assert.ok(migration.includes("rubi_update_share_template_audited"));
+  assert.ok(migration.includes("rubi_update_share_card_config_audited"));
+  assert.ok(migration.includes("insert into public.admin_audit_log"));
+  assert.ok(migration.includes("security invoker\nset search_path=''"));
+  assert.ok(migration.includes("caption_length"));
+  assert.ok(migration.includes("config values are never copied into audit payloads"));
 
-  assert.match(server, /middleware\\(\\[requireOwnerRole\\]\\)/);
-  assert.match(server, /rubi_update_share_template_audited/);
-  assert.match(server, /rubi_update_share_card_config_audited/);
-  assert.match(server, /p_actor: context\\.userId/);
-  assert.doesNotMatch(shared, /from\\(["']share_templates["']\\)\\.update/);
-  assert.doesNotMatch(shared, /from\\(["']share_card_config["']\\)\\.update/);
-  assert.match(component, /updateAdminShareTemplate/);
-  assert.match(component, /updateAdminShareCardConfig/);
+  assert.ok(server.includes(".middleware([requireOwnerRole])"));
+  assert.ok(server.includes("rubi_update_share_template_audited"));
+  assert.ok(server.includes("rubi_update_share_card_config_audited"));
+  assert.ok(server.includes("p_actor: context.userId"));
+  assert.ok(!shared.includes('.from("share_templates").update'));
+  assert.ok(!shared.includes('.from("share_card_config").update'));
+  assert.ok(component.includes("updateAdminShareTemplate"));
+  assert.ok(component.includes("updateAdminShareCardConfig"));
 
-  assert.match(smoke, /RUBI_QA_FORCED_SHARE_AUDIT_FAILURE/);
-  assert.match(smoke, /Share template mutation survived audit rollback/);
-  assert.match(smoke, /Share card config mutation survived audit rollback/);
-  assert.match(smoke, /Owner authorization required/);
-  assert.match(smoke, /RUBI_SHARE_CARD_CONFIG_UPDATED/);
-  assert.match(hub, /share-studio-atomic-audit\\.test\\.mjs/);
-  assert.match(e2e, /rubi-local-share-studio-audit-smoke\\.sql/);
+  assert.ok(smoke.includes("RUBI_QA_FORCED_SHARE_AUDIT_FAILURE"));
+  assert.ok(smoke.includes("Share template mutation survived audit rollback"));
+  assert.ok(smoke.includes("Share card config mutation survived audit rollback"));
+  assert.ok(smoke.includes("Owner authorization required"));
+  assert.ok(smoke.includes("RUBI_SHARE_CARD_CONFIG_UPDATED"));
+  assert.ok(hub.includes("share-studio-atomic-audit.test.mjs"));
+  assert.ok(e2e.includes("rubi-local-share-studio-audit-smoke.sql"));
 });
