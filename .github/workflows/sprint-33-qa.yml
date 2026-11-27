@@ -4,7 +4,7 @@ on:
   push:
     branches: [main, sprint/365-admin-audit-closure]
   pull_request:
-    branches: [main]
+    branches: [main, sprint/365-admin-audit-closure]
 
 permissions:
   contents: read
