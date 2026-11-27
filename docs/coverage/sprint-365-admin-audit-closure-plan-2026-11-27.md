@@ -112,3 +112,13 @@ A PR filha `sprint/365-user-data-rls-hardening`:
 
 A correção não mexe em dados, não aplica migration no Supabase remoto e não remove o fluxo de favoritos ou personalização autenticada.
 - Classificação até os gates: correção de segurança/upgrade; +0 ponto até validação e aceite do critério.
+
+
+### Resultado do artefato real e PR #396 — 27/11
+- PR #395 foi integrada à `main` no commit `612c8b3f3d97be99a8cf9c5de2b8b29c4f9ac02d`.
+- O E2E local produziu o artefato `rubi-local-admin-audit-catalog` (13.445 bytes; SHA-256 `ae6129b286b3d094f36b88b789c15c99e91a2c536722c230ed23eba313c267f`), baixado e inspecionado. Snapshot: 136 tabelas, 215 funções e 26 triggers.
+- A triagem de políticas de escrita PUBLIC/anon com expressão literalmente permissiva encontrou somente três ocorrências: duas em `user_interests` e uma em `favorites`. As demais políticas de escrita PUBLIC/anon encontradas são escopadas por `auth.uid() = user_id`, limitadas a eventos anônimos sem atribuição (`user_id IS NULL`) ou a Owner via `has_role`.
+- A PR #396 remove as três permissões legadas, revoga grants de escrita anon/PUBLIC, preserva as regras autenticadas por proprietário e acrescenta smoke PostgreSQL com dois perfis.
+- A PR #396 também amplia o próprio catálogo para falhar no E2E se surgir qualquer política de escrita PUBLIC/anon com `USING (true)` ou `WITH CHECK (true)` em tabelas públicas. Assim, o achado vira uma proteção preventiva do pipeline, não só uma correção pontual.
+- PR #396: aberta, base `main` em `612c8b3f3d97be99a8cf9c5de2b8b29c4f9ac02d`, HEAD atual `e8d054c953bef63370638472535457723049e967`. Gates Sprint 33 QA e Hub V1 QA iniciados; E2E local iniciado no HEAD anterior e precisa ser confirmado/reexecutado no HEAD final antes do merge.
+- Pontuação: PR #395 = +0; PR #396 = +0 até os três gates verdes e aceite da rubrica 11.3.
