@@ -53,8 +53,8 @@ test("manual trending migration preserves the scoring refresh and audits atomica
   );
   assert.match(trending, /create or replace function public\.refresh_demand_and_trend_scores\(\)/i);
   assert.match(trending, /security invoker\s+set search_path = ''/i);
-  assert.match(trending, /revoke all on function public\.refresh_demand_and_trend_scores\(\)[\s\\S]*from public, anon, authenticated/i);
-  assert.match(trending, /grant execute on function public\.refresh_demand_and_trend_scores\(\)[\s\\S]*to service_role/i);
+  assert.match(trending, /revoke all on function public\.refresh_demand_and_trend_scores\(\)[\s\S]*from public, anon, authenticated/i);
+  assert.match(trending, /grant execute on function public\.refresh_demand_and_trend_scores\(\)[\s\S]*to service_role/i);
   assert.match(trending, /public\.calculate_product_demand\(r\.id\)/);
   assert.match(trending, /public\.calculate_product_trend_velocity\(r\.id\)/);
   assert.match(trending, /rubi_recalculate_trending_audited/i);
