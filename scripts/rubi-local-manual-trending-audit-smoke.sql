@@ -2,6 +2,8 @@
 begin;
 select set_config('rubi.qa.master_id', :'master_id', true);
 select set_config('rubi.qa.non_owner_id', :'non_owner_id', true);
+select set_config('rubi.qa.merchant_id', :'merchant_id', true);
+select set_config('rubi.qa.partner_id', :'partner_id', true);
 
 do $grants$
 begin
@@ -23,15 +25,21 @@ $grants$;
 
 set local role service_role;
 do $owner$
+declare
+  v_actor uuid;
 begin
-  begin
-    perform public.rubi_recalculate_trending_audited(
-      current_setting('rubi.qa.non_owner_id')::uuid
-    );
-    raise exception 'Non-Owner actor unexpectedly recalculated trending';
-  exception when others then
-    if sqlerrm <> 'Owner authorization required' then raise; end if;
-  end;
+  foreach v_actor in array array[
+    current_setting('rubi.qa.non_owner_id')::uuid,
+    current_setting('rubi.qa.merchant_id')::uuid,
+    current_setting('rubi.qa.partner_id')::uuid
+  ] loop
+    begin
+      perform public.rubi_recalculate_trending_audited(v_actor);
+      raise exception 'Non-Owner actor unexpectedly recalculated trending: %', v_actor;
+    exception when others then
+      if sqlerrm <> 'Owner authorization required' then raise; end if;
+    end;
+  end loop;
 end
 $owner$;
 reset role;
