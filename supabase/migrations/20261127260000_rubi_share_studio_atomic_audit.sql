@@ -8,6 +8,7 @@ create policy share_templates_owner_select_s38
   using (public.has_role((select auth.uid()), 'owner'));
 
 drop policy if exists share_card_config_owner_write_s38 on public.share_card_config;
+drop policy if exists share_card_config_authenticated_read_s38 on public.share_card_config;
 create policy share_card_config_owner_select_s38
   on public.share_card_config for select to authenticated
   using (public.has_role((select auth.uid()), 'owner'));
