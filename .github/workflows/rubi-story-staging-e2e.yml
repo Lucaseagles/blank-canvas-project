@@ -46,7 +46,7 @@ jobs:
       RUBI_QA_INACTIVE_PRODUCT_STORY_TITLE: ${{ vars.RUBI_QA_INACTIVE_PRODUCT_STORY_TITLE }}
       RUBI_QA_INACTIVE_SUPPLIER_PRODUCT_ID: ${{ vars.RUBI_QA_INACTIVE_SUPPLIER_PRODUCT_ID }}
       RUBI_QA_INACTIVE_SUPPLIER_STORY_TITLE: ${{ vars.RUBI_QA_INACTIVE_SUPPLIER_STORY_TITLE }}
-      RUBI_E2E_REPORT_PATH: ${{ runner.temp }}/rubi-story-staging-evidence.json
+      RUBI_E2E_REPORT_PATH: ${{ github.workspace }}/rubi-story-staging-evidence.json
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -67,6 +67,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: rubi-story-staging-evidence
-          path: ${{ runner.temp }}/rubi-story-staging-evidence.json
+          path: ${{ github.workspace }}/rubi-story-staging-evidence.json
           if-no-files-found: warn
           retention-days: 3
