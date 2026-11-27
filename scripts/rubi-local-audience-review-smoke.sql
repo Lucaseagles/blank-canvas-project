@@ -92,7 +92,7 @@ begin
   raise exception 'QA failure: immutable review row not persisted';
  end if;
  if not exists(select 1 from public.admin_audit_log a
-  where a.entity_id=review_id and a.action_type='RUBI_AUDIENCE_EVIDENCE_REVIEWED') then
+  where a.entity_id=review_id::text and a.action_type='RUBI_AUDIENCE_EVIDENCE_REVIEWED') then
   raise exception 'QA failure: matching audit event not persisted';
  end if;
  begin
