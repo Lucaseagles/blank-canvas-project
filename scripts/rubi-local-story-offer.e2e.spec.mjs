@@ -18,7 +18,7 @@ async function signIn(page,key,path){
 
 for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",width:1366,height:768}]){
  test.describe(`RUBI Story persistido — bloqueio seguro de publicação — ${viewport.name}`,()=>{
-  test.use({viewport:{width:viewport.width,height:viewport.height}});
+  test.use({viewport:{width:viewport.width,height:viewport.height},isMobile:viewport.name==="mobile",hasTouch:viewport.name==="mobile",deviceScaleFactor:viewport.name==="mobile"?2:1});
   test("Master não publica Story quando produto não possui checkout oficial verificado",async({page})=>{
    await signIn(page,"MASTER","/admin/hub-catalog");
    const storyAdmin=page.getByRole("region",{name:"RUBI Stories por produto"});
@@ -42,7 +42,7 @@ for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",widt
 
 for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",width:1366,height:768}]){
  test.describe(`RUBI Story persistido — bloqueio por ausência de direitos — ${viewport.name}`,()=>{
-  test.use({viewport:{width:viewport.width,height:viewport.height}});
+  test.use({viewport:{width:viewport.width,height:viewport.height},isMobile:viewport.name==="mobile",hasTouch:viewport.name==="mobile",deviceScaleFactor:viewport.name==="mobile"?2:1});
   test("Master não publica Story sem confirmação de direitos mesmo com produto e checkout elegíveis",async({page})=>{
    const rightsProductId=process.env.RUBI_QA_RIGHTS_PRODUCT_ID;
    const rightsStoryTitle=process.env.RUBI_QA_RIGHTS_STORY_TITLE;
@@ -71,7 +71,7 @@ for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",widt
    const approvedStoryTitle=process.env.RUBI_QA_APPROVED_STORY_TITLE;
    const productTitle=process.env.RUBI_QA_APPROVED_STORY_PRODUCT_TITLE;
    if(!approvedProductId||!approvedStoryTitle||!productTitle)throw new Error("Disposable approved Story fixture environment is missing.");
-   const masterContext=await browser.newContext({viewport:{width:viewport.width,height:viewport.height}});
+   const masterContext=await browser.newContext({viewport:{width:viewport.width,height:viewport.height},isMobile:viewport.name==="mobile",hasTouch:viewport.name==="mobile",deviceScaleFactor:viewport.name==="mobile"?2:1});
    const masterPage=await masterContext.newPage();
    await signIn(masterPage,"MASTER","/admin/hub-catalog");
    const storyAdmin=masterPage.getByRole("region",{name:"RUBI Stories por produto"});
@@ -92,7 +92,7 @@ for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",widt
    }
    await masterContext.close();
 
-   const consumerContext=await browser.newContext({viewport:{width:viewport.width,height:viewport.height}});
+   const consumerContext=await browser.newContext({viewport:{width:viewport.width,height:viewport.height},isMobile:viewport.name==="mobile",hasTouch:viewport.name==="mobile",deviceScaleFactor:viewport.name==="mobile"?2:1});
    const consumerPage=await consumerContext.newPage();
    await signIn(consumerPage,"CONSUMER","/hub-product/"+approvedProductId);
    const productPresentation=consumerPage.getByRole("region",{name:"Apresentação do produto"});
@@ -111,14 +111,16 @@ for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",widt
 }
 
 for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",width:1366,height:768}]){
- test(`Consumidor não recebe Story cuja revisão do movimento ficou obsoleta — ${viewport.name}`,async({page})=>{
+ test.describe(`Consumidor não recebe Story cuja revisão do movimento ficou obsoleta — ${viewport.name}`,()=>{
+  test.use({viewport:{width:viewport.width,height:viewport.height},isMobile:viewport.name==="mobile",hasTouch:viewport.name==="mobile",deviceScaleFactor:viewport.name==="mobile"?2:1});
+  test("oculta a revisão obsoleta na experiência autenticada",async({page})=>{
   const approvedProductId=process.env.RUBI_QA_APPROVED_STORY_PRODUCT_ID;
   const staleTitle=process.env.RUBI_QA_STALE_STORY_TITLE;
   if(!approvedProductId||!staleTitle)throw new Error("Disposable stale-revision Story fixture environment is missing.");
-  await page.setViewportSize({width:viewport.width,height:viewport.height});
   await signIn(page,"CONSUMER","/hub-product/"+approvedProductId);
   await expect(page.getByRole("heading",{name:process.env.RUBI_QA_APPROVED_STORY_TITLE})).toBeVisible({timeout:20000});
   await expect(page.getByRole("heading",{name:staleTitle})).toHaveCount(0);
+ });
  });
 }
 
@@ -128,11 +130,12 @@ for(const gate of [
  {key:"INACTIVE_SUPPLIER",label:"fornecedor inativo"}
 ]){
  for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",width:1366,height:768}]){
-  test(`Master não publica Story com ${gate.label} — ${viewport.name}`,async({page})=>{
+  test.describe(`Master não publica Story com ${gate.label} — ${viewport.name}`,()=>{
+   test.use({viewport:{width:viewport.width,height:viewport.height},isMobile:viewport.name==="mobile",hasTouch:viewport.name==="mobile",deviceScaleFactor:viewport.name==="mobile"?2:1});
+   test("bloqueia publicação quando produto ou fornecedor está inativo",async({page})=>{
    const gateProductId=process.env[`RUBI_QA_${gate.key}_PRODUCT_ID`];
    const gateStoryTitle=process.env[`RUBI_QA_${gate.key}_STORY_TITLE`];
    if(!gateProductId||!gateStoryTitle)throw new Error(`Disposable ${gate.label} fixture environment is missing.`);
-   await page.setViewportSize({width:viewport.width,height:viewport.height});
    await signIn(page,"MASTER","/admin/hub-catalog");
    const storyAdmin=page.getByRole("region",{name:"RUBI Stories por produto"});
    await storyAdmin.getByLabel("Produto").selectOption(gateProductId);
@@ -148,5 +151,6 @@ for(const gate of [
    await expect(storyAdmin.getByText("Rascunho privado")).toBeVisible();
    await expect(storyAdmin.getByText("Aprovado e visível")).toHaveCount(0);
   });
+ });
  }
 }

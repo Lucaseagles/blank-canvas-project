@@ -11,17 +11,17 @@ const fixtureEnv = {
   RUBI_QA_MASTER_PASSWORD: "disposable-password",
   RUBI_QA_CONSUMER_EMAIL: "consumer@example.test",
   RUBI_QA_CONSUMER_PASSWORD: "disposable-password",
-  RUBI_QA_STORY_PRODUCT_ID: "story-product",
+  RUBI_QA_STORY_PRODUCT_ID: "00000000-0000-4000-8000-000000000001",
   RUBI_QA_STORY_TITLE: "Story sem checkout",
-  RUBI_QA_RIGHTS_PRODUCT_ID: "rights-product",
+  RUBI_QA_RIGHTS_PRODUCT_ID: "00000000-0000-4000-8000-000000000002",
   RUBI_QA_RIGHTS_STORY_TITLE: "Story sem direitos",
-  RUBI_QA_APPROVED_STORY_PRODUCT_ID: "approved-product",
+  RUBI_QA_APPROVED_STORY_PRODUCT_ID: "00000000-0000-4000-8000-000000000003",
   RUBI_QA_APPROVED_STORY_TITLE: "Story aprovado",
   RUBI_QA_APPROVED_STORY_PRODUCT_TITLE: "Produto aprovado",
   RUBI_QA_STALE_STORY_TITLE: "Story obsoleto",
-  RUBI_QA_INACTIVE_PRODUCT_PRODUCT_ID: "inactive-product",
+  RUBI_QA_INACTIVE_PRODUCT_PRODUCT_ID: "00000000-0000-4000-8000-000000000004",
   RUBI_QA_INACTIVE_PRODUCT_STORY_TITLE: "Story produto inativo",
-  RUBI_QA_INACTIVE_SUPPLIER_PRODUCT_ID: "inactive-supplier",
+  RUBI_QA_INACTIVE_SUPPLIER_PRODUCT_ID: "00000000-0000-4000-8000-000000000005",
   RUBI_QA_INACTIVE_SUPPLIER_STORY_TITLE: "Story fornecedor inativo",
 };
 
@@ -93,5 +93,30 @@ test("requires every disposable profile credential and Story gate fixture", () =
   assert.throws(
     () => resolveRubiStagingTarget(missing),
     /RUBI_QA_APPROVED_STORY_TITLE/,
+  );
+});
+
+
+test("rejects malformed product fixture UUIDs before starting Playwright", () => {
+  assert.throws(
+    () => resolveRubiStagingTarget({ ...fixtureEnv, RUBI_QA_APPROVED_STORY_PRODUCT_ID: "approved-product" }),
+    /valid UUID fixture identifiers: RUBI_QA_APPROVED_STORY_PRODUCT_ID/,
+  );
+});
+
+test("rejects duplicate product fixture identifiers that could cross-contaminate Story gates", () => {
+  assert.throws(
+    () => resolveRubiStagingTarget({
+      ...fixtureEnv,
+      RUBI_QA_INACTIVE_PRODUCT_PRODUCT_ID: fixtureEnv.RUBI_QA_STORY_PRODUCT_ID,
+    }),
+    /distinct product fixture UUIDs/,
+  );
+});
+
+test("rejects malformed QA email values before browser login", () => {
+  assert.throws(
+    () => resolveRubiStagingTarget({ ...fixtureEnv, RUBI_QA_CONSUMER_EMAIL: "not-an-email" }),
+    /invalid QA email values: RUBI_QA_CONSUMER_EMAIL/,
   );
 });
