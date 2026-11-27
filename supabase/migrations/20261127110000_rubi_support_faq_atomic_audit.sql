@@ -44,7 +44,10 @@ begin
   else
     select * into v_before from public.support_faq where id = p_id for update;
     if not found then raise exception 'Support FAQ article not found'; end if;
-    if p_expected_updated_at is not null and v_before.updated_at <> p_expected_updated_at then
+    if p_expected_updated_at is null then
+      raise exception 'Expected support FAQ revision is required';
+    end if;
+    if v_before.updated_at <> p_expected_updated_at then
       raise exception 'Support FAQ article changed; reload before retrying';
     end if;
 
