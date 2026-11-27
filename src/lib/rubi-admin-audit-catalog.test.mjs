@@ -16,6 +16,8 @@ test("catalog inventory is read-only and scoped to public schema metadata", () =
   assert.match(sql, /has_function_privilege/i);
   assert.match(sql, /pg_get_triggerdef/i);
   assert.match(sql, /unrestricted_public_write_policies/i);
+  assert.match(sql, /security_definer_anon_executable/i);
+  assert.match(sql, /p\.prosecdef/i);
   assert.match(sql, /p\.cmd in \('ALL', 'INSERT', 'UPDATE', 'DELETE'\)/i);
   assert.match(sql, /'public' = any\(p\.roles\) or 'anon' = any\(p\.roles\)/i);
   assert.doesNotMatch(sql, /\b(insert\s+into|update\s+public\.|delete\s+from|alter\s+table|drop\s+table)\b/i);
