@@ -20,6 +20,22 @@ const REQUIRED_CREDENTIAL_ENV = [
   "RUBI_QA_CONSUMER_PASSWORD",
 ];
 
+const REQUIRED_FIXTURE_UUID_ENV = [
+  "RUBI_QA_STORY_PRODUCT_ID",
+  "RUBI_QA_RIGHTS_PRODUCT_ID",
+  "RUBI_QA_APPROVED_STORY_PRODUCT_ID",
+  "RUBI_QA_INACTIVE_PRODUCT_PRODUCT_ID",
+  "RUBI_QA_INACTIVE_SUPPLIER_PRODUCT_ID",
+];
+
+const REQUIRED_EMAIL_ENV = [
+  "RUBI_QA_MASTER_EMAIL",
+  "RUBI_QA_CONSUMER_EMAIL",
+];
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const EMAIL_PATTERN = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
+
 export function resolveRubiStagingTarget(env = process.env) {
   if (env.RUBI_STAGING_CONFIRMATION !== "I_CONFIRM_DISPOSABLE_STAGING") {
     throw new Error("Explicit disposable-staging confirmation is required.");
@@ -60,6 +76,21 @@ export function resolveRubiStagingTarget(env = process.env) {
   const missing = [...REQUIRED_CREDENTIAL_ENV, ...REQUIRED_FIXTURE_ENV].filter((key) => !env[key]?.trim());
   if (missing.length) {
     throw new Error("Staging Story E2E is missing required isolated credentials/fixtures: " + missing.join(", "));
+  }
+
+  const invalidEmails = REQUIRED_EMAIL_ENV.filter((key) => !EMAIL_PATTERN.test(env[key].trim()));
+  if (invalidEmails.length) {
+    throw new Error("Staging Story E2E has invalid QA email values: " + invalidEmails.join(", "));
+  }
+
+  const invalidIds = REQUIRED_FIXTURE_UUID_ENV.filter((key) => !UUID_PATTERN.test(env[key].trim()));
+  if (invalidIds.length) {
+    throw new Error("Staging Story E2E requires valid UUID fixture identifiers: " + invalidIds.join(", "));
+  }
+
+  const fixtureIds = REQUIRED_FIXTURE_UUID_ENV.map((key) => env[key].trim().toLowerCase());
+  if (new Set(fixtureIds).size !== fixtureIds.length) {
+    throw new Error("Staging Story E2E requires distinct product fixture UUIDs for every gate.");
   }
 
   return target.origin;
