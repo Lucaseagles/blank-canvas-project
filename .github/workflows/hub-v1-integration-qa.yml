@@ -291,6 +291,8 @@ jobs:
         run: node --test src/lib/opportunity-engine-atomic-audit.test.mjs
       - name: RUBI Opportunity Engine refresh audit regression
         run: node --test src/lib/opportunity-refresh-atomic-audit.test.mjs
+      - name: Sprint 362 Opportunity Engine direct DML hardening regression
+        run: node --test src/lib/opportunity-alert-dml-hardening.test.mjs
 
       - name: TypeScript
         run: npx tsc --noEmit
