@@ -35,9 +35,10 @@ Limites conhecidos:
 | 2 | #385 — upgrade premium do painel Master | Card visual por estado, progresso editorial acessível, clareza de bloqueios e experiência responsiva | Build, TypeScript, lint e contrato visual acessível | +0 |
 | 3 | #386 — cobertura operacional | Smoke PostgreSQL descartável para Owner/non-Owner, revisão obsoleta, auditoria atômica, rollback e histórico append-only | Jornada real em banco descartável e regressões de autorização | +0 |
 | 4 | #388 — hardening complementar do desempenho por público (08.4) | Duplicidades e telemetria inválida falham de forma segura; regressões de integridade | Hub QA, testes de domínio, TypeScript, lint, build e E2E | +0 isolado; parcial até release final |
-| 5 | #389 — cobertura completa e release consolidada | Gates finais no mesmo HEAD, reconciliação da rubrica, matriz, score e release única | Todos os gates e evidências aceitos; merge da branch de integração à main | Única PR elegível para conversão |
+| 5 | #389 — proveniência e privacidade da evidência 08.2 | Tipo de fonte, amostra, consentimento, anonimização e validação server-side | Contratos, Hub V1, E2E e regressões de privacidade | +0 isolado; cobertura parcial |
+| 6 | #390 — cobertura completa e release consolidada | Gates finais no mesmo HEAD, reconciliação das 48 linhas, matriz, score e release única | Todos os gates e evidências aceitos; merge da branch de integração à main | Única PR elegível para conversão |
 
-Os números correspondem às PRs criadas no GitHub. As PRs intermediárias são empilhadas e entram somente na branch `sprint/363-integration`, após seus próprios gates. Nenhuma delas será integrada diretamente à `main`. A PR #389 será a única PR de `sprint/363-integration` para `main`, depois do fechamento completo.
+Os números correspondem às PRs criadas no GitHub. As PRs intermediárias são empilhadas e entram somente na branch `sprint/363-integration`, após seus próprios gates. Nenhuma delas será integrada diretamente à `main`. A PR #390 será a única PR de `sprint/363-integration` para `main`, depois do fechamento completo.
 
 ## Definição de cobertura completa proposta para revisão
 
@@ -71,8 +72,8 @@ O critério 08.2 só poderá ser considerado completo se a implementação e a e
 - Agregado confirmado no início: **38.5/48 = 80.2%**.
 - Gap agregado aritmético: **9.5/48 = 19.8%**.
 - Score individual atual de 08.2: **não reconciliado**; o 0.5 histórico da matriz Sprint 122 não será tratado como valor atual sem revalidação.
-- PRs #384–#388: +0 isoladamente.
-- Somente a PR #389 poderá propor novo score, após todos os gates e reconciliação formal.
+- PRs #384–#389: +0 isoladamente.
+- Somente a PR #390 poderá propor novo score, após todos os gates e reconciliação formal.
 - Nenhuma migration será aplicada ao Supabase remoto sem autorização explícita; smokes serão executados em PostgreSQL/Supabase descartável.
 
 ## Próximas decisões técnicas
@@ -84,4 +85,4 @@ O critério 08.2 só poderá ser considerado completo se a implementação e a e
 5. Manter o Shadow Master único e privado.
 6. Não afirmar que um público converte melhor sem experimento válido ou evidência apropriada.
 
-**Método híbrido obrigatório:** cada etapa combina upgrade visual premium, evolução funcional, hardening, testes e evidências de cobertura. Uma PR pode ser upgrade-only ou cobertura parcial, mas não pontua isoladamente. A sprint só entra na `main` uma vez, pela PR final de cobertura completa.\n\n**Status:** sprint iniciada; nenhuma cobertura nova aceita e nenhum ponto convertido nesta etapa.
+**Método híbrido obrigatório:** cada etapa combina upgrade visual premium, evolução funcional, hardening, testes e evidências de cobertura. Uma PR pode ser upgrade-only ou cobertura parcial, mas não pontua isoladamente. A sprint só entra na `main` uma vez, pela PR final de cobertura completa.\n\n**Status:** PRs #384, #385, #386 e #388 integradas à branch de integração; PR #389 em validação. Cobertura parcial operacional concluída, sem conversão de ponto até o aceite final.
