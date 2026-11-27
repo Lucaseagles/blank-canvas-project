@@ -4,7 +4,6 @@ import { requireOwnerRole } from '@/lib/auth-guards.server';
 import { getIntegrationSecretServer } from '@/integrations/secrets.server';
 
 const ConfigSchema = z.object({ channelId: z.string().trim().min(1).max(200), isActive: z.boolean(), botToken: z.string().trim().min(1).max(500).optional().nullable() });
-const MessageSchema = z.object({ message: z.string().trim().min(1).max(4000).default('🧪 Mensagem de teste do Admin') });
 
 async function getConfig(supabaseAdmin: any) { const { data, error } = await supabaseAdmin.from('telegram_config').select('id,channel_id,is_active,updated_at').maybeSingle(); if (error) throw error; return data as any; }
 async function getTelegramCredentials() { const [token, channelId] = await Promise.all([getIntegrationSecretServer('telegram', 'bot_token'), getIntegrationSecretServer('telegram', 'channel_id')]); return { token: token?.trim() || null, channelId: channelId?.trim() || null }; }
