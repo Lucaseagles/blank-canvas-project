@@ -36,5 +36,7 @@ test("user-ban audit supports both text and UUID entity_id schemas", () => {
   assert.match(migration, /p_user_id::text/);
   const smoke = read("../../scripts/rubi-local-admin-user-ban-audit-smoke.sql");
   assert.match(smoke, /entity_id::text\s*=\s*v_user::text/);
+  assert.match(smoke, /rubi.qa.merchant_id/);
+  assert.match(smoke, /rubi.qa.partner_id/);
 });
 
