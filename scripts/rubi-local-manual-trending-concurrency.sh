@@ -21,7 +21,7 @@ SELECT count(*)
   FROM public.admin_audit_log
  WHERE actor_user_id=:'actor_id'::uuid
    AND action_type='RUBI_AUTOMATION_TRENDING_RECALCULATED'
-   AND entity_id=:'rule_id';
+   AND entity_id::text=:'rule_id';
 SQL
 )"
 
@@ -52,7 +52,7 @@ SELECT count(*)
   FROM public.admin_audit_log
  WHERE actor_user_id=:'actor_id'::uuid
    AND action_type='RUBI_AUTOMATION_TRENDING_RECALCULATED'
-   AND entity_id=:'rule_id';
+   AND entity_id::text=:'rule_id';
 SQL
 )"
 
