@@ -267,12 +267,6 @@ jobs:
           -v master_id="$RUBI_QA_MASTER_USER_ID"
           -v non_owner_id="$RUBI_QA_CONSUMER_USER_ID"
           -f scripts/rubi-local-opportunity-alert-audit-smoke.sql
-      - name: Prove Opportunity Engine direct DML is denied on disposable PostgreSQL
-        run: >-
-          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1
-          -v master_id="$RUBI_QA_MASTER_USER_ID"
-          -v non_owner_id="$RUBI_QA_CONSUMER_USER_ID"
-          -f scripts/rubi-local-opportunity-alert-audit-smoke.sql
       - name: Prove Opportunity Engine refresh audit rollback on disposable PostgreSQL
         run: >-
           psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1
