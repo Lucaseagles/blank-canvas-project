@@ -16,12 +16,12 @@ function section(name, nextName) {
   return source.slice(start, end);
 }
 
-test("manual trending keeps its existing RPC path; no unverified database wrapper", () => {
+test("manual trending delegates to the Owner-attributed atomic audit RPC", () => {
   const body = section("recalculateTrendingManual", "runRetentionCheck");
-  assert.match(body, /middleware\(\[requireOwnerRole\]\)/);
-  assert.match(body, /refresh_demand_and_trend_scores/);
-  assert.match(body, /logAutomationActivity/);
-  assert.doesNotMatch(migration, /refresh_demand_and_trend_scores/);
+  assert.match(body, /middleware\\(\\[requireOwnerRole\\]\\)/);
+  assert.match(body, /rubi_recalculate_trending_audited/);
+  assert.match(body, /p_actor: context\\.userId/);
+  assert.doesNotMatch(body, /refresh_demand_and_trend_scores|logAutomationActivity/);
 });
 
 test("manual retention delegates to the atomic actor-attributed RPC", () => {
