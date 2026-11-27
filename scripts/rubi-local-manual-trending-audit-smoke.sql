@@ -61,7 +61,7 @@ begin
    where actor_user_id=v_actor
      and action_type='RUBI_AUTOMATION_TRENDING_RECALCULATED'
      and entity_type='automation_rules'
-     and entity_id=v_rule::text;
+     and entity_id::text=v_rule::text;
   if v_count <> 1 then
     raise exception 'Expected exactly one successful trending audit event, got %',v_count;
   end if;
@@ -133,7 +133,7 @@ begin
     from public.admin_audit_log
    where actor_user_id=v_actor
      and action_type='RUBI_AUTOMATION_TRENDING_RECALCULATION_FAILED'
-     and entity_id=v_rule::text;
+     and entity_id::text=v_rule::text;
   if v_count <> 1 then
     raise exception 'Expected one failure audit event, got %',v_count;
   end if;
