@@ -23,8 +23,8 @@ REVOKE ALL ON FUNCTION public.audit_marketplace_mutation()
 
 DO $$
 BEGIN
-  IF NOT has_function_privilege('anon',
-      'public.append_admin_audit(text,text,text,jsonb,jsonb)', 'EXECUTE') = false THEN
+  IF has_function_privilege('anon',
+      'public.append_admin_audit(text,text,text,jsonb,jsonb)', 'EXECUTE') THEN
     RAISE EXCEPTION 'anon must not execute append_admin_audit';
   END IF;
   IF NOT has_function_privilege('authenticated',

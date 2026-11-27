@@ -3,8 +3,8 @@
 **Status:** iniciada após integração das entregas de prontidão da Sprint 364.  
 **Branch:** `sprint/365-admin-audit-closure`  
 **Base:** `main` em `05246475791c94f8f4557b62af99bf3f353af2e1`.  
-**Critério prioritário:** 11.3 — auditoria administrativa completa.  
-**Classificação:** cobertura candidata; nenhuma pontuação é concedida por abrir a sprint, inventariar código ou passar CI.
+**Referência auditada:** 11.3 — auditoria administrativa completa, já encerrada com 1.0/1.0 na Sprint 362.  
+**Classificação revisada:** upgrade-only / hardening de segurança e governança; +0 ponto nesta Sprint. O 11.3 não será recontado.
 
 ## Por que esta sprint vem agora
 
@@ -122,3 +122,20 @@ A correção não mexe em dados, não aplica migration no Supabase remoto e não
 - A PR #396 também amplia o próprio catálogo para falhar no E2E se surgir qualquer política de escrita PUBLIC/anon com `USING (true)` ou `WITH CHECK (true)` em tabelas públicas. Assim, o achado vira uma proteção preventiva do pipeline, não só uma correção pontual.
 - PR #396: aberta, base `main` em `612c8b3f3d97be99a8cf9c5de2b8b29c4f9ac02d`, HEAD atual `e8d054c953bef63370638472535457723049e967`. Gates Sprint 33 QA e Hub V1 QA iniciados; E2E local iniciado no HEAD anterior e precisa ser confirmado/reexecutado no HEAD final antes do merge.
 - Pontuação: PR #395 = +0; PR #396 = +0 até os três gates verdes e aceite da rubrica 11.3.
+
+
+## Correção de escopo e pontuação — após PR #397 (27/11/2026)
+
+A reauditoria do histórico encontrou uma decisão de pontuação autoritativa que não havia sido incorporada ao plano inicial desta Sprint: `docs/coverage/sprint-362-criterion-11-3-closeout-2026-11-27.md` registra o critério **11.3 = 1.0/1.0**, após a release #382, com inventário transversal, testes negativos, rollback, concorrência e três gates verdes no mesmo HEAD.
+
+A PR #397 foi integrada à `main` em `b07327f25c8572b38e48c68fa8116092e27e686d`, após Sprint 33 QA, Hub V1 Integration QA e E2E autenticado dos quatro perfis passarem no mesmo HEAD. Ela restringe EXECUTE de funções SECURITY DEFINER conforme o princípio do menor privilégio e reforça a postura de segurança. **Pontuação: +0**, pois 11.3 já estava completo e não pode ser contado duas vezes.
+
+A PR #398 é um follow-up pequeno de clareza da asserção de privilégio, regressão estática e correção da descrição do estado real da função de trigger. Ela também é **upgrade-only (+0)** e só será integrada após os três gates passarem no mesmo HEAD.
+
+### Decisão vinculante
+- Não reabrir 11.3 como critério incompleto com base em documentos antigos que antecedem a release #382.
+- Preservar o Shadow Master único e privado.
+- Encerrar a Sprint 365 como hardening/upgrade após a integração da PR #398.
+- A próxima Sprint deve mirar o maior gap ainda pontuável, priorizando 02.4 (0.5 → 1.0), cujo bloqueio restante é a homologação HTTPS autorizada e a prova de round-trip de checkout oficial. Não declarar fechamento até o ambiente descartável e o provedor permitirem a execução real.
+- Não atribuir pontos adicionais a 07.4, 08.3, 08.4, 11.3 ou 12.3 sem nova rubrica e evidência que demonstrem um requisito distinto.
+
