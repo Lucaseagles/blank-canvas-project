@@ -29,10 +29,9 @@ test("ban mutation serializes the profile row and suppresses duplicate no-op aud
 });
 
 
-test("user-ban audit uses the UUID entity identifier stored by admin_audit_log", () => {
-  assert.match(migration, /'USER_BAN_STATUS_CHANGED',\s*'profiles',\s*p_user_id,/);
-  assert.doesNotMatch(migration, /'USER_BAN_STATUS_CHANGED',[\s\S]{0,80}p_user_id::text/);
+test("user-ban audit follows the versioned text entity_id schema", () => {
+  assert.match(migration, /'USER_BAN_STATUS_CHANGED',\s*'profiles',\s*p_user_id::text,/);
   const smoke = read("../../scripts/rubi-local-admin-user-ban-audit-smoke.sql");
-  assert.match(smoke, /entity_id\s*=\s*v_user\b/);
-  assert.doesNotMatch(smoke, /entity_id\s*=\s*v_user::text/);
+  assert.match(smoke, /entity_id\s*=\s*v_user::text/);
 });
+
