@@ -1,4 +1,4 @@
-\\set ON_ERROR_STOP on
+\set ON_ERROR_STOP on
 begin;
 select set_config('rubi.qa.master_id', :'master_id', true);
 select set_config('rubi.qa.non_owner_id', :'non_owner_id', true);
@@ -158,4 +158,4 @@ drop trigger rubi_qa_reject_trending_success_audit on public.admin_audit_log;
 drop function pg_temp.rubi_qa_reject_trending_success_audit();
 
 rollback;
-\\echo 'PASS: trending Owner gate, least-privilege grants, success audit, failure rollback and sanitized failure evidence.'
+\echo 'PASS: trending Owner gate, least-privilege grants, success audit, failure rollback and sanitized failure evidence.'
