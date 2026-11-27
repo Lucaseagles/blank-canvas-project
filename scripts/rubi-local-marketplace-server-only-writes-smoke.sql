@@ -5,9 +5,17 @@ select set_config('rubi.qa.non_owner_id', :'non_owner_id', true);
 
 do $grants$
 begin
-  if not has_table_privilege('anon','public.marketplaces','SELECT')
-    or not has_table_privilege('authenticated','public.marketplaces','SELECT') then
-    raise exception 'Public marketplace catalog SELECT was removed';
+  if not has_column_privilege('anon','public.marketplaces','id','SELECT')
+    or not has_column_privilege('authenticated','public.marketplaces','id','SELECT')
+    or not has_column_privilege('anon','public.marketplaces','name','SELECT')
+    or not has_column_privilege('authenticated','public.marketplaces','name','SELECT')
+    or not has_column_privilege('anon','public.marketplaces','slug','SELECT')
+    or not has_column_privilege('authenticated','public.marketplaces','slug','SELECT')
+    or not has_column_privilege('anon','public.marketplaces','status','SELECT')
+    or not has_column_privilege('authenticated','public.marketplaces','status','SELECT')
+    or not has_column_privilege('anon','public.marketplaces','created_at','SELECT')
+    or not has_column_privilege('authenticated','public.marketplaces','created_at','SELECT') then
+    raise exception 'Safe marketplace catalog column grants were removed';
   end if;
   if has_table_privilege('anon','public.marketplaces','INSERT')
     or has_table_privilege('authenticated','public.marketplaces','INSERT')
