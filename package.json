@@ -77,7 +77,7 @@
     "test:rubi-partner-customer-acquisition": "node --test src/lib/rubi-partner-customer-acquisition.test.mjs",
     "test:rubi-public-creator-profile": "node --test src/lib/rubi-public-creator-profile.test.mjs",
     "test:rubi-public-creator-directory": "node --test src/lib/rubi-public-creator-directory.test.mjs",
-    "test:rubi-story-staging": "node --test src/lib/rubi-staging-story-target.test.mjs"
+    "test:rubi-story-staging": "playwright test -c rubi-staging-story-playwright.config.mjs scripts/rubi-local-story-offer.e2e.spec.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
