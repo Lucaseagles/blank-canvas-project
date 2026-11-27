@@ -90,3 +90,25 @@ O relatório não lê linhas de negócio, corpos de funções, credenciais ou se
 - PR #394 e esta entrega de catálogo: +0 isoladamente.
 - O 11.3 continua candidato a fechamento, sem novo ponto concedido nesta etapa.
 - A reconciliação integral das 48 linhas continua obrigatória antes de qualquer conversão adicional.
+
+
+## Achado de catálogo e correção de isolamento — 27/11
+
+### Evidência real do PostgreSQL descartável
+O artefato `rubi-local-admin-audit-catalog` da PR #395 foi baixado e inspecionado. O snapshot registra 136 tabelas, 215 funções e 26 triggers. A revisão das políticas encontrou três políticas legadas permissivas ainda ativas:
+- `Anyone can insert user_interests` — INSERT com `WITH CHECK (true)`;
+- `Anyone can update their interests` — UPDATE com `USING (true)`;
+- `Anyone can insert favorites` — INSERT com `WITH CHECK (true)`.
+
+A migration `20260822043722_afd4e745-502f-4924-b81b-45012b5660b8.sql` havia criado políticas próprias, mas não removido essas permissões antigas. Como políticas permissivas são combinadas por OR, a regra ampla continuava efetiva. O inventário de código confirma que favoritos são escritos por `toggleFavorite` com middleware autenticado e identidade obtida do contexto; `user_interests` é atualizado por função de servidor que valida a identidade opcional e usa service-role. Não há necessidade funcional de escrita anônima direta.
+
+### Correção proposta
+A PR filha `sprint/365-user-data-rls-hardening`:
+- remove as três políticas permissivas;
+- revoga INSERT/UPDATE/DELETE anônimo e público nessas duas tabelas;
+- preserva RLS e as políticas autenticadas restritas a `auth.uid() = user_id`;
+- adiciona smoke PostgreSQL com perfis consumidor/lojista para provar insert próprio, negar insert cruzado, negar update cruzado e bloquear anon;
+- integra o smoke ao E2E local e adiciona testes de contrato ao Hub QA e Sprint 33 QA.
+
+A correção não mexe em dados, não aplica migration no Supabase remoto e não remove o fluxo de favoritos ou personalização autenticada.
+- Classificação até os gates: correção de segurança/upgrade; +0 ponto até validação e aceite do critério.
