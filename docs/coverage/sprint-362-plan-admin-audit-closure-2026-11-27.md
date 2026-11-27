@@ -75,3 +75,11 @@ Concluir o inventário real sobre a `main`, comparar as famílias já protegidas
 | Integridade do log administrativo | `getRubiMasterAuditIntegrityAdmin` percorre registros e declara explicitamente que não garante cobertura de todas as mutações | Leitura/diagnóstico, não prova de inventário | Usar como verificação complementar, nunca como certificado global |
 
 **Limite:** o achado de tendências ainda não é uma implementação pronta. A função SQL subjacente não aparece na árvore versionada consultada; não vou inventar sua lógica nem fazer uma migration que dependa de um objeto ausente no banco descartável. O pacote A continua aberto até o inventário de todas as server functions e migrations ser concluído.
+
+## Progresso das PRs filhas
+
+| PR | Escopo | Destino | Estado | Pontos V1 |
+|---|---|---|---|---:|
+| #362 | User-ban: Owner verificado também sob `service_role`, lock da linha, rollback atômico e retry idempotente | `sprint/362-admin-audit-closure` | Integrada à branch de sprint em `67e5f03a3d245022bcd2f5970f236a162e2eebc5` | +0 |
+
+A PR #362 foi integrada somente à branch da Sprint 362, não à `main`. Seus testes de contrato e smoke foram conectados aos workflows que serão executados no candidato final da sprint. A validação completa ainda está pendente; não declarar a mutação fechada antes dos workflows e da revisão transversal.
