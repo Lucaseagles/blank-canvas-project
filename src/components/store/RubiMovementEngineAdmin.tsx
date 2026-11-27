@@ -87,7 +87,7 @@ export function RubiMovementEngineAdmin({products}:{products:Product[]}){
    {field("narrative","Qual história conecta tudo?","Gancho → situação → benefício → convite para conhecer",4)}
    {field("evidence_notes","Quais fontes sustentam a mensagem?","Referência à ficha do fornecedor e direitos de uso")}
    <RubiAudienceEvidenceBuilder onApply={notes=>change("evidence_notes",notes)}/>
-   {evidenceStatus&&<RubiAudienceEvidenceStatusCard status={evidenceStatus}/ >}
+   {evidenceStatus&&<RubiAudienceEvidenceStatusCard status={evidenceStatus}/>}
    <div className="rounded-xl border bg-muted/30 p-4 text-sm space-y-3">
     <div className="flex items-center justify-between gap-3"><strong>Preparação editorial</strong><span className="text-xs font-bold tabular-nums text-muted-foreground">{check?.completed}/{check?.total} · {checklistPercent}%</span></div>
     <div role="progressbar" aria-label="Progresso do checklist editorial" aria-valuemin={0} aria-valuemax={100} aria-valuenow={checklistPercent} className="h-2 overflow-hidden rounded-full bg-muted">
