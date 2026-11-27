@@ -13,6 +13,11 @@ begin
   if to_regprocedure('public.refresh_demand_and_trend_scores()') is null then
     raise exception 'Reproducible trending refresh function is missing';
   end if;
+  if not has_function_privilege('service_role','public.refresh_demand_and_trend_scores()','EXECUTE')
+     or has_function_privilege('anon','public.refresh_demand_and_trend_scores()','EXECUTE')
+     or has_function_privilege('authenticated','public.refresh_demand_and_trend_scores()','EXECUTE') then
+    raise exception 'Internal trending refresh grants are not least-privilege';
+  end if;
 end
 $grants$;
 
