@@ -115,4 +115,4 @@ revoke all on function public.rubi_manage_customer_coupon_audited(text,uuid,json
 grant execute on function public.rubi_manage_customer_coupon_audited(text,uuid,jsonb,uuid,timestamptz) to service_role;
 
 -- Remove browser-role DML as defense in depth; Owner reads remain governed by the existing RLS policy.
-revoke insert, update, delete on public.customer_coupons from anon, authenticated;
+revoke insert, update, delete on public.customer_coupons from public, anon, authenticated;
