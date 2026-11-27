@@ -29,5 +29,6 @@ test("authenticated disposable E2E exports the catalog snapshot as a retained ar
   assert.match(workflow, /rubi-local-admin-audit-catalog\.sql/);
   assert.match(workflow, /rubi-admin-audit-catalog\.json/);
   assert.match(workflow, /rubi-local-admin-audit-catalog/);
+  assert.match(workflow, /-X -A -t -q -v ON_ERROR_STOP=1/);
   assert.match(workflow, /retention-days: 7/);
 });
