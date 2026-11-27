@@ -26,12 +26,18 @@ SQL
 )"
 
 run_refresh() {
-  psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -v actor_id="$actor_id" <<'SQL'
+  local result
+  result="$(psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -qAt -v actor_id="$actor_id" <<'SQL'
 BEGIN;
 SET LOCAL ROLE service_role;
 SELECT public.rubi_recalculate_trending_audited(:'actor_id'::uuid);
 COMMIT;
 SQL
+)"
+  if [[ "$result" != *'"success": true'* ]]; then
+    echo "Manual trending refresh did not succeed: $result"
+    return 1
+  fi
 }
 
 run_refresh > /tmp/rubi-trending-concurrency-a.log 2>&1 &
