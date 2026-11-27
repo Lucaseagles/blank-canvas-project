@@ -345,3 +345,26 @@ A PR #373 foi integrada por squash à branch da Sprint 362 no commit `08a0bfb349
 - Branch de integração após PR #373: `08a0bfb34930471f8b75e0c963a8d9254c39847f`.
 - PRs filhas #370, #371, #372 e #373 estão integradas à branch da sprint, não à `main`.
 - Ainda pendem a reconciliação integral de mutações SQL/RPC, validação global de concorrência/redação/autorização e o trio de workflows no mesmo HEAD final (Hub V1, E2E autenticado, Sprint 33 QA) antes da promoção única à `main`.
+
+
+## PR #374 integrada — Telegram Outbox DML hardening
+
+A PR #374 foi integrada por squash à branch da Sprint 362 no commit `732e58557dbce2be0f9726e14125e3ed8b150c81`.
+
+### Correção
+- Removidas as policies legadas de escrita do histórico Telegram (`Admins manage...` e `Owners manage...`).
+- Mantida leitura autenticada Owner-only via `is_admin()`.
+- Revogados privilégios diretos de PUBLIC, anon e authenticated; escrita mantida para `service_role`.
+- O ciclo de envio continua usando exclusivamente `rubi_prepare_telegram_send_audited` e `rubi_finalize_telegram_send_audited`.
+- Migration não aplicada ao Supabase remoto.
+
+### Evidências no HEAD da PR #374
+- Hub V1 Integration QA: SUCCESS, 106 etapas concluídas; TypeScript e ESLint aprovados; teste de contrato Telegram Outbox DML aprovado.
+- E2E autenticado: SUCCESS, 54 etapas concluídas; smoke de Telegram outbox passou com verificação de grants, Owner read, negação de DML direto, idempotência, rollback e auditoria.
+- PR integrada à branch de sprint após ambos os workflows verdes.
+
+### Pontuação e estado
+- Score permanece **38.0/48 = 79.2%**; PR #374 soma **+0 isoladamente** até o fechamento integral do critério 11.3.
+- Branch de integração após PR #374: `732e58557dbce2be0f9726e14125e3ed8b150c81`.
+- PRs filhas #370, #371, #372, #373 e #374 estão integradas à branch da sprint, não à `main`.
+- A nova frente de hardening do conjunto de tabelas de Admin Settings está em preparação na branch `sprint/362-child-admin-settings-dml-hardening`; não deve ser promovida antes de seus smokes e workflows passarem.
