@@ -24,6 +24,8 @@ on:
       - "scripts/rubi-local-support-faq-audit-smoke.sql"
       - "scripts/rubi-local-admin-user-ban-audit-smoke.sql"
       - "scripts/rubi-local-admin-user-ban-concurrency.sh"
+      - "scripts/rubi-local-manual-trending-audit-smoke.sql"
+      - "scripts/rubi-local-manual-trending-concurrency.sh"
       - "scripts/rubi-local-strategy-orchestration-pause-concurrency.sh"
       - "scripts/rubi-local-partner-academy-progress-smoke.sql"
       - "scripts/rubi-local-story-offer.e2e.spec.mjs"
@@ -206,6 +208,16 @@ jobs:
           -v master_id="$RUBI_QA_MASTER_USER_ID"
           -v non_owner_id="$RUBI_QA_CONSUMER_USER_ID"
           -f scripts/rubi-local-manual-automation-audit-smoke.sql
+      - name: Prove manual trending Owner authorization and atomic audit on disposable PostgreSQL
+        run: >-
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1
+          -v master_id="$RUBI_QA_MASTER_USER_ID"
+          -v non_owner_id="$RUBI_QA_CONSUMER_USER_ID"
+          -v merchant_id="$RUBI_QA_MERCHANT_USER_ID"
+          -v partner_id="$RUBI_QA_PARTNER_USER_ID"
+          -f scripts/rubi-local-manual-trending-audit-smoke.sql
+      - name: Prove concurrent manual trending recalculations serialize
+        run: bash scripts/rubi-local-manual-trending-concurrency.sh
       - name: Prove administrative user-ban Owner authorization and atomic audit on disposable PostgreSQL
         run: >-
           psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1
