@@ -68,20 +68,14 @@ export const recalculateTrendingManual = createServerFn({ method: "POST" }).midd
   return { success: true, processed: count ?? 0 };
 });
 
-export const runRetentionCheck = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).handler(async () => {
+export const runRetentionCheck = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).handler(async ({ context }) => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data: rule, error: ruleError } = await supabaseAdmin.from("automation_rules").select("id,is_active").eq("trigger_type", "USER_INACTIVE").maybeSingle();
-  if (ruleError) throw ruleError;
-  if (!rule) return { success: false, notifications_queued: 0, error: "Retention rule not found" };
-  if (!rule.is_active) return { success: false, notifications_queued: 0, error: "Retention rule is disabled" };
-  const { data: queued, error } = await supabaseAdmin.rpc("run_retention_engine", { _inactive_days: 3 });
-  if (error) {
-    await logAutomationActivity(supabaseAdmin, rule.id, { inactive_days: 3, triggered_by: "admin_manual" }, error.message, "failed");
-    throw error;
-  }
-  const notificationsQueued = Number(queued ?? 0);
-  await logAutomationActivity(supabaseAdmin, rule.id, { inactive_days: 3, triggered_by: "admin_manual", notifications_queued: notificationsQueued }, `Retention processed: ${notificationsQueued} notifications queued`, "success");
-  return { success: true, notifications_queued: notificationsQueued };
+  const { data, error } = await (supabaseAdmin as any).rpc("rubi_run_automation_action_audited", {
+    p_action: "RUN_RETENTION_CHECK",
+    p_actor: context.userId,
+  });
+  if (error) throw error;
+  return data as { success: boolean; notifications_queued: number; error?: string };
 });
 
 export const processVideoLaunches = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).handler(async ({ context }) => {
