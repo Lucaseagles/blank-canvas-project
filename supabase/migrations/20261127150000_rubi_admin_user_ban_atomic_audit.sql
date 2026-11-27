@@ -54,7 +54,7 @@ begin
     actor_user_id, actor_email, action_type, entity_type, entity_id,
     previous_value, new_value
   ) values (
-    v_actor, v_actor_email, 'USER_BAN_STATUS_CHANGED', 'profiles', p_user_id::text,
+    v_actor, v_actor_email, 'USER_BAN_STATUS_CHANGED', 'profiles', p_user_id,
     jsonb_build_object('is_banned', v_old_value),
     jsonb_build_object('is_banned', p_banned)
   );
