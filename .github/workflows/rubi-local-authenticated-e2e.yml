@@ -273,7 +273,6 @@ jobs:
           -v non_owner_id="$RUBI_QA_CONSUMER_USER_ID"
           -v merchant_id="$RUBI_QA_MERCHANT_USER_ID"
           -v partner_id="$RUBI_QA_PARTNER_USER_ID"
-          -v product_id="$RUBI_QA_APPROVED_STORY_PRODUCT_ID"
           -f scripts/rubi-local-telegram-send-outbox-smoke.sql
       - name: Prove product/channel/campaign uniqueness under concurrent PostgreSQL transactions
         run: node scripts/rubi-local-distribution-campaign-concurrency.mjs
