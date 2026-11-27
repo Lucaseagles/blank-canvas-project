@@ -4,12 +4,12 @@
 drop policy if exists "owner manages content notification queue" on public.content_notification_queue;
 create policy "owner can view content notification queue"
   on public.content_notification_queue for select to authenticated
-  using (public.has_role((select auth.uid()), 'owner'::public.app_role));
+  using (private.has_role((select auth.uid()), 'owner'::public.app_role));
 
 drop policy if exists "owner manages content affinity logs" on public.content_affinity_log;
 create policy "owner can view content affinity logs"
   on public.content_affinity_log for select to authenticated
-  using (public.has_role((select auth.uid()), 'owner'::public.app_role));
+  using (private.has_role((select auth.uid()), 'owner'::public.app_role));
 
 revoke all privileges on table
   public.content_notification_queue,
@@ -56,7 +56,7 @@ begin
     execute $offer_policy$
       create policy "Owners can view offer products"
         on public.offer_products for select to authenticated
-        using (public.has_role((select auth.uid()), 'owner'::public.app_role))
+        using (private.has_role((select auth.uid()), 'owner'::public.app_role))
     $offer_policy$;
     execute 'revoke all privileges on table public.offer_products from public, anon, authenticated';
     execute 'grant select on table public.offer_products to authenticated';
@@ -72,7 +72,7 @@ begin
     execute $recommendation_policy$
       create policy "Owners can view recommendation config"
         on public.recommendation_config for select to authenticated
-        using (public.has_role((select auth.uid()), 'owner'::public.app_role))
+        using (private.has_role((select auth.uid()), 'owner'::public.app_role))
     $recommendation_policy$;
     execute 'revoke all privileges on table public.recommendation_config from public, anon, authenticated';
     execute 'grant select on table public.recommendation_config to authenticated';
