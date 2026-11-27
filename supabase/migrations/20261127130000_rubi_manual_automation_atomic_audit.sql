@@ -28,19 +28,15 @@ begin
     pg_catalog.hashtextextended('rubi:manual-automation:' || p_action, 0)
   );
 
+  -- Match the exact rule selector used by run_retention_engine. If no active
+  -- rule exists, the engine safely returns zero; the manual attempt is still audited.
   select * into v_rule
   from public.automation_rules
-  where trigger_type::text='USER_INACTIVE'
+  where name='Retention Sentinel'
+    and is_active=true
   order by created_at,id
   limit 1
   for update;
-
-  if not found then
-    return jsonb_build_object('success',false,'notifications_queued',0,'error','Retention rule not found');
-  end if;
-  if not v_rule.is_active then
-    return jsonb_build_object('success',false,'notifications_queued',0,'error','Retention rule is disabled');
-  end if;
 
   v_processed := public.run_retention_engine(3);
 
