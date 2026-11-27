@@ -112,7 +112,7 @@ A PR #363 adiciona um smoke PostgreSQL descartável com duas transações simult
 - Este mapa é uma revisão dirigida dos handlers administrativos listados, não um certificado de inventário exaustivo.
 - Leitura protegida por `requireOwnerRole` não substitui teste de GRANT/RLS no PostgreSQL.
 - Uma RPC com sufixo `_audited` só é considerada comprovada quando migration, autorização, transação, rollback e smoke correspondente forem verificados.
-- A definição SQL real do recálculo de tendências foi recuperada por inspeção read-only; o wrapper atômico, os grants e o smoke local ainda precisam ser versionados e aprovados.
+- A definição SQL real do recálculo de tendências foi recuperada por inspeção read-only; o wrapper atômico, os grants e o smoke local ainda precisam ser versionados e aprovados. A reconciliação de schema também identificou drift entre o banco conectado (entity_id UUID) e a migration-base versionada (entity_id text); o CI local deve seguir a migration versionada até haver plano formal de reconciliação do ambiente remoto.
 - A PR #363 e esta documentação são filhas da Sprint 362: pontuação permanece +0 até release final, validação integral e aceite do critério.
 
 
@@ -140,3 +140,24 @@ A inspeção foi estritamente de leitura. Nenhum dado, função, migration, gran
 - Validar grants efetivos e a identidade Owner dentro da RPC.
 - Smoke PostgreSQL descartável: negar não-Owner, provar atomicidade com falha forçada de auditoria e provar serialização de duas execuções concorrentes.
 - Só então remover a chamada direta mais o log separado do handler e migrar para a RPC atômica.
+
+
+## Revalidação da PR #366 — 27/11
+
+O workflow E2E no HEAD `9f1e9b92b0b354d8fe0d3dba08a5ebb96c6fbacb` falhou novamente no smoke de bloqueio, agora com erro de tipo: `operator does not exist: text = uuid`. A inspeção da migration-base `20260901000000_sprint32_admin_audit.sql` confirmou que a coluna `admin_audit_log.entity_id` é `text` nos ambientes reconstruídos a partir do repositório. A consulta read-only no Supabase conectado mostrou UUID, caracterizando drift entre ambiente remoto e baseline versionado.
+
+### Decisão corretiva
+- Não alterar migration histórica para acomodar silenciosamente o drift remoto.
+- Manter a RPC e o smoke compatíveis com a árvore de migrations: `p_user_id::text` e `v_user::text`.
+- Adicionar teste de contrato que fixa esse tipo no CI.
+- Tratar a divergência do projeto conectado em trilha de reconciliação de schema, sem executar DDL remoto nesta sprint.
+
+A PR #367 contém o teste de contrato para o schema versionado. A PR #366, que tentou a direção UUID, é obsoleta e não deve ser integrada.
+
+### Estado de validação
+- Hub QA no HEAD anterior `9f1e9b9`: sucesso.
+- E2E no mesmo HEAD: falhou apenas no smoke de bloqueio por comparação text/UUID.
+- Novo E2E e Hub QA no HEAD da PR #367: em execução; não marcar como aprovados antes da conclusão.
+
+### Pontuação
+Nenhuma alteração: 38.0/48 (79,2%) permanece a referência formal. A PR #367 é evidência de contrato e vale +0 isoladamente. O critério 11.3 continua sem aceite integral.
