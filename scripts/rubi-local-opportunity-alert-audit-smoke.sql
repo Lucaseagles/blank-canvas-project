@@ -98,6 +98,16 @@ BEGIN
   IF v_count<1 THEN RAISE EXCEPTION 'Owner read policy did not expose the seeded QA opportunity'; END IF;
 END
 $owner_read$;
+DO $non_owner_read$
+DECLARE v_count bigint;
+BEGIN
+  PERFORM set_config('request.jwt.claim.sub', current_setting('rubi.qa_non_owner_id'), true);
+  PERFORM set_config('request.jwt.claims',
+    jsonb_build_object('sub',current_setting('rubi.qa_non_owner_id'),'role','authenticated')::text, true);
+  SELECT count(*) INTO v_count FROM public.opportunity_alerts;
+  IF v_count<>0 THEN RAISE EXCEPTION 'Non-Owner can read administrative opportunity alerts'; END IF;
+END
+$non_owner_read$;
 RESET ROLE;
 
 SET LOCAL ROLE service_role;
