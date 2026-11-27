@@ -297,3 +297,28 @@ A PR #371 foi integrada por squash à branch da Sprint 362 no commit `d0867525f7
 - PRs #370 e #371 integradas à branch de sprint, não à release/main.
 - Os checks da #371 passaram no HEAD da PR; o candidato final ainda precisa executar Hub V1, E2E e Sprint 33 QA no mesmo HEAD após o inventário global.
 - O placar oficial permanece **38.0/48 = 79.2%**; esta continuação soma **+0** até o aceite formal do critério 11.3.
+
+
+## PR #372 integrada — varredura DML da camada de aplicação
+
+A PR #372 foi integrada por squash à branch da Sprint 362 no commit `e411ef09b0924a3ce4ef58b04343c2471186980e`.
+
+Documento: `docs/coverage/sprint-362-source-dml-sweep-2026-11-27.md`.
+
+### Resultado da varredura
+- Busca estática de `.insert()`, `.update()`, `.delete()` e `.upsert()` em `src/lib`, `src/routes/admin` e `src/components`, seguida de revisão manual dos resultados.
+- Não foram encontrados writers diretos nas rotas administrativas consultadas.
+- Os principais writers encontrados foram classificados entre RPCs auditadas (#370/#371 e superfícies anteriores), trigger auditado (status de produto), mutações do próprio usuário, eventos analíticos e logs.
+- Nenhum novo bypass administrativo foi confirmado nesta varredura.
+
+### Limite explícito
+A PR #372 não fecha o inventário 11.3. Ainda falta a reconciliação de todas as funções SQL/RPC, tabelas, triggers, GRANT/RLS, ator e smokes. A varredura estática não é prova de ausência de DML dinâmico nem substitui revisão de migrations.
+
+**Pontuação:** +0. Habilitador do gate 1, sem aumento de score.
+
+### Estado de integração
+- PR #370: integrada à branch.
+- PR #371: integrada à branch, Hub V1 e E2E verdes no HEAD da PR.
+- PR #372: integrada à branch, evidência documental.
+- Branch de integração após #372: `e411ef09b0924a3ce4ef58b04343c2471186980e`.
+- A release final continua bloqueada até completar a matriz SQL/RPC, os gates de papéis/rollback/concorrência/redação e a validação conjunta Hub V1 + Sprint 33 QA + E2E no mesmo HEAD.
