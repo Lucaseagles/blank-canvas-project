@@ -14,7 +14,9 @@ begin
     or not has_column_privilege('anon','public.marketplaces','status','SELECT')
     or not has_column_privilege('authenticated','public.marketplaces','status','SELECT')
     or not has_column_privilege('anon','public.marketplaces','created_at','SELECT')
-    or not has_column_privilege('authenticated','public.marketplaces','created_at','SELECT') then
+    or not has_column_privilege('authenticated','public.marketplaces','created_at','SELECT')
+    or not has_column_privilege('anon','public.marketplaces','icon','SELECT')
+    or not has_column_privilege('authenticated','public.marketplaces','icon','SELECT') then
     raise exception 'Safe marketplace catalog column grants were removed';
   end if;
   if has_table_privilege('anon','public.marketplaces','INSERT')
@@ -28,7 +30,11 @@ begin
   if has_column_privilege('anon','public.marketplaces','api_config','SELECT')
     or has_column_privilege('authenticated','public.marketplaces','api_config','SELECT')
     or has_column_privilege('anon','public.marketplaces','api_status','SELECT')
-    or has_column_privilege('authenticated','public.marketplaces','api_status','SELECT') then
+    or has_column_privilege('authenticated','public.marketplaces','api_status','SELECT')
+    or has_column_privilege('anon','public.marketplaces','affiliate_link_structure','SELECT')
+    or has_column_privilege('authenticated','public.marketplaces','affiliate_link_structure','SELECT')
+    or has_column_privilege('anon','public.marketplaces','updated_at','SELECT')
+    or has_column_privilege('authenticated','public.marketplaces','updated_at','SELECT') then
     raise exception 'Marketplace API credentials/status remain visible to browser roles';
   end if;
   if not has_column_privilege('anon','public.marketplaces','id','SELECT')
