@@ -32,6 +32,28 @@ test("missing, partial and implausible event data never creates reliable rates",
  const other=[{...traffic[0],productId:"other"}];
  assert.equal(summarizeRubiAudienceMovements(movements,variants,plans,other,product,false)[0].viewEvents,0);
 });
+
+test("duplicate aggregate telemetry for one campaign is ambiguous, never last-row-wins",()=>{
+ const duplicate=[...traffic,{...traffic[0],viewEvents:200,viewSessions:100,checkoutIntents:90}];
+ const result=summarizeRubiAudienceMovements(movements,variants,plans,duplicate,product,false);
+ assert.equal(result[0].ambiguousCampaigns,1);
+ assert.equal(result[0].observedCampaigns,0);
+ assert.equal(result[0].intentPerViewPercent,null);
+});
+test("fractional, negative and impossible session aggregates fail closed",()=>{
+ for(const patch of [
+  {viewEvents:20.5},
+  {viewSessions:-1},
+  {viewSessions:21},
+  {checkoutIntents:-1},
+  {checkoutIntents:4.5}
+ ]){
+  const invalid=[{...traffic[0],...patch}];
+  const result=summarizeRubiAudienceMovements(movements,variants,plans,invalid,product,false);
+  assert.equal(result[0].missingCampaigns,1);
+  assert.equal(result[0].intentPerViewPercent,null);
+ }
+});
 test("server and panel keep owner gate, query bounds, and honest disclaimers",()=>{
  const server=readFileSync(new URL("./rubi-audience-movement-summary.functions.ts",import.meta.url),"utf8");
  const panel=readFileSync(new URL("../components/store/RubiAudienceMovementSummaryAdmin.tsx",import.meta.url),"utf8");
