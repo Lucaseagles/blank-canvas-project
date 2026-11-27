@@ -9,7 +9,7 @@ create or replace function public.rubi_manage_customer_coupon_audited(
 ) returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = ''
 as $$
 declare
   v_before public.customer_coupons%rowtype;
