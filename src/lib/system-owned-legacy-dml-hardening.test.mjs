@@ -37,6 +37,11 @@ test("system-owned logs/queue and present legacy configs are not directly writab
   assert.ok(supportAi.includes("support_ai_config"));
 
   assert.ok(smoke.includes("Owner SELECT policy missing on"));
+  assert.ok(smoke.includes("Owner cannot read seeded content notification queue row"));
+  assert.ok(smoke.includes("Owner cannot read seeded content affinity row"));
+  assert.ok(smoke.includes("Non-Owner can read content notification queue row"));
+  assert.ok(smoke.includes("Non-Owner can read content affinity row"));
+  assert.ok(smoke.includes("rubi.qa.fixture_content_id"));
   assert.ok(smoke.includes("RUBI_QA_EXPECTED_SYSTEM_LEGACY_INSERT_DENIAL_NOT_RAISED"));
   assert.ok(smoke.includes("RUBI_QA_EXPECTED_SYSTEM_LEGACY_UPDATE_DENIAL_NOT_RAISED"));
   assert.ok(smoke.includes("RUBI_QA_EXPECTED_SYSTEM_LEGACY_DELETE_DENIAL_NOT_RAISED"));
