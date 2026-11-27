@@ -240,3 +240,36 @@ A PR cobre duas mutações específicas do RUBI Business. Não certifica o inven
 3. Smoke comprova Owner positivo, não-Owner negativo, grants mínimos, rollback por falha de auditoria, stale-write e trilha de auditoria.
 4. Verificar se o fixture merchant está presente no bootstrap completo.
 5. Reconciliar o inventário transversal antes de atribuir qualquer fração de 11.3.
+
+
+## 11. PR #351 integrada — RUBI Business quote/follow-up audit
+
+**Estado:** integrada à `main` em 2026-11-26.  
+**Merge commit:** `4bfe0566f4bd6eb547650672a4bd14310fc9fa7f`.  
+**Classificação:** habilitador + evidência parcial candidata para 11.3; **0 ponto atribuído** sem inventário global e reconciliação do critério.
+
+Aprovados no commit `016ed34d458ade2a4e43e10209b4d15e5afd023f`:
+- Hub V1 Integration QA.
+- Sprint 33 QA.
+- E2E autenticado dos quatro perfis, incluindo smoke PostgreSQL descartável.
+
+A PR fecha duas mutações específicas de RUBI Business: atualização de cotação e conclusão de follow-up interno. Ambas usam RPC Owner-only, bloqueio de linha, revisão esperada, auditoria na mesma transação, rollback e payload sanitizado. Não declara envio externo de follow-up nem pagamento B2B.
+
+## 12. PR #352 — Opportunity Engine status audit
+
+**Estado:** aberta; CI e smoke PostgreSQL aguardando.  
+**Classificação:** habilitador + parcial candidata para 11.3; **0 ponto até os gates passarem**.
+
+A inspeção da `main` encontrou que a ação administrativa de dispensar/marcar oportunidade como tratada chamava a RPC legada `update_opportunity_alert_status`, sem inserir `admin_audit_log`. A PR substitui esse caminho por RPC atômica auditada, Owner verificado, `FOR UPDATE`, controle otimista de `updated_at`, grants mínimos e teste de regressão. A interface envia a revisão que estava exibida ao operador.
+
+A PR não fecha o inventário global 11.3. O refresh/recalculo de oportunidades permanece fora deste escopo e deve ser auditado separadamente caso seja classificado como mutação administrativa pontuável.
+
+## Próximos gates de 11.3 após #352
+
+1. Auditar separadamente refresh/recalculo do Opportunity Engine e as demais mutações Owner-only.
+2. Gerar inventário completo de server functions POST, RPCs, tabelas e grants, incluindo rotas não localizadas em `/admin`.
+3. Testar bypass por anon, consumidor, lojista, parceiro e sessão autenticada sem Owner.
+4. Reconciliar cada mutação com rollback, concorrência, idempotência, redaction e evidência E2E.
+5. Somente então reavaliar 11.3 como parcial ou completa segundo a rubrica V1.
+
+**Regra de score:** PR integrada não significa ponto automático. Baseline de trabalho permanece 37.5/48 (78.1%) até reconciliação formal das 48 linhas.
