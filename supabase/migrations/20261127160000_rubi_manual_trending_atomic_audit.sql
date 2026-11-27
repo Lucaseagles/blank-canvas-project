@@ -32,6 +32,7 @@ declare
   v_rule public.automation_rules%rowtype;
   v_processed integer := 0;
   v_error text;
+  v_error_code text;
 begin
   if p_actor is null or not exists (
     select 1 from public.user_roles r
@@ -101,7 +102,9 @@ begin
     -- The exception block is a subtransaction: a failed refresh or success-audit
     -- insert rolls back all product updates and success logs before this failure
     -- record is written. If failure auditing also fails, the whole RPC aborts.
-    v_error := left(sqlerrm, 1000);
+    get stacked diagnostics v_error_code = returned_sqlstate;
+    -- Do not persist raw SQLERRM: it can contain row values or other sensitive context.
+    v_error := 'Trending recalculation failed (SQLSTATE ' || v_error_code || ')';
 
     insert into public.automation_logs(rule_id, context, result, status)
     values (
