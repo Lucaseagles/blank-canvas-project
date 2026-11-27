@@ -20,7 +20,7 @@ export const getAdminSupportFaq = createServerFn({ method: "GET" })
   .middleware([requireOwnerRole])
   .handler(async () => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin.from("support_faq")
+    const { data, error } = await (supabaseAdmin as any).from("support_faq")
       .select("id,question,answer,keywords,priority,is_active,created_at,updated_at")
       .order("priority", { ascending: false })
       .order("created_at", { ascending: false });
@@ -36,7 +36,7 @@ export const manageAdminSupportFaq = createServerFn({ method: "POST" })
     const payload = data.action === "create" || data.action === "update"
       ? data.payload
       : data.action === "toggle" ? { is_active: data.isActive } : {};
-    const { data: result, error } = await supabaseAdmin.rpc("rubi_manage_support_faq_audited", {
+    const { data: result, error } = await (supabaseAdmin as any).rpc("rubi_manage_support_faq_audited", {
       p_action: data.action,
       p_id: "id" in data ? data.id : null,
       p_payload: payload,
