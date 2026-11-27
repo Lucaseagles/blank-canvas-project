@@ -12,6 +12,7 @@ export type OpportunityAlert = {
   score: number;
   priority: number;
   reasons: string[];
+  updated_at: string;
 };
 
 async function db() {
@@ -42,10 +43,16 @@ export const refreshOpportunityAlerts = createServerFn({ method: "POST" })
 
 export const updateOpportunityAlertStatus = createServerFn({ method: "POST" })
   .middleware([requireOwnerRole])
-  .inputValidator((data: unknown) => z.object({ id: z.string().uuid(), status: statusSchema }).parse(data))
-  .handler(async ({ data }) => {
+  .inputValidator((data: unknown) => z.object({ id: z.string().uuid(), expectedUpdatedAt: z.string().datetime({ offset: true }), status: statusSchema }).parse(data))
+  .handler(async ({ data, context }) => {
     const supabase = await db();
-    const { data: updated, error } = await supabase.rpc("update_opportunity_alert_status", { p_id: data.id, p_status: data.status });
-    if (error) throw error;
-    return { updated: Boolean(updated) };
+    const { data: updated, error } = await supabase.rpc("rubi_update_opportunity_alert_status_audited", {
+      p_id: data.id,
+      p_expected_updated_at: data.expectedUpdatedAt,
+      p_status: data.status,
+      p_actor: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    if (!updated?.id) throw new Error("Oportunidade não atualizada.");
+    return { updated: true, updatedAt: updated.updated_at };
   });
