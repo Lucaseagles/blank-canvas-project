@@ -18,6 +18,7 @@ test("Share Studio global configuration uses Owner-gated audited server writes",
   }
   assert.ok(migration.includes("drop policy if exists share_templates_owner_write_s38"));
   assert.ok(migration.includes("drop policy if exists share_card_config_owner_write_s38"));
+  assert.ok(migration.includes("drop policy if exists share_card_config_authenticated_read_s38"));
   assert.ok(migration.includes("create policy share_templates_owner_select_s38"));
   assert.ok(migration.includes("create policy share_card_config_owner_select_s38"));
   assert.ok(migration.includes("rubi_update_share_template_audited"));
