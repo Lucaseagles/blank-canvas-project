@@ -19,7 +19,7 @@ test("Owner knowledge-base reads include inactive rows and all mutations use the
   for (const action of ["create", "update", "toggle", "delete"]) assert.ok(api.includes(`action: z.literal("${action}")`));
   for (const token of [
     "add column if not exists updated_at", "security definer", "set search_path = ''",
-    "Owner access required", "for update", "p_expected_updated_at",
+    "Owner access required", "for update", "Expected support FAQ revision is required", "p_expected_updated_at",
     "insert into public.admin_audit_log", "RUBI_SUPPORT_FAQ_CREATED",
     "RUBI_SUPPORT_FAQ_UPDATED", "RUBI_SUPPORT_FAQ_STATUS_CHANGED",
     "RUBI_SUPPORT_FAQ_DELETED", "revoke all on function",
