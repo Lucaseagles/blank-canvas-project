@@ -43,6 +43,9 @@ begin
   if v_before.updated_at <> p_expected_updated_at then
     raise exception 'Product changed; reload before retrying';
   end if;
+  if v_before.status = 'published' and jsonb_array_length(p_images) = 0 then
+    raise exception 'Published products must retain at least one image';
+  end if;
 
   select coalesce(array_agg(trim(image.value)), '{}'::text[])
   into v_images
