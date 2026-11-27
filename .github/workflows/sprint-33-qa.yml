@@ -54,6 +54,9 @@ jobs:
       - name: Product gallery Owner-only atomic audit regression
         run: npm run test:rubi-product-media-audit
 
+      - name: Support FAQ Owner-only atomic audit regression
+        run: npm run test:rubi-support-faq-audit
+
       - name: Sprint 345 Telegram config and Vault atomic audit regression
         run: node --test src/lib/rubi-telegram-config-atomic-audit.test.mjs
       - name: Generic admin settings allowlist regression
