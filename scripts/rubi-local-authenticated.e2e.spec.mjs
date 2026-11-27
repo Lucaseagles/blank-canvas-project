@@ -117,7 +117,29 @@ for (const viewport of viewports) {
       });
     }
 
-    test("authenticated non-owner cannot enter the Master dashboard", async ({ page }) => {
+
+    if (profile.proof === "master") {
+      test("MASTER sees the premium evidence state and accessible editorial progress", async ({ page }) => {
+        const runtimeErrors = [];
+        page.on("pageerror", (error) => runtimeErrors.push(error.message));
+        await signIn(page, "MASTER", "/admin");
+        await page.goto("/admin/hub-catalog");
+        await page.waitForLoadState("networkidle");
+        await expect(page.getByRole("heading", { name: "Movimentos comerciais por produto" })).toBeVisible();
+        const productTitle = process.env.RUBI_QA_AUDIENCE_REVIEW_PRODUCT_TITLE;
+        const movementName = process.env.RUBI_QA_AUDIENCE_REVIEW_MOVEMENT_NAME;
+        if (!productTitle || !movementName) throw new Error("Missing disposable evidence fixture labels.");
+        await page.getByLabel("Produto").selectOption({ label: productTitle });
+        const movement = page.getByRole("button", { name: new RegExp(movementName.replace(/[.*+?^${}()|[\]\\]/g, "\\    test("authenticated non-owner cannot enter the Master dashboard", async ({ page }) => {")) });
+        await expect(movement).toBeVisible();
+        await movement.click();
+        await expect(page.getByRole("heading", { name: "Declaração registrada · revisão pendente" })).toBeVisible();
+        await expect(page.getByRole("progressbar", { name: "Progresso do checklist editorial" })).toBeVisible();
+        await expect(page.getByText(/Isto não valida o mercado nem autoriza campanha/)).toBeVisible();
+        expect(runtimeErrors).toEqual([]);
+      });
+    }
+\n    test("authenticated non-owner cannot enter the Master dashboard", async ({ page }) => {
       await signIn(page, "CONSUMER", "/admin", "/");
       await expect(page.getByText("Verificando acesso seguro...")).toHaveCount(0);
     });
