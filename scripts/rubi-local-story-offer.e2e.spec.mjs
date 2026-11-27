@@ -117,7 +117,7 @@ for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",widt
   if(!approvedProductId||!staleTitle)throw new Error("Disposable stale-revision Story fixture environment is missing.");
   await page.setViewportSize({width:viewport.width,height:viewport.height});
   await signIn(page,"CONSUMER","/hub-product/"+approvedProductId);
-  await expect(page.getByRole("heading",{name:"Story aprovado de validação RUBI"})).toBeVisible({timeout:20000});
+  await expect(page.getByRole("heading",{name:process.env.RUBI_QA_APPROVED_STORY_TITLE})).toBeVisible({timeout:20000});
   await expect(page.getByRole("heading",{name:staleTitle})).toHaveCount(0);
  });
 }
