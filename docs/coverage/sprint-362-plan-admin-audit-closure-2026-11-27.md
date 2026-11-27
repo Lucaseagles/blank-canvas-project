@@ -112,7 +112,7 @@ A PR #363 adiciona um smoke PostgreSQL descartável com duas transações simult
 - Este mapa é uma revisão dirigida dos handlers administrativos listados, não um certificado de inventário exaustivo.
 - Leitura protegida por `requireOwnerRole` não substitui teste de GRANT/RLS no PostgreSQL.
 - Uma RPC com sufixo `_audited` só é considerada comprovada quando migration, autorização, transação, rollback e smoke correspondente forem verificados.
-- O gap de recálculo de tendências continua bloqueando o fechamento transversal enquanto a definição SQL real não estiver recuperada e reproduzida no bootstrap local.
+- A definição SQL real do recálculo de tendências foi recuperada por inspeção read-only; o wrapper atômico, os grants e o smoke local ainda precisam ser versionados e aprovados.
 - A PR #363 e esta documentação são filhas da Sprint 362: pontuação permanece +0 até release final, validação integral e aceite do critério.
 
 
