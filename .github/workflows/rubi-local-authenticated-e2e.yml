@@ -37,6 +37,9 @@ on:
       - "scripts/rubi-local-admin-user-ban-concurrency.sh"
       - "scripts/rubi-local-manual-trending-audit-smoke.sql"
       - "scripts/rubi-local-admin-audit-catalog.sql"
+      - "scripts/rubi-local-user-data-rls-hardening-smoke.sql"
+      - "supabase/migrations/20261127235900_rubi_user_data_rls_policy_hardening.sql"
+      - "src/lib/rubi-user-data-rls-hardening.test.mjs"
       - "src/lib/rubi-admin-audit-catalog.test.mjs"
       - "scripts/rubi-local-manual-trending-concurrency.sh"
       - "scripts/rubi-local-strategy-orchestration-pause-concurrency.sh"
@@ -193,6 +196,13 @@ jobs:
           -v consumer_id="$RUBI_QA_CONSUMER_USER_ID"
           -v merchant_id="$RUBI_QA_MERCHANT_USER_ID"
           -f scripts/rubi-local-analytics-privacy-smoke.sql
+
+      - name: Verify user interests and favorites cannot cross profile boundaries
+        run: >-
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1
+          -v consumer_id="$RUBI_QA_CONSUMER_USER_ID"
+          -v merchant_id="$RUBI_QA_MERCHANT_USER_ID"
+          -f scripts/rubi-local-user-data-rls-hardening-smoke.sql
 
       - name: Verify public table privilege hardening and future defaults
         run: psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f scripts/rubi-local-public-table-privilege-hardening-smoke.sql
