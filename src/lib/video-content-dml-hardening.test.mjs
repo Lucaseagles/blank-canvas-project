@@ -13,6 +13,7 @@ test("native and bridge video tables allow reads but only audited RPC writes", (
 
   for (const policy of [
     '"Admin videos manage"',
+    '"Admins can do everything with videos"',
     '"Admins can manage all videos"',
     '"Admins can manage video associations"',
     '"Owners can manage bridge videos"',
@@ -30,6 +31,8 @@ test("native and bridge video tables allow reads but only audited RPC writes", (
   assert.ok(migration.includes("to anon, authenticated"));
   assert.ok(migration.includes("to service_role"));
   assert.ok(!migration.includes('drop policy if exists "Public can view published videos"'));
+  assert.ok(!migration.includes('drop policy if exists "Anyone can view published videos"'));
+  assert.ok(!migration.includes('drop policy if exists "Public videos view"'));
   assert.ok(!migration.includes('drop policy if exists "Public can view video product associations"'));
   assert.ok(!migration.includes('drop policy if exists "Public can view active bridge videos"'));
 
