@@ -24,6 +24,8 @@ on:
       - "scripts/rubi-local-support-faq-audit-smoke.sql"
       - "scripts/rubi-local-admin-user-ban-audit-smoke.sql"
       - "scripts/rubi-local-telegram-send-outbox-smoke.sql"
+      - "scripts/rubi-local-social-channel-dml-hardening-smoke.sql"
+      - "supabase/migrations/20261127180000_rubi_social_channel_dml_hardening.sql"
       - "scripts/rubi-local-admin-user-ban-concurrency.sh"
       - "scripts/rubi-local-manual-trending-audit-smoke.sql"
       - "scripts/rubi-local-manual-trending-concurrency.sh"
@@ -142,6 +144,14 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y postgresql-client
           fi
+      - name: Prove social channel direct DML is revoked and audited RPC is atomic
+        run: >-
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1
+          -v master_id="$RUBI_QA_MASTER_USER_ID"
+          -v consumer_id="$RUBI_QA_CONSUMER_USER_ID"
+          -v merchant_id="$RUBI_QA_MERCHANT_USER_ID"
+          -v partner_id="$RUBI_QA_PARTNER_USER_ID"
+          -f scripts/rubi-local-social-channel-dml-hardening-smoke.sql
       - name: Verify partner academy progress isolation and profile-specific lessons
         run: |
           psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 \
