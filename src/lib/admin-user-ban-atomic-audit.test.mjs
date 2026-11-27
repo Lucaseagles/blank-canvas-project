@@ -29,8 +29,12 @@ test("ban mutation serializes the profile row and suppresses duplicate no-op aud
 });
 
 
-test("user-ban audit follows the versioned text entity_id schema", () => {
-  assert.match(migration, /'USER_BAN_STATUS_CHANGED',\\s*'profiles',\\s*p_user_id::text,/);
+test("user-ban audit supports both text and UUID entity_id schemas", () => {
+  assert.match(migration, /format_type\(a\.atttypid, a\.atttypmod\)/i);
+  assert.match(migration, /v_entity_id_type = 'uuid'/i);
+  assert.match(migration, /v_entity_id_type = 'text'/i);
+  assert.match(migration, /p_user_id::text/);
   const smoke = read("../../scripts/rubi-local-admin-user-ban-audit-smoke.sql");
-  assert.match(smoke, /entity_id\\s*=\\s*v_user::text/);
+  assert.match(smoke, /entity_id::text\s*=\s*v_user::text/);
 });
+
