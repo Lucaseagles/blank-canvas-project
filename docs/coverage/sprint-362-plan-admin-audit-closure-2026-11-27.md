@@ -453,3 +453,42 @@ A PR #378 foi integrada por squash à branch de integração da Sprint 362 no co
 ### Pontuação
 +0 isoladamente. A PR reforça o gate de inventário e least privilege do critério 11.3; a pontuação continua 38.0/48 (79.2%) até aceite integral da sprint.
 
+
+
+## PR #379 integrada — Social Sharing Studio auditável
+
+A PR #379 passou no Hub V1 e no E2E autenticado e foi integrada por squash à branch de integração no commit `508d05113026fce7c3026183fdfc50b16d4b42b8`.
+
+- Escritas em `share_templates` e `share_card_config` migradas para server functions Owner + RPCs com auditoria transacional.
+- DML direto revogado para roles de browser; leitura de configuração privada preservada somente para Owner.
+- `share_history` permaneceu como histórico de eventos do próprio usuário, fora do escopo de escrita administrativa.
+- Smoke descartável comprovou autorização, rollback de auditoria e redação de conteúdo sensível.
+- Nenhuma migration foi aplicada ao Supabase remoto.
+
+**Pontuação:** +0 isoladamente; contribuição ao critério 11.3, pendente de aceite integral.
+
+## PR #381 integrada — Marketplace audited-only writes
+
+A PR #381 foi integrada por squash após Hub V1 e E2E autenticado aprovados no mesmo HEAD, commit de integração `efe2752ccd456b104fa6176c82ee1639010194be`.
+
+- Removidas as policies históricas de escrita Owner `FOR ALL`; mantida leitura Owner e catálogo público com colunas seguras.
+- Revogados INSERT/UPDATE/DELETE/TRUNCATE/REFERENCES/TRIGGER para PUBLIC, anon e authenticated.
+- Preservados os campos públicos necessários à UI: `id`, `name`, `slug`, `status`, `created_at` e `icon`.
+- Revogados os grants de leitura no browser para `api_config`, `api_status`, `affiliate_link_structure` e `updated_at`.
+- A RPC `rubi_manage_marketplace_audited` permanece como caminho de mutação, com execução exclusiva de `service_role` e verificação Owner do ator dentro do PostgreSQL.
+- O primeiro smoke falhou por exigir SELECT em nível de tabela, embora a política correta conceda SELECT por coluna. A asserção foi corrigida para validar cada coluna segura e a privacidade das colunas não públicas.
+- No HEAD final da PR #381, Hub V1: SUCCESS (TypeScript, ESLint, build e contrato); E2E autenticado: SUCCESS, incluindo o smoke Marketplace e os smokes transacionais anteriores.
+- Nenhuma migration foi aplicada ao Supabase remoto.
+
+**Pontuação:** +0 isoladamente; contribuição ao critério 11.3, pendente de aceite integral.
+
+## Reconciliação de PRs e gate de release
+
+- PR #379: integrada à branch da Sprint 362.
+- PR #381: integrada à branch da Sprint 362.
+- PR #380: fechada como supersedida pela #381; nenhum código da #380 foi integrado.
+- PR #373 e #378: continuam como entregas integradas anteriormente à branch da Sprint 362.
+- A PR de release para `main` ainda não foi integrada. A pontuação formal continua **38.0/48 = 79.2%**.
+- O gate Sprint 33 QA foi ampliado para executar também os contratos de Social Sharing Studio e Marketplace. O fechamento do critério 11.3 depende de Hub V1, E2E e Sprint 33 QA aprovados no mesmo HEAD candidato, revisão final do inventário SQL/RPC e aceite da rubrica.
+- Nenhuma migration da Sprint 362 foi aplicada ao Supabase remoto.
+
