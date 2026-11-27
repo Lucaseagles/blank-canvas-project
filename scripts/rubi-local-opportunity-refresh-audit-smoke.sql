@@ -2,6 +2,7 @@
 BEGIN;
 CREATE TEMP TABLE rubi_qa_refresh_actor(master_id uuid, non_owner_id uuid) ON COMMIT DROP;
 INSERT INTO rubi_qa_refresh_actor VALUES (:'master_id'::uuid, :'non_owner_id'::uuid);
+GRANT SELECT ON rubi_qa_refresh_actor TO service_role;
 
 CREATE FUNCTION pg_temp.rubi_qa_reject_refresh_audit()
 RETURNS trigger LANGUAGE plpgsql AS $trigger$
