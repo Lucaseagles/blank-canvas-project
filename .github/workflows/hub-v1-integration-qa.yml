@@ -314,6 +314,8 @@ jobs:
         run: node --test src/lib/rubi-admin-audit-catalog.test.mjs
       - name: Sprint 365 per-user engagement RLS hardening regression
         run: node --test src/lib/rubi-user-data-rls-hardening.test.mjs
+      - name: Sprint 365 SECURITY DEFINER execution grant regression
+        run: node --test src/lib/rubi-security-definer-execute-hardening.test.mjs
 
       - name: TypeScript
         run: npx tsc --noEmit
