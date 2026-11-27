@@ -74,6 +74,7 @@ begin
     raise exception 'Owner authorization required';
   end if;
   if p_operation_key is null
+     or p_message_kind is null
      or p_message_text is null
      or length(pg_catalog.btrim(p_message_text)) < 1
      or length(p_message_text) > 4000
