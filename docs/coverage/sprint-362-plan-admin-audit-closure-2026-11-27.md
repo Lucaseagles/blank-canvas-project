@@ -322,3 +322,26 @@ A PR #372 não fecha o inventário 11.3. Ainda falta a reconciliação de todas 
 - PR #372: integrada à branch, evidência documental.
 - Branch de integração após #372: `e411ef09b0924a3ce4ef58b04343c2471186980e`.
 - A release final continua bloqueada até completar a matriz SQL/RPC, os gates de papéis/rollback/concorrência/redação e a validação conjunta Hub V1 + Sprint 33 QA + E2E no mesmo HEAD.
+
+
+## PR #373 integrada — hardening do Opportunity Engine
+
+A PR #373 foi integrada por squash à branch da Sprint 362 no commit `08a0bfb34930471f8b75e0c963a8d9254c39847f`.
+
+### Lacunas fechadas na implementação
+- Removida a policy Owner `FOR ALL` de `opportunity_alerts`; Owner permanece com SELECT via RLS.
+- Revogados privilégios de DML direto de `PUBLIC`, `anon` e `authenticated`; escrita preservada para `service_role`.
+- RPC `get_opportunity_alerts(text)` (SECURITY DEFINER) restrita ao `service_role`; o server function aplica `requireOwnerRole`.
+- Escritas continuam exclusivamente pelos server functions e RPCs atômicas auditadas de status/refresh; RPCs legadas já revogadas por migrations anteriores.
+- Nenhuma migration foi aplicada ao Supabase remoto.
+
+### Evidências no HEAD da PR #373
+- Hub V1 Integration QA: SUCCESS, 105 etapas concluídas; TypeScript e ESLint aprovados; teste novo de hardening aprovado.
+- E2E autenticado dos quatro perfis: SUCCESS, 54 etapas concluídas; smoke de status do Opportunity Engine passou com grants, DML direto negado, Owner read, non-Owner sem leitura, rollback e evento auditado; smoke de refresh passou.
+- A PR foi integrada à branch de sprint após os dois workflows ficarem verdes.
+
+### Pontuação e estado
+- Score permanece **38.0/48 = 79.2%**; PR #373 soma **+0 isoladamente** até o fechamento completo do critério 11.3.
+- Branch de integração após PR #373: `08a0bfb34930471f8b75e0c963a8d9254c39847f`.
+- PRs filhas #370, #371, #372 e #373 estão integradas à branch da sprint, não à `main`.
+- Ainda pendem a reconciliação integral de mutações SQL/RPC, validação global de concorrência/redação/autorização e o trio de workflows no mesmo HEAD final (Hub V1, E2E autenticado, Sprint 33 QA) antes da promoção única à `main`.
