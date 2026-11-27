@@ -157,7 +157,7 @@ jobs:
       - name: Capture read-only administrative audit catalog from disposable PostgreSQL
         run: |
           set -euo pipefail
-          psql "$SUPABASE_DB_URL" -X -A -t -v ON_ERROR_STOP=1 -o "$RUNNER_TEMP/rubi-admin-audit-catalog.json" -f scripts/rubi-local-admin-audit-catalog.sql
+          psql "$SUPABASE_DB_URL" -X -A -t -q -v ON_ERROR_STOP=1 -o "$RUNNER_TEMP/rubi-admin-audit-catalog.json" -f scripts/rubi-local-admin-audit-catalog.sql
           node --input-type=module <<'NODE'
           import { readFile } from "node:fs/promises";
           const path = process.env.RUNNER_TEMP + "/rubi-admin-audit-catalog.json";
