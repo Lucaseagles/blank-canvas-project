@@ -1,5 +1,6 @@
 -- Sprint 362: public video reads remain available; mutations use audited service-role RPCs only.
 drop policy if exists "Admin videos manage" on public.videos;
+drop policy if exists "Admins can do everything with videos" on public.videos;
 drop policy if exists "Admins can manage all videos" on public.videos;
 create policy "Owners can view videos"
   on public.videos for select to authenticated
