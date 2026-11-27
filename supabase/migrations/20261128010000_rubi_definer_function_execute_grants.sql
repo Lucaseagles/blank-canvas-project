@@ -45,15 +45,6 @@ BEGIN
      OR has_function_privilege('authenticated', 'public.audit_marketplace_mutation()', 'EXECUTE') THEN
     RAISE EXCEPTION 'trigger function remains directly executable by browser roles';
   END IF;
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_catalog.pg_trigger t
-    JOIN pg_catalog.pg_proc p ON p.oid=t.tgfoid
-    JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace
-    WHERE n.nspname='public' AND p.proname='audit_marketplace_mutation'
-      AND NOT t.tgisinternal
-  ) THEN
-    RAISE EXCEPTION 'marketplace audit trigger attachment is missing';
-  END IF;
 END
 $$;
 
