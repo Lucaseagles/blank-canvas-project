@@ -24,7 +24,7 @@ test("hand-crafted documentary records cannot bypass sample, consent or HTTPS ru
  const record=buildRubiAudienceEvidence(valid).notes;
  const invalidSample=assessRubiAudienceEvidenceStatus(record.replace("Amostra: 0","Amostra: -4"));
  const invalidConsent=assessRubiAudienceEvidenceStatus(record.replace("Consentimento: não aplicável","Consentimento: talvez"));
- const insecureSource=assessRubiAudienceEvidenceStatus(record.replace("https://","http://").replace("Fonte: Ficha","Fonte: Ficha"));
+ const insecureSource=assessRubiAudienceEvidenceStatus(record.replace("Fonte: Ficha pública verificável do fornecedor ABC","Fonte: http://example.com/research"));
  assert.ok(invalidSample.blockers.some(x=>x.includes("Amostra deve ser")));
  assert.ok(invalidConsent.blockers.some(x=>x.includes("consentimento inválido")));
  assert.ok(insecureSource.blockers.some(x=>x.includes("HTTPS")));
