@@ -310,6 +310,8 @@ jobs:
         run: node --test src/lib/opportunity-refresh-atomic-audit.test.mjs
       - name: Sprint 362 Opportunity Engine direct DML hardening regression
         run: node --test src/lib/opportunity-alert-dml-hardening.test.mjs
+      - name: Sprint 365 administrative audit catalog contract regression
+        run: node --test src/lib/rubi-admin-audit-catalog.test.mjs
 
       - name: TypeScript
         run: npx tsc --noEmit

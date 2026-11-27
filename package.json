@@ -78,7 +78,7 @@
     "test:rubi-public-creator-profile": "node --test src/lib/rubi-public-creator-profile.test.mjs",
     "test:rubi-public-creator-directory": "node --test src/lib/rubi-public-creator-directory.test.mjs",
     "test:rubi-story-staging": "node --test src/lib/rubi-staging-story-target.test.mjs",
-    "test:rubi-admin-mutation-inventory": "node --test src/lib/rubi-admin-mutation-inventory.test.mjs",
+    "test:rubi-admin-mutation-inventory": "node --test src/lib/rubi-admin-mutation-inventory.test.mjs src/lib/rubi-admin-audit-catalog.test.mjs",
     "audit:rubi-admin-mutation-inventory": "node scripts/rubi-admin-mutation-inventory.mjs"
   },
   "dependencies": {

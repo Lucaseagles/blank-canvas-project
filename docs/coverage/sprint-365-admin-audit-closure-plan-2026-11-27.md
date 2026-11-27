@@ -60,3 +60,33 @@ Não reimplementar famílias já auditadas sem demonstrar uma lacuna real. Não 
 ## Próxima ação imediata
 
 Gerar o inventário real da `main`, cruzar cada mutação com as migrations e testes já existentes, identificar o menor bypass/gap ainda não fechado e abrir a primeira PR filha apenas quando houver uma mudança funcional comprovável.
+
+
+## Reconciliação após PR #394 e seleção da próxima entrega — 27/11
+
+### Integração confirmada
+- PR #394 foi integrada à `main` por squash no commit `caa569218d943bafffe6529c2edbecf5fc6baf50`.
+- No mesmo HEAD `634d93f2309e927987f51e8292ad055a425f436b`, Sprint 33 QA, Hub V1 Integration QA e E2E autenticado dos quatro perfis terminaram SUCCESS.
+- A PR #394 entrega scanner heurístico e governança da Sprint 365; não prova inventário SQL/RPC nem converte pontos.
+
+### Candidatos antigos revalidados como já implementados
+- Marketplaces: `rubi_manage_marketplace_audited` cobre CRUD, credenciais e status; Owner check, lock, auditoria transacional, redação de credenciais e grants service_role estão na migration `20261117120000_rubi_marketplace_atomic_audit.sql`, com teste e smoke dedicados.
+- Métricas Telegram: `rubi_record_telegram_metric_audited` grava métrica e evento de auditoria na mesma transação; Owner, canal ativo, `FOR SHARE`, grants e teste estão versionados na migration `20261117143000_rubi_telegram_metric_atomic_audit.sql`.
+- Recálculo manual de tendências: o caminho anteriormente apontado como gap agora usa `rubi_recalculate_trending_audited`; a migration `20261127160000_rubi_manual_trending_atomic_audit.sql`, teste de contrato, smoke PostgreSQL e smoke de concorrência estão na `main`. A operação valida Owner, serializa execução, registra `automation_logs` e `admin_audit_log`, trata falha com rollback dos scores e não expõe SQLERRM bruto.
+- Esses três itens não serão reabertos nem contados como novos pontos nesta Sprint.
+
+### Próxima entrega habilitadora
+A varredura de aplicação e os smokes específicos ainda não formam um snapshot único do catálogo PostgreSQL. Esta branch adiciona um inventário read-only do schema descartável com:
+- tabelas públicas, RLS habilitada/forçada e privilégios de anon/authenticated/service_role;
+- policies e expressões USING/WITH CHECK;
+- funções públicas, SECURITY DEFINER/INVOKER, configuração e privilégios EXECUTE;
+- triggers não internos e suas definições;
+- validação JSON e artefato retido por sete dias no workflow E2E.
+
+O relatório não lê linhas de negócio, corpos de funções, credenciais ou segredos. Também declara expressamente que catálogo não prova alcance da aplicação nem completude de auditoria; precisa ser cruzado com scanner de código, migrations e smokes.
+
+### Pontuação e histórico de autoridade
+- A release PR #390 registra a conversão aceita de 08.3: 38.5/48 (80.2%) → 39.0/48 (81.3%), ganho confirmado de +0.5.
+- PR #394 e esta entrega de catálogo: +0 isoladamente.
+- O 11.3 continua candidato a fechamento, sem novo ponto concedido nesta etapa.
+- A reconciliação integral das 48 linhas continua obrigatória antes de qualquer conversão adicional.
