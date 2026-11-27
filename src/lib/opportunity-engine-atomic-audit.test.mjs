@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 const api = read("./opportunity-engine.functions.ts");
 const route = read("../routes/admin/opportunities.tsx");
-const migration = read("../../supabase/migrations/20261126140000_rubi_opportunity_alert_atomic_audit.sql");
+const migration = read("../../supabase/migrations/20261126141000_rubi_opportunity_alert_atomic_audit.sql");
 
 test("Owner opportunity status mutation uses audited RPC and verified server actor", () => {
   const block = api.split("export const updateOpportunityAlertStatus")[1] ?? "";
