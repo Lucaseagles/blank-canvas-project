@@ -10,6 +10,8 @@ test("system-owned logs/queue and present legacy configs are not directly writab
   const workerHardening = read("../../supabase/migrations/20261124120000_sprint306_harden_content_notification_queue_temp_table.sql");
   const supportAi = read("../../supabase/functions/support-ai/index.ts");
   const smoke = read("../../scripts/rubi-local-system-owned-legacy-dml-hardening-smoke.sql");
+  const hubWorkflow = read("../../.github/workflows/hub-v1-integration-qa.yml");
+  const e2eWorkflow = read("../../.github/workflows/rubi-local-authenticated-e2e.yml");
 
   for (const table of ["content_notification_queue", "content_affinity_log"]) {
     assert.ok(migration.includes("public." + table), table);
@@ -42,6 +44,9 @@ test("system-owned logs/queue and present legacy configs are not directly writab
   assert.ok(smoke.includes("Non-Owner can read content notification queue row"));
   assert.ok(smoke.includes("Non-Owner can read content affinity row"));
   assert.ok(smoke.includes("rubi.qa.fixture_content_id"));
+  assert.equal((hubWorkflow.match(/node --test src\/lib\/system-owned-legacy-dml-hardening\.test\.mjs/g) ?? []).length, 1);
+  assert.equal((e2eWorkflow.match(/scripts\/rubi-local-system-owned-legacy-dml-hardening-smoke\.sql/g) ?? []).length, 2);
+  assert.ok(e2eWorkflow.includes('-v non_owner_id="$RUBI_QA_CONSUMER_USER_ID"'));
   assert.ok(smoke.includes("RUBI_QA_EXPECTED_SYSTEM_LEGACY_INSERT_DENIAL_NOT_RAISED"));
   assert.ok(smoke.includes("RUBI_QA_EXPECTED_SYSTEM_LEGACY_UPDATE_DENIAL_NOT_RAISED"));
   assert.ok(smoke.includes("RUBI_QA_EXPECTED_SYSTEM_LEGACY_DELETE_DENIAL_NOT_RAISED"));
