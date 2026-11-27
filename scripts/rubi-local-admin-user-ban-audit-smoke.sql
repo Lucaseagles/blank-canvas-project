@@ -2,6 +2,8 @@
 begin;
 select set_config('rubi.qa.master_id', :'master_id', true);
 select set_config('rubi.qa.non_owner_id', :'non_owner_id', true);
+select set_config('rubi.qa.merchant_id', :'merchant_id', true);
+select set_config('rubi.qa.partner_id', :'partner_id', true);
 
 -- Auth fixtures create commercial_profiles, but this legacy admin RPC mutates
 -- public.profiles. Ensure the disposable consumer has the exact target row.
@@ -21,16 +23,22 @@ $grants$;
 
 set local role service_role;
 do $owner$
+declare
+  v_actor uuid;
+  v_target uuid := current_setting('rubi.qa.non_owner_id')::uuid;
 begin
-  begin
-    perform public.admin_set_profile_banned(
-      current_setting('rubi.qa.master_id')::uuid, true,
-      current_setting('rubi.qa.non_owner_id')::uuid
-    );
-    raise exception 'Non-Owner actor unexpectedly changed a user ban';
-  exception when others then
-    if sqlerrm <> 'Owner authorization required' then raise; end if;
-  end;
+  foreach v_actor in array array[
+    current_setting('rubi.qa.non_owner_id')::uuid,
+    current_setting('rubi.qa.merchant_id')::uuid,
+    current_setting('rubi.qa.partner_id')::uuid
+  ] loop
+    begin
+      perform public.admin_set_profile_banned(v_target, true, v_actor);
+      raise exception 'Non-Owner actor unexpectedly changed a user ban: %', v_actor;
+    exception when others then
+      if sqlerrm <> 'Owner authorization required' then raise; end if;
+    end;
+  end loop;
 end
 $owner$;
 reset role;
