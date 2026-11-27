@@ -14,6 +14,7 @@ test("Master coupon writes use the Owner-gated atomic audit RPC, never browser D
   assert.match(ui, /manageCustomerCouponAdmin/);
   assert.doesNotMatch(ui, /from\("customer_coupons"\)\.(?:insert|update|delete)/);
   for (const action of ["create", "update", "toggle", "delete"]) assert.ok(api.includes(`action: z.literal("${action}")`));
+  assert.match(migration, /set search_path = ''/);
   for (const token of [
     "security definer", "Owner access required", "for update",
     "p_expected_updated_at", "insert into public.admin_audit_log",
