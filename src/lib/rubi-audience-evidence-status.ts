@@ -30,7 +30,9 @@ export function assessRubiAudienceEvidenceStatus(notes:string):RubiAudienceEvide
  for(const [field,minLength,label] of fields){
   const matches=lines.filter(line=>line.startsWith(field));
   if(matches.length!==1){blockers.push(matches.length===0? "Campo ausente: "+label:"Campo duplicado: "+label);continue;}
-  const content=matches[0].slice(field.length).trim();
+  const line=matches[0];
+  if(!line)continue;
+  const content=line.slice(field.length).trim();
   if(content.length<minLength)blockers.push("Campo insuficiente: "+label);
   parsed.set(label,content);
  }
