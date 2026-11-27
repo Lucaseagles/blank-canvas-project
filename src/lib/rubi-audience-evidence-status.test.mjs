@@ -20,4 +20,13 @@ test("missing, short or duplicate fields cannot enter the review-ready state",()
  const duplicate=assessRubiAudienceEvidenceStatus(record.notes+"\nFonte: Outra referência verificável");
  assert.ok(missing.blockers.some(x=>x.includes("Hipótese")));assert.ok(short.blockers.some(x=>x.includes("Método")));assert.ok(duplicate.blockers.some(x=>x.includes("duplicado: Fonte")));
 });
+test("hand-crafted documentary records cannot bypass sample, consent or HTTPS rules",()=>{
+ const record=buildRubiAudienceEvidence(valid).notes;
+ const invalidSample=assessRubiAudienceEvidenceStatus(record.replace("Amostra: 0","Amostra: -4"));
+ const invalidConsent=assessRubiAudienceEvidenceStatus(record.replace("Consentimento: não aplicável","Consentimento: talvez"));
+ const insecureSource=assessRubiAudienceEvidenceStatus(record.replace("https://","http://").replace("Fonte: Ficha","Fonte: Ficha"));
+ assert.ok(invalidSample.blockers.some(x=>x.includes("Amostra deve ser")));
+ assert.ok(invalidConsent.blockers.some(x=>x.includes("consentimento inválido")));
+ assert.ok(insecureSource.blockers.some(x=>x.includes("HTTPS")));
+});
 test("future and impossible dates are blocked",()=>{const original=buildRubiAudienceEvidence(valid).notes;assert.ok(assessRubiAudienceEvidenceStatus(original.replace("2026-10-20","2099-12-30")).blockers.includes("Data inválida ou futura."));assert.ok(assessRubiAudienceEvidenceStatus(original.replace("2026-10-20","2026-02-31")).blockers.includes("Data inválida ou futura."));});
