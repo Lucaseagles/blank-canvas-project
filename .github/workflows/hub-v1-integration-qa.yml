@@ -279,6 +279,8 @@ jobs:
         run: node --test src/lib/rubi-product-lifecycle-atomic-audit.test.mjs
       - name: RUBI social channel lifecycle atomic audit regression
         run: node --test src/lib/rubi-social-channel-atomic-audit.test.mjs
+      - name: Sprint 362 social channel direct DML hardening regression
+        run: node --test src/lib/rubi-social-channel-dml-hardening.test.mjs
       - name: RUBI Experience Engine atomic audit boundary regression
         run: node --test src/lib/rubi-experience-popup-atomic-audit.test.mjs
       - name: RUBI Social Proof legacy audit-boundary regression
