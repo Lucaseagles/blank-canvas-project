@@ -60,6 +60,8 @@ test("manual trending migration preserves the scoring refresh and audits atomica
   assert.match(trending, /insert into public\.automation_logs/i);
   assert.match(trending, /insert into public\.admin_audit_log/i);
   assert.match(trending, /RUBI_AUTOMATION_TRENDING_RECALCULATION_FAILED/);
+  assert.match(trending, /get stacked diagnostics v_error_code = returned_sqlstate/i);
+  assert.doesNotMatch(trending, /left\\(sqlerrm/i);
   assert.match(trending, /revoke all on function public\.rubi_recalculate_trending_audited\(uuid\)/i);
   assert.match(trending, /grant execute on function public\.rubi_recalculate_trending_audited\(uuid\)[\s\S]*to service_role/i);
 });
