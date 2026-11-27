@@ -1,4 +1,5 @@
 import test from "node:test";
+import {readFileSync} from "node:fs";
 import assert from "node:assert/strict";
 import {movementCampaign,movementCampaignPath,canRecordPublication,isValidRubiPublicationReference} from "./rubi-movement-distribution.ts";
 import {readRubiOrganicAttribution} from "./rubi-organic-campaigns.ts";
@@ -60,4 +61,15 @@ test("draft distribution plans remain saveable without a publication reference",
  for(const channel of ["instagram","tiktok","youtube","facebook","pinterest","whatsapp","telegram"]){
   assert.equal(canRecordPublication({variant_id:variant,channel,campaign:"qa",status:"planned",notes:"",published_reference:""}),true);
  }
+});
+
+
+test("database trigger enforces the same platform permalink contract as the server",()=>{
+ const migration=readFileSync(new URL("../../supabase/migrations/20261128090000_rubi_distribution_publication_reference_guard.sql",import.meta.url),"utf8");
+ assert.match(migration,/rubi_valid_distribution_publication_reference/);
+ assert.match(migration,/rubi_distribution_publication_reference_guard_trg/);
+ assert.match(migration,/before insert or update of channel,status,published_reference/i);
+ assert.match(migration,/WhatsApp requires provider confirmation/i);
+ assert.match(migration,/revoke all on function public\.rubi_valid_distribution_publication_reference[\s\S]*from public, anon, authenticated/i);
+ assert.match(migration,/grant execute on function public\.rubi_valid_distribution_publication_reference[\s\S]*to service_role/i);
 });
