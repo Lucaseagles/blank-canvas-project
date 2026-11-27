@@ -5,8 +5,6 @@ import process from "node:process";
 
 const ROOT = process.cwd();
 const SOURCE_ROOT = path.join(ROOT, "src", "lib");
-const MUTATORS = ["insert", "update", "upsert", "delete"];
-
 async function collectFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
   const nested = await Promise.all(entries.map(async (entry) => {
