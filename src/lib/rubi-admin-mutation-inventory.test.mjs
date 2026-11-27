@@ -12,7 +12,7 @@ test("finds direct table writes across multiline Supabase chains", () => {
   `;
   const result = inspectMutationCandidates(source, "fixture.functions.ts");
   assert.deepEqual(result.directDml, [
-    { file: "fixture.functions.ts", line: 2, table: "profiles", operation: "update" },
+    { file: "fixture.functions.ts", line: 3, table: "profiles", operation: "update" },
     { file: "fixture.functions.ts", line: 6, table: "admin_audit_log", operation: "insert" },
   ]);
 });
