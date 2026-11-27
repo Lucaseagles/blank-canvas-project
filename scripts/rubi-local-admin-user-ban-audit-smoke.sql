@@ -18,8 +18,8 @@ do $owner$
 begin
   begin
     perform public.admin_set_profile_banned(
-      current_setting('rubi.qa_master_id')::uuid, true,
-      current_setting('rubi.qa_non_owner_id')::uuid
+      current_setting('rubi.qa.master_id')::uuid, true,
+      current_setting('rubi.qa.non_owner_id')::uuid
     );
     raise exception 'Non-Owner actor unexpectedly changed a user ban';
   exception when others then
