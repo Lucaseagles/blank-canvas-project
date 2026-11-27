@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {movementCampaign,movementCampaignPath,canRecordPublication} from "./rubi-movement-distribution.ts";
+import {movementCampaign,movementCampaignPath,canRecordPublication,isValidRubiPublicationReference} from "./rubi-movement-distribution.ts";
 import {readRubiOrganicAttribution} from "./rubi-organic-campaigns.ts";
 
 const product="00000000-0000-4000-8000-000000000001";
@@ -18,5 +18,46 @@ test("Manual publication requires a reference, draft plan remains harmless",()=>
  const plan={variant_id:variant,channel:"instagram",campaign:"teste",status:"planned",notes:"",published_reference:""};
  assert.equal(canRecordPublication(plan),true);
  assert.equal(canRecordPublication({...plan,status:"manually_published"}),false);
- assert.equal(canRecordPublication({...plan,status:"manually_published",published_reference:"https://example.org/post"}),true);
+ assert.equal(canRecordPublication({...plan,status:"manually_published",published_reference:"https://www.instagram.com/p/ABC123xyz/"}),true);
+});
+
+
+test("manual publication references must be HTTPS permalinks on the selected platform",()=>{
+ const valid=[
+  ["instagram","https://www.instagram.com/p/ABC123xyz/"],
+  ["tiktok","https://www.tiktok.com/@rubi/video/1234567890123456789"],
+  ["youtube","https://www.youtube.com/watch?v=AbCdEf12345"],
+  ["youtube","https://youtu.be/AbCdEf12345"],
+  ["facebook","https://www.facebook.com/rubi/posts/123456789"],
+  ["pinterest","https://www.pinterest.com/pin/123456789012345678/"],
+  ["telegram","https://t.me/rubichannel/123"],
+  ["telegram","https://t.me/c/123456789/123"],
+ ];
+ for(const [channel,reference] of valid){
+  assert.equal(isValidRubiPublicationReference(channel,reference),true,channel+" "+reference);
+  assert.equal(canRecordPublication({variant_id:variant,channel,campaign:"qa",status:"manually_published",notes:"",published_reference:reference}),true);
+ }
+});
+
+test("manual publication rejects spoofed domains, insecure URLs and non-permalink references",()=>{
+ const invalid=[
+  ["instagram","https://instagram.com.evil.example/p/ABC123xyz/"],
+  ["instagram","http://instagram.com/p/ABC123xyz/"],
+  ["tiktok","https://www.tiktok.com/@rubi/video/not-a-number"],
+  ["youtube","https://youtube.com.evil.example/watch?v=AbCdEf12345"],
+  ["facebook","https://www.facebook.com/profile.php?id=123"],
+  ["pinterest","https://www.pinterest.com.evil.example/pin/123456789012345678/"],
+  ["telegram","https://t.me/rubichannel"],
+  ["whatsapp","https://chat.whatsapp.com/InviteCode123"],
+ ];
+ for(const [channel,reference] of invalid){
+  assert.equal(isValidRubiPublicationReference(channel,reference),false,channel+" "+reference);
+  assert.equal(canRecordPublication({variant_id:variant,channel,campaign:"qa",status:"manually_published",notes:"",published_reference:reference}),false);
+ }
+});
+
+test("draft distribution plans remain saveable without a publication reference",()=>{
+ for(const channel of ["instagram","tiktok","youtube","facebook","pinterest","whatsapp","telegram"]){
+  assert.equal(canRecordPublication({variant_id:variant,channel,campaign:"qa",status:"planned",notes:"",published_reference:""}),true);
+ }
 });
