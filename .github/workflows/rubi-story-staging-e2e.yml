@@ -1,0 +1,72 @@
+name: RUBI Story → Offer — Authorized Staging E2E
+
+on:
+  workflow_dispatch:
+    inputs:
+      authorize_disposable_staging:
+        description: Confirm that the configured target is isolated staging and all seeded Story/product records are disposable.
+        required: true
+        type: choice
+        options:
+          - NO
+          - I_CONFIRM_DISPOSABLE_STAGING
+        default: NO
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rubi-story-staging-e2e
+  cancel-in-progress: false
+
+jobs:
+  story-offer-staging:
+    if: \${{ inputs.authorize_disposable_staging == 'I_CONFIRM_DISPOSABLE_STAGING' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: rubi-staging
+    env:
+      RUBI_STAGING_CONFIRMATION: \${{ inputs.authorize_disposable_staging }}
+      RUBI_STAGING_BASE_URL: \${{ vars.RUBI_STAGING_BASE_URL }}
+      RUBI_STAGING_ALLOWED_ORIGIN: \${{ vars.RUBI_STAGING_ALLOWED_ORIGIN }}
+      RUBI_STAGING_ALLOW_MUTATING_FIXTURES: \${{ secrets.RUBI_STAGING_ALLOW_MUTATING_FIXTURES }}
+      RUBI_QA_MASTER_EMAIL: \${{ secrets.RUBI_QA_MASTER_EMAIL }}
+      RUBI_QA_MASTER_PASSWORD: \${{ secrets.RUBI_QA_MASTER_PASSWORD }}
+      RUBI_QA_CONSUMER_EMAIL: \${{ secrets.RUBI_QA_CONSUMER_EMAIL }}
+      RUBI_QA_CONSUMER_PASSWORD: \${{ secrets.RUBI_QA_CONSUMER_PASSWORD }}
+      RUBI_QA_STORY_PRODUCT_ID: \${{ vars.RUBI_QA_STORY_PRODUCT_ID }}
+      RUBI_QA_STORY_TITLE: \${{ vars.RUBI_QA_STORY_TITLE }}
+      RUBI_QA_RIGHTS_PRODUCT_ID: \${{ vars.RUBI_QA_RIGHTS_PRODUCT_ID }}
+      RUBI_QA_RIGHTS_STORY_TITLE: \${{ vars.RUBI_QA_RIGHTS_STORY_TITLE }}
+      RUBI_QA_APPROVED_STORY_PRODUCT_ID: \${{ vars.RUBI_QA_APPROVED_STORY_PRODUCT_ID }}
+      RUBI_QA_APPROVED_STORY_TITLE: \${{ vars.RUBI_QA_APPROVED_STORY_TITLE }}
+      RUBI_QA_APPROVED_STORY_PRODUCT_TITLE: \${{ vars.RUBI_QA_APPROVED_STORY_PRODUCT_TITLE }}
+      RUBI_QA_STALE_STORY_TITLE: \${{ vars.RUBI_QA_STALE_STORY_TITLE }}
+      RUBI_QA_INACTIVE_PRODUCT_PRODUCT_ID: \${{ vars.RUBI_QA_INACTIVE_PRODUCT_PRODUCT_ID }}
+      RUBI_QA_INACTIVE_PRODUCT_STORY_TITLE: \${{ vars.RUBI_QA_INACTIVE_PRODUCT_STORY_TITLE }}
+      RUBI_QA_INACTIVE_SUPPLIER_PRODUCT_ID: \${{ vars.RUBI_QA_INACTIVE_SUPPLIER_PRODUCT_ID }}
+      RUBI_QA_INACTIVE_SUPPLIER_STORY_TITLE: \${{ vars.RUBI_QA_INACTIVE_SUPPLIER_STORY_TITLE }}
+      RUBI_E2E_REPORT_PATH: \${{ runner.temp }}/rubi-story-staging-evidence.json
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install application and browser dependencies
+        run: |
+          npm ci
+          npm install --no-save --package-lock=false --legacy-peer-deps @playwright/test
+          npx playwright install --with-deps chromium
+      - name: Validate approved staging target and disposable fixture contract
+        run: node --input-type=module -e "import { resolveRubiStagingTarget } from './scripts/rubi-staging-story-target.mjs'; console.log('Approved Story staging origin:', resolveRubiStagingTarget())"
+      - name: Run authenticated Story → same product → official pre-checkout journey
+        run: npm run test:rubi-story-staging
+      - name: Upload sanitized staging evidence report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rubi-story-staging-evidence
+          path: \${{ runner.temp }}/rubi-story-staging-evidence.json
+          if-no-files-found: warn
+          retention-days: 3
