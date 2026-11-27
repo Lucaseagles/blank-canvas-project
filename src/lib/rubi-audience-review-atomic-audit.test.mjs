@@ -22,3 +22,19 @@ test("audience evidence review requires Owner, revision and audit in one transac
  assert.doesNotMatch(source,/\.from\("rubi_audience_evidence_reviews"\)\.insert/);
  assert.doesNotMatch(sql.slice(sql.indexOf("insert into public.admin_audit_log")),/source_reference|reviewer_note|evidence_snapshot/);
 });
+
+test("local disposable PostgreSQL smoke proves audience review authorization, stale revision, rollback and immutability",()=>{
+ const smoke=read("../../scripts/rubi-local-audience-review-smoke.sql");
+ const fixture=read("../../scripts/rubi-local-audience-review-fixture.mjs");
+ const workflow=read("../../.github/workflows/rubi-local-authenticated-e2e.yml");
+ assert.match(fixture,/Refusing audience-review fixtures outside local Supabase/);
+ assert.match(fixture,/RUBI_QA_AUDIENCE_REVIEW_MOVEMENT_ID/);
+ assert.match(smoke,/Owner authorization required/);
+ assert.match(smoke,/Movement revision changed/);
+ assert.match(smoke,/QA forced audit failure/);
+ assert.match(smoke,/append-only/);
+ assert.match(smoke,/RUBI_AUDIENCE_EVIDENCE_REVIEWED/);
+ assert.match(workflow,/rubi-local-audience-review-fixture\.mjs/);
+ assert.match(workflow,/rubi-local-audience-review-smoke\.sql/);
+ assert.doesNotMatch(workflow,/supabase link|migration up --remote|db push --remote/);
+});

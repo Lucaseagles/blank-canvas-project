@@ -31,12 +31,12 @@ Limites conhecidos:
 
 | Ordem | PR planejada | Escopo | Gate de aceite | Pontuação isolada |
 |---:|---|---|---|---:|
-| 1 | #384 — baseline e contrato de cobertura | Este plano, estado real da main, definição de evidências e critérios de não-invenção | Revisão do escopo e inventário dos componentes existentes | +0 |
-| 2 | #385 — contrato estruturado de evidência | Definir evidência rastreável por público/ângulo, origem, data, responsável, escopo e limitações; compatibilidade com registros existentes | Validação server-side, dados inválidos rejeitados e nenhuma fonte fictícia | +0 |
-| 3 | #386 — fluxo de validação e revisão | UX Master para avaliar hipótese, fonte, amostra/feedback quando houver, ressalvas e decisão versionada; isolamento dos demais perfis | Owner-only, revisão concorrente, histórico auditável e regressões mobile/desktop | +0 |
-| 4 | #387 — prova integral e release da sprint | Testes de domínio, contratos, PostgreSQL descartável, RLS/grants, rollback, E2E e reconciliação da rubrica | Todos os gates no mesmo HEAD; inventário de evidências; score formal atualizado | Única PR elegível para conversão |
+| 1 | #384 — contrato e hardening de evidências | Validar estrutura, unicidade, limites e datas; preservar distinção entre declaração e validação de mercado | Contratos e regressões server-side | +0 |
+| 2 | #385 — upgrade premium do painel Master | Card visual por estado, progresso editorial acessível, clareza de bloqueios e experiência responsiva | Build, TypeScript, lint e contrato visual acessível | +0 |
+| 3 | #386 — cobertura operacional | Smoke PostgreSQL descartável para Owner/non-Owner, revisão obsoleta, auditoria atômica, rollback e histórico append-only | Jornada real em banco descartável e regressões de autorização | +0 |
+| 4 | #387 — cobertura completa e release consolidada | Gates finais no mesmo HEAD, reconciliação da rubrica, matriz, score e release única | Todos os gates e evidências aceitos; merge da branch de integração à main | Única PR elegível para conversão |
 
-Os números são identificadores planejados, não PRs já criadas. Se o GitHub atribuir outros números, o fechamento registrará os números reais. A PR final poderá ser renumerada automaticamente; a ordem de dependência prevalece.
+Os números correspondem às PRs criadas no GitHub. As PRs intermediárias são empilhadas e entram somente na branch `sprint/363-integration`, após seus próprios gates. Nenhuma delas será integrada diretamente à `main`. A PR #387 será a única PR de `sprint/363-integration` para `main`, depois do fechamento completo.
 
 ## Definição de cobertura completa proposta para revisão
 
@@ -82,4 +82,4 @@ O critério 08.2 só poderá ser considerado completo se a implementação e a e
 4. Manter o Shadow Master único e privado.
 5. Não afirmar que um público converte melhor sem experimento válido ou evidência apropriada.
 
-**Status:** sprint iniciada; nenhuma cobertura nova aceita e nenhum ponto convertido nesta etapa.
+**Método híbrido obrigatório:** cada etapa combina upgrade visual premium, evolução funcional, hardening, testes e evidências de cobertura. Uma PR pode ser upgrade-only ou cobertura parcial, mas não pontua isoladamente. A sprint só entra na `main` uma vez, pela PR final de cobertura completa.\n\n**Status:** sprint iniciada; nenhuma cobertura nova aceita e nenhum ponto convertido nesta etapa.
