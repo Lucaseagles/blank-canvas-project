@@ -4,7 +4,20 @@ select set_config('rubi.qa.master_id', :'master_id', true);
 select set_config('rubi.qa.non_owner_id', :'non_owner_id', true);
 select set_config('rubi.qa.merchant_id', :'merchant_id', true);
 select set_config('rubi.qa.partner_id', :'partner_id', true);
-select set_config('rubi.qa.product_id', :'product_id', true);
+-- Telegram messages reference the legacy marketplace products catalog, not
+-- hub_products. Create a dedicated valid row in this disposable database.
+with legacy_product as (
+  insert into public.products (id, title, current_price, status, slug)
+  values (
+    gen_random_uuid(),
+    'RUBI QA Telegram legacy product',
+    19.90,
+    'active',
+    'rubi-qa-telegram-' || replace(gen_random_uuid()::text, '-', '')
+  )
+  returning id
+)
+select set_config('rubi.qa.product_id', id::text, true) from legacy_product;
 
 do $grants$
 begin
