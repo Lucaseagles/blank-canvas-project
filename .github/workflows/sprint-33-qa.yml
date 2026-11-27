@@ -62,8 +62,14 @@ jobs:
 
       - name: Sprint 345 Telegram config and Vault atomic audit regression
         run: node --test src/lib/rubi-telegram-config-atomic-audit.test.mjs
+
+      - name: Sprint 362 Telegram send outbox atomic audit and idempotency regression
+        run: node --test src/lib/telegram-send-outbox.test.mjs
       - name: Generic admin settings allowlist regression
         run: node --test src/lib/rubi-admin-setting-atomic-audit.test.mjs
+
+      - name: Sprint 362 user ban Owner-only atomic audit regression
+        run: npm run test:rubi-admin-user-ban-audit
 
       - name: Sprint 316 admin audit fail-closed regression
         run: npm run test:rubi-admin-audit-fail-closed
@@ -91,6 +97,12 @@ jobs:
 
       - name: Sprint 324 public creator directory regression
         run: npm run test:rubi-public-creator-directory
+
+      - name: Sprint 362 Social Sharing Studio atomic audit regression
+        run: node --test src/lib/share-studio-atomic-audit.test.mjs
+
+      - name: Sprint 362 Marketplace server-only writes regression
+        run: node --test src/lib/marketplace-server-only-writes.test.mjs
 
       - name: TypeScript
         run: npx tsc --noEmit

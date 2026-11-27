@@ -19,9 +19,24 @@ on:
       - "scripts/rubi-local-public-table-privilege-hardening-smoke.sql"
       - "scripts/rubi-local-strategy-orchestration-pause-audit-smoke.sql"
       - "scripts/rubi-local-opportunity-refresh-audit-smoke.sql"
+      - "scripts/rubi-local-opportunity-alert-audit-smoke.sql"
+      - "src/lib/opportunity-alert-dml-hardening.test.mjs"
+      - "supabase/migrations/20261127210000_rubi_opportunity_alert_dml_hardening.sql"
       - "scripts/rubi-local-customer-coupon-audit-smoke.sql"
       - "scripts/rubi-local-product-media-audit-smoke.sql"
       - "scripts/rubi-local-support-faq-audit-smoke.sql"
+      - "scripts/rubi-local-admin-user-ban-audit-smoke.sql"
+      - "scripts/rubi-local-telegram-send-outbox-smoke.sql"
+      - "scripts/rubi-local-admin-settings-dml-hardening-smoke.sql"
+      - "scripts/rubi-local-video-content-dml-hardening-smoke.sql"
+      - "scripts/rubi-local-system-owned-legacy-dml-hardening-smoke.sql"
+      - "scripts/rubi-local-marketplace-server-only-writes-smoke.sql"
+      - "scripts/rubi-local-share-studio-audit-smoke.sql"
+      - "scripts/rubi-local-social-channel-dml-hardening-smoke.sql"
+      - "supabase/migrations/20261127180000_rubi_social_channel_dml_hardening.sql"
+      - "scripts/rubi-local-admin-user-ban-concurrency.sh"
+      - "scripts/rubi-local-manual-trending-audit-smoke.sql"
+      - "scripts/rubi-local-manual-trending-concurrency.sh"
       - "scripts/rubi-local-strategy-orchestration-pause-concurrency.sh"
       - "scripts/rubi-local-partner-academy-progress-smoke.sql"
       - "scripts/rubi-local-story-offer.e2e.spec.mjs"
@@ -137,6 +152,14 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y postgresql-client
           fi
+      - name: Prove social channel direct DML is revoked and audited RPC is atomic
+        run: >-
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1
+          -v master_id="$RUBI_QA_MASTER_USER_ID"
+          -v consumer_id="$RUBI_QA_CONSUMER_USER_ID"
+          -v merchant_id="$RUBI_QA_MERCHANT_USER_ID"
+          -v partner_id="$RUBI_QA_PARTNER_USER_ID"
+          -f scripts/rubi-local-social-channel-dml-hardening-smoke.sql
       - name: Verify partner academy progress isolation and profile-specific lessons
         run: |
           psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 \
@@ -173,6 +196,30 @@ jobs:
             -v master_id="$RUBI_QA_MASTER_USER_ID" \
             -v non_owner_id="$RUBI_QA_CONSUMER_USER_ID" \
             -f scripts/rubi-local-admin-audit-smoke.sql
+      - name: Prove video content tables deny direct DML and preserve public reads
+        run: >-
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1
+          -v master_id="$RUBI_QA_MASTER_USER_ID"
+          -v non_owner_id="$RUBI_QA_CONSUMER_USER_ID"
+          -f scripts/rubi-local-video-content-dml-hardening-smoke.sql
+      - name: Prove system-owned and legacy tables deny direct DML on disposable PostgreSQL
+        run: >-
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1
+          -v master_id="$RUBI_QA_MASTER_USER_ID"
+          -v non_owner_id="$RUBI_QA_CONSUMER_USER_ID"
+          -f scripts/rubi-local-system-owned-legacy-dml-hardening-smoke.sql
+      - name: Prove marketplace audited-only writes and public catalog field isolation on disposable PostgreSQL
+        run: >-
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1
+          -v master_id="$RUBI_QA_MASTER_USER_ID"
+          -v non_owner_id="$RUBI_QA_CONSUMER_USER_ID"
+          -f scripts/rubi-local-marketplace-server-only-writes-smoke.sql
+      - name: Prove Share Studio Owner authorization and atomic audit rollback on disposable PostgreSQL
+        run: >-
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1
+          -v master_id="$RUBI_QA_MASTER_USER_ID"
+          -v non_owner_id="$RUBI_QA_CONSUMER_USER_ID"
+          -f scripts/rubi-local-share-studio-audit-smoke.sql
       - name: Prove referral tier Owner authorization, atomic audit and rollback in disposable PostgreSQL
         run: >-
           psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1
@@ -204,6 +251,26 @@ jobs:
           -v master_id="$RUBI_QA_MASTER_USER_ID"
           -v non_owner_id="$RUBI_QA_CONSUMER_USER_ID"
           -f scripts/rubi-local-manual-automation-audit-smoke.sql
+      - name: Prove manual trending Owner authorization and atomic audit on disposable PostgreSQL
+        run: >-
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1
+          -v master_id="$RUBI_QA_MASTER_USER_ID"
+          -v non_owner_id="$RUBI_QA_CONSUMER_USER_ID"
+          -v merchant_id="$RUBI_QA_MERCHANT_USER_ID"
+          -v partner_id="$RUBI_QA_PARTNER_USER_ID"
+          -f scripts/rubi-local-manual-trending-audit-smoke.sql
+      - name: Prove concurrent manual trending recalculations serialize
+        run: bash scripts/rubi-local-manual-trending-concurrency.sh
+      - name: Prove administrative user-ban Owner authorization and atomic audit on disposable PostgreSQL
+        run: >-
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1
+          -v master_id="$RUBI_QA_MASTER_USER_ID"
+          -v non_owner_id="$RUBI_QA_CONSUMER_USER_ID"
+          -v merchant_id="$RUBI_QA_MERCHANT_USER_ID"
+          -v partner_id="$RUBI_QA_PARTNER_USER_ID"
+          -f scripts/rubi-local-admin-user-ban-audit-smoke.sql
+      - name: Prove concurrent administrative user-ban requests serialize to one audit event
+        run: bash scripts/rubi-local-admin-user-ban-concurrency.sh
       - name: Prove customer coupon Owner authorization, atomic audit and rollback on disposable PostgreSQL
         run: >-
           psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1
@@ -216,6 +283,12 @@ jobs:
           -v master_id="$RUBI_QA_MASTER_USER_ID"
           -v non_owner_id="$RUBI_QA_CONSUMER_USER_ID"
           -f scripts/rubi-local-telegram-config-audit-smoke.sql
+      - name: Prove Admin Settings tables deny direct DML on disposable PostgreSQL
+        run: >-
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1
+          -v master_id="$RUBI_QA_MASTER_USER_ID"
+          -v non_owner_id="$RUBI_QA_CONSUMER_USER_ID"
+          -f scripts/rubi-local-admin-settings-dml-hardening-smoke.sql
       - name: Prove RUBI Business quote admin audit and rollback on disposable PostgreSQL
         run: >-
           psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1
@@ -241,6 +314,14 @@ jobs:
           bash scripts/rubi-local-admin-audit-concurrency.sh
       - name: Seed disposable supplier, product, reviewed movement and private Story
         run: node scripts/rubi-local-story-fixture.mjs
+      - name: Prove Telegram manual and test send outbox authorization, atomicity and idempotency
+        run: >-
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1
+          -v master_id="$RUBI_QA_MASTER_USER_ID"
+          -v non_owner_id="$RUBI_QA_CONSUMER_USER_ID"
+          -v merchant_id="$RUBI_QA_MERCHANT_USER_ID"
+          -v partner_id="$RUBI_QA_PARTNER_USER_ID"
+          -f scripts/rubi-local-telegram-send-outbox-smoke.sql
       - name: Prove product/channel/campaign uniqueness under concurrent PostgreSQL transactions
         run: node scripts/rubi-local-distribution-campaign-concurrency.mjs
       - name: Exercise privileged notification worker against hostile temp relation

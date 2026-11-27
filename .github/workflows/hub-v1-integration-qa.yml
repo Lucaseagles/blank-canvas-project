@@ -267,6 +267,20 @@ jobs:
         run: node --test src/lib/rubi-marketplace-trigger-audit.test.mjs
       - name: RUBI Telegram metric atomic audit regression
         run: node --test src/lib/rubi-telegram-metric-atomic-audit.test.mjs
+      - name: Sprint 362 Telegram send outbox audit and idempotency regression
+        run: node --test src/lib/telegram-send-outbox.test.mjs
+      - name: Sprint 362 Telegram outbox direct DML hardening regression
+        run: node --test src/lib/telegram-messages-dml-hardening.test.mjs
+      - name: Sprint 362 generic Admin Settings direct DML hardening regression
+        run: node --test src/lib/admin-settings-dml-hardening.test.mjs
+      - name: Sprint 362 video content direct DML hardening regression
+        run: node --test src/lib/video-content-dml-hardening.test.mjs
+      - name: Sprint 362 system-owned and legacy table DML hardening regression
+        run: node --test src/lib/system-owned-legacy-dml-hardening.test.mjs
+      - name: Sprint 362 marketplace server-only writes regression
+        run: node --test src/lib/marketplace-server-only-writes.test.mjs
+      - name: Sprint 362 Share Studio atomic audit regression
+        run: node --test src/lib/share-studio-atomic-audit.test.mjs
       - name: RUBI editorial session journey UUID regression
         run: node --test src/lib/rubi-editorial-session-journey-uuid.test.mjs
       - name: RUBI four-engine ecosystem architecture regression
@@ -277,6 +291,8 @@ jobs:
         run: node --test src/lib/rubi-product-lifecycle-atomic-audit.test.mjs
       - name: RUBI social channel lifecycle atomic audit regression
         run: node --test src/lib/rubi-social-channel-atomic-audit.test.mjs
+      - name: Sprint 362 social channel direct DML hardening regression
+        run: node --test src/lib/rubi-social-channel-dml-hardening.test.mjs
       - name: RUBI Experience Engine atomic audit boundary regression
         run: node --test src/lib/rubi-experience-popup-atomic-audit.test.mjs
       - name: RUBI Social Proof legacy audit-boundary regression
@@ -287,6 +303,8 @@ jobs:
         run: node --test src/lib/opportunity-engine-atomic-audit.test.mjs
       - name: RUBI Opportunity Engine refresh audit regression
         run: node --test src/lib/opportunity-refresh-atomic-audit.test.mjs
+      - name: Sprint 362 Opportunity Engine direct DML hardening regression
+        run: node --test src/lib/opportunity-alert-dml-hardening.test.mjs
 
       - name: TypeScript
         run: npx tsc --noEmit
