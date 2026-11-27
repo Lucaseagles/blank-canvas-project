@@ -18,6 +18,7 @@
     "test:rubi-offer": "node --experimental-strip-types --test src/lib/rubi-offer-playbook.test.mjs",
     "test:rubi-complementary": "node --experimental-strip-types --test src/lib/rubi-complementary-offers.test.mjs",
     "test:rubi-movement": "node --experimental-strip-types --test src/lib/rubi-movements.test.mjs",
+    "test:rubi-controlled-ab": "node --experimental-strip-types --test src/lib/rubi-movement-controlled-ab.test.mjs",
     "test:rubi-variants": "node --experimental-strip-types --test src/lib/rubi-movement-variants.test.mjs",
     "test:rubi-distribution": "node --experimental-strip-types --test src/lib/rubi-movement-distribution.test.mjs",
     "test:rubi-performance": "node --experimental-strip-types --test src/lib/rubi-movement-performance.test.mjs",
