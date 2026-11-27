@@ -32,8 +32,11 @@ function TelegramAdmin() {
   const testMutation = useMutation({
     mutationFn: () => test({ data: { operationKey: testOperationKey } }),
     onSuccess: r => {
-      if (r.status === "sent") { toast.success("Mensagem de teste enviada."); setTestOperationKey(crypto.randomUUID()); }
-      else toast.error(r.error || "Falha na conexão Telegram.");
+      if (r.status === "sent") { toast.success("Mensagem de teste enviada e auditada."); setTestOperationKey(crypto.randomUUID()); }
+      else {
+        toast.error(r.error || "Falha na conexão Telegram.");
+        if (r.status === "failed") setTestOperationKey(crypto.randomUUID());
+      }
     },
     onError: e => toast.error(e.message),
   });
@@ -60,7 +63,7 @@ function TelegramAdmin() {
         <div><Label>Channel ID / Username</Label><Input name="channelId" defaultValue={config?.channel_id || ""} placeholder="@canal ou -100..." maxLength={200} required disabled={isLoading}/></div>
         <div><Label>Bot Token</Label><Input type="password" value={token} onChange={e => setToken(e.target.value)} maxLength={500} placeholder={config?.hasToken ? "Token seguro já configurado — informe apenas para substituir" : "Token do BotFather"}/><p className="mt-1 text-xs text-muted-foreground">O token não é exibido nem salvo em texto aberto na configuração.</p></div>
         <div className="flex items-center justify-between rounded-xl border p-3"><Label>Ativar integração</Label><Switch name="isActive" defaultChecked={config?.is_active} disabled={isLoading}/></div>
-        <div className="flex flex-wrap gap-2"><Button type="submit" disabled={saveMutation.isPending || isLoading}>{saveMutation.isPending ? "Salvando…" : "Salvar"}</Button><Button type="button" variant="outline" disabled={testMutation.isPending || isLoading || !config?.is_active} onClick={() => testMutation.mutate()}><TestTube2 className="mr-2 h-4 w-4"/>{testMutation.isPending ? "Testando…" : "Enviar teste"}</Button></div>
+        <div className="flex flex-wrap gap-2"><Button type="submit" disabled={saveMutation.isPending || isLoading}>{saveMutation.isPending ? "Salvando…" : "Salvar"}</Button><Button type="button" variant="outline" disabled={testMutation.isPending || isLoading || !config?.is_active || testMutation.data?.status === "unknown" || testMutation.data?.status === "sending"} onClick={() => testMutation.mutate()}><TestTube2 className="mr-2 h-4 w-4"/>{testMutation.isPending ? "Testando…" : testMutation.data?.status === "unknown" || testMutation.data?.status === "sending" ? "Aguardando reconciliação" : "Enviar teste"}</Button></div>
       </form></CardContent></Card>
       <Card className="rounded-3xl"><CardHeader><CardTitle><Send className="mr-2 inline h-5 w-5"/>Envio manual</CardTitle></CardHeader><CardContent className="space-y-5">
         <div><Label>Product ID</Label><div className="flex flex-col gap-2 sm:flex-row"><Input value={productId} onChange={e => setProductId(e.target.value.trim())} placeholder="UUID do produto"/><Button type="button" variant="outline" disabled={!productId || composeMutation.isPending} onClick={() => composeMutation.mutate()}><Zap className="mr-2 h-4 w-4"/>Compor</Button></div></div>
