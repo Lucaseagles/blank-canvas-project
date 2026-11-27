@@ -8,7 +8,7 @@ create or replace function public.admin_set_profile_banned(
 ) returns boolean
 language plpgsql
 security definer
-set search_path to 'public','auth'
+set search_path = ''
 as $function$
 declare
   v_actor uuid := coalesce(auth.uid(), p_actor);
