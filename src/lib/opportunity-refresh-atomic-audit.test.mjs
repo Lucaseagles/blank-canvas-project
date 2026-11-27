@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 const api = read("./opportunity-engine.functions.ts");
-const migration = read("../../supabase/migrations/20261126143000_rubi_opportunity_refresh_atomic_audit.sql");
+const migration = read("../../supabase/migrations/20261126142000_rubi_opportunity_refresh_atomic_audit.sql");
 
 test("Owner refresh uses audited RPC and verified server actor", () => {
   const block = api.split("export const refreshOpportunityAlerts")[1]?.split("export const updateOpportunityAlertStatus")[0] ?? "";
