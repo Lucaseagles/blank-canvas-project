@@ -37,8 +37,9 @@ test("missing, short or duplicate fields cannot enter the review-ready state",()
  assert.ok(duplicate.blockers.some(x=>x.includes("duplicado: Fonte")));
 });
 test("manually crafted future or impossible dates are blocked",()=>{
- const future=assessRubiAudienceEvidenceStatus(buildRubiAudienceEvidence({...valid,observedAt:"2099-12-30"}).notes.replace("2026-10-20","2099-12-30"));
- const impossible=assessRubiAudienceEvidenceStatus(buildRubiAudienceEvidence(valid).notes.replace("2026-10-20","2026-02-31"));
+ const original=buildRubiAudienceEvidence(valid).notes;
+ const future=assessRubiAudienceEvidenceStatus(original.replace("2026-10-20","2099-12-30"));
+ const impossible=assessRubiAudienceEvidenceStatus(original.replace("2026-10-20","2026-02-31"));
  assert.ok(future.blockers.includes("Data inválida ou futura."));
  assert.ok(impossible.blockers.includes("Data inválida ou futura."));
 });
