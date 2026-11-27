@@ -33,6 +33,7 @@ as $fn$
 declare
   v_before public.share_templates%rowtype;
   v_after public.share_templates%rowtype;
+  v_entity_id_is_uuid boolean;
 begin
   if p_actor is null or not exists (
     select 1 from public.user_roles r where r.user_id=p_actor and r.role='owner'
@@ -50,17 +51,30 @@ begin
     caption_template=btrim(p_caption_template), max_length=p_max_length,
     hashtags=p_hashtags, is_active=p_is_active, updated_at=now()
   where id=p_template_id returning * into v_after;
-  insert into public.admin_audit_log(
-    actor_user_id,actor_email,action_type,entity_type,entity_id,previous_value,new_value
-  ) values (
-    p_actor,null,'RUBI_SHARE_TEMPLATE_UPDATED','share_templates',v_after.id::text,
-    jsonb_build_object('platform',v_before.platform,'active',v_before.is_active,
-      'caption_length',length(v_before.caption_template),'max_length',v_before.max_length,
-      'hashtag_count',cardinality(v_before.hashtags)),
-    jsonb_build_object('platform',v_after.platform,'active',v_after.is_active,
-      'caption_length',length(v_after.caption_template),'max_length',v_after.max_length,
-      'hashtag_count',cardinality(v_after.hashtags))
-  );
+  select a.atttypid='uuid'::regtype into v_entity_id_is_uuid
+    from pg_attribute a
+    where a.attrelid='public.admin_audit_log'::regclass and a.attname='entity_id'
+      and a.attnum>0 and not a.attisdropped;
+  if v_entity_id_is_uuid is null then raise exception 'admin_audit_log.entity_id column missing'; end if;
+  if v_entity_id_is_uuid then
+    execute 'insert into public.admin_audit_log(actor_user_id,actor_email,action_type,entity_type,entity_id,previous_value,new_value) values ($1,null,$2,$3,$4,$5,$6)'
+      using p_actor,'RUBI_SHARE_TEMPLATE_UPDATED','share_templates',v_after.id,
+        jsonb_build_object('platform',v_before.platform,'active',v_before.is_active,
+          'caption_length',length(v_before.caption_template),'max_length',v_before.max_length,
+          'hashtag_count',cardinality(v_before.hashtags)),
+        jsonb_build_object('platform',v_after.platform,'active',v_after.is_active,
+          'caption_length',length(v_after.caption_template),'max_length',v_after.max_length,
+          'hashtag_count',cardinality(v_after.hashtags));
+  else
+    execute 'insert into public.admin_audit_log(actor_user_id,actor_email,action_type,entity_type,entity_id,previous_value,new_value) values ($1,null,$2,$3,$4,$5,$6)'
+      using p_actor,'RUBI_SHARE_TEMPLATE_UPDATED','share_templates',v_after.id::text,
+        jsonb_build_object('platform',v_before.platform,'active',v_before.is_active,
+          'caption_length',length(v_before.caption_template),'max_length',v_before.max_length,
+          'hashtag_count',cardinality(v_before.hashtags)),
+        jsonb_build_object('platform',v_after.platform,'active',v_after.is_active,
+          'caption_length',length(v_after.caption_template),'max_length',v_after.max_length,
+          'hashtag_count',cardinality(v_after.hashtags));
+  end if;
   return jsonb_build_object('id',v_after.id,'platform',v_after.platform,
     'caption_template',v_after.caption_template,'max_length',v_after.max_length,
     'hashtags',v_after.hashtags,'is_active',v_after.is_active,'updated_at',v_after.updated_at);
@@ -81,6 +95,9 @@ declare
   v_text_before jsonb;
   v_style_after jsonb;
   v_text_after jsonb;
+  v_style_id uuid;
+  v_text_id uuid;
+  v_entity_id_is_uuid boolean;
 begin
   if p_actor is null or not exists (
     select 1 from public.user_roles r where r.user_id=p_actor and r.role='owner'
@@ -96,22 +113,35 @@ begin
     or exists(select 1 from jsonb_each_text(p_texts) e where length(e.value)>500) then
     raise exception 'Social share card configuration value too long';
   end if;
-  select config_value into v_style_before from public.share_card_config where config_key='card_style' for update;
-  select config_value into v_text_before from public.share_card_config where config_key='card_texts' for update;
+  select id,config_value into v_style_id,v_style_before from public.share_card_config where config_key='card_style' for update;
+  select id,config_value into v_text_id,v_text_before from public.share_card_config where config_key='card_texts' for update;
   if v_style_before is null or v_text_before is null then raise exception 'Social share card configuration rows missing'; end if;
   update public.share_card_config set config_value=p_style,updated_at=now()
     where config_key='card_style' returning config_value into v_style_after;
   update public.share_card_config set config_value=p_texts,updated_at=now()
     where config_key='card_texts' returning config_value into v_text_after;
-  insert into public.admin_audit_log(
-    actor_user_id,actor_email,action_type,entity_type,entity_id,previous_value,new_value
-  ) values
-  (p_actor,null,'RUBI_SHARE_CARD_CONFIG_UPDATED','share_card_config','card_style',
-    jsonb_build_object('keys',array(select jsonb_object_keys(v_style_before))),
-    jsonb_build_object('keys',array(select jsonb_object_keys(v_style_after)))),
-  (p_actor,null,'RUBI_SHARE_CARD_CONFIG_UPDATED','share_card_config','card_texts',
-    jsonb_build_object('keys',array(select jsonb_object_keys(v_text_before))),
-    jsonb_build_object('keys',array(select jsonb_object_keys(v_text_after))));
+  select a.atttypid='uuid'::regtype into v_entity_id_is_uuid
+    from pg_attribute a
+    where a.attrelid='public.admin_audit_log'::regclass and a.attname='entity_id'
+      and a.attnum>0 and not a.attisdropped;
+  if v_entity_id_is_uuid is null then raise exception 'admin_audit_log.entity_id column missing'; end if;
+  if v_entity_id_is_uuid then
+    execute 'insert into public.admin_audit_log(actor_user_id,actor_email,action_type,entity_type,entity_id,previous_value,new_value) values ($1,null,$2,$3,$4,$5,$6),($1,null,$2,$3,$7,$8,$9)'
+      using p_actor,'RUBI_SHARE_CARD_CONFIG_UPDATED','share_card_config',v_style_id,
+        jsonb_build_object('keys',array(select jsonb_object_keys(v_style_before))),
+        jsonb_build_object('keys',array(select jsonb_object_keys(v_style_after))),
+        v_text_id,
+        jsonb_build_object('keys',array(select jsonb_object_keys(v_text_before))),
+        jsonb_build_object('keys',array(select jsonb_object_keys(v_text_after)));
+  else
+    execute 'insert into public.admin_audit_log(actor_user_id,actor_email,action_type,entity_type,entity_id,previous_value,new_value) values ($1,null,$2,$3,$4,$5,$6),($1,null,$2,$3,$7,$8,$9)'
+      using p_actor,'RUBI_SHARE_CARD_CONFIG_UPDATED','share_card_config','card_style',
+        jsonb_build_object('keys',array(select jsonb_object_keys(v_style_before))),
+        jsonb_build_object('keys',array(select jsonb_object_keys(v_style_after))),
+        'card_texts',
+        jsonb_build_object('keys',array(select jsonb_object_keys(v_text_before))),
+        jsonb_build_object('keys',array(select jsonb_object_keys(v_text_after)));
+  end if;
   return jsonb_build_object('card_style',v_style_after,'card_texts',v_text_after);
 end;
 $fn$;
