@@ -27,6 +27,11 @@ export function assessRubiAudienceEvidenceStatus(notes:string):RubiAudienceEvide
  }
  const date=parsed.get("Data");if(date&&!validCalendarDate(date))blockers.push("Data inválida ou futura.");
  const kind=parsed.get("Tipo de fonte"),sample=Number(parsed.get("Amostra"));
+ if(!Number.isSafeInteger(sample)||sample<0||sample>100000)blockers.push("Amostra deve ser um inteiro entre 0 e 100.000.");
+ const source=parsed.get("Fonte");
+ if(source&&/^http:\/\//i.test(source))blockers.push("Referência web deve usar HTTPS.");
+ const consent=parsed.get("Consentimento");
+ if(consent!=="confirmado"&&consent!=="não aplicável")blockers.push("Estado de consentimento inválido.");
  const participantKinds=["interview","survey","usability_test","support_feedback"];
  if(kind&&!["interview","survey","usability_test","support_feedback","supplier_document","market_report","search_trend","other"].includes(kind))blockers.push("Tipo de fonte não reconhecido.");
  if(kind&&participantKinds.includes(kind)&&(!Number.isSafeInteger(sample)||sample<1))blockers.push("Pesquisa com participantes exige amostra positiva.");
