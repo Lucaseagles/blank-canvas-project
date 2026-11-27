@@ -2,7 +2,7 @@ name: Sprint 33 QA
 
 on:
   push:
-    branches: [main]
+    branches: [main, sprint/365-admin-audit-closure]
   pull_request:
     branches: [main]
 
@@ -103,6 +103,9 @@ jobs:
 
       - name: Sprint 362 Marketplace server-only writes regression
         run: node --test src/lib/marketplace-server-only-writes.test.mjs
+
+      - name: Sprint 365 administrative mutation inventory regression
+        run: npm run test:rubi-admin-mutation-inventory
 
       - name: TypeScript
         run: npx tsc --noEmit
