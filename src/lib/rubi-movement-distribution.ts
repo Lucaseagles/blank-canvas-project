@@ -35,7 +35,7 @@ export function isValidRubiPublicationReference(channel:RubiOrganicChannel,refer
    )||host==="youtu.be"&&/^\/[A-Za-z0-9_-]{6,}\/?$/.test(path);
   case "facebook":
    return ["facebook.com","www.facebook.com","m.facebook.com"].includes(host)&&
-    (/\/(posts|videos|reel)\/[A-Za-z0-9_-]+\/?$/.test(path)||/^\/watch\/?$/.test(path)&&url.searchParams.has("v"));
+    (/\/(posts|videos|reel)\/[A-Za-z0-9_-]+\/?$/.test(path)||/^\/watch\/?$/.test(path)&&/^[A-Za-z0-9_-]+$/.test(url.searchParams.get("v")??""));
   case "pinterest":
    return ["pinterest.com","www.pinterest.com"].includes(host)&&/^\/pin\/[0-9]+\/?$/.test(path);
   case "telegram":
