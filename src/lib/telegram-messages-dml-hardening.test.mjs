@@ -11,6 +11,7 @@ test("Telegram outbox table is Owner-read-only and all writes use audited server
   const smoke = read("../../scripts/rubi-local-telegram-send-outbox-smoke.sql");
 
   assert.match(migration, /drop policy if exists "Admins manage telegram messages"/i);
+  assert.match(migration, /drop policy if exists "Owners manage telegram messages"/i);
   assert.match(migration, /create policy "Admins can view telegram messages"[\\s\\S]*for select[\\s\\S]*to authenticated/i);
   assert.match(migration, /revoke all privileges[\\s\\S]*from public, anon, authenticated/i);
   assert.match(migration, /grant select[\\s\\S]*to authenticated/i);
