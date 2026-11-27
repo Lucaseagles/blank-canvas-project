@@ -78,7 +78,6 @@ revoke all privileges on table
   public.automation_rules,
   public.banners,
   public.compliance_rules,
-  public.feature_flags,
   public.feed_mix_config,
   public.personalization_weights,
   public.social_proof_config,
@@ -91,7 +90,6 @@ grant select on table
   public.automation_rules,
   public.banners,
   public.compliance_rules,
-  public.feature_flags,
   public.feed_mix_config,
   public.personalization_weights,
   public.social_proof_config,
@@ -107,7 +105,6 @@ grant all privileges on table
   public.automation_rules,
   public.banners,
   public.compliance_rules,
-  public.feature_flags,
   public.feed_mix_config,
   public.personalization_weights,
   public.social_proof_config,
@@ -122,8 +119,6 @@ comment on table public.automation_rules is
 comment on table public.banners is
   'Admin Settings: Owner reads and public active-banner reads only; mutations must use rubi_update_admin_setting_audited.';
 comment on table public.compliance_rules is
-  'Admin Settings: Owner reads only; mutations must use rubi_update_admin_setting_audited.';
-comment on table public.feature_flags is
   'Admin Settings: Owner reads only; mutations must use rubi_update_admin_setting_audited.';
 comment on table public.feed_mix_config is
   'Admin Settings: Owner reads only; mutations must use rubi_update_admin_setting_audited.';
