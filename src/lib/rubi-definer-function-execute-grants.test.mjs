@@ -19,5 +19,5 @@ test("SECURITY DEFINER functions expose only the intended execution roles", () =
   assert.match(smoke, /anon unexpectedly executes append_admin_audit/i);
   assert.match(smoke, /browser role can execute server-only benefit popup/i);
   assert.match(smoke, /service_role cannot execute benefit popup/i);
-  assert.match(server, /supabaseAdmin\.rpc\('get_eligible_benefit_popup'/);
+  assert.match(server, /\(supabaseAdmin as any\)\.rpc\('get_eligible_benefit_popup'/);
 });
