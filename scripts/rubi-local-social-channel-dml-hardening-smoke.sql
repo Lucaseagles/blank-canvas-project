@@ -128,12 +128,12 @@ begin
     raise exception 'Social channel delete did not persist';
   end if;
   if (select count(*) from public.admin_audit_log
-      where entity_type='social_channel' and entity_id=v_id::text
+      where entity_type='social_channel' and entity_id::text=v_id::text
       and action_type in ('RUBI_SOCIAL_CHANNEL_CREATED','RUBI_SOCIAL_CHANNEL_UPDATED','RUBI_SOCIAL_CHANNEL_DELETED')) <> 3 then
     raise exception 'Social channel lifecycle must produce exactly three audit events';
   end if;
   if exists(select 1 from public.admin_audit_log
-      where entity_type='social_channel' and entity_id=v_id::text
+      where entity_type='social_channel' and entity_id::text=v_id::text
       and coalesce(previous_value,'{}'::jsonb)::text||coalesce(new_value,'{}'::jsonb)::text like '%private-path%') then
     raise exception 'Social channel audit unexpectedly stored a private URL path';
   end if;
