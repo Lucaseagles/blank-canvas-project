@@ -1,5 +1,6 @@
--- Sprint 360: make manual automation execution and the Master audit one transaction.
--- The caller is an Owner-guarded server function; the database verifies the actor again.
+-- Sprint 360: make manual retention execution and the Master audit one transaction.
+-- Trending is intentionally excluded: its historical RPC has no reproducible migration
+-- in a clean local bootstrap, so it must not be called by this new audited wrapper.
 create or replace function public.rubi_run_automation_action_audited(
   p_action text,
   p_actor uuid
@@ -11,8 +12,6 @@ as $fn$
 declare
   v_rule public.automation_rules%rowtype;
   v_processed integer := 0;
-  v_entity text;
-  v_result jsonb;
 begin
   if p_actor is null or not exists (
     select 1 from public.user_roles r
@@ -21,7 +20,7 @@ begin
     raise exception 'Owner authorization required';
   end if;
 
-  if p_action not in ('RECALCULATE_TRENDING','RUN_RETENTION_CHECK') then
+  if p_action <> 'RUN_RETENTION_CHECK' then
     raise exception 'Unsupported manual automation action';
   end if;
 
@@ -29,55 +28,35 @@ begin
     pg_catalog.hashtextextended('rubi:manual-automation:' || p_action, 0)
   );
 
-  if p_action='RECALCULATE_TRENDING' then
-    select * into v_rule
-    from public.automation_rules
-    where action_type::text='RECALCULATE_TRENDING'
-    order by created_at,id
-    limit 1
-    for update;
-  else
-    select * into v_rule
-    from public.automation_rules
-    where trigger_type::text='USER_INACTIVE'
-    order by created_at,id
-    limit 1
-    for update;
-  end if;
+  select * into v_rule
+  from public.automation_rules
+  where trigger_type::text='USER_INACTIVE'
+  order by created_at,id
+  limit 1
+  for update;
 
   if not found then
-    return jsonb_build_object('success',false,'processed',0,'error','Automation rule not found');
+    return jsonb_build_object('success',false,'notifications_queued',0,'error','Retention rule not found');
   end if;
   if not v_rule.is_active then
-    return jsonb_build_object('success',false,'processed',0,'error','Automation rule is disabled');
+    return jsonb_build_object('success',false,'notifications_queued',0,'error','Retention rule is disabled');
   end if;
 
-  if p_action='RECALCULATE_TRENDING' then
-    perform public.refresh_demand_and_trend_scores();
-    select count(*)::integer into v_processed from public.products;
-    v_entity := 'products';
-    v_result := jsonb_build_object('success',true,'processed',v_processed);
-  else
-    v_processed := public.run_retention_engine(3);
-    v_entity := 'retention_notifications';
-    v_result := jsonb_build_object('success',true,'notifications_queued',v_processed);
-  end if;
+  v_processed := public.run_retention_engine(3);
 
-  -- The business operation and actor-attributed audit commit or roll back together.
+  -- run_retention_engine's automation log and the Master audit share this transaction.
   insert into public.admin_audit_log(
     actor_user_id,action_type,entity_type,entity_id,previous_value,new_value
   ) values (
     p_actor,
-    case when p_action='RECALCULATE_TRENDING'
-      then 'RUBI_AUTOMATION_TRENDING_RECALCULATED'
-      else 'RUBI_AUTOMATION_RETENTION_EXECUTED' end,
-    v_entity,
+    'RUBI_AUTOMATION_RETENTION_EXECUTED',
+    'retention_notifications',
     v_rule.id::text,
     jsonb_build_object('rule_id',v_rule.id,'active',v_rule.is_active),
     jsonb_build_object('processed',v_processed,'action',p_action)
   );
 
-  return v_result;
+  return jsonb_build_object('success',true,'notifications_queued',v_processed);
 end;
 $fn$;
 
@@ -86,4 +65,4 @@ revoke all on function public.rubi_run_automation_action_audited(text,uuid)
 grant execute on function public.rubi_run_automation_action_audited(text,uuid)
   to service_role;
 comment on function public.rubi_run_automation_action_audited(text,uuid)
-  is 'Owner-verified manual automation execution with serialized operation and actor-attributed admin audit in the same transaction.';
+  is 'Owner-verified manual retention execution with serialized operation and actor-attributed admin audit in the same transaction.';
