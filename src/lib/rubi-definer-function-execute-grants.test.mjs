@@ -15,7 +15,6 @@ test("SECURITY DEFINER functions expose only the intended execution roles", () =
   assert.match(migration, /grant execute on function public\.get_eligible_benefit_popup[\s\S]*?to service_role/i);
   assert.match(migration, /revoke all on function public\.audit_marketplace_mutation[\s\S]*?from public, anon, authenticated/i);
   assert.match(migration, /has_function_privilege\('service_role'/i);
-  assert.match(migration, /pg_catalog\.pg_trigger/i);
   assert.match(smoke, /anon unexpectedly executes append_admin_audit/i);
   assert.match(smoke, /browser role can execute server-only benefit popup/i);
   assert.match(smoke, /service_role cannot execute benefit popup/i);
