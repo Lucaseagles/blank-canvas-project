@@ -36,6 +36,8 @@ on:
       - "supabase/migrations/20261127180000_rubi_social_channel_dml_hardening.sql"
       - "scripts/rubi-local-admin-user-ban-concurrency.sh"
       - "scripts/rubi-local-manual-trending-audit-smoke.sql"
+      - "scripts/rubi-local-admin-audit-catalog.sql"
+      - "src/lib/rubi-admin-audit-catalog.test.mjs"
       - "scripts/rubi-local-manual-trending-concurrency.sh"
       - "scripts/rubi-local-strategy-orchestration-pause-concurrency.sh"
       - "scripts/rubi-local-partner-academy-progress-smoke.sql"
@@ -152,6 +154,22 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y postgresql-client
           fi
+      - name: Capture read-only administrative audit catalog from disposable PostgreSQL
+        run: |
+          set -euo pipefail
+          psql "$SUPABASE_DB_URL" -X -A -t -v ON_ERROR_STOP=1 -o "$RUNNER_TEMP/rubi-admin-audit-catalog.json" -f scripts/rubi-local-admin-audit-catalog.sql
+          node --input-type=module <<'NODE'
+          import { readFile } from "node:fs/promises";
+          const path = process.env.RUNNER_TEMP + "/rubi-admin-audit-catalog.json";
+          const report = JSON.parse(await readFile(path, "utf8"));
+          for (const key of ["generated_at", "tables", "functions", "triggers", "limitations"]) {
+            if (!(key in report)) throw new Error("Catalog snapshot missing " + key);
+          }
+          if (!Array.isArray(report.tables) || !Array.isArray(report.functions) || !Array.isArray(report.triggers)) {
+            throw new Error("Catalog snapshot collections are invalid");
+          }
+          console.log("Read-only catalog snapshot validated: " + report.tables.length + " tables, " + report.functions.length + " functions, " + report.triggers.length + " triggers.");
+          NODE
       - name: Prove social channel direct DML is revoked and audited RPC is atomic
         run: >-
           psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1
@@ -492,6 +510,14 @@ jobs:
           name: rubi-local-e2e-sanitized-evidence
           path: ${{ runner.temp }}/rubi-local-evidence-sanitized.json
           if-no-files-found: warn
+          retention-days: 7
+      - name: Upload read-only administrative audit catalog
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rubi-local-admin-audit-catalog
+          path: ${{ runner.temp }}/rubi-admin-audit-catalog.json
+          if-no-files-found: ignore
           retention-days: 7
       - name: Stop and discard local Supabase
         if: always()
