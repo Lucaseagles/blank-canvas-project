@@ -36,7 +36,8 @@ begin
     end if;
   end loop;
 
-  if not exists (select 1 from pg_policies where schemaname='public' and tablename='videos' and policyname='Public can view published videos' and cmd='SELECT')
+  if not exists (select 1 from pg_policies where schemaname='public' and tablename='videos'
+       and policyname in ('Public can view published videos','Anyone can view published videos') and cmd='SELECT')
      or not exists (select 1 from pg_policies where schemaname='public' and tablename='video_products' and policyname='Public can view video product associations' and cmd='SELECT')
      or not exists (select 1 from pg_policies where schemaname='public' and tablename='bridge_videos' and policyname='Public can view active bridge videos' and cmd='SELECT') then
     raise exception 'One or more public video read policies were removed';
