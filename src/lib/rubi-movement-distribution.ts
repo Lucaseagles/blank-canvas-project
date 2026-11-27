@@ -22,6 +22,7 @@ export function isValidRubiPublicationReference(channel:RubiOrganicChannel,refer
  if(url.protocol!=="https:"||url.username||url.password||url.hash)return false;
  const host=url.hostname.toLowerCase();
  const path=url.pathname;
+ if(url.search&&!(channel==="youtube"&&path==="/watch")&&!(channel==="facebook"&&path==="/watch"))return false;
  switch(channel){
   case "instagram":
    return ["instagram.com","www.instagram.com"].includes(host)&&/^\/(p|reel)\/[A-Za-z0-9_-]+\/?$/.test(path);
