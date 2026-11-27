@@ -62,6 +62,9 @@ jobs:
 
       - name: Sprint 345 Telegram config and Vault atomic audit regression
         run: node --test src/lib/rubi-telegram-config-atomic-audit.test.mjs
+
+      - name: Sprint 362 Telegram send outbox atomic audit and idempotency regression
+        run: node --test src/lib/telegram-send-outbox.test.mjs
       - name: Generic admin settings allowlist regression
         run: node --test src/lib/rubi-admin-setting-atomic-audit.test.mjs
 
