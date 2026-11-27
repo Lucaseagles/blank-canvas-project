@@ -22,3 +22,8 @@ grant all privileges
 
 comment on table public.opportunity_alerts is
   'Opportunity Engine alerts: Owner SELECT only; all mutations must use the audited service_role RPCs.';
+
+-- The read RPC is SECURITY DEFINER; only the trusted server-side service role may call it.
+-- Owner authorization is enforced by the server function before this RPC is reached.
+revoke all on function public.get_opportunity_alerts(text) from public, anon, authenticated;
+grant execute on function public.get_opportunity_alerts(text) to service_role;
