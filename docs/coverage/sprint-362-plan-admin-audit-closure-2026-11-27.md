@@ -406,3 +406,30 @@ A tabela `feature_flags` foi identificada no snapshot read-only do projeto conec
 - Branch de integração após PR #376: `f4a968a3993b3be649c9429a535ca780e594e2e4`.
 - PRs filhas #370, #371, #372, #373, #374 e #376 estão integradas à branch da sprint, não à `main`.
 - Próxima frente identificada por inspeção read-only: hardening de DML direto em `videos`, `video_products` e `bridge_videos`. As três já possuem RPCs auditadas e políticas de leitura pública que precisam ser preservadas; a próxima PR deve revogar somente a escrita direta e provar as leituras públicas e Owner.
+
+
+## PR #377 integrada — hardening de vídeos nativos e vídeos de ponte
+
+A PR #377 foi integrada por squash à branch da Sprint 362 no commit `3ea1cf111422f61a2af0b1d46ca0ef0403d86f4c`.
+
+### Superfícies fechadas
+- `videos`: removidas as policies Owner `ALL` históricas (incluindo variantes legadas); leitura Owner-only adicionada.
+- `video_products`: removida a policy de escrita Owner; leitura Owner-only adicionada.
+- `bridge_videos`: removida a policy de escrita Owner; leitura Owner-only adicionada.
+
+### Proteção preservada
+- Grants SELECT de anon/authenticated preservados.
+- Policies públicas de vídeo publicado/ativo, associação de vídeo publicado e bridge video ativo preservadas.
+- Escritas continuam nas RPCs `rubi_manage_video_audited` e `rubi_manage_bridge_video_audited`, executadas por `service_role`.
+- Nenhuma migration aplicada ao Supabase remoto.
+
+### Evidências no HEAD da PR #377
+- Hub V1 Integration QA: SUCCESS, 108 etapas concluídas; TypeScript, ESLint e teste de contrato de vídeo aprovados.
+- E2E autenticado dos quatro perfis: SUCCESS, 56 etapas concluídas; migration aplicada; smoke PostgreSQL comprovou Owner read, non-Owner sem acesso aos registros draft/inactive, anon lendo somente publicados/ativos, associação pública preservada e DML direto negado nas três tabelas.
+- PR integrada à branch da sprint após ambos os workflows verdes.
+
+### Pontuação e estado
+- Score permanece **38.0/48 = 79.2%**; PR #377 soma **+0 isoladamente** até o fechamento integral do critério 11.3.
+- Branch de integração após PR #377: `3ea1cf111422f61a2af0b1d46ca0ef0403d86f4c`.
+- PRs filhas #370, #371, #372, #373, #374, #376 e #377 estão integradas à branch da sprint, não à `main`.
+- Próximo gate: reconciliar as demais superfícies administrativas e system-owned que aparecem no snapshot de privilégios, distinguindo políticas já fechadas por migrations existentes, tabelas unversioned e mutações de usuário que não são administrativas.
