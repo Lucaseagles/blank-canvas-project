@@ -16,6 +16,8 @@ test("Opportunity Engine direct table DML is revoked while Owner read and audite
   assert.match(migration, /revoke all privileges[\s\S]*from public, anon, authenticated/i);
   assert.match(migration, /grant select[\s\S]*to authenticated/i);
   assert.match(migration, /grant all privileges[\s\S]*to service_role/i);
+  assert.match(migration, /revoke all on function public\\.get_opportunity_alerts\\(text\\) from public, anon, authenticated/i);
+  assert.match(migration, /grant execute on function public\\.get_opportunity_alerts\\(text\\) to service_role/i);
 
   assert.match(api, /rubi_refresh_opportunity_alerts_audited/);
   assert.match(api, /rubi_update_opportunity_alert_status_audited/);
