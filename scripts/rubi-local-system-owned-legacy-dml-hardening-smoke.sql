@@ -33,6 +33,7 @@ begin
       select 1 from pg_policies p
       where p.schemaname='public' and p.tablename=v_table and p.cmd='SELECT'
         and p.roles && array['authenticated']::name[]
+        and (coalesce(p.qual,'') ilike '%owner%' or coalesce(p.qual,'') ilike '%is_admin%')
     ) then
       raise exception 'Owner SELECT policy missing on %',v_table;
     end if;
