@@ -44,8 +44,11 @@ test("manually crafted future or impossible dates are blocked",()=>{
  assert.ok(impossible.blockers.includes("Data inválida ou futura."));
 });
 test("oversized structured declarations are blocked before human review",()=>{
- const record=buildRubiAudienceEvidence({...valid,finding:"Observação documentada ".repeat(100)});
- const crafted="[VALIDAÇÃO DECLARADA — REVISÃO HUMANA PENDENTE]\n"+record.notes.split("\n").slice(1).join("\n");
+ const original=buildRubiAudienceEvidence(valid).notes;
+ const crafted=original.replace(
+  "Observação: O produto tem características descritas em sua ficha técnica",
+  "Observação: "+"Observação documentada ".repeat(100)
+ );
  const r=assessRubiAudienceEvidenceStatus(crafted);
  assert.ok(r.blockers.includes("Registro excede o limite de 1.400 caracteres."));
 });
