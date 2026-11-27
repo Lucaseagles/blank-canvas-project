@@ -23,7 +23,11 @@ const {data,error}=await db.rpc("rubi_mutate_movement_audited",{
   evidence_notes:[
    "[VALIDAÇÃO DECLARADA — REVISÃO HUMANA PENDENTE]",
    "Fonte: Ficha técnica sintética de QA local do produto",
+   "Tipo de fonte: supplier_document",
    "Data: "+new Date().toISOString().slice(0,10),
+   "Amostra: 0",
+   "Consentimento: não aplicável",
+   "Dados pessoais: não incluídos",
    "Método: Revisão documental automatizada em banco local descartável",
    "Observação: O teste confere somente a consistência estrutural do registro",
    "Contraevidência/limites: Fixture não representa pesquisa nem aceitação de consumidores",
@@ -35,16 +39,16 @@ const {data,error}=await db.rpc("rubi_mutate_movement_audited",{
 if(error)throw new Error("Could not create disposable movement: "+error.message);
 const movementId=data?.[0]?.id;
 if(!movementId)throw new Error("Disposable audience evidence movement was not created.");
-const {data:product,error:productError}=await db.from("hub_products").select("title").eq("id",productId).maybeSingle();
-if(productError||!product?.title)throw new Error("Could not resolve the local QA product title for the Master UI journey.");
 const {data:movement,error:movementError}=await db.from("rubi_movements")
  .select("id,revision").eq("id",movementId).maybeSingle();
 if(movementError)throw new Error("Could not verify disposable movement revision: "+movementError.message);
 if(!movement||!Number.isInteger(Number(movement.revision)))throw new Error("Disposable audience evidence movement has no valid revision.");
+const {data:product,error:productError}=await db.from("hub_products").select("title").eq("id",productId).maybeSingle();
+if(productError||!product?.title)throw new Error("Could not resolve the local QA product title for the Master UI journey.");
 await appendFile(envFile,
  "RUBI_QA_AUDIENCE_REVIEW_MOVEMENT_ID="+movement.id+"\n"+
  "RUBI_QA_AUDIENCE_REVIEW_REVISION="+movement.revision+"\n"+
- "RUBI_QA_AUDIENCE_REVIEW_PRODUCT_TITLE="+product.title.replace(/[\\r\\n]/g," ")+"\n"+
+ "RUBI_QA_AUDIENCE_REVIEW_PRODUCT_TITLE="+product.title.replace(/[\r\n]/g," ")+"\n"+
  "RUBI_QA_AUDIENCE_REVIEW_MOVEMENT_NAME=RUBI QA — revisão de evidência\n",
  {encoding:"utf8",mode:0o600});
 process.stdout.write("Disposable audience-evidence review movement created in local Supabase; no production data used.\n");
