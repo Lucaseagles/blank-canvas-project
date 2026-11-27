@@ -22,6 +22,7 @@ test("generic Admin Settings tables are Owner-read-only and mutations stay on au
     assert.ok(migration.includes("public." + table + " is"), table);
   }
 
+  assert.ok(migration.includes("to_regclass('public.feature_flags') is not null"));
   assert.ok(migration.includes("revoke all privileges on table"));
   assert.ok(migration.includes("from public, anon, authenticated"));
   assert.ok(migration.includes("grant all privileges on table"));
@@ -50,6 +51,7 @@ test("generic Admin Settings tables are Owner-read-only and mutations stay on au
   assert.ok(settingsApi.includes("rubi_update_admin_setting_audited"));
   assert.ok(telegramApi.includes("rubi_save_telegram_config_audited"));
 
+  assert.ok(smoke.includes("to_regclass('public.feature_flags') is not null"));
   assert.ok(smoke.includes("RUBI_QA_EXPECTED_ADMIN_SETTINGS_INSERT_DENIAL_NOT_RAISED"));
   assert.ok(smoke.includes("RUBI_QA_EXPECTED_ADMIN_SETTINGS_UPDATE_DENIAL_NOT_RAISED"));
   assert.ok(smoke.includes("RUBI_QA_EXPECTED_ADMIN_SETTINGS_DELETE_DENIAL_NOT_RAISED"));
