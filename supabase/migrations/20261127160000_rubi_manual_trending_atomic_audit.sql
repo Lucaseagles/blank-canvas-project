@@ -6,8 +6,8 @@
 create or replace function public.refresh_demand_and_trend_scores()
 returns void
 language plpgsql
-security definer
-set search_path = public
+security invoker
+set search_path = ''
 as $refresh$
 declare
   r record;
@@ -20,6 +20,11 @@ begin
   end loop;
 end;
 $refresh$;
+
+revoke all on function public.refresh_demand_and_trend_scores()
+  from public, anon, authenticated;
+grant execute on function public.refresh_demand_and_trend_scores()
+  to service_role;
 
 create or replace function public.rubi_recalculate_trending_audited(
   p_actor uuid
