@@ -254,3 +254,21 @@ A integração foi somente na branch `sprint/362-admin-audit-closure`; não houv
 PR #369 permanece aberta e aguarda o E2E completo da compatibilidade text/UUID do user-ban, além de sua revalidação no HEAD combinado com #368.
 
 **Pontuação:** +0 ainda. A PR #368 fecha uma família específica de mutação; não substitui inventário exaustivo nem os gates restantes de 11.3.
+
+
+## PR #369 integrada à Sprint 362 — 27/11
+
+A PR #369 foi integrada por squash à branch de integração no commit `8af999e2c6712d3e943b306e1dbac97e40114991`, após:
+- Hub V1 Integration QA: SUCCESS no HEAD validado.
+- E2E autenticado: SUCCESS, incluindo smoke de user-ban.
+- Owner autorizado; consumer, merchant e partner negados sob `service_role`.
+- `anon` e `authenticated` sem EXECUTE nas RPCs sensíveis.
+- Compatibilidade de `entity_id` com `text` e `uuid` por introspecção do catálogo.
+- `search_path = ''` na RPC SECURITY DEFINER.
+
+A PR #369, assim como a #368, foi integrada somente à branch `sprint/362-admin-audit-closure`; `main` permanece intocada.
+
+### Próxima validação obrigatória
+As PRs #368 e #369 passaram separadamente em seus HEADs. Antes da release, executar E2E e Hub QA no mesmo HEAD combinado da branch; depois, abrir PR final para `main` e exigir Hub V1, Sprint 33 QA e E2E verdes no mesmo candidato.
+
+**Pontuação:** +0 por enquanto. As duas famílias administrativas estão cobertas, mas os gates 1–7 de 11.3 ainda exigem inventário transversal e fechamento dos writers remanescentes.
