@@ -14,7 +14,8 @@ test("SECURITY DEFINER entry points have least-privilege execution grants", () =
 
   assert.match(migration, /revoke all on function public\.append_admin_audit[\s\S]*from public, anon, service_role/i);
   assert.match(migration, /grant execute on function public\.append_admin_audit[\s\S]*to authenticated/i);
-  assert.match(migration, /revoke all on function public\.audit_marketplace_mutation\(\)[\s\S]*from public, anon, authenticated, service_role/i);
+  assert.match(migration, /revoke all on function public\.audit_marketplace_mutation\(\)[\s\S]*from public, anon, authenticated/i);
+  assert.match(migration, /grant execute on function public\.audit_marketplace_mutation\(\)[\s\S]*to service_role/i);
   assert.match(migration, /revoke all on function public\.get_eligible_benefit_popup\(uuid\)[\s\S]*from public, anon, authenticated/i);
   assert.match(migration, /grant execute on function public\.get_eligible_benefit_popup\(uuid\)[\s\S]*to service_role/i);
 
@@ -22,7 +23,7 @@ test("SECURITY DEFINER entry points have least-privilege execution grants", () =
   assert.match(adminAudit, /Owner access required/i);
   assert.match(marketplace, /returns trigger[\s\S]*security definer/i);
   assert.match(benefits, /coalesce\(p_user_id, auth\.uid\(\)\)/i);
-  assert.match(relationships, /supabaseAdmin\)\.rpc\('get_eligible_benefit_popup'/);
+  assert.match(relationships, /supabaseAdmin as any\)\.rpc\('get_eligible_benefit_popup'/);
   assert.match(smoke, /Authenticated non-Owner called append_admin_audit successfully/);
   assert.match(smoke, /Anonymous client executed get_eligible_benefit_popup/);
   assert.match(smoke, /Owner audit event was not persisted with auth\.uid\(\) as actor/);
