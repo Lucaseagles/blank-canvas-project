@@ -23,7 +23,11 @@ const {data,error}=await db.rpc("rubi_mutate_movement_audited",{
   evidence_notes:[
    "[VALIDAÇÃO DECLARADA — REVISÃO HUMANA PENDENTE]",
    "Fonte: Ficha técnica sintética de QA local do produto",
+   "Tipo de fonte: supplier_document",
    "Data: "+new Date().toISOString().slice(0,10),
+   "Amostra: 0",
+   "Consentimento: não aplicável",
+   "Dados pessoais: não incluídos",
    "Método: Revisão documental automatizada em banco local descartável",
    "Observação: O teste confere somente a consistência estrutural do registro",
    "Contraevidência/limites: Fixture não representa pesquisa nem aceitação de consumidores",
