@@ -3,6 +3,12 @@ begin;
 select set_config('rubi.qa.master_id', :'master_id', true);
 select set_config('rubi.qa.non_owner_id', :'non_owner_id', true);
 
+-- Auth fixtures create commercial_profiles, but this legacy admin RPC mutates
+-- public.profiles. Ensure the disposable consumer has the exact target row.
+insert into public.profiles (user_id, display_name, is_banned)
+values (:'non_owner_id'::uuid, 'RUBI QA Consumidor', false)
+on conflict (user_id) do nothing;
+
 do $grants$
 begin
   if not has_function_privilege('service_role','public.admin_set_profile_banned(uuid,boolean,uuid)','EXECUTE')
