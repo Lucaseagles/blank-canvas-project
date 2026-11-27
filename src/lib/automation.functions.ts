@@ -51,14 +51,21 @@ export const getAutomationLogs = createServerFn({ method: "GET" }).middleware([r
   return logs ?? [];
 });
 
-export const recalculateTrendingManual = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).handler(async ({ context }) => {
+export const recalculateTrendingManual = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).handler(async () => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data, error } = await (supabaseAdmin as any).rpc("rubi_run_automation_action_audited", {
-    p_action: "RECALCULATE_TRENDING",
-    p_actor: context.userId,
-  });
-  if (error) throw error;
-  return data as { success: boolean; processed: number; error?: string };
+  const { data: rule, error: ruleError } = await supabaseAdmin.from("automation_rules").select("id,is_active").eq("action_type", "RECALCULATE_TRENDING").maybeSingle();
+  if (ruleError) throw ruleError;
+  if (!rule) return { success: false, processed: 0, error: "Trending rule not found" };
+  if (!rule.is_active) return { success: false, processed: 0, error: "Trending rule is disabled" };
+  const { error: refreshError } = await supabaseAdmin.rpc("refresh_demand_and_trend_scores");
+  if (refreshError) {
+    await logAutomationActivity(supabaseAdmin, rule.id, { triggered_by: "admin_manual" }, refreshError.message, "failed");
+    throw refreshError;
+  }
+  const { count, error: countError } = await supabaseAdmin.from("products").select("id", { count: "exact", head: true });
+  if (countError) throw countError;
+  await logAutomationActivity(supabaseAdmin, rule.id, { triggered_by: "admin_manual" }, `Trending scores refreshed for ${count ?? 0} products`, "success");
+  return { success: true, processed: count ?? 0 };
 });
 
 export const runRetentionCheck = createServerFn({ method: "POST" }).middleware([requireOwnerRole]).handler(async ({ context }) => {
