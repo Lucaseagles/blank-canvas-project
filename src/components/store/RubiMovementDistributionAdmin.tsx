@@ -5,7 +5,7 @@ import {useQuery,useMutation,useQueryClient} from "@tanstack/react-query";
 import {useServerFn} from "@tanstack/react-start";
 import {toast} from "sonner";
 import {Button} from "@/components/ui/button";
-import {RUBI_ORGANIC_CHANNELS,movementCampaign,movementCampaignPath,type RubiDistributionPlan} from "@/lib/rubi-movement-distribution";
+import {RUBI_ORGANIC_CHANNELS,movementCampaign,movementCampaignPath,canRecordPublication,type RubiDistributionPlan} from "@/lib/rubi-movement-distribution";
 import {listRubiDistributionAdmin,saveRubiDistributionAdmin} from "@/lib/rubi-movement-distribution.functions";
 import {setRubiMovementPagePublishedAdmin} from "@/lib/rubi-movement-publishing.functions";
 
@@ -62,9 +62,9 @@ export function RubiMovementDistributionAdmin({variantId,variantName,variantStat
    <div className="rounded-lg bg-muted/40 p-3 text-sm break-all">{path}</div>
    <label className="block space-y-1 text-sm font-semibold">Orientações de publicação<textarea className="w-full rounded-lg border bg-background p-2" rows={3} maxLength={1500} value={draft.notes} onChange={e=>change("notes",e.target.value)} placeholder="Formato, mensagem, público, CTA e revisão manual"/></label>
    <label className="block space-y-1 text-sm font-semibold">Estado<select className="w-full rounded-lg border bg-background p-2" value={draft.status} onChange={e=>change("status",e.target.value as RubiDistributionPlan["status"])}>
-     <option value="planned">Planejado</option><option value="manually_published" disabled={variantStatus!=="review"}>Publicado por mim (declaração)</option>
+     <option value="planned">Planejado</option><option value="manually_published" disabled={variantStatus!=="review"||draft.channel==="whatsapp"}>Publicado por mim (declaração)</option>
    </select></label>
-   {draft.status==="manually_published"&&<label className="block space-y-1 text-sm font-semibold">Referência do post publicado<input className="w-full rounded-lg border bg-background p-2" maxLength={500} value={draft.published_reference} onChange={e=>change("published_reference",e.target.value)} placeholder="URL ou identificação do post"/></label>}
+   {draft.channel==="whatsapp"&&<p className="text-xs text-amber-700 dark:text-amber-300">WhatsApp permanece como planejado até existir um conector oficial que retorne uma confirmação de envio. Link de convite não comprova publicação.</p>}\n   {draft.status==="manually_published"&&<label className="block space-y-1 text-sm font-semibold">Permalink HTTPS do post publicado<input className="w-full rounded-lg border bg-background p-2" maxLength={500} value={draft.published_reference} onChange={e=>change("published_reference",e.target.value)} placeholder="Link público do post na plataforma selecionada"/></label>}
    {draft.id&&<div className="space-y-2 rounded-lg border p-3">
     <p className="font-semibold text-sm">Página deste movimento: {draft.page_published_at?"Publicada":"Não publicada"}</p>
     <p className="text-xs text-muted-foreground">Aprovação separada do post na rede. O produto precisa estar ativo e com checkout oficial validado. Alterar o plano, movimento ou criativo exige nova aprovação.</p>
@@ -76,7 +76,7 @@ export function RubiMovementDistributionAdmin({variantId,variantName,variantStat
    <RubiAiPaidFunnelPlanner productId={productId} variantName={variantName} campaign={draft.campaign} />
    <RubiMasterCampaignApprovalAdmin productId={productId} campaign={draft.campaign} />
    <div className="flex flex-wrap gap-2">
-    <Button disabled={mutation.isPending||(!dirty&&!!draft.id)||!draft.campaign||draft.status==="manually_published"&&(variantStatus!=="review"||draft.published_reference.trim().length<8)} onClick={()=>mutation.mutate()}>{mutation.isPending?"Salvando...":"Salvar plano"}</Button>
+    <Button disabled={mutation.isPending||(!dirty&&!!draft.id)||!draft.campaign||draft.status==="manually_published"&&(variantStatus!=="review"||!canRecordPublication(draft))} onClick={()=>mutation.mutate()}>{mutation.isPending?"Salvando...":"Salvar plano"}</Button>
     <Button variant="outline" onClick={()=>{const url=window.location.origin+path;void navigator.clipboard.writeText(url).then(()=>toast.success("Link copiado."),()=>toast.error("Não foi possível copiar."));}}>Copiar link da RUBI</Button>
     <Button variant="outline" onClick={()=>{if(dirty&&!window.confirm("Descartar alterações?"))return;setDraft(null);setDirty(false);}}>Fechar</Button>
    </div>
