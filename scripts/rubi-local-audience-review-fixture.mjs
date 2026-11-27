@@ -33,8 +33,12 @@ const {data,error}=await db.rpc("rubi_mutate_movement_audited",{
  }
 });
 if(error)throw new Error("Could not create disposable movement: "+error.message);
-const movement=data?.[0];
-if(!movement?.id||!Number.isInteger(Number(movement.revision)))throw new Error("Disposable audience evidence movement was not created with a revision.");
+const movementId=data?.[0]?.id;
+if(!movementId)throw new Error("Disposable audience evidence movement was not created.");
+const {data:movement,error:movementError}=await db.from("rubi_movements")
+ .select("id,revision").eq("id",movementId).maybeSingle();
+if(movementError)throw new Error("Could not verify disposable movement revision: "+movementError.message);
+if(!movement||!Number.isInteger(Number(movement.revision)))throw new Error("Disposable audience evidence movement has no valid revision.");
 await appendFile(envFile,
  "RUBI_QA_AUDIENCE_REVIEW_MOVEMENT_ID="+movement.id+"\n"+
  "RUBI_QA_AUDIENCE_REVIEW_REVISION="+movement.revision+"\n",
