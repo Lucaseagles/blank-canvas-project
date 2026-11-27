@@ -1,4 +1,4 @@
-\\set ON_ERROR_STOP on
+\set ON_ERROR_STOP on
 begin;
 select set_config('rubi.qa.master_id', :'master_id', true);
 select set_config('rubi.qa.consumer_id', :'consumer_id', true);
@@ -141,4 +141,4 @@ end
 $lifecycle$;
 reset role;
 rollback;
-\\echo 'PASS: social channel direct DML revoked, Owner-only RPC, non-Owner denial, atomic rollback, lifecycle audit and URL redaction.'
+\echo 'PASS: social channel direct DML revoked, Owner-only RPC, non-Owner denial, atomic rollback, lifecycle audit and URL redaction.'
