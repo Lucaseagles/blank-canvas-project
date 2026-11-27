@@ -187,3 +187,37 @@ PR #368 aberta e workflows E2E/Hub QA em execução no HEAD `9d30ef670d39e33acf1
 
 ### Pontuação
 +0 nesta etapa. É candidata de cobertura para o gap de tendências no critério 11.3, mas a pontuação depende da aprovação integral da Sprint 362 e do aceite formal da rubrica.
+
+
+## Atualização de integração e compatibilidade de schema — 27/11
+
+### PR #367 — contrato de user-ban
+- PR #367 integrada à branch Sprint 362 após E2E autenticado e Hub QA aprovados no mesmo HEAD da PR.
+- PR #366 encerrada como obsoleta; sua tentativa de forçar UUID no smoke local foi rejeitada pela migration-base text.
+- A PR #369 amplia a migration de user-ban para detectar o tipo de `admin_audit_log.entity_id` em runtime e suportar tanto `text` quanto `uuid`, sem DDL remoto. Smoke compara o identificador por `entity_id::text`.
+
+### PR #368 — recálculo manual de tendências
+- RPC Owner-only, lock advisory, log de automação e trilha Master na mesma transação.
+- Entry point de refresh versionado com o loop observado no banco ativo, sem redefinir as fórmulas dos helpers de scoring.
+- Entry point interno passa a SECURITY INVOKER, search_path vazio e EXECUTE exclusivo de `service_role`.
+- Auditoria suporta ambos os tipos observados de `entity_id` via leitura do catálogo; nenhum schema é alterado.
+- Falha no refresh/auditoria de sucesso reverte as atualizações; erro persistido registra apenas SQLSTATE, não SQLERRM bruto.
+- Smokes incluídos no E2E: Owner/non-Owner, grants, sucesso, rollback com falha forçada e concorrência.
+
+### Validação corrente
+- PR #367: E2E autenticado e Hub QA aprovados.
+- PR #368: novos workflows E2E e Hub QA executando no HEAD `fa0d2380057d84c6280a9d881e1b43382a1e25bf`; ainda não aprovados.
+- PR #369: workflows E2E e Hub QA executando no HEAD `7967dd4d7575199656ea837956803056e76a8896`; ainda não aprovados.
+- Nenhuma migration foi aplicada ao Supabase remoto.
+
+### Placar e critério 11.3
+A matriz V1 revisada confirma 11.3 = 0.5/1.0. O baseline formal permanece 38.0/48 = 79.2%. O fechamento integral de 11.3 pode adicionar +0.5, levando a 38.5/48 = 80.2%, mas somente depois de todos os gates e aceite final. Até lá, +0 nesta sprint.
+
+### Próxima ordem
+1. Fechar os workflows das PRs #368 e #369; corrigir qualquer falha real antes de integrar.
+2. Integrar PRs filhas validadas à branch da Sprint 362.
+3. Concluir inventário exaustivo de mutações e bypasses, não apenas os handlers já listados.
+4. Provar matriz Owner/non-Owner nos caminhos administrativos sensíveis.
+5. Completar rollback, concorrência/idempotência e redação em cada família aplicável.
+6. Executar E2E, Hub QA e Sprint 33 QA no mesmo HEAD de release.
+7. Só então abrir release para main e revisar o ponto 11.3 na matriz.
