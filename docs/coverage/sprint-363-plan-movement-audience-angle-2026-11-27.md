@@ -34,7 +34,7 @@ Limites conhecidos:
 | 1 | #384 — contrato e hardening de evidências | Validar estrutura, unicidade, limites e datas; preservar distinção entre declaração e validação de mercado | Contratos e regressões server-side | +0 |
 | 2 | #385 — upgrade premium do painel Master | Card visual por estado, progresso editorial acessível, clareza de bloqueios e experiência responsiva | Build, TypeScript, lint e contrato visual acessível | +0 |
 | 3 | #386 — cobertura operacional | Smoke PostgreSQL descartável para Owner/non-Owner, revisão obsoleta, auditoria atômica, rollback e histórico append-only | Jornada real em banco descartável e regressões de autorização | +0 |
-| 4 | #388 — hardening complementar do desempenho por público (08.4) | +0 isolado; parcial até release final |
+| 4 | #388 — hardening complementar do desempenho por público (08.4) | Duplicidades e telemetria inválida falham de forma segura; regressões de integridade | Hub QA, testes de domínio, TypeScript, lint, build e E2E | +0 isolado; parcial até release final |
 | 5 | #389 — cobertura completa e release consolidada | Gates finais no mesmo HEAD, reconciliação da rubrica, matriz, score e release única | Todos os gates e evidências aceitos; merge da branch de integração à main | Única PR elegível para conversão |
 
 Os números correspondem às PRs criadas no GitHub. As PRs intermediárias são empilhadas e entram somente na branch `sprint/363-integration`, após seus próprios gates. Nenhuma delas será integrada diretamente à `main`. A PR #389 será a única PR de `sprint/363-integration` para `main`, depois do fechamento completo.
