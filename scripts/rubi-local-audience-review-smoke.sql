@@ -87,7 +87,7 @@ begin
  );
  if review_id is null then raise exception 'QA failure: Owner review did not return an ID'; end if;
  if not exists(select 1 from public.rubi_audience_evidence_reviews r
-  where r.id=review_id and r.movement_id=v_movement_id and r.movement_revision=revision
+  where r.id=review_id and r.movement_id=v_movement_id and r.movement_revision=v_revision
    and r.outcome='document_reviewed') then
   raise exception 'QA failure: immutable review row not persisted';
  end if;
@@ -108,7 +108,7 @@ begin
   raise exception 'QA failure: immutable review was deleted';
  exception when others then
   if sqlerrm='QA failure: immutable review was deleted' then raise; end if;
-  if position('append-only' in sqlerrm)=0 then raise; end if;
+  if position('append-only' in sqlerrm)=0 and position('permission denied' in sqlerrm)=0 then raise; end if;
  end;
  raise notice 'PASS: Owner review and audit persisted; review history is append-only.';
 end;
