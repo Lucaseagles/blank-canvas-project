@@ -4,12 +4,12 @@
 drop policy if exists "owner manages content notification queue" on public.content_notification_queue;
 create policy "owner can view content notification queue"
   on public.content_notification_queue for select to authenticated
-  using (private.has_role((select auth.uid()), 'owner'::public.app_role));
+  using (public.has_role((select auth.uid()), 'owner'::public.app_role));
 
 drop policy if exists "owner manages content affinity logs" on public.content_affinity_log;
 create policy "owner can view content affinity logs"
   on public.content_affinity_log for select to authenticated
-  using (private.has_role((select auth.uid()), 'owner'::public.app_role));
+  using (public.has_role((select auth.uid()), 'owner'::public.app_role));
 
 revoke all privileges on table
   public.content_notification_queue,
