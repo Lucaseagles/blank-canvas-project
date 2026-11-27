@@ -35,6 +35,81 @@ BEGIN
 END;
 $grants$;
 
+DO $read_rpc_grants$
+BEGIN
+  IF has_function_privilege('anon','public.get_opportunity_alerts(text)','EXECUTE')
+     OR has_function_privilege('authenticated','public.get_opportunity_alerts(text)','EXECUTE')
+     OR NOT has_function_privilege('service_role','public.get_opportunity_alerts(text)','EXECUTE') THEN
+    RAISE EXCEPTION 'Opportunity SECURITY DEFINER read RPC grants are not restricted to service_role';
+  END IF;
+END
+$read_rpc_grants$;
+
+DO $table_grants$
+BEGIN
+  IF has_table_privilege('anon','public.opportunity_alerts','SELECT')
+     OR has_table_privilege('anon','public.opportunity_alerts','INSERT')
+     OR has_table_privilege('anon','public.opportunity_alerts','UPDATE')
+     OR has_table_privilege('anon','public.opportunity_alerts','DELETE') THEN
+    RAISE EXCEPTION 'anon retains direct access to opportunity_alerts';
+  END IF;
+  IF NOT has_table_privilege('authenticated','public.opportunity_alerts','SELECT')
+     OR has_table_privilege('authenticated','public.opportunity_alerts','INSERT')
+     OR has_table_privilege('authenticated','public.opportunity_alerts','UPDATE')
+     OR has_table_privilege('authenticated','public.opportunity_alerts','DELETE') THEN
+    RAISE EXCEPTION 'authenticated table privileges do not match Owner-read-only contract';
+  END IF;
+  IF NOT has_table_privilege('service_role','public.opportunity_alerts','INSERT')
+     OR NOT has_table_privilege('service_role','public.opportunity_alerts','UPDATE')
+     OR NOT has_table_privilege('service_role','public.opportunity_alerts','DELETE') THEN
+    RAISE EXCEPTION 'service_role lost audited Opportunity Engine write privileges';
+  END IF;
+END
+$table_grants$;
+
+SELECT set_config('request.jwt.claim.sub', current_setting('rubi.qa_master_id'), true);
+SELECT set_config('request.jwt.claims',
+  jsonb_build_object('sub',current_setting('rubi.qa_master_id'),'role','authenticated')::text, true);
+SET LOCAL ROLE authenticated;
+DO $direct_dml$
+BEGIN
+  BEGIN
+    UPDATE public.opportunity_alerts SET status='dismissed' WHERE false;
+    RAISE EXCEPTION 'RUBI_QA_EXPECTED_DIRECT_UPDATE_DENIAL_NOT_RAISED';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+  BEGIN
+    INSERT INTO public.opportunity_alerts(opportunity_type,source_id,title,recommended_action)
+    VALUES('campaign',gen_random_uuid(),'RUBI QA direct insert','must be denied');
+    RAISE EXCEPTION 'RUBI_QA_EXPECTED_DIRECT_INSERT_DENIAL_NOT_RAISED';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+  BEGIN
+    DELETE FROM public.opportunity_alerts WHERE false;
+    RAISE EXCEPTION 'RUBI_QA_EXPECTED_DIRECT_DELETE_DENIAL_NOT_RAISED';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+END
+$direct_dml$;
+DO $owner_read$
+DECLARE v_count bigint;
+BEGIN
+  SELECT count(*) INTO v_count FROM public.opportunity_alerts;
+  IF v_count<1 THEN RAISE EXCEPTION 'Owner read policy did not expose the seeded QA opportunity'; END IF;
+END
+$owner_read$;
+DO $non_owner_read$
+DECLARE v_count bigint;
+BEGIN
+  PERFORM set_config('request.jwt.claim.sub', current_setting('rubi.qa_non_owner_id'), true);
+  PERFORM set_config('request.jwt.claims',
+    jsonb_build_object('sub',current_setting('rubi.qa_non_owner_id'),'role','authenticated')::text, true);
+  SELECT count(*) INTO v_count FROM public.opportunity_alerts;
+  IF v_count<>0 THEN RAISE EXCEPTION 'Non-Owner can read administrative opportunity alerts'; END IF;
+END
+$non_owner_read$;
+RESET ROLE;
+
 SET LOCAL ROLE service_role;
 DO $rollback$
 DECLARE v_id uuid; v_revision timestamptz; v_status text;
