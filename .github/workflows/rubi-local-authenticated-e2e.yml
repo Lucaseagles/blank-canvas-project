@@ -165,13 +165,16 @@ jobs:
           import { readFile } from "node:fs/promises";
           const path = process.env.RUNNER_TEMP + "/rubi-admin-audit-catalog.json";
           const report = JSON.parse(await readFile(path, "utf8"));
-          for (const key of ["generated_at", "tables", "functions", "triggers", "limitations"]) {
+          for (const key of ["generated_at", "tables", "functions", "triggers", "unrestricted_public_write_policies", "limitations"]) {
             if (!(key in report)) throw new Error("Catalog snapshot missing " + key);
           }
-          if (!Array.isArray(report.tables) || !Array.isArray(report.functions) || !Array.isArray(report.triggers)) {
+          if (!Array.isArray(report.tables) || !Array.isArray(report.functions) || !Array.isArray(report.triggers) || !Array.isArray(report.unrestricted_public_write_policies)) {
             throw new Error("Catalog snapshot collections are invalid");
           }
-          console.log("Read-only catalog snapshot validated: " + report.tables.length + " tables, " + report.functions.length + " functions, " + report.triggers.length + " triggers.");
+          if (report.unrestricted_public_write_policies.length) {
+  throw new Error("Catalog contains unrestricted PUBLIC/anon write policies: " + report.unrestricted_public_write_policies.map(p => p.table + "." + p.name).join(", "));
+}
+console.log("Read-only catalog snapshot validated: " + report.tables.length + " tables, " + report.functions.length + " functions, " + report.triggers.length + " triggers, zero unrestricted PUBLIC/anon write policies.");
           NODE
       - name: Prove social channel direct DML is revoked and audited RPC is atomic
         run: >-
