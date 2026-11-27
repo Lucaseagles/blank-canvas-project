@@ -8,12 +8,13 @@ create or replace function public.admin_set_profile_banned(
 ) returns boolean
 language plpgsql
 security definer
-set search_path to 'public','auth'
+set search_path = ''
 as $function$
 declare
   v_actor uuid := coalesce(auth.uid(), p_actor);
   v_actor_email text;
   v_old_value boolean;
+  v_entity_id_type text;
 begin
   if v_actor is null or not exists (
     select 1 from public.user_roles r
@@ -50,14 +51,35 @@ begin
     from auth.users u
    where u.id = v_actor;
 
-  insert into public.admin_audit_log(
-    actor_user_id, actor_email, action_type, entity_type, entity_id,
-    previous_value, new_value
-  ) values (
-    v_actor, v_actor_email, 'USER_BAN_STATUS_CHANGED', 'profiles', p_user_id::text,
-    jsonb_build_object('is_banned', v_old_value),
-    jsonb_build_object('is_banned', p_banned)
-  );
+  select pg_catalog.format_type(a.atttypid, a.atttypmod)
+    into v_entity_id_type
+    from pg_catalog.pg_attribute a
+   where a.attrelid = 'public.admin_audit_log'::regclass
+     and a.attname = 'entity_id'
+     and a.attnum > 0
+     and not a.attisdropped;
+
+  if v_entity_id_type = 'uuid' then
+    insert into public.admin_audit_log(
+      actor_user_id, actor_email, action_type, entity_type, entity_id,
+      previous_value, new_value
+    ) values (
+      v_actor, v_actor_email, 'USER_BAN_STATUS_CHANGED', 'profiles', p_user_id,
+      jsonb_build_object('is_banned', v_old_value),
+      jsonb_build_object('is_banned', p_banned)
+    );
+  elsif v_entity_id_type = 'text' then
+    insert into public.admin_audit_log(
+      actor_user_id, actor_email, action_type, entity_type, entity_id,
+      previous_value, new_value
+    ) values (
+      v_actor, v_actor_email, 'USER_BAN_STATUS_CHANGED', 'profiles', p_user_id::text,
+      jsonb_build_object('is_banned', v_old_value),
+      jsonb_build_object('is_banned', p_banned)
+    );
+  else
+    raise exception 'Unsupported admin_audit_log.entity_id type';
+  end if;
 
   return true;
 end;
