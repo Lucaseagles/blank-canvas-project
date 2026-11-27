@@ -48,6 +48,9 @@ jobs:
       - name: Sprint 317 brand identity atomic audit regression
         run: npm run test:rubi-brand-identity-audit
 
+      - name: Customer coupon Owner-only atomic audit regression
+        run: npm run test:rubi-customer-coupons-audit
+
       - name: Sprint 345 Telegram config and Vault atomic audit regression
         run: node --test src/lib/rubi-telegram-config-atomic-audit.test.mjs
       - name: Generic admin settings allowlist regression

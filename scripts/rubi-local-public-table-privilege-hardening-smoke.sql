@@ -53,10 +53,20 @@ BEGIN
   END IF;
 
   IF NOT has_table_privilege('anon', 'public.customer_coupons', 'SELECT')
-     OR NOT has_table_privilege('authenticated', 'public.customer_coupons', 'INSERT')
-     OR NOT has_table_privilege('authenticated', 'public.customer_coupons', 'UPDATE')
-     OR NOT has_table_privilege('authenticated', 'public.customer_coupons', 'DELETE') THEN
-    RAISE EXCEPTION 'Customer coupon application grants changed unexpectedly';
+     OR NOT has_table_privilege('authenticated', 'public.customer_coupons', 'SELECT')
+     OR has_table_privilege('anon', 'public.customer_coupons', 'INSERT')
+     OR has_table_privilege('anon', 'public.customer_coupons', 'UPDATE')
+     OR has_table_privilege('anon', 'public.customer_coupons', 'DELETE')
+     OR has_table_privilege('authenticated', 'public.customer_coupons', 'INSERT')
+     OR has_table_privilege('authenticated', 'public.customer_coupons', 'UPDATE')
+     OR has_table_privilege('authenticated', 'public.customer_coupons', 'DELETE') THEN
+    RAISE EXCEPTION 'Customer coupon reads must remain available while browser DML is denied';
+  END IF;
+
+  IF NOT has_table_privilege('service_role', 'public.customer_coupons', 'INSERT')
+     OR NOT has_table_privilege('service_role', 'public.customer_coupons', 'UPDATE')
+     OR NOT has_table_privilege('service_role', 'public.customer_coupons', 'DELETE') THEN
+    RAISE EXCEPTION 'Trusted server customer coupon DML grants changed unexpectedly';
   END IF;
 
   IF NOT has_table_privilege('service_role', 'public.products', 'INSERT')
