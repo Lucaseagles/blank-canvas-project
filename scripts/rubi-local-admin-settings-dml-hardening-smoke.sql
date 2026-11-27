@@ -7,10 +7,13 @@ do $grants$
 declare
   v_table text;
   v_tables text[] := array[
-    'app_points_config','automation_rules','banners','compliance_rules','feature_flags',
+    'app_points_config','automation_rules','banners','compliance_rules',
     'feed_mix_config','personalization_weights','social_proof_config','telegram_config','whatsapp_config'
   ];
 begin
+  if to_regclass('public.feature_flags') is not null then
+    v_tables := array_append(v_tables,'feature_flags');
+  end if;
   foreach v_table in array v_tables loop
     if has_table_privilege('anon',format('public.%I',v_table),'INSERT')
        or has_table_privilege('anon',format('public.%I',v_table),'UPDATE')
@@ -58,11 +61,14 @@ declare
   v_table text;
   v_column text;
   v_tables text[] := array[
-    'app_points_config','automation_rules','banners','compliance_rules','feature_flags',
+    'app_points_config','automation_rules','banners','compliance_rules',
     'feed_mix_config','personalization_weights','social_proof_config','telegram_config','whatsapp_config'
   ];
   v_count bigint;
 begin
+  if to_regclass('public.feature_flags') is not null then
+    v_tables := array_append(v_tables,'feature_flags');
+  end if;
   select count(*) into v_count from public.app_points_config
    where action_key='rubi_qa_admin_settings_dml_hardening';
   if v_count <> 1 then raise exception 'Owner cannot read the admin settings fixture'; end if;
