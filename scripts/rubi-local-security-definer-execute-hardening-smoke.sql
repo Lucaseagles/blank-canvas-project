@@ -1,7 +1,8 @@
 \set ON_ERROR_STOP on
 BEGIN;
+SELECT set_config('rubi.smoke.consumer_id', :'consumer_id', true);
 
-DO $$
+DO $
 BEGIN
   IF has_function_privilege('anon', 'public.append_admin_audit(text,text,text,jsonb,jsonb)', 'EXECUTE')
      OR NOT has_function_privilege('authenticated', 'public.append_admin_audit(text,text,text,jsonb,jsonb)', 'EXECUTE') THEN
@@ -9,7 +10,7 @@ BEGIN
   END IF;
   IF has_function_privilege('anon', 'public.audit_marketplace_mutation()', 'EXECUTE')
      OR has_function_privilege('authenticated', 'public.audit_marketplace_mutation()', 'EXECUTE')
-     OR has_function_privilege('service_role', 'public.audit_marketplace_mutation()', 'EXECUTE') THEN
+     OR NOT has_function_privilege('service_role', 'public.audit_marketplace_mutation()', 'EXECUTE') THEN
     RAISE EXCEPTION 'marketplace trigger function is exposed as a direct RPC';
   END IF;
   IF has_function_privilege('anon', 'public.get_eligible_benefit_popup(uuid)', 'EXECUTE')
