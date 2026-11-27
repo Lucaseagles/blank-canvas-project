@@ -19,6 +19,9 @@ on:
       - "scripts/rubi-local-public-table-privilege-hardening-smoke.sql"
       - "scripts/rubi-local-strategy-orchestration-pause-audit-smoke.sql"
       - "scripts/rubi-local-opportunity-refresh-audit-smoke.sql"
+      - "scripts/rubi-local-opportunity-alert-audit-smoke.sql"
+      - "src/lib/opportunity-alert-dml-hardening.test.mjs"
+      - "supabase/migrations/20261127210000_rubi_opportunity_alert_dml_hardening.sql"
       - "scripts/rubi-local-customer-coupon-audit-smoke.sql"
       - "scripts/rubi-local-product-media-audit-smoke.sql"
       - "scripts/rubi-local-support-faq-audit-smoke.sql"
@@ -259,6 +262,12 @@ jobs:
           -v merchant_id="$RUBI_QA_MERCHANT_USER_ID"
           -f scripts/rubi-local-business-quote-admin-audit-smoke.sql
       - name: Prove Opportunity Engine status audit and rollback on disposable PostgreSQL
+        run: >-
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1
+          -v master_id="$RUBI_QA_MASTER_USER_ID"
+          -v non_owner_id="$RUBI_QA_CONSUMER_USER_ID"
+          -f scripts/rubi-local-opportunity-alert-audit-smoke.sql
+      - name: Prove Opportunity Engine direct DML is denied on disposable PostgreSQL
         run: >-
           psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1
           -v master_id="$RUBI_QA_MASTER_USER_ID"
