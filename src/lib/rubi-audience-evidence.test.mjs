@@ -1,28 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {buildRubiAudienceEvidence} from "./rubi-audience-evidence.ts";
-const valid={
- source:"Ficha verificada do fornecedor, protocolo 123",
- observedAt:"2026-10-20",
- method:"Entrevista voluntária documentada",
- finding:"Público relatou dificuldades na seleção de produtos para casa",
- counterEvidence:"Amostra pequena e não representativa",
- hypothesis:"Demonstração de uso ajuda a reduzir dúvidas práticas"
-};
-test("real evidence fields form a bounded review-pending record",()=>{
- const result=buildRubiAudienceEvidence(valid);
- assert.equal(result.valid,true);
- assert.match(result.notes,/REVISÃO HUMANA PENDENTE/);
- assert.match(result.notes,/Contraevidência\/limites:/);
-});
-test("missing proof and fabricated future dates do not qualify",()=>{
- const invalid=buildRubiAudienceEvidence({...valid,source:"",counterEvidence:"",observedAt:"2099-12-30"});
- assert.equal(invalid.valid,false);
- assert.equal(invalid.notes,"");
- assert.ok(invalid.issues.length>=3);
-});
-test("oversized evidence cannot bypass database field limit",()=>{
- const oversized=buildRubiAudienceEvidence({...valid,finding:"Explicação observada ".repeat(100)});
- assert.equal(oversized.valid,false);
- assert.match(oversized.issues.join(" "),/1.400 caracteres/);
-});
+const valid={source:"Relatório público de pesquisa, referência 123",sourceKind:"interview",observedAt:"2026-10-20",sampleSize:8,consentConfirmed:true,containsPersonalData:false,method:"Entrevista voluntária documentada",finding:"Público relatou dificuldades na seleção de produtos para casa",counterEvidence:"Amostra pequena e não representativa",hypothesis:"Demonstração de uso ajuda a reduzir dúvidas práticas"};
+test("source-backed research records include type, sample, consent and privacy declaration",()=>{const r=buildRubiAudienceEvidence(valid);assert.equal(r.valid,true);assert.match(r.notes,/Tipo de fonte: interview/);assert.match(r.notes,/Amostra: 8/);assert.match(r.notes,/Consentimento: confirmado/);assert.match(r.notes,/Dados pessoais: não incluídos/);assert.match(r.notes,/REVISÃO HUMANA PENDENTE/);});
+test("participant research without sample or consent cannot be recorded",()=>{const r=buildRubiAudienceEvidence({...valid,sampleSize:0,consentConfirmed:false});assert.equal(r.valid,false);assert.ok(r.issues.some(x=>x.includes("quantidade real")));assert.ok(r.issues.some(x=>x.includes("consentimento")));assert.equal(r.notes,"");});
+test("documentary sources do not invent a participant sample",()=>{const r=buildRubiAudienceEvidence({...valid,sourceKind:"supplier_document",sampleSize:0,consentConfirmed:false});assert.equal(r.valid,true);assert.match(r.notes,/Amostra: 0/);assert.match(r.notes,/Consentimento: não aplicável/);});
+test("future dates, personal data and insecure source URLs are blocked",()=>{assert.equal(buildRubiAudienceEvidence({...valid,observedAt:"2099-12-30"}).valid,false);assert.equal(buildRubiAudienceEvidence({...valid,containsPersonalData:true}).valid,false);assert.equal(buildRubiAudienceEvidence({...valid,source:"http://example.com/research"}).valid,false);});
+test("oversized evidence cannot bypass database field limit",()=>{const r=buildRubiAudienceEvidence({...valid,finding:"Explicação observada ".repeat(100)});assert.equal(r.valid,false);assert.match(r.issues.join(" "),/1.400 caracteres/);});
