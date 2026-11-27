@@ -221,3 +221,21 @@ A matriz V1 revisada confirma 11.3 = 0.5/1.0. O baseline formal permanece 38.0/4
 5. Completar rollback, concorrência/idempotência e redação em cada família aplicável.
 6. Executar E2E, Hub QA e Sprint 33 QA no mesmo HEAD de release.
 7. Só então abrir release para main e revisar o ponto 11.3 na matriz.
+
+
+## Evidências incrementais confirmadas — 27/11
+
+### PR #368 — checks parciais aprovados
+No HEAD `fa0d2380057d84c6280a9d881e1b43382a1e25bf`:
+- Hub V1 Integration QA: sucesso (TypeScript e ESLint também passaram).
+- E2E autenticado: os smokes de tendências e bloqueio de usuários passaram no PostgreSQL descartável.
+- Passaram explicitamente: Owner/non-Owner e grants do trending RPC; execução bem-sucedida e ator atribuído; falha forçada da auditoria com rollback dos scores; concorrência de duas execuções com dois eventos; smoke de bloqueio de usuário; concorrência/idempotência do user-ban.
+- E2E ainda estava na etapa Playwright de jornadas autenticadas desktop/mobile; portanto, o workflow completo ainda não está aprovado.
+
+### PR #369 — compatibilidade do user-ban
+- Hub QA: TypeScript aprovado; ESLint em execução na última leitura.
+- E2E: instalação de dependências em andamento.
+- Não promover até os dois workflows terminarem no mesmo HEAD.
+
+### Status de pontuação
+Mesmo com os smokes locais aprovados, a sprint segue em +0 até concluir o E2E, integrar as PRs validadas, terminar o inventário transversal e executar a validação final conjunta.
