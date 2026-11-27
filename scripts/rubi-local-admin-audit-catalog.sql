@@ -79,6 +79,18 @@ select pg_catalog.jsonb_pretty(pg_catalog.jsonb_build_object(
     join pg_catalog.pg_proc p on p.oid = t.tgfoid
     where n.nspname = 'public' and not t.tgisinternal
   ), '[]'::jsonb),
+  'security_definer_anon_executable', coalesce((
+    select pg_catalog.jsonb_agg(pg_catalog.jsonb_build_object(
+      'name', p.proname,
+      'identity_arguments', pg_catalog.pg_get_function_identity_arguments(p.oid)
+    ) order by p.proname, pg_catalog.pg_get_function_identity_arguments(p.oid))
+    from pg_catalog.pg_proc p
+    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and p.prokind = 'f'
+      and p.prosecdef
+      and has_function_privilege('anon', p.oid, 'EXECUTE')
+  ), '[]'::jsonb),
   'unrestricted_public_write_policies', coalesce((
     select pg_catalog.jsonb_agg(pg_catalog.jsonb_build_object(
       'table', p.tablename,
