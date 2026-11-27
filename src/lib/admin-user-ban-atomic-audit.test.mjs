@@ -14,6 +14,7 @@ test("admin ban server action is Owner-gated and passes the authenticated actor"
 });
 
 test("database function verifies the supplied actor is an Owner even under service_role", () => {
+  assert.match(migration, /set search_path = ''/i);
   assert.match(migration, /v_actor is null or not exists\([\s\S]*r\.user_id = v_actor and r\.role::text = 'owner'/i);
   assert.match(migration, /auth\.uid\(\) is not null and auth\.uid\(\) is distinct from v_actor/i);
   assert.match(migration, /revoke all on function public\.admin_set_profile_banned\(uuid, boolean, uuid\)[\s\S]*from public, anon, authenticated/i);
