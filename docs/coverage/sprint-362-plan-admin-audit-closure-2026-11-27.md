@@ -161,3 +161,29 @@ A PR #367 contém o teste de contrato para o schema versionado. A PR #366, que t
 
 ### Pontuação
 Nenhuma alteração: 38.0/48 (79,2%) permanece a referência formal. A PR #367 é evidência de contrato e vale +0 isoladamente. O critério 11.3 continua sem aceite integral.
+
+
+## Sprint 362 — pacote de recálculo manual de tendências preparado (PR #368)
+
+A PR #368 implementa o fechamento do gap do recálculo manual de tendências, mantendo a lógica de pontuação delegada às funções `calculate_product_demand` e `calculate_product_trend_velocity` existentes.
+
+### Arquitetura da entrega
+- Reproduz o entrypoint `refresh_demand_and_trend_scores()` observado no banco conectado: percorre produtos e atualiza os dois scores chamando as funções de cálculo existentes. As fórmulas dos helpers não são redefinidas.
+- O handler `recalculateTrendingManual` passa a chamar exclusivamente `rubi_recalculate_trending_audited(p_actor)`.
+- A RPC verifica Owner dentro do banco mesmo sob `service_role`, serializa chamadas por advisory transaction lock e bloqueia a linha da regra.
+- Atualização dos produtos, `automation_logs` e `admin_audit_log` são transacionais.
+- Falha na atualização ou na auditoria de sucesso reverte o sub-bloco; registra tentativa malsucedida em ambos os logs. O erro armazenado usa somente SQLSTATE, sem persistir SQLERRM bruto que poderia conter valores sensíveis.
+- Execução pública, anon e authenticated é revogada; apenas service_role recebe EXECUTE.
+
+### Evidência planejada no CI
+- Smoke de autorização/grants, sucesso e atribuição do ator.
+- Trigger de falha forçada no evento de sucesso para provar rollback das alterações em produtos e ausência de log de sucesso adicional.
+- Duas chamadas simultâneas para provar serialização e dois eventos auditados independentes.
+- Teste de contrato do handler e da migration.
+- E2E local e Hub QA executados no mesmo HEAD; Sprint 33 QA deve também ser confirmado no candidato final.
+
+### Estado
+PR #368 aberta e workflows E2E/Hub QA em execução no HEAD `9d30ef670d39e33acf1b4aac91bfee06a2f36c7a`. Não marcar como aprovada até execução dos novos smokes e conclusão verde. Nenhum SQL foi aplicado ao Supabase remoto.
+
+### Pontuação
++0 nesta etapa. É candidata de cobertura para o gap de tendências no critério 11.3, mas a pontuação depende da aprovação integral da Sprint 362 e do aceite formal da rubrica.
