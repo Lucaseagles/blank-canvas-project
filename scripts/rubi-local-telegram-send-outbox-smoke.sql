@@ -43,6 +43,7 @@ begin
   end loop;
 end
 $denials$;
+reset role;
 
 -- Toggleable trigger forces audit failures to prove both transaction boundaries.
 select set_config('rubi.qa.reject_telegram_audit','true',true);
@@ -84,6 +85,7 @@ $rollback$;
 
 select set_config('rubi.qa.reject_telegram_audit','false',true);
 
+set local role service_role;
 do $prepare$
 declare
   v_id uuid;
