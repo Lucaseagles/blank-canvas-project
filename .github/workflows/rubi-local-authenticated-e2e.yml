@@ -22,6 +22,8 @@ on:
       - "scripts/rubi-local-customer-coupon-audit-smoke.sql"
       - "scripts/rubi-local-product-media-audit-smoke.sql"
       - "scripts/rubi-local-support-faq-audit-smoke.sql"
+      - "scripts/rubi-local-admin-user-ban-audit-smoke.sql"
+      - "scripts/rubi-local-admin-user-ban-concurrency.sh"
       - "scripts/rubi-local-strategy-orchestration-pause-concurrency.sh"
       - "scripts/rubi-local-partner-academy-progress-smoke.sql"
       - "scripts/rubi-local-story-offer.e2e.spec.mjs"
