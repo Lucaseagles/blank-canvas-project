@@ -153,8 +153,16 @@ begin
     raise exception 'Owner authorization required';
   end if;
   if p_status not in ('sent','failed','unknown')
-     or (p_status = 'sent' and (p_provider_message_id is null or p_result_code is not null))
-     or (p_status <> 'sent' and p_result_code not in ('telegram_rejected','network_unknown','response_invalid')) then
+     or (p_status = 'sent' and (
+       p_provider_message_id is null
+       or pg_catalog.btrim(p_provider_message_id) = ''
+       or p_result_code is not null
+     ))
+     or (p_status <> 'sent' and (
+       p_provider_message_id is not null
+       or p_result_code is null
+       or p_result_code not in ('telegram_rejected','network_unknown','response_invalid')
+     )) then
     raise exception 'Invalid Telegram final status';
   end if;
   if p_provider_message_id is not null and length(p_provider_message_id) > 128 then
