@@ -63,3 +63,15 @@ Essas famílias não devem ser reimplementadas. Permanecem sujeitas a revisão d
 ## Próxima ação
 
 Concluir o inventário real sobre a `main`, comparar as famílias já protegidas e selecionar apenas os gaps restantes para PRs filhas desta branch. A release final será aberta para `main) somente após todos os gates estarem verdes.
+
+## Primeiros achados do inventário (27/11)
+
+| Superfície | Evidência na main | Classificação atual | Próxima ação |
+|---|---|---|---|
+| Status de usuário banido | `setUserBanned` → `admin_set_profile_banned`; migration `20260909001332_bfe38b06-238c-4983-91b5-08671bc4b254.sql` atualiza `profiles` e insere `USER_BAN_STATUS_CHANGED` em `admin_audit_log` na mesma função SQL | Mutação auditada; ainda revisar bloqueio concorrente e matriz negativa no smoke | Não reimplementar; adicionar/confirmar prova de concorrência e não-Owner |
+| Configurações administrativas | `updateAdminSetting` → `rubi_update_admin_setting_audited`; `createBanner`/delete → RPCs auditadas | Caminhos server protegidos por `requireOwnerRole`; RPCs específicas | Reutilizar testes/migrations; revisar cobertura de todas as fontes do registry |
+| Execução manual de tendências | `recalculateTrendingManual` → `refresh_demand_and_trend_scores`; registra apenas `automation_logs` via `log_automation_activity`, sem evento explícito em `admin_audit_log` no handler | **Gap candidato confirmado no código da main** | Localizar/recuperar a definição SQL real antes de criar wrapper transacional; a busca do repositório encontrou a chamada no handler e o tipo gerado, mas não uma migration que defina a função |
+| Lançamento manual de vídeos agendados | `processVideoLaunches` → `rubi_process_due_video_launch_audited` por vídeo; migration `20261118010100_rubi_video_launch_atomic_audit.sql` | Mutação por vídeo já auditada atomicamente | Confirmar no smoke o comportamento de lote e manter sem duplicar a auditoria de cada vídeo |
+| Integridade do log administrativo | `getRubiMasterAuditIntegrityAdmin` percorre registros e declara explicitamente que não garante cobertura de todas as mutações | Leitura/diagnóstico, não prova de inventário | Usar como verificação complementar, nunca como certificado global |
+
+**Limite:** o achado de tendências ainda não é uma implementação pronta. A função SQL subjacente não aparece na árvore versionada consultada; não vou inventar sua lógica nem fazer uma migration que dependa de um objeto ausente no banco descartável. O pacote A continua aberto até o inventário de todas as server functions e migrations ser concluído.
