@@ -18,6 +18,7 @@ on:
       - "scripts/rubi-local-analytics-privacy-smoke.sql"
       - "scripts/rubi-local-public-table-privilege-hardening-smoke.sql"
       - "scripts/rubi-local-strategy-orchestration-pause-audit-smoke.sql"
+      - "scripts/rubi-local-opportunity-refresh-audit-smoke.sql"
       - "scripts/rubi-local-strategy-orchestration-pause-concurrency.sh"
       - "scripts/rubi-local-partner-academy-progress-smoke.sql"
       - "scripts/rubi-local-story-offer.e2e.spec.mjs"
