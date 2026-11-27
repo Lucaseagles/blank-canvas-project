@@ -38,6 +38,7 @@ declare
   v_processed integer := 0;
   v_error text;
   v_error_code text;
+  v_entity_id_type text;
 begin
   if p_actor is null or not exists (
     select 1 from public.user_roles r
@@ -69,6 +70,18 @@ begin
     );
   end if;
 
+  select pg_catalog.format_type(a.atttypid, a.atttypmod)
+    into v_entity_id_type
+    from pg_catalog.pg_attribute a
+   where a.attrelid = 'public.admin_audit_log'::regclass
+     and a.attname = 'entity_id'
+     and a.attnum > 0
+     and not a.attisdropped;
+
+  if v_entity_id_type not in ('text', 'uuid') then
+    raise exception 'Unsupported admin_audit_log.entity_id type';
+  end if;
+
   begin
     perform public.refresh_demand_and_trend_scores();
 
@@ -86,19 +99,25 @@ begin
       'success'
     );
 
-    insert into public.admin_audit_log(
-      actor_user_id, action_type, entity_type, entity_id, previous_value, new_value
-    ) values (
-      p_actor,
-      'RUBI_AUTOMATION_TRENDING_RECALCULATED',
-      'automation_rules',
-      v_rule.id::text,
-      pg_catalog.jsonb_build_object('is_active', v_rule.is_active),
-      pg_catalog.jsonb_build_object(
-        'processed', v_processed,
-        'triggered_by', 'admin_manual'
-      )
-    );
+    if v_entity_id_type = 'uuid' then
+      insert into public.admin_audit_log(
+        actor_user_id, action_type, entity_type, entity_id, previous_value, new_value
+      ) values (
+        p_actor, 'RUBI_AUTOMATION_TRENDING_RECALCULATED',
+        'automation_rules', v_rule.id,
+        pg_catalog.jsonb_build_object('is_active', v_rule.is_active),
+        pg_catalog.jsonb_build_object('processed', v_processed, 'triggered_by', 'admin_manual')
+      );
+    else
+      insert into public.admin_audit_log(
+        actor_user_id, action_type, entity_type, entity_id, previous_value, new_value
+      ) values (
+        p_actor, 'RUBI_AUTOMATION_TRENDING_RECALCULATED',
+        'automation_rules', v_rule.id::text,
+        pg_catalog.jsonb_build_object('is_active', v_rule.is_active),
+        pg_catalog.jsonb_build_object('processed', v_processed, 'triggered_by', 'admin_manual')
+      );
+    end if;
 
     return pg_catalog.jsonb_build_object(
       'success', true, 'processed', v_processed
@@ -122,19 +141,25 @@ begin
       'failed'
     );
 
-    insert into public.admin_audit_log(
-      actor_user_id, action_type, entity_type, entity_id, previous_value, new_value
-    ) values (
-      p_actor,
-      'RUBI_AUTOMATION_TRENDING_RECALCULATION_FAILED',
-      'automation_rules',
-      v_rule.id::text,
-      pg_catalog.jsonb_build_object('is_active', v_rule.is_active),
-      pg_catalog.jsonb_build_object(
-        'error', v_error,
-        'triggered_by', 'admin_manual'
-      )
-    );
+    if v_entity_id_type = 'uuid' then
+      insert into public.admin_audit_log(
+        actor_user_id, action_type, entity_type, entity_id, previous_value, new_value
+      ) values (
+        p_actor, 'RUBI_AUTOMATION_TRENDING_RECALCULATION_FAILED',
+        'automation_rules', v_rule.id,
+        pg_catalog.jsonb_build_object('is_active', v_rule.is_active),
+        pg_catalog.jsonb_build_object('error', v_error, 'triggered_by', 'admin_manual')
+      );
+    else
+      insert into public.admin_audit_log(
+        actor_user_id, action_type, entity_type, entity_id, previous_value, new_value
+      ) values (
+        p_actor, 'RUBI_AUTOMATION_TRENDING_RECALCULATION_FAILED',
+        'automation_rules', v_rule.id::text,
+        pg_catalog.jsonb_build_object('is_active', v_rule.is_active),
+        pg_catalog.jsonb_build_object('error', v_error, 'triggered_by', 'admin_manual')
+      );
+    end if;
 
     return pg_catalog.jsonb_build_object(
       'success', false, 'processed', 0, 'error', v_error
