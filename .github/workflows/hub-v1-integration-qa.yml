@@ -128,6 +128,7 @@ jobs:
           src/lib/rubi-audience-evidence-status.test.mjs
           src/lib/rubi-audience-movement-summary.test.mjs
           src/lib/rubi-movement-controlled-ab.test.mjs
+          src/lib/rubi-audience-evidence-premium-ui.test.mjs
       - name: RUBI movement publication safety tests
         run: npm run test:rubi-publication
       - name: RUBI Kairos launch readiness tests

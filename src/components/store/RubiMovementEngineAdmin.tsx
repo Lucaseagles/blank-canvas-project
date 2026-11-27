@@ -7,6 +7,7 @@ import {RubiMovementVariantsAdmin} from "@/components/store/RubiMovementVariants
 import {RubiMovementPerformanceAdmin} from "@/components/store/RubiMovementPerformanceAdmin";
 import {RubiAudienceMovementSummaryAdmin} from "@/components/store/RubiAudienceMovementSummaryAdmin";
 import {RubiAudienceEvidenceBuilder} from "@/components/store/RubiAudienceEvidenceBuilder";
+import {RubiAudienceEvidenceStatusCard} from "@/components/store/RubiAudienceEvidenceStatusCard";
 import {RubiAudienceEvidenceReviewAdmin} from "@/components/store/RubiAudienceEvidenceReviewAdmin";
 import {assessRubiAudienceEvidenceStatus} from "@/lib/rubi-audience-evidence-status";
 import {emptyRubiMovement,rubiMovementChecklist,rubiMovementEditorialQuality,type RubiMovement} from "@/lib/rubi-movements";
@@ -39,6 +40,7 @@ export function RubiMovementEngineAdmin({products}:{products:Product[]}){
  const editorialQuality=draft?rubiMovementEditorialQuality(draft):null;
  const evidenceStatus=draft?assessRubiAudienceEvidenceStatus(draft.evidence_notes):null;
  const canSendToReview=check?.missing.length===0&&editorialQuality?.ready===true;
+ const checklistPercent=check&&check.total>0?Math.round(check.completed/check.total*100):0;
  return <section aria-label="RUBI Movement Engine" className="space-y-5 rounded-3xl border border-primary/30 bg-card p-6">
   <header className="space-y-2"><p className="text-xs font-black uppercase tracking-widest text-primary">RUBI 11× · Movement Engine</p>
    <h2 className="text-2xl font-black">Movimentos comerciais por produto</h2>
@@ -85,13 +87,13 @@ export function RubiMovementEngineAdmin({products}:{products:Product[]}){
    {field("narrative","Qual história conecta tudo?","Gancho → situação → benefício → convite para conhecer",4)}
    {field("evidence_notes","Quais fontes sustentam a mensagem?","Referência à ficha do fornecedor e direitos de uso")}
    <RubiAudienceEvidenceBuilder onApply={notes=>change("evidence_notes",notes)}/>
-   {evidenceStatus&&<aside aria-label="Situação da evidência comercial" className="rounded-xl border border-amber-500/30 p-3 space-y-1">
-    <p className="text-sm font-bold">{evidenceStatus.label}</p>
-    {evidenceStatus.blockers.map((issue,index)=><p key={index} className="text-xs text-muted-foreground">{issue}</p>)}
-    <p className="text-xs text-muted-foreground">A classificação não libera o movimento, a publicidade nem concede validação de mercado.</p>
-   </aside>}
-   <div className="rounded-lg bg-muted/40 p-3 text-sm"><strong>Checklist de preparação: {check?.completed}/{check?.total}</strong>
-    <p className="mt-1 text-muted-foreground">{check?.missing.length? "Faltam: "+check.missing.join(", "):"Campos completos. A revisão e a comprovação ainda são humanas."}</p>
+   {evidenceStatus&&<RubiAudienceEvidenceStatusCard status={evidenceStatus}/>}
+   <div className="rounded-xl border bg-muted/30 p-4 text-sm space-y-3">
+    <div className="flex items-center justify-between gap-3"><strong>Preparação editorial</strong><span className="text-xs font-bold tabular-nums text-muted-foreground">{check?.completed}/{check?.total} · {checklistPercent}%</span></div>
+    <div role="progressbar" aria-label="Progresso do checklist editorial" aria-valuemin={0} aria-valuemax={100} aria-valuenow={checklistPercent} className="h-2 overflow-hidden rounded-full bg-muted">
+     <div className="h-full rounded-full bg-primary transition-[width] duration-300" style={{width: checklistPercent+"%"}}/>
+    </div>
+    <p className="text-xs leading-relaxed text-muted-foreground">{check?.missing.length? "Para concluir o rascunho: "+check.missing.join(", "):"Campos editoriais completos. A revisão e a comprovação de mercado continuam sendo etapas distintas."}</p>
     {editorialQuality&&!editorialQuality.ready&&<p role="alert" className="mt-2 text-amber-700 dark:text-amber-300">Corrija antes da revisão: {editorialQuality.repeated.join(" · ")}</p>}
    </div>
    <aside className="space-y-2 rounded-xl border bg-muted/20 p-3" aria-label="Plano de validação do público e do ângulo">
