@@ -19,15 +19,25 @@ export function summarizeRubiAudienceMovements(
   const key=identity(plan.channel,plan.campaign);
   collisions.set(key,(collisions.get(key)??0)+1);
  }
- const byTraffic=new Map(traffic.filter(t=>t.productId===productId).map(t=>[identity(t.channel,t.campaign),t]));
+ // Duplicate aggregate keys are ambiguous telemetry, not "last row wins".
+ const trafficByKey=new Map<string,RubiMovementTrafficRow[]>();
+ for(const row of traffic.filter(t=>t.productId===productId)){
+  const key=identity(row.channel,row.campaign);
+  const rows=trafficByKey.get(key)??[];
+  rows.push(row);
+  trafficByKey.set(key,rows);
+ }
  return movements.map(m=>{
   let observedCampaigns=0,missingCampaigns=0,ambiguousCampaigns=0,viewEvents=0,checkoutIntents=0;
   for(const p of plans){
    if(byVariant.get(p.variant_id)!==m.id)continue;
    const key=identity(p.channel,p.campaign);
    if((collisions.get(key)??0)>1){ambiguousCampaigns++;continue;}
-   const row=byTraffic.get(key);
+   const matches=trafficByKey.get(key)??[];
+   if(matches.length>1){ambiguousCampaigns++;continue;}
+   const row=matches[0];
    if(!row||!Number.isSafeInteger(row.viewEvents)||row.viewEvents<=0||
+     !Number.isSafeInteger(row.viewSessions)||row.viewSessions<0||row.viewSessions>row.viewEvents||
      !Number.isSafeInteger(row.checkoutIntents)||row.checkoutIntents<0||
      row.checkoutIntents>row.viewEvents){missingCampaigns++;continue;}
    observedCampaigns++;viewEvents+=row.viewEvents;checkoutIntents+=row.checkoutIntents;
