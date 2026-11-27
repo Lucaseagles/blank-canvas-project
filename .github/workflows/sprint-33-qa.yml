@@ -107,6 +107,9 @@ jobs:
       - name: Sprint 365 administrative mutation inventory regression
         run: npm run test:rubi-admin-mutation-inventory
 
+      - name: Sprint 365 SECURITY DEFINER execution grants regression
+        run: node --test src/lib/rubi-definer-function-execute-grants.test.mjs
+
       - name: TypeScript
         run: npx tsc --noEmit
 
