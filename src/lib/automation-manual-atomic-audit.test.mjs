@@ -18,9 +18,9 @@ function section(name, nextName) {
 
 test("manual trending delegates to the Owner-attributed atomic audit RPC", () => {
   const body = section("recalculateTrendingManual", "runRetentionCheck");
-  assert.match(body, /middleware\\(\\[requireOwnerRole\\]\\)/);
+  assert.match(body, /middleware\(\[requireOwnerRole\]\)/);
   assert.match(body, /rubi_recalculate_trending_audited/);
-  assert.match(body, /p_actor: context\\.userId/);
+  assert.match(body, /p_actor: context\.userId/);
   assert.doesNotMatch(body, /refresh_demand_and_trend_scores|logAutomationActivity/);
 });
 
@@ -52,9 +52,9 @@ test("manual trending migration preserves the scoring refresh and audits atomica
     "utf8",
   );
   assert.match(trending, /create or replace function public\.refresh_demand_and_trend_scores\(\)/i);
-  assert.match(trending, /security invoker\\s+set search_path = ''/i);
-  assert.match(trending, /revoke all on function public\\.refresh_demand_and_trend_scores\\(\\)[\\s\\S]*from public, anon, authenticated/i);
-  assert.match(trending, /grant execute on function public\\.refresh_demand_and_trend_scores\\(\\)[\\s\\S]*to service_role/i);
+  assert.match(trending, /security invoker\s+set search_path = ''/i);
+  assert.match(trending, /revoke all on function public\.refresh_demand_and_trend_scores\(\)[\s\\S]*from public, anon, authenticated/i);
+  assert.match(trending, /grant execute on function public\.refresh_demand_and_trend_scores\(\)[\s\\S]*to service_role/i);
   assert.match(trending, /public\.calculate_product_demand\(r\.id\)/);
   assert.match(trending, /public\.calculate_product_trend_velocity\(r\.id\)/);
   assert.match(trending, /rubi_recalculate_trending_audited/i);
@@ -64,7 +64,7 @@ test("manual trending migration preserves the scoring refresh and audits atomica
   assert.match(trending, /insert into public\.admin_audit_log/i);
   assert.match(trending, /RUBI_AUTOMATION_TRENDING_RECALCULATION_FAILED/);
   assert.match(trending, /get stacked diagnostics v_error_code = returned_sqlstate/i);
-  assert.doesNotMatch(trending, /left\\(sqlerrm/i);
+  assert.doesNotMatch(trending, /left\(sqlerrm/i);
   assert.match(trending, /revoke all on function public\.rubi_recalculate_trending_audited\(uuid\)/i);
   assert.match(trending, /grant execute on function public\.rubi_recalculate_trending_audited\(uuid\)[\s\S]*to service_role/i);
 });
