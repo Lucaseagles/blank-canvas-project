@@ -16,8 +16,8 @@ test("marketplace writes use the audited Owner RPC and sensitive fields stay pri
   assert.ok(migration.includes('drop policy if exists "Admins manage marketplaces"'));
   assert.ok(migration.includes("create policy marketplaces_owner_select_s362"));
   assert.ok(migration.includes("revoke insert, update, delete, truncate, references, trigger"));
-  assert.ok(migration.includes("revoke select (api_config, api_status, affiliate_link_structure)"));
-  assert.ok(migration.includes("grant select (id, name, slug, status, created_at)"));
+  assert.ok(migration.includes("revoke select (api_config, api_status, affiliate_link_structure, updated_at)"));
+  assert.ok(migration.includes("grant select (id, name, slug, status, created_at, icon)"));
   assert.ok(migration.includes("rubi_manage_marketplace_audited"));
   assert.ok(rpc.includes("MARKETPLACE_CREDENTIALS_UPDATED"));
   assert.ok(rpc.includes("values_redacted"));
