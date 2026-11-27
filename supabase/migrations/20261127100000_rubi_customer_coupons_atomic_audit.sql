@@ -96,7 +96,7 @@ begin
     p_actor,
     v_action_type,
     'customer_coupon',
-    v_id,
+    v_id::text,
     case when p_action = 'create' then '{}'::jsonb
          when p_action = 'delete' then public.sanitize_admin_audit_value(to_jsonb(v_before))
          else public.sanitize_admin_audit_value(to_jsonb(v_before)) end,
