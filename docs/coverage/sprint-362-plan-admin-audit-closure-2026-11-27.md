@@ -272,3 +272,28 @@ A PR #369, assim como a #368, foi integrada somente à branch `sprint/362-admin-
 As PRs #368 e #369 passaram separadamente em seus HEADs. Antes da release, executar E2E e Hub QA no mesmo HEAD combinado da branch; depois, abrir PR final para `main` e exigir Hub V1, Sprint 33 QA e E2E verdes no mesmo candidato.
 
 **Pontuação:** +0 por enquanto. As duas famílias administrativas estão cobertas, mas os gates 1–7 de 11.3 ainda exigem inventário transversal e fechamento dos writers remanescentes.
+
+
+## Continuação — PRs #370 e #371 (27/11)
+
+### PR #370 — Telegram send outbox
+A PR #370 foi integrada por squash à branch da Sprint 362 no commit `2c90720655222f1c9f788fb5426c9d357cb86946`.
+- Corrigiu o fixture do smoke para usar o catálogo legado `products` exigido por `telegram_messages`, sem misturar IDs de `hub_products`.
+- Manteve os gates de autorização, rollback, idempotência e finalização da outbox.
+- Hub V1 QA e E2E autenticado foram aprovados no candidato da PR.
+- Integração somente na branch de sprint; não promoveu pontuação.
+
+### PR #371 — hardening de DML direto em social_channels
+A PR #371 foi integrada por squash à branch da Sprint 362 no commit `d0867525f7f40007fadd220665a210228a8c1001`.
+- Removeu a policy Owner `FOR ALL`, preservando SELECT Owner-only.
+- Revogou INSERT/UPDATE/DELETE direto de `public`, `anon` e `authenticated`; manteve escrita pela RPC auditada sob `service_role`.
+- Adicionou teste de contrato, smoke PostgreSQL e execução nos workflows Hub V1 e E2E.
+- Hub V1 Integration QA: SUCCESS, 104 etapas concluídas, incluindo TypeScript, ESLint e o novo teste de hardening.
+- E2E autenticado: SUCCESS, 54 etapas concluídas; smoke social-channel DML, negação dos três perfis, rollback, lifecycle e redação de URL aprovados; jornadas autenticadas mobile/desktop também aprovadas.
+- A migration permanece versionada na branch da sprint; não foi aplicada ao Supabase remoto.
+
+### Reconciliação do estado atual
+- Branch de integração atual: `d0867525f7f40007fadd220665a210228a8c1001`.
+- PRs #370 e #371 integradas à branch de sprint, não à release/main.
+- Os checks da #371 passaram no HEAD da PR; o candidato final ainda precisa executar Hub V1, E2E e Sprint 33 QA no mesmo HEAD após o inventário global.
+- O placar oficial permanece **38.0/48 = 79.2%**; esta continuação soma **+0** até o aceite formal do critério 11.3.
