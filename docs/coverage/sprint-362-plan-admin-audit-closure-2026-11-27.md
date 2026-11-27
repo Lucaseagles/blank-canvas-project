@@ -83,3 +83,60 @@ Concluir o inventário real sobre a `main`, comparar as famílias já protegidas
 | #362 | User-ban: Owner verificado também sob `service_role`, lock da linha, rollback atômico e retry idempotente | `sprint/362-admin-audit-closure` | Integrada à branch de sprint em `67e5f03a3d245022bcd2f5970f236a162e2eebc5` | +0 |
 
 A PR #362 foi integrada somente à branch da Sprint 362, não à `main`. Seus testes de contrato e smoke foram conectados aos workflows que serão executados no candidato final da sprint. A validação completa ainda está pendente; não declarar a mutação fechada antes dos workflows e da revisão transversal.
+
+
+## Revisão transversal adicional — 27/11
+
+### Mapa de server functions revisadas
+
+| Arquivo/superfície | Caminho de escrita observado | Classificação | Evidência / decisão |
+|---|---|---|---|
+| `admin-users.functions.ts` | `setUserBanned` → `admin_set_profile_banned` | RPC auditada | Reutiliza #362; a #363 acrescenta teste concorrente de duas requisições com mesmo estado desejado. |
+| `admin-settings.functions.ts` | `rubi_update_admin_setting_audited`, `rubi_create_banner_audited`, `rubi_delete_banner_audited` | RPCs auditadas | Sem DML direto nos handlers revisados. |
+| `admin-publishing.functions.ts` | criação/decisão de publicação e fila de orquestração via RPCs `*_audited` | RPCs auditadas | O lançamento de vídeo também usa `rubi_process_due_video_launch_audited`; manter prova SQL por vídeo e evitar log duplicado de mutação. |
+| `admin-product-operations.functions.ts` | atualização inline e status em lote via RPCs `*_audited` | RPCs auditadas | Verificar os respectivos testes e grants no fechamento; não reimplementar. |
+| `admin-modules.functions.ts` | habilitar/reordenar módulos e badges via RPCs `*_audited` | RPCs auditadas | Sem DML direto nos handlers revisados. |
+| `admin_intel.functions.ts` | categorias e grupos de ofertas via RPCs `*_audited` | RPCs auditadas | Sem DML direto nos handlers revisados. |
+| `commercial-admin.functions.ts` | decisão de perfil comercial via `rubi_decide_commercial_profile_audited` | RPC auditada | Reutilizar a migração comercial existente. |
+| `partner-agreements-admin.functions.ts` | contrato/comissão via `rubi_set_partner_agreement_audited` | RPC auditada | Reutilizar a migração e teste de contrato existentes. |
+| `admin-audit.functions.ts` | execução do diagnóstico registra `ADMIN_AUDIT_RUN` no histórico | Escrita de trilha de diagnóstico | Não altera entidade de negócio; falha de persistência interrompe resposta de sucesso. Não confundir com prova de cobertura de todas as mutações. |
+| `automation.functions.ts` — tendências | `refresh_demand_and_trend_scores` e depois `log_automation_activity` | **Gap candidato permanece aberto** | O código executa a atualização e grava `automation_logs` em chamada separada. A definição SQL não foi localizada em migrations versionadas; nenhuma wrapper/migration será criada até recuperar e testar a implementação real. |
+| `automation.functions.ts` — retenção | `rubi_run_automation_action_audited` | RPC auditada | Migração #361 faz Owner check, lock transacional, execução e evento em `admin_audit_log` na mesma transação. |
+
+### Evidência nova da PR #363
+
+A PR #363 adiciona um smoke PostgreSQL descartável com duas transações simultâneas que solicitam a mesma transição de bloqueio. O aceite exige exatamente um evento de auditoria e estado final bloqueado. O workflow autenticado está em execução no HEAD `5e86f761289143465e9a61c50691bd5ea1fc4ed8`; não marcar a evidência como aprovada antes da conclusão verde do job.
+
+### Limites desta revisão
+
+- Este mapa é uma revisão dirigida dos handlers administrativos listados, não um certificado de inventário exaustivo.
+- Leitura protegida por `requireOwnerRole` não substitui teste de GRANT/RLS no PostgreSQL.
+- Uma RPC com sufixo `_audited` só é considerada comprovada quando migration, autorização, transação, rollback e smoke correspondente forem verificados.
+- A definição SQL real do recálculo de tendências foi recuperada por inspeção read-only; o wrapper atômico, os grants e o smoke local ainda precisam ser versionados e aprovados.
+- A PR #363 e esta documentação são filhas da Sprint 362: pontuação permanece +0 até release final, validação integral e aceite do critério.
+
+
+## Recuperação da definição real do recálculo de tendências — 27/11
+
+A investigação read-only do projeto Supabase conectado `heartful-helper-box` (`akfvkjarpgocdsieuvvq`) confirmou que `public.refresh_demand_and_trend_scores()` existe no banco ativo, embora sua definição não esteja presente na árvore de migrations versionadas consultada.
+
+### Definição observada no banco
+
+- Assinatura: `public.refresh_demand_and_trend_scores()`, retorno `void`.
+- Segurança: `SECURITY DEFINER`, `search_path = public`.
+- Comportamento: percorre os IDs de `public.products` e atualiza `demand_score` e `trend_velocity` usando `public.calculate_product_demand(id)` e `public.calculate_product_trend_velocity(id)`.
+- A função atual não grava `admin_audit_log` e não recebe ator.
+- `public.log_automation_activity(uuid,jsonb,text,text)` grava apenas em `automation_logs`; também é `SECURITY DEFINER`.
+
+### Decisão técnica
+
+O bloqueio de descoberta foi resolvido, mas o gate de auditoria continua aberto. A próxima implementação candidata é uma RPC Owner-only, com ator explícito, lock/controle de execução, chamada da função existente, registro em `automation_logs` e `admin_audit_log` na mesma transação. Se qualquer gravação de auditoria falhar, o recálculo inteiro deve sofrer rollback.
+
+A inspeção foi estritamente de leitura. Nenhum dado, função, migration, grant ou configuração do Supabase remoto foi alterado.
+
+### Verificação pendente
+
+- Recuperar/representar a função existente de modo reprodutível em migrations versionadas, sem substituir sua lógica por uma aproximação.
+- Validar grants efetivos e a identidade Owner dentro da RPC.
+- Smoke PostgreSQL descartável: negar não-Owner, provar atomicidade com falha forçada de auditoria e provar serialização de duas execuções concorrentes.
+- Só então remover a chamada direta mais o log separado do handler e migrar para a RPC atômica.
