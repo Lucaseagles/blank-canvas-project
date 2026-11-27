@@ -38,6 +38,9 @@ on:
       - "scripts/rubi-local-manual-trending-audit-smoke.sql"
       - "scripts/rubi-local-admin-audit-catalog.sql"
       - "scripts/rubi-local-user-data-rls-hardening-smoke.sql"
+      - "scripts/rubi-local-security-definer-execute-hardening-smoke.sql"
+      - "supabase/migrations/20261127235970_rubi_security_definer_execute_hardening.sql"
+      - "src/lib/rubi-security-definer-execute-hardening.test.mjs"
       - "supabase/migrations/20261127235900_rubi_user_data_rls_policy_hardening.sql"
       - "src/lib/rubi-user-data-rls-hardening.test.mjs"
       - "src/lib/rubi-admin-audit-catalog.test.mjs"
@@ -165,13 +168,16 @@ jobs:
           import { readFile } from "node:fs/promises";
           const path = process.env.RUNNER_TEMP + "/rubi-admin-audit-catalog.json";
           const report = JSON.parse(await readFile(path, "utf8"));
-          for (const key of ["generated_at", "tables", "functions", "triggers", "unrestricted_public_write_policies", "limitations"]) {
+          for (const key of ["generated_at", "tables", "functions", "triggers", "unrestricted_public_write_policies", "security_definer_anon_executable", "limitations"]) {
             if (!(key in report)) throw new Error("Catalog snapshot missing " + key);
           }
-          if (!Array.isArray(report.tables) || !Array.isArray(report.functions) || !Array.isArray(report.triggers) || !Array.isArray(report.unrestricted_public_write_policies)) {
+          if (!Array.isArray(report.tables) || !Array.isArray(report.functions) || !Array.isArray(report.triggers) || !Array.isArray(report.unrestricted_public_write_policies) || !Array.isArray(report.security_definer_anon_executable)) {
             throw new Error("Catalog snapshot collections are invalid");
           }
-          if (report.unrestricted_public_write_policies.length) {
+          if (report.security_definer_anon_executable.length) {
+  throw new Error("Catalog contains SECURITY DEFINER functions executable by anon: " + report.security_definer_anon_executable.map(p => p.name + "(" + p.identity_arguments + ")").join(", "));
+}
+if (report.unrestricted_public_write_policies.length) {
             throw new Error("Catalog contains unrestricted PUBLIC/anon write policies: " + report.unrestricted_public_write_policies.map(p => p.table + "." + p.name).join(", "));
           }
           console.log("Read-only catalog snapshot validated: " + report.tables.length + " tables, " + report.functions.length + " functions, " + report.triggers.length + " triggers, zero unrestricted PUBLIC/anon write policies.");
@@ -206,6 +212,13 @@ jobs:
           -v consumer_id="$RUBI_QA_CONSUMER_USER_ID"
           -v merchant_id="$RUBI_QA_MERCHANT_USER_ID"
           -f scripts/rubi-local-user-data-rls-hardening-smoke.sql
+
+      - name: Verify SECURITY DEFINER execution grants and Owner actor checks
+        run: >-
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1
+          -v master_id="$RUBI_QA_MASTER_USER_ID"
+          -v consumer_id="$RUBI_QA_CONSUMER_USER_ID"
+          -f scripts/rubi-local-security-definer-execute-hardening-smoke.sql
 
       - name: Verify public table privilege hardening and future defaults
         run: psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f scripts/rubi-local-public-table-privilege-hardening-smoke.sql
