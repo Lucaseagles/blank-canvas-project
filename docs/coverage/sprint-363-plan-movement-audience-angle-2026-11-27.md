@@ -1,7 +1,7 @@
 # Sprint 363 — Movement Engine: validação de público e ângulo (critério 08.2)
 
 **Base:** `main` após Sprint 362, score agregado formal de referência **38.5/48 = 80.2%**.  
-**Branch:** `sprint/363-movement-audience-angle-coverage`  
+**Branch de integração:** `sprint/363-integration`  
 **Classificação inicial:** habilitador + cobertura candidata. **+0 ponto nesta PR.**
 
 ## Objetivo de fechamento
@@ -34,9 +34,9 @@ Limites conhecidos:
 | 1 | #384 — contrato e hardening de evidências | Validar estrutura, unicidade, limites e datas; preservar distinção entre declaração e validação de mercado | Contratos e regressões server-side | +0 |
 | 2 | #385 — upgrade premium do painel Master | Card visual por estado, progresso editorial acessível, clareza de bloqueios e experiência responsiva | Build, TypeScript, lint e contrato visual acessível | +0 |
 | 3 | #386 — cobertura operacional | Smoke PostgreSQL descartável para Owner/non-Owner, revisão obsoleta, auditoria atômica, rollback e histórico append-only | Jornada real em banco descartável e regressões de autorização | +0 |
-| 4 | #387 — cobertura completa e release consolidada | Gates finais no mesmo HEAD, reconciliação da rubrica, matriz, score e release única | Todos os gates e evidências aceitos; merge da branch de integração à main | Única PR elegível para conversão |
+| 4 | #388 — cobertura completa e release consolidada | Gates finais no mesmo HEAD, reconciliação da rubrica, matriz, score e release única | Todos os gates e evidências aceitos; merge da branch de integração à main | Única PR elegível para conversão |
 
-Os números correspondem às PRs criadas no GitHub. As PRs intermediárias são empilhadas e entram somente na branch `sprint/363-integration`, após seus próprios gates. Nenhuma delas será integrada diretamente à `main`. A PR #387 será a única PR de `sprint/363-integration` para `main`, depois do fechamento completo.
+Os números correspondem às PRs criadas no GitHub. As PRs intermediárias são empilhadas e entram somente na branch `sprint/363-integration`, após seus próprios gates. Nenhuma delas será integrada diretamente à `main`. A PR #388 será a única PR de `sprint/363-integration` para `main`, depois do fechamento completo.
 
 ## Definição de cobertura completa proposta para revisão
 
@@ -71,7 +71,7 @@ O critério 08.2 só poderá ser considerado completo se a implementação e a e
 - Gap agregado aritmético: **9.5/48 = 19.8%**.
 - Score individual atual de 08.2: **não reconciliado**; o 0.5 histórico da matriz Sprint 122 não será tratado como valor atual sem revalidação.
 - PRs #384–#386: +0 isoladamente.
-- Somente a PR final poderá propor novo score, após todos os gates e reconciliação formal.
+- Somente a PR #388 poderá propor novo score, após todos os gates e reconciliação formal.
 - Nenhuma migration será aplicada ao Supabase remoto sem autorização explícita; smokes serão executados em PostgreSQL/Supabase descartável.
 
 ## Próximas decisões técnicas
