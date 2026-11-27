@@ -368,3 +368,41 @@ A PR #374 foi integrada por squash à branch da Sprint 362 no commit `732e58557d
 - Branch de integração após PR #374: `732e58557dbce2be0f9726e14125e3ed8b150c81`.
 - PRs filhas #370, #371, #372, #373 e #374 estão integradas à branch da sprint, não à `main`.
 - A nova frente de hardening do conjunto de tabelas de Admin Settings está em preparação na branch `sprint/362-child-admin-settings-dml-hardening`; não deve ser promovida antes de seus smokes e workflows passarem.
+
+
+## PR #376 integrada — hardening transversal de Admin Settings
+
+A PR #376 foi integrada por squash à branch da Sprint 362 no commit `f4a968a3993b3be649c9429a535ca780e594e2e4`.
+
+### Superfícies endurecidas
+Nove tabelas reconstruídas e exercitadas no PostgreSQL descartável:
+- `app_points_config`
+- `automation_rules`
+- `banners`
+- `compliance_rules`
+- `feed_mix_config`
+- `personalization_weights`
+- `social_proof_config`
+- `telegram_config`
+- `whatsapp_config`
+
+A tabela `feature_flags` foi identificada no snapshot read-only do projeto conectado, mas não existe no conjunto de migrations que reconstrói o banco local. A migration agora aplica a proteção condicionalmente se a relação existir; não cria uma tabela fictícia nem conta essa superfície como exercitada no ambiente descartável.
+
+### Correção
+- Policies Owner `ALL` convertidas em SELECT Owner-only nas tabelas versionadas.
+- Revogados INSERT/UPDATE/DELETE de PUBLIC, anon e authenticated.
+- DML preservado para `service_role` e RPCs auditadas genéricas/específicas.
+- Leitura pública de banners ativos preservada (policy e grant SELECT anon).
+- WhatsApp mantém a policy de leitura; somente policies de escrita direta foram removidas.
+- Nenhuma migration aplicada ao Supabase remoto.
+
+### Evidências no HEAD da PR #376
+- Hub V1 Integration QA: SUCCESS, 107 etapas concluídas; TypeScript e ESLint aprovados; novo teste de contrato aprovado.
+- E2E autenticado dos quatro perfis: SUCCESS, 55 etapas concluídas; migration aplicada; smoke PostgreSQL passou para as nove tabelas versionadas, incluindo Owner/non-Owner, privilégios, bloqueio de INSERT/UPDATE/DELETE e leitura pública de banners.
+- PR integrada à branch da sprint após ambos os workflows verdes.
+
+### Pontuação e estado
+- Score permanece **38.0/48 = 79.2%**; PR #376 soma **+0 isoladamente** até o fechamento integral do critério 11.3.
+- Branch de integração após PR #376: `f4a968a3993b3be649c9429a535ca780e594e2e4`.
+- PRs filhas #370, #371, #372, #373, #374 e #376 estão integradas à branch da sprint, não à `main`.
+- Próxima frente identificada por inspeção read-only: hardening de DML direto em `videos`, `video_products` e `bridge_videos`. As três já possuem RPCs auditadas e políticas de leitura pública que precisam ser preservadas; a próxima PR deve revogar somente a escrita direta e provar as leituras públicas e Owner.
