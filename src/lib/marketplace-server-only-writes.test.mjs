@@ -27,7 +27,7 @@ test("marketplace writes use the audited Owner RPC and sensitive fields stay pri
   assert.doesNotMatch(api, /from\(["']marketplaces["']\)\.(insert|update|delete)/);
 
   assert.ok(smoke.includes("Browser role retains direct marketplace DML"));
-  assert.ok(smoke.includes("Marketplace API credentials/status remain visible"));
+  assert.ok(smoke.includes("Marketplace API credentials and private metadata remain visible"));
   assert.ok(smoke.includes("RUBI_QA_EXPECTED_MARKETPLACE_INSERT_DENIAL_NOT_RAISED"));
   assert.ok(smoke.includes("RUBI_QA_EXPECTED_MARKETPLACE_UPDATE_DENIAL_NOT_RAISED"));
   assert.ok(smoke.includes("RUBI_QA_EXPECTED_MARKETPLACE_DELETE_DENIAL_NOT_RAISED"));
