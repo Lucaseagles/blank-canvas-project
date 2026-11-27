@@ -45,6 +45,7 @@ BEGIN
   END IF;
 END;
 $rollback$;
+RESET ROLE;
 DROP TRIGGER rubi_qa_reject_refresh_audit ON public.admin_audit_log;
 DROP FUNCTION pg_temp.rubi_qa_reject_refresh_audit();
 
