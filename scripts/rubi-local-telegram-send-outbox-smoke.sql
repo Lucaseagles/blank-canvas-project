@@ -93,6 +93,9 @@ declare
   v_send boolean;
   v_retry_id uuid;
   v_retry_send boolean;
+  v_test_id uuid;
+  v_test_status text;
+  v_test_send boolean;
   v_audit_count integer;
 begin
   select message_id,status,should_send into v_id,v_status,v_send
@@ -152,6 +155,28 @@ begin
       and entity_type='telegram_messages' and entity_id::text=v_id::text
       and action_type in ('TELEGRAM_MESSAGE_SEND_STARTED','TELEGRAM_MESSAGE_SEND_FINISHED');
   if v_audit_count <> 2 then raise exception 'Expected exactly two Telegram audit events, got %',v_audit_count; end if;
+
+  -- The connection-test button uses the same audited outbox without a product.
+  select message_id,status,should_send into v_test_id,v_test_status,v_test_send
+    from public.rubi_prepare_telegram_send_audited(
+      '36200000-0000-4000-8000-000000000004',
+      null,
+      'RUBI QA Telegram test message',
+      'test',
+      current_setting('rubi.qa.master_id')::uuid
+    );
+  if v_test_status <> 'sending' or v_test_send is not true then
+    raise exception 'Test-message outbox did not start correctly';
+  end if;
+  if public.rubi_finalize_telegram_send_audited(
+    v_test_id,'failed',null,'telegram_rejected',current_setting('rubi.qa.master_id')::uuid
+  ) <> 'failed' then
+    raise exception 'Test-message rejection was not finalized';
+  end if;
+  if (select message_kind from public.telegram_messages where id=v_test_id) <> 'test'
+     or (select status from public.telegram_messages where id=v_test_id) <> 'failed' then
+    raise exception 'Test-message state was not persisted correctly';
+  end if;
 end
 $prepare$;
 reset role;
