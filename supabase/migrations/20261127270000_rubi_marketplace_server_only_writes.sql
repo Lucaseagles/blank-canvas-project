@@ -14,6 +14,7 @@ revoke insert, update, delete, truncate, references, trigger
 -- Preserve the established public catalog fields only. Sensitive API fields remain
 -- hidden from anon/authenticated; trusted server functions use service_role.
 revoke select on public.marketplaces from anon, authenticated;
+revoke select (api_config, api_status) on public.marketplaces from anon, authenticated;
 grant select (id, name, slug, status, created_at)
   on public.marketplaces to anon, authenticated;
 grant all privileges on public.marketplaces to service_role;
