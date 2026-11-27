@@ -65,6 +65,9 @@ jobs:
       - name: Generic admin settings allowlist regression
         run: node --test src/lib/rubi-admin-setting-atomic-audit.test.mjs
 
+      - name: Sprint 362 user ban Owner-only atomic audit regression
+        run: npm run test:rubi-admin-user-ban-audit
+
       - name: Sprint 316 admin audit fail-closed regression
         run: npm run test:rubi-admin-audit-fail-closed
 
