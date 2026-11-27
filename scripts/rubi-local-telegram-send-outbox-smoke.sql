@@ -44,11 +44,13 @@ begin
 end
 $denials$;
 
--- A forced start-audit failure must roll back the outbox row.
+-- Toggleable trigger forces audit failures to prove both transaction boundaries.
+select set_config('rubi.qa.reject_telegram_audit','true',true);
 create function pg_temp.rubi_qa_reject_telegram_audit() returns trigger
 language plpgsql as $trigger$
 begin
-  if new.action_type in ('TELEGRAM_MESSAGE_SEND_STARTED','TELEGRAM_MESSAGE_SEND_FINISHED') then
+  if current_setting('rubi.qa.reject_telegram_audit',true) = 'true'
+     and new.action_type in ('TELEGRAM_MESSAGE_SEND_STARTED','TELEGRAM_MESSAGE_SEND_FINISHED') then
     raise exception 'RUBI_QA_FORCED_TELEGRAM_AUDIT_FAILURE';
   end if;
   return new;
@@ -80,8 +82,7 @@ begin
 end
 $rollback$;
 
-drop trigger rubi_qa_reject_telegram_audit on public.admin_audit_log;
-drop function pg_temp.rubi_qa_reject_telegram_audit();
+select set_config('rubi.qa.reject_telegram_audit','false',true);
 
 do $prepare$
 declare
@@ -126,20 +127,7 @@ begin
   end;
 
   -- Failed finalization must roll back if its audit insert fails.
-  create temporary table rubi_qa_dummy(id int) on commit drop;
-  create function pg_temp.rubi_qa_reject_telegram_finish() returns trigger
-  language plpgsql as $trigger$
-  begin
-    if new.action_type = 'TELEGRAM_MESSAGE_SEND_FINISHED' then
-      raise exception 'RUBI_QA_FORCED_TELEGRAM_AUDIT_FAILURE';
-    end if;
-    return new;
-  end
-  $trigger$;
-  create trigger rubi_qa_reject_telegram_finish
-  before insert on public.admin_audit_log
-  for each row execute function pg_temp.rubi_qa_reject_telegram_finish();
-
+  perform set_config('rubi.qa.reject_telegram_audit','true',true);
   begin
     perform public.rubi_finalize_telegram_send_audited(v_id,'sent','qa-provider-1',null,current_setting('rubi.qa.master_id')::uuid);
     raise exception 'Expected finalization audit failure did not occur';
@@ -149,8 +137,7 @@ begin
   if (select status from public.telegram_messages where id=v_id) <> 'sending' then
     raise exception 'Telegram finalization survived failed audit';
   end if;
-  drop trigger rubi_qa_reject_telegram_finish on public.admin_audit_log;
-  drop function pg_temp.rubi_qa_reject_telegram_finish();
+  perform set_config('rubi.qa.reject_telegram_audit','false',true);
 
   if public.rubi_finalize_telegram_send_audited(v_id,'sent','qa-provider-1',null,current_setting('rubi.qa.master_id')::uuid) <> 'sent' then
     raise exception 'Telegram send did not finalize';
