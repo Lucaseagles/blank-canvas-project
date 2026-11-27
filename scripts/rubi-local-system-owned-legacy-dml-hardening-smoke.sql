@@ -1,6 +1,12 @@
 \set ON_ERROR_STOP on
 begin;
 select set_config('rubi.qa.master_id', :'master_id', true);
+select set_config('rubi.qa.fixture_content_id', gen_random_uuid()::text, true);
+select set_config('rubi.qa.fixture_queue_id', gen_random_uuid()::text, true);
+insert into public.content_notification_queue(id,content_type,content_id)
+values (current_setting('rubi.qa.fixture_queue_id')::uuid,'qa',current_setting('rubi.qa.fixture_content_id')::uuid);
+insert into public.content_affinity_log(content_id,user_id,affinity_score,notified)
+values (current_setting('rubi.qa.fixture_content_id')::uuid,:'master_id'::uuid,90,true);
 
 do $grants$
 declare
@@ -54,6 +60,32 @@ select set_config('request.jwt.claim.sub',current_setting('rubi.qa.master_id'),t
 select set_config('request.jwt.claims',
   jsonb_build_object('sub',current_setting('rubi.qa.master_id'),'role','authenticated')::text,true);
 set local role authenticated;
+do $owner_read$
+begin
+  if (select count(*) from public.content_notification_queue where id=current_setting('rubi.qa.fixture_queue_id')::uuid) <> 1 then
+    raise exception 'Owner cannot read seeded content notification queue row';
+  end if;
+  if (select count(*) from public.content_affinity_log where content_id=current_setting('rubi.qa.fixture_content_id')::uuid) <> 1 then
+    raise exception 'Owner cannot read seeded content affinity row';
+  end if;
+end
+$owner_read$;
+select set_config('request.jwt.claim.sub', :'non_owner_id', true);
+select set_config('request.jwt.claims',
+  jsonb_build_object('sub', :'non_owner_id', 'role','authenticated')::text,true);
+do $non_owner_read$
+begin
+  if (select count(*) from public.content_notification_queue where id=current_setting('rubi.qa.fixture_queue_id')::uuid) <> 0 then
+    raise exception 'Non-Owner can read content notification queue row';
+  end if;
+  if (select count(*) from public.content_affinity_log where content_id=current_setting('rubi.qa.fixture_content_id')::uuid) <> 0 then
+    raise exception 'Non-Owner can read content affinity row';
+  end if;
+end
+$non_owner_read$;
+select set_config('request.jwt.claim.sub', :'master_id', true);
+select set_config('request.jwt.claims',
+  jsonb_build_object('sub', :'master_id', 'role','authenticated')::text,true);
 do $owner_direct_dml$
 declare
   v_table text;
