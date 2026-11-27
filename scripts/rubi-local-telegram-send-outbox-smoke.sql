@@ -29,6 +29,24 @@ begin
      or has_function_privilege('authenticated','public.rubi_finalize_telegram_send_audited(uuid,text,text,text,uuid)','EXECUTE') then
     raise exception 'Telegram outbox RPC grants are not least-privilege';
   end if;
+
+  if has_table_privilege('anon','public.telegram_messages','SELECT')
+     or has_table_privilege('anon','public.telegram_messages','INSERT')
+     or has_table_privilege('anon','public.telegram_messages','UPDATE')
+     or has_table_privilege('anon','public.telegram_messages','DELETE') then
+    raise exception 'anon retains direct access to Telegram outbox';
+  end if;
+  if not has_table_privilege('authenticated','public.telegram_messages','SELECT')
+     or has_table_privilege('authenticated','public.telegram_messages','INSERT')
+     or has_table_privilege('authenticated','public.telegram_messages','UPDATE')
+     or has_table_privilege('authenticated','public.telegram_messages','DELETE') then
+    raise exception 'authenticated Telegram outbox privileges are not Owner-read-only';
+  end if;
+  if not has_table_privilege('service_role','public.telegram_messages','INSERT')
+     or not has_table_privilege('service_role','public.telegram_messages','UPDATE')
+     or not has_table_privilege('service_role','public.telegram_messages','DELETE') then
+    raise exception 'service_role lost Telegram outbox write privileges';
+  end if;
 end
 $grants$;
 
@@ -192,6 +210,41 @@ begin
   end if;
 end
 $prepare$;
+reset role;
+
+select set_config('request.jwt.claim.sub', current_setting('rubi.qa.master_id'), true);
+select set_config('request.jwt.claims',
+  jsonb_build_object('sub',current_setting('rubi.qa.master_id'),'role','authenticated')::text, true);
+set local role authenticated;
+do $owner_read_and_direct_dml$
+declare v_count bigint;
+begin
+  select count(*) into v_count from public.telegram_messages;
+  if v_count < 2 then raise exception 'Owner cannot read Telegram outbox history'; end if;
+  begin
+    insert into public.telegram_messages(operation_key,product_id,message_text,message_kind,status)
+    values ('36200000-0000-4000-8000-000000000099',
+      current_setting('rubi.qa.product_id')::uuid,'RUBI QA direct write','manual','sending');
+    raise exception 'RUBI_QA_EXPECTED_TELEGRAM_DIRECT_INSERT_DENIAL_NOT_RAISED';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    update public.telegram_messages set status='failed' where false;
+    raise exception 'RUBI_QA_EXPECTED_TELEGRAM_DIRECT_UPDATE_DENIAL_NOT_RAISED';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    delete from public.telegram_messages where false;
+    raise exception 'RUBI_QA_EXPECTED_TELEGRAM_DIRECT_DELETE_DENIAL_NOT_RAISED';
+  exception when insufficient_privilege then null;
+  end;
+  perform set_config('request.jwt.claim.sub', current_setting('rubi.qa.non_owner_id'), true);
+  perform set_config('request.jwt.claims',
+    jsonb_build_object('sub',current_setting('rubi.qa.non_owner_id'),'role','authenticated')::text, true);
+  select count(*) into v_count from public.telegram_messages;
+  if v_count <> 0 then raise exception 'Non-Owner can read Telegram outbox history'; end if;
+end
+$owner_read_and_direct_dml$;
 reset role;
 rollback;
 \echo 'PASS: Telegram outbox Owner-only grants, non-owner denial, atomic audit rollback, idempotency, payload binding and finalization.'
