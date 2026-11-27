@@ -433,3 +433,23 @@ A PR #377 foi integrada por squash à branch da Sprint 362 no commit `3ea1cf1114
 - Branch de integração após PR #377: `3ea1cf111422f61a2af0b1d46ca0ef0403d86f4c`.
 - PRs filhas #370, #371, #372, #373, #374, #376 e #377 estão integradas à branch da sprint, não à `main`.
 - Próximo gate: reconciliar as demais superfícies administrativas e system-owned que aparecem no snapshot de privilégios, distinguindo políticas já fechadas por migrations existentes, tabelas unversioned e mutações de usuário que não são administrativas.
+
+
+## PR #378 integrada — hardening system-owned e tabelas legadas (27/11)
+
+A PR #378 foi integrada por squash à branch de integração da Sprint 362 no commit `3cca7e7aa2bffb4ab032cfb86baf6d22c0411609`.
+
+### Superfícies protegidas
+- `content_notification_queue` e `content_affinity_log`: Owner SELECT-only; DML revogado de PUBLIC, anon e authenticated; service_role mantém os workers.
+- `support_ai_config`, `offer_products` e `recommendation_config`: proteção condicional, somente se cada relação existir no schema; não cria tabelas ausentes nem afirma cobertura local delas.
+
+### Evidências no HEAD validado
+- Hub V1 Integration QA: SUCCESS, incluindo TypeScript, ESLint, build e contrato novo.
+- E2E autenticado: SUCCESS no mesmo HEAD, com PostgreSQL descartável.
+- Smoke provou grants, Owner read, non-Owner sem leitura dos registros de fila/log, negação de DML direto e EXECUTE dos workers somente por service_role.
+- As tabelas legadas ausentes do bootstrap local permanecem explicitamente não exercitadas.
+- Nenhuma migration foi aplicada ao Supabase remoto.
+
+### Pontuação
++0 isoladamente. A PR reforça o gate de inventário e least privilege do critério 11.3; a pontuação continua 38.0/48 (79.2%) até aceite integral da sprint.
+
