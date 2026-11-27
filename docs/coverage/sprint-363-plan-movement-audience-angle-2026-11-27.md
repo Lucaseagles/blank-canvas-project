@@ -1,85 +1,83 @@
 # Sprint 363 — Movement Engine: validação de público e ângulo (critério 08.2)
 
-**Base:** `main` após Sprint 362, score agregado formal de referência **38.5/48 = 80.2%**.  
-**Branch:** `sprint/363-movement-audience-angle-coverage`  
-**Classificação inicial:** habilitador + cobertura candidata. **+0 ponto nesta PR.**
+**Base:** `main` após Sprint 362, score agregado formal **38.5/48 = 80.2%**.  
+**Integração da sprint:** `sprint/363-integration`  
+**Classificação atual:** hardening concluído parcialmente + UX de revisão em execução. **Nenhum ponto convertido.**
 
 ## Objetivo de fechamento
 
 Transformar o cadastro de movimentos por produto em um processo verificável de validação de público, situação, problema, resultado e ângulo — sem confundir preenchimento editorial com validação real de mercado.
 
-O critério-alvo é **08.2 — Público/ângulo validado**. O valor atual desta linha não será presumido: a reconciliação histórica de 48 linhas não distribuiu de forma autoritativa todos os deltas pós-Sprint 122. O único número confirmado neste início é o agregado 38.5/48. A linha 08.2 será pontuada somente após reconciliar a rubrica e comprovar todos os gates.
+O critério-alvo é **08.2 — Público/ângulo validado**. O valor atual desta linha não será presumido: a reconciliação histórica de 48 linhas não distribuiu de forma autoritativa todos os deltas pós-Sprint 122. O único número confirmado nesta sprint é o agregado 38.5/48.
 
-## Estado conhecido na main
+## Estado conhecido e reaproveitado
 
-Já existem e devem ser reaproveitados:
+Já existem e devem ser preservados:
 - `rubi_movements` e CRUD server-side Owner-only;
-- campos de público, persona, problema, resultado desejado, promessa verdadeira, diferenciação, narrativa e notas de evidência;
-- checklist editorial e bloqueio de textos repetidos;
-- revisão otimista e RPC auditada;
-- variantes criativas e páginas ligadas ao movimento;
-- testes de contrato para rascunho e envio à revisão.
+- campos distintos de público, persona, problema, resultado desejado, promessa, diferenciação e narrativa;
+- Builder de evidências com fonte, data, método, observação, contraevidência e hipótese;
+- revisão Master-only imutável, versionada e auditada por RPC transacional;
+- variantes criativas, páginas e métricas ligadas ao movimento.
 
-Limites conhecidos:
-- o checklist atual verifica completude editorial, não prova pesquisa/validação de público;
-- notas de evidência em texto livre não equivalem a uma fonte verificável;
-- aprovação do Master não prova resposta de mercado;
+Limites:
+- checklist editorial verifica completude, não prova pesquisa;
+- declaração documental não equivale a validação independente;
+- revisão do Master não prova resposta do mercado;
 - métricas observacionais não demonstram causalidade nem intenção de compra paga;
-- não existe autorização para inventar pesquisa, feedback, dados ou resultados.
+- não inventar pesquisa, feedback, participantes, amostras ou resultados.
 
-## Sequência de PRs da Sprint 363
+## Sequência executada e planejada
 
-| Ordem | PR planejada | Escopo | Gate de aceite | Pontuação isolada |
+| Ordem | PR | Escopo | Estado / gate | Pontuação isolada |
 |---:|---|---|---|---:|
-| 1 | #384 — baseline e contrato de cobertura | Este plano, estado real da main, definição de evidências e critérios de não-invenção | Revisão do escopo e inventário dos componentes existentes | +0 |
-| 2 | #385 — contrato estruturado de evidência | Definir evidência rastreável por público/ângulo, origem, data, responsável, escopo e limitações; compatibilidade com registros existentes | Validação server-side, dados inválidos rejeitados e nenhuma fonte fictícia | +0 |
-| 3 | #386 — fluxo de validação e revisão | UX Master para avaliar hipótese, fonte, amostra/feedback quando houver, ressalvas e decisão versionada; isolamento dos demais perfis | Owner-only, revisão concorrente, histórico auditável e regressões mobile/desktop | +0 |
-| 4 | #387 — prova integral e release da sprint | Testes de domínio, contratos, PostgreSQL descartável, RLS/grants, rollback, E2E e reconciliação da rubrica | Todos os gates no mesmo HEAD; inventário de evidências; score formal atualizado | Única PR elegível para conversão |
+| 1 | #384 | Hardening do parser: campos únicos, mínimos, limite, data válida e não futura; reforço dos testes adulterados | **Mergeada em `sprint/363-integration`**; não foi para `main` | +0 |
+| 2 | #385 | UX Master premium: status de integridade, decisões por versão, histórico vazio/parcial, retry e bloqueio de decisão duplicada na mesma versão | Esta PR; gates ainda precisam passar | +0 |
+| 3 | #386 | Prova de domínio/contratos e smoke em PostgreSQL descartável: Owner/non-Owner, grants/RLS, auditoria, rollback e concorrência; E2E dos quatro perfis | Planejada; sem alteração remota | +0 |
+| 4 | #387 | Consolidação integral, reconciliação da rubrica, evidências, todos os gates no mesmo SHA e release para `main` | Única PR elegível para propor conversão de ponto | A validar |
 
-Os números são identificadores planejados, não PRs já criadas. Se o GitHub atribuir outros números, o fechamento registrará os números reais. A PR final poderá ser renumerada automaticamente; a ordem de dependência prevalece.
+Os números #385–#387 são sequenciais planejados; o GitHub atribui os números efetivos ao abrir cada PR. A ordem de dependência prevalece.
 
-## Definição de cobertura completa proposta para revisão
+## Definição de cobertura completa
 
-O critério 08.2 só poderá ser considerado completo se a implementação e a evidência demonstrarem, no mínimo:
-
-1. Cada movimento está ligado a um produto real do catálogo e a um segmento permitido.
-2. Público-alvo, situação de uso, problema, resultado desejado e ângulo são campos distintos, coerentes e revisáveis.
-3. Cada afirmação factual relevante aponta para uma fonte identificável e compatível com o produto; ausência de fonte bloqueia alegação não comprovada.
-4. Hipótese editorial é rotulada como hipótese; não aparece como comportamento de consumidor já validado.
-5. Quando houver pesquisa/feedback, registra-se origem, período, método, amostra e limitações; sem isso, o sistema não exibe selo de validação de mercado.
-6. Aprovação do Master registra ator, versão, data e decisão; alterações posteriores invalidam a aprovação anterior.
-7. Não há promessas garantidas, prova social fabricada, inferência sensível ou alegação incompatível com o fornecedor.
+O critério 08.2 só poderá ser considerado completo se implementação e evidências demonstrarem:
+1. Cada movimento está ligado a produto real do catálogo e a um segmento permitido.
+2. Público-alvo, situação, problema, resultado desejado e ângulo são campos distintos, coerentes e revisáveis.
+3. Afirmações factuais relevantes apontam para fonte identificável e compatível com o produto.
+4. Hipótese editorial permanece rotulada como hipótese; não aparece como comportamento de consumidor validado.
+5. Quando houver pesquisa/feedback real, registra origem, período, método, amostra e limitações; sem isso, não há selo de validação de mercado.
+6. Aprovação do Master registra ator, versão, data e decisão; alterações posteriores exigem nova revisão.
+7. Não há promessa garantida, prova social fabricada, inferência sensível ou alegação incompatível com fornecedor.
 8. Consumer, merchant e partner não acessam nem alteram o espaço privado do Shadow Master.
-9. Testes positivos e negativos, concorrência/stale revision, auditoria, persistência e jornada mobile/desktop passam no mesmo HEAD final.
+9. Testes positivos/negativos, stale revision, auditoria, persistência e jornadas mobile/desktop passam no mesmo HEAD final.
 
-**Distinção obrigatória:** validação editorial/factual e validação de mercado são estados diferentes. Se a rubrica 08.2 exigir evidência de mercado real, a ausência de participantes/dados reais impede o fechamento completo, mesmo que o código esteja pronto. Não converter ponto com fixtures.
+**Distinção obrigatória:** validação editorial/factual e validação de mercado são estados diferentes. Se a rubrica 08.2 exigir evidência de mercado real, a ausência de participantes/dados reais impede o fechamento completo, mesmo que o código esteja pronto. Fixtures não são prova de mercado.
 
 ## Gates da release final
 
 - TypeScript, lint, build e testes de contrato.
 - Testes de domínio para consistência de público/ângulo e fontes.
 - PostgreSQL descartável: Owner autorizado, non-Owner negado, grants mínimos, RLS, rollback de auditoria e revisão concorrente.
-- E2E autenticado de Shadow Master e negação dos outros perfis, mobile e desktop.
-- Revisão manual de claims e direitos; nenhum dado comercial fictício.
+- E2E autenticado do Shadow Master e negação dos demais perfis, mobile e desktop.
+- Revisão de claims e direitos; nenhum dado comercial fictício.
 - Mesmo SHA candidato para todos os workflows exigidos.
-- PR final integrada à `main` somente depois de todos os gates SUCCESS.
-- Atualização documental da matriz após merge, com fonte, score anterior, delta e novo agregado.
+- PR final integrada à `main` somente após todos os gates SUCCESS.
+- Atualização da matriz depois do merge, com fonte, score anterior, delta e novo agregado.
 
 ## Baseline e regra de pontuação
 
-- Agregado confirmado no início: **38.5/48 = 80.2%**.
-- Gap agregado aritmético: **9.5/48 = 19.8%**.
-- Score individual atual de 08.2: **não reconciliado**; o 0.5 histórico da matriz Sprint 122 não será tratado como valor atual sem revalidação.
-- PRs #384–#386: +0 isoladamente.
-- Somente a PR final poderá propor novo score, após todos os gates e reconciliação formal.
+- Agregado formal confirmado: **38.5/48 = 80.2%**.
+- Gap aritmético: **9.5/48 = 19.8%**.
+- Score individual atual de 08.2: **não reconciliado**.
+- PRs intermediárias: **+0 isoladamente**.
+- Só a PR final poderá propor novo score, após reconciliação formal e todos os gates.
 - Nenhuma migration será aplicada ao Supabase remoto sem autorização explícita; smokes serão executados em PostgreSQL/Supabase descartável.
 
-## Próximas decisões técnicas
+## Segurança e escopo
 
-1. Auditar migration, schema e todas as leituras/escritas atuais antes de propor novo campo ou tabela.
-2. Reutilizar o modelo existente; não criar tabelas duplicadas nem alterar checkout, preço, comissão ou publicação.
-3. Preferir metadados de fonte e revisão versionada; minimizar dados pessoais e não coletar dados sensíveis.
-4. Manter o Shadow Master único e privado.
-5. Não afirmar que um público converte melhor sem experimento válido ou evidência apropriada.
+- Reutilizar o modelo existente; não criar tabelas duplicadas.
+- Não alterar checkout, preço, comissão ou publicação.
+- Manter o Shadow Master único e privado.
+- Minimizar dados pessoais; não coletar dados sensíveis.
+- Nenhuma alteração de auth/RLS/grants no Supabase remoto nesta etapa.
 
-**Status:** sprint iniciada; nenhuma cobertura nova aceita e nenhum ponto convertido nesta etapa.
+**Status:** #384 mergeada apenas na branch de integração; #385 em revisão; score permanece **38.5/48 = 80.2%**.
