@@ -9,6 +9,7 @@ test("legacy public user-interest and favorites policies are removed without bre
   const smoke = read("../../scripts/rubi-local-user-data-rls-hardening-smoke.sql");
   const engagement = read("./engagement.functions.ts");
   const personalization = read("./personalization.functions.ts");
+  const catalog = read("../../scripts/rubi-local-admin-audit-catalog.sql");
 
   assert.match(migration, /drop policy if exists "Anyone can insert user_interests"/i);
   assert.match(migration, /drop policy if exists "Anyone can update their interests"/i);
@@ -34,4 +35,7 @@ test("legacy public user-interest and favorites policies are removed without bre
   assert.match(engagement, /user_id: userId, product_id: productId/);
   assert.match(personalization, /await verifyOptionalUser\(userId\)/);
   assert.match(personalization, /supabaseAdmin\.from\("user_interests"\)/);
+  assert.match(catalog, /unrestricted_public_write_policies/);
+  assert.match(catalog, /coalesce\(p\.qual, ''\)/);
+  assert.match(catalog, /coalesce\(p\.with_check, ''\)/);
 });
