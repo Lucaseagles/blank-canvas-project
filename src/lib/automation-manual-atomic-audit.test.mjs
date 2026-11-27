@@ -59,6 +59,9 @@ test("manual trending migration preserves the scoring refresh and audits atomica
   assert.match(trending, /public\.calculate_product_trend_velocity\(r\.id\)/);
   assert.match(trending, /rubi_recalculate_trending_audited/i);
   assert.match(trending, /role::text = 'owner'/i);
+  const smoke = readFileSync(new URL("../../scripts/rubi-local-manual-trending-audit-smoke.sql", import.meta.url), "utf8");
+  assert.match(smoke, /rubi.qa.merchant_id/);
+  assert.match(smoke, /rubi.qa.partner_id/);
   assert.match(trending, /pg_advisory_xact_lock/i);
   assert.match(trending, /insert into public\.automation_logs/i);
   assert.match(trending, /insert into public\.admin_audit_log/i);
