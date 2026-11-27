@@ -85,7 +85,7 @@ begin
   end if;
   select count(*) into v_count from public.admin_audit_log
     where actor_user_id=v_master and action_type='USER_BAN_STATUS_CHANGED'
-      and entity_type='profiles' and entity_id=v_user;
+      and entity_type='profiles' and entity_id=v_user::text;
   if v_count <> 1 then raise exception 'Expected exactly one audit event, got %',v_count; end if;
 
   -- Repeating the same desired state is idempotent and must not duplicate the audit row.
