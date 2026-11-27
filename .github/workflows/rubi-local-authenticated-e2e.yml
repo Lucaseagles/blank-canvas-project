@@ -12,6 +12,7 @@ on:
       - "scripts/rubi-local-auth-fixtures.mjs"
       - "scripts/rubi-local-authenticated.e2e.spec.mjs"
       - "scripts/rubi-local-distribution-campaign-concurrency.mjs"
+      - "scripts/rubi-local-distribution-publication-reference-smoke.mjs"
       - "src/lib/rubi-distribution-campaign-uniqueness.test.mjs"
       - "scripts/rubi-local-story-fixture.mjs"
       - "scripts/rubi-local-smart-collection-grants-smoke.sql"
@@ -371,6 +372,8 @@ jobs:
           -f scripts/rubi-local-telegram-send-outbox-smoke.sql
       - name: Prove product/channel/campaign uniqueness under concurrent PostgreSQL transactions
         run: node scripts/rubi-local-distribution-campaign-concurrency.mjs
+      - name: Prove platform-specific publication references at the database boundary
+        run: node scripts/rubi-local-distribution-publication-reference-smoke.mjs
       - name: Exercise privileged notification worker against hostile temp relation
         run: |
           set -euo pipefail
