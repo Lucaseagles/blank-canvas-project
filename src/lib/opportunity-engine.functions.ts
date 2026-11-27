@@ -32,11 +32,13 @@ export const getOpportunityAlerts = createServerFn({ method: "GET" })
 
 export const refreshOpportunityAlerts = createServerFn({ method: "POST" })
   .middleware([requireOwnerRole])
-  .handler(async () => {
+  .handler(async ({ context }) => {
     const supabase = await db();
-    const { data, error } = await supabase.rpc("refresh_opportunity_alerts");
-    if (error) throw error;
-    return { count: Number(data ?? 0) };
+    const { data, error } = await supabase.rpc("rubi_refresh_opportunity_alerts_audited", {
+      p_actor: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    return { count: Number(data?.count ?? 0), runId: String(data?.run_id ?? "") };
   });
 
 export const updateOpportunityAlertStatus = createServerFn({ method: "POST" })
