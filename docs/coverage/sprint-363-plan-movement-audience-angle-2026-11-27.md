@@ -34,9 +34,10 @@ Limites conhecidos:
 | 1 | #384 — contrato e hardening de evidências | Validar estrutura, unicidade, limites e datas; preservar distinção entre declaração e validação de mercado | Contratos e regressões server-side | +0 |
 | 2 | #385 — upgrade premium do painel Master | Card visual por estado, progresso editorial acessível, clareza de bloqueios e experiência responsiva | Build, TypeScript, lint e contrato visual acessível | +0 |
 | 3 | #386 — cobertura operacional | Smoke PostgreSQL descartável para Owner/non-Owner, revisão obsoleta, auditoria atômica, rollback e histórico append-only | Jornada real em banco descartável e regressões de autorização | +0 |
-| 4 | #388 — cobertura completa e release consolidada | Gates finais no mesmo HEAD, reconciliação da rubrica, matriz, score e release única | Todos os gates e evidências aceitos; merge da branch de integração à main | Única PR elegível para conversão |
+| 4 | #389 — hardening complementar do desempenho por público (08.4) | +0 isolado; parcial até release final |
+| 5 | #390 — cobertura completa e release consolidada | Gates finais no mesmo HEAD, reconciliação da rubrica, matriz, score e release única | Todos os gates e evidências aceitos; merge da branch de integração à main | Única PR elegível para conversão |
 
-Os números correspondem às PRs criadas no GitHub. As PRs intermediárias são empilhadas e entram somente na branch `sprint/363-integration`, após seus próprios gates. Nenhuma delas será integrada diretamente à `main`. A PR #388 será a única PR de `sprint/363-integration` para `main`, depois do fechamento completo.
+Os números correspondem às PRs criadas no GitHub. As PRs intermediárias são empilhadas e entram somente na branch `sprint/363-integration`, após seus próprios gates. Nenhuma delas será integrada diretamente à `main`. A PR #390 será a única PR de `sprint/363-integration` para `main`, depois do fechamento completo.
 
 ## Definição de cobertura completa proposta para revisão
 
@@ -70,16 +71,17 @@ O critério 08.2 só poderá ser considerado completo se a implementação e a e
 - Agregado confirmado no início: **38.5/48 = 80.2%**.
 - Gap agregado aritmético: **9.5/48 = 19.8%**.
 - Score individual atual de 08.2: **não reconciliado**; o 0.5 histórico da matriz Sprint 122 não será tratado como valor atual sem revalidação.
-- PRs #384–#386: +0 isoladamente.
-- Somente a PR #388 poderá propor novo score, após todos os gates e reconciliação formal.
+- PRs #384–#389: +0 isoladamente.
+- Somente a PR #390 poderá propor novo score, após todos os gates e reconciliação formal.
 - Nenhuma migration será aplicada ao Supabase remoto sem autorização explícita; smokes serão executados em PostgreSQL/Supabase descartável.
 
 ## Próximas decisões técnicas
 
 1. Auditar migration, schema e todas as leituras/escritas atuais antes de propor novo campo ou tabela.
-2. Reutilizar o modelo existente; não criar tabelas duplicadas nem alterar checkout, preço, comissão ou publicação.
-3. Preferir metadados de fonte e revisão versionada; minimizar dados pessoais e não coletar dados sensíveis.
-4. Manter o Shadow Master único e privado.
-5. Não afirmar que um público converte melhor sem experimento válido ou evidência apropriada.
+2. A PR #389 fortalece 08.4: telemetria duplicada ou malformada é marcada como ambígua, nunca selecionada silenciosamente.
+3. Reutilizar o modelo existente; não criar tabelas duplicadas nem alterar checkout, preço, comissão ou publicação.
+4. Preferir metadados de fonte e revisão versionada; minimizar dados pessoais e não coletar dados sensíveis.
+5. Manter o Shadow Master único e privado.
+6. Não afirmar que um público converte melhor sem experimento válido ou evidência apropriada.
 
 **Método híbrido obrigatório:** cada etapa combina upgrade visual premium, evolução funcional, hardening, testes e evidências de cobertura. Uma PR pode ser upgrade-only ou cobertura parcial, mas não pontua isoladamente. A sprint só entra na `main` uma vez, pela PR final de cobertura completa.\n\n**Status:** sprint iniciada; nenhuma cobertura nova aceita e nenhum ponto convertido nesta etapa.
