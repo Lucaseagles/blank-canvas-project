@@ -22,17 +22,17 @@ create trigger rubi_qa_fail_audience_review_audit
 set local role service_role;
 do $qa$
 declare
- movement_id uuid := current_setting('rubi.qa.audience_movement_id')::uuid;
- revision integer := current_setting('rubi.qa.audience_revision')::integer;
- master_id uuid := current_setting('rubi.qa.master_id')::uuid;
- non_owner_id uuid := current_setting('rubi.qa.non_owner_id')::uuid;
- before_count integer;
- after_count integer;
+ v_movement_id uuid := current_setting('rubi.qa.audience_movement_id')::uuid;
+ v_revision integer := current_setting('rubi.qa.audience_revision')::integer;
+ v_master_id uuid := current_setting('rubi.qa.master_id')::uuid;
+ v_non_owner_id uuid := current_setting('rubi.qa.non_owner_id')::uuid;
+ v_before_count integer;
+ v_after_count integer;
 begin
  begin
   perform public.rubi_record_audience_review_audited(
-   movement_id,revision,'needs_more_evidence',
-   'Tentativa de revisão por perfil sem privilégio.','Fonte de teste não autorizada',non_owner_id
+   v_movement_id,v_revision,'needs_more_evidence',
+   'Tentativa de revisão por perfil sem privilégio.','Fonte de teste não autorizada',v_non_owner_id
   );
   raise exception 'QA failure: non-owner review unexpectedly succeeded';
  exception when others then
@@ -41,29 +41,29 @@ begin
  end;
  begin
   perform public.rubi_record_audience_review_audited(
-   movement_id,revision+1,'needs_more_evidence',
-   'Tentativa com versão obsoleta deve falhar.','Fonte de teste obsoleta',master_id
+   v_movement_id,v_revision+1,'needs_more_evidence',
+   'Tentativa com versão obsoleta deve falhar.','Fonte de teste obsoleta',v_master_id
   );
   raise exception 'QA failure: stale revision unexpectedly succeeded';
  exception when others then
   if sqlerrm='QA failure: stale revision unexpectedly succeeded' then raise; end if;
   if position('Movement revision changed' in sqlerrm)=0 then raise; end if;
  end;
- select count(*) into before_count from public.rubi_audience_evidence_reviews r
-  where r.movement_id=movement_id;
+ select count(*) into v_before_count from public.rubi_audience_evidence_reviews r
+  where r.movement_id=v_movement_id;
  begin
   perform public.rubi_record_audience_review_audited(
-   movement_id,revision,'needs_more_evidence',
-   'Falha de auditoria deve reverter toda a revisão.','Fonte de teste para rollback',master_id
+   v_movement_id,v_revision,'needs_more_evidence',
+   'Falha de auditoria deve reverter toda a revisão.','Fonte de teste para rollback',v_master_id
   );
   raise exception 'QA failure: review survived forced audit failure';
  exception when others then
   if sqlerrm='QA failure: review survived forced audit failure' then raise; end if;
   if position('QA forced audit failure' in sqlerrm)=0 then raise; end if;
  end;
- select count(*) into after_count from public.rubi_audience_evidence_reviews r
-  where r.movement_id=movement_id;
- if after_count<>before_count then
+ select count(*) into v_after_count from public.rubi_audience_evidence_reviews r
+  where r.movement_id=v_movement_id;
+ if v_after_count<>v_before_count then
   raise exception 'QA failure: failed audit left a review row behind';
  end if;
  raise notice 'PASS: non-owner denied; stale revision denied; failed audit rolled back review insert.';
@@ -75,19 +75,19 @@ drop trigger rubi_qa_fail_audience_review_audit on public.admin_audit_log;
 set local role service_role;
 do $qa$
 declare
- movement_id uuid := current_setting('rubi.qa.audience_movement_id')::uuid;
- revision integer := current_setting('rubi.qa.audience_revision')::integer;
- master_id uuid := current_setting('rubi.qa.master_id')::uuid;
+ v_movement_id uuid := current_setting('rubi.qa.audience_movement_id')::uuid;
+ v_revision integer := current_setting('rubi.qa.audience_revision')::integer;
+ v_master_id uuid := current_setting('rubi.qa.master_id')::uuid;
  review_id uuid;
 begin
  review_id:=public.rubi_record_audience_review_audited(
-  movement_id,revision,'document_reviewed',
+  v_movement_id,v_revision,'document_reviewed',
   'Documento sintético conferido; isto não valida aceitação do mercado.',
-  'Fixture local de QA — fonte sintética',master_id
+  'Fixture local de QA — fonte sintética',v_master_id
  );
  if review_id is null then raise exception 'QA failure: Owner review did not return an ID'; end if;
  if not exists(select 1 from public.rubi_audience_evidence_reviews r
-  where r.id=review_id and r.movement_id=movement_id and r.movement_revision=revision
+  where r.id=review_id and r.movement_id=v_movement_id and r.movement_revision=revision
    and r.outcome='document_reviewed') then
   raise exception 'QA failure: immutable review row not persisted';
  end if;
