@@ -3650,6 +3650,7 @@ export type Database = {
         Returns: string
       }
       refresh_demand_and_trend_scores: { Args: never; Returns: undefined }
+      rubi_recalculate_trending_audited: { Args: { p_actor: string }; Returns: Json }
       refresh_opportunity_alerts: { Args: never; Returns: number }
       refresh_referral_profile_stats: {
         Args: { p_referrer_user_id: string }
