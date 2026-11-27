@@ -13,7 +13,7 @@ async function sendTelegramWithOutbox(
   input: { operationKey: string; productId: string | null; message: string; messageKind: "manual" | "test"; actorId: string },
   credentials: { token: string; channelId: string },
 ) {
-  const { data: prepared, error: prepareError } = await supabaseAdmin.rpc("rubi_prepare_telegram_send_audited", {
+  const { data: prepared, error: prepareError } = await (supabaseAdmin as any).rpc("rubi_prepare_telegram_send_audited", {
     p_operation_key: input.operationKey,
     p_product_id: input.productId,
     p_message_text: input.message,
@@ -48,7 +48,7 @@ async function sendTelegramWithOutbox(
     });
     payload = await response.json();
   } catch {
-    const { error } = await supabaseAdmin.rpc("rubi_finalize_telegram_send_audited", {
+    const { error } = await (supabaseAdmin as any).rpc("rubi_finalize_telegram_send_audited", {
       p_message_id: operation.message_id,
       p_status: "unknown",
       p_provider_message_id: null,
