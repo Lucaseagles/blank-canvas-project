@@ -78,5 +78,23 @@ select pg_catalog.jsonb_pretty(pg_catalog.jsonb_build_object(
     join pg_catalog.pg_namespace n on n.oid = c.relnamespace
     join pg_catalog.pg_proc p on p.oid = t.tgfoid
     where n.nspname = 'public' and not t.tgisinternal
+  ), '[]'::jsonb),
+  'unrestricted_public_write_policies', coalesce((
+    select pg_catalog.jsonb_agg(pg_catalog.jsonb_build_object(
+      'table', p.tablename,
+      'name', p.policyname,
+      'command', p.cmd,
+      'roles', pg_catalog.to_jsonb(p.roles),
+      'using_expression', p.qual,
+      'check_expression', p.with_check
+    ) order by p.tablename, p.policyname)
+    from pg_catalog.pg_policies p
+    where p.schemaname = 'public'
+      and p.cmd in ('ALL', 'INSERT', 'UPDATE', 'DELETE')
+      and ('public' = any(p.roles) or 'anon' = any(p.roles))
+      and (
+        lower(trim(coalesce(p.qual, ''))) in ('true', '(true)')
+        or lower(trim(coalesce(p.with_check, ''))) in ('true', '(true)')
+      )
   ), '[]'::jsonb)
 ));

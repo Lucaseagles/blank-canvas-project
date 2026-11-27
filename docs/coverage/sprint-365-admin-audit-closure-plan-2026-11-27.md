@@ -90,3 +90,35 @@ O relatório não lê linhas de negócio, corpos de funções, credenciais ou se
 - PR #394 e esta entrega de catálogo: +0 isoladamente.
 - O 11.3 continua candidato a fechamento, sem novo ponto concedido nesta etapa.
 - A reconciliação integral das 48 linhas continua obrigatória antes de qualquer conversão adicional.
+
+
+## Achado de catálogo e correção de isolamento — 27/11
+
+### Evidência real do PostgreSQL descartável
+O artefato `rubi-local-admin-audit-catalog` da PR #395 foi baixado e inspecionado. O snapshot registra 136 tabelas, 215 funções e 26 triggers. A revisão das políticas encontrou três políticas legadas permissivas ainda ativas:
+- `Anyone can insert user_interests` — INSERT com `WITH CHECK (true)`;
+- `Anyone can update their interests` — UPDATE com `USING (true)`;
+- `Anyone can insert favorites` — INSERT com `WITH CHECK (true)`.
+
+A migration `20260822043722_afd4e745-502f-4924-b81b-45012b5660b8.sql` havia criado políticas próprias, mas não removido essas permissões antigas. Como políticas permissivas são combinadas por OR, a regra ampla continuava efetiva. O inventário de código confirma que favoritos são escritos por `toggleFavorite` com middleware autenticado e identidade obtida do contexto; `user_interests` é atualizado por função de servidor que valida a identidade opcional e usa service-role. Não há necessidade funcional de escrita anônima direta.
+
+### Correção proposta
+A PR filha `sprint/365-user-data-rls-hardening`:
+- remove as três políticas permissivas;
+- revoga INSERT/UPDATE/DELETE anônimo e público nessas duas tabelas;
+- preserva RLS e as políticas autenticadas restritas a `auth.uid() = user_id`;
+- adiciona smoke PostgreSQL com perfis consumidor/lojista para provar insert próprio, negar insert cruzado, negar update cruzado e bloquear anon;
+- integra o smoke ao E2E local e adiciona testes de contrato ao Hub QA e Sprint 33 QA.
+
+A correção não mexe em dados, não aplica migration no Supabase remoto e não remove o fluxo de favoritos ou personalização autenticada.
+- Classificação até os gates: correção de segurança/upgrade; +0 ponto até validação e aceite do critério.
+
+
+### Resultado do artefato real e PR #396 — 27/11
+- PR #395 foi integrada à `main` no commit `612c8b3f3d97be99a8cf9c5de2b8b29c4f9ac02d`.
+- O E2E local produziu o artefato `rubi-local-admin-audit-catalog` (13.445 bytes; SHA-256 `ae6129b286b3d094f36b88b789c15c99e91a2c536722c230ed23eba313c267f`), baixado e inspecionado. Snapshot: 136 tabelas, 215 funções e 26 triggers.
+- A triagem de políticas de escrita PUBLIC/anon com expressão literalmente permissiva encontrou somente três ocorrências: duas em `user_interests` e uma em `favorites`. As demais políticas de escrita PUBLIC/anon encontradas são escopadas por `auth.uid() = user_id`, limitadas a eventos anônimos sem atribuição (`user_id IS NULL`) ou a Owner via `has_role`.
+- A PR #396 remove as três permissões legadas, revoga grants de escrita anon/PUBLIC, preserva as regras autenticadas por proprietário e acrescenta smoke PostgreSQL com dois perfis.
+- A PR #396 também amplia o próprio catálogo para falhar no E2E se surgir qualquer política de escrita PUBLIC/anon com `USING (true)` ou `WITH CHECK (true)` em tabelas públicas. Assim, o achado vira uma proteção preventiva do pipeline, não só uma correção pontual.
+- PR #396: aberta, base `main` em `612c8b3f3d97be99a8cf9c5de2b8b29c4f9ac02d`, HEAD atual `e8d054c953bef63370638472535457723049e967`. Gates Sprint 33 QA e Hub V1 QA iniciados; E2E local iniciado no HEAD anterior e precisa ser confirmado/reexecutado no HEAD final antes do merge.
+- Pontuação: PR #395 = +0; PR #396 = +0 até os três gates verdes e aceite da rubrica 11.3.
