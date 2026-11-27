@@ -1,6 +1,7 @@
 -- Sprint 362: keep Telegram outbox rows readable by Owner, but close direct client DML.
 -- The only supported mutations are the audited service_role prepare/finalize RPCs.
 drop policy if exists "Admins manage telegram messages" on public.telegram_messages;
+drop policy if exists "Owners manage telegram messages" on public.telegram_messages;
 
 create policy "Admins can view telegram messages"
   on public.telegram_messages
