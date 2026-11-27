@@ -75,3 +75,11 @@ test("database trigger enforces the same platform permalink contract as the serv
  assert.match(migration,/revoke all on function public\.rubi_valid_distribution_publication_reference[\s\S]*from public, anon, authenticated/i);
  assert.match(migration,/grant execute on function public\.rubi_valid_distribution_publication_reference[\s\S]*to service_role/i);
 });
+
+
+test("Master distribution UI cannot manually declare WhatsApp publication and uses the shared guard",()=>{
+ const ui=readFileSync(new URL("../components/store/RubiMovementDistributionAdmin.tsx",import.meta.url),"utf8");
+ assert.match(ui,/draft\.channel==="whatsapp"/);
+ assert.match(ui,/canRecordPublication\(draft\)/);
+ assert.match(ui,/WhatsApp permanece como planejado/);
+});
