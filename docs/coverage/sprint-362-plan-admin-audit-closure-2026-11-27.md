@@ -239,3 +239,18 @@ No HEAD `fa0d2380057d84c6280a9d881e1b43382a1e25bf`:
 
 ### Status de pontuação
 Mesmo com os smokes locais aprovados, a sprint segue em +0 até concluir o E2E, integrar as PRs validadas, terminar o inventário transversal e executar a validação final conjunta.
+
+
+## PR #368 integrada à Sprint 362 — 27/11
+
+A PR #368 foi integrada por squash à branch de integração da Sprint 362 no commit `f6264ea9dd79ebd8afb77539d189efd504d18276`, após:
+- Hub V1 QA: SUCCESS no HEAD `937d4a80c51f80309d0fdd03d8a5189b1f1cf34c`.
+- E2E autenticado: SUCCESS no mesmo HEAD.
+- Smokes SQL de tendências e user-ban executados no PostgreSQL descartável; matriz negativa incluiu consumer, merchant e partner.
+- TypeScript e ESLint aprovados.
+
+A integração foi somente na branch `sprint/362-admin-audit-closure`; não houve merge para `main`.
+
+PR #369 permanece aberta e aguarda o E2E completo da compatibilidade text/UUID do user-ban, além de sua revalidação no HEAD combinado com #368.
+
+**Pontuação:** +0 ainda. A PR #368 fecha uma família específica de mutação; não substitui inventário exaustivo nem os gates restantes de 11.3.
