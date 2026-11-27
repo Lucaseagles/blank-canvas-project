@@ -108,6 +108,8 @@ jobs:
         run: npm run test:rubi-complementary
       - name: RUBI Movement Engine tests
         run: npm run test:rubi-movement
+      - name: RUBI controlled A/B contract tests
+        run: npm run test:rubi-controlled-ab
       - name: RUBI Movement variants tests
         run: npm run test:rubi-variants
       - name: RUBI A/B sample size planning regression
