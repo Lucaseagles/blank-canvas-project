@@ -42,11 +42,13 @@ test("manual publication references must be HTTPS permalinks on the selected pla
 
 test("manual publication rejects spoofed domains, insecure URLs and non-permalink references",()=>{
  const invalid=[
-  ["instagram","https://instagram.com.evil.example/p/ABC123xyz/"],\n  ["instagram","https://www.instagram.com/p/ABC123xyz/?redirect=evil"],
+  ["instagram","https://instagram.com.evil.example/p/ABC123xyz/"],
+  ["instagram","https://www.instagram.com/p/ABC123xyz/?redirect=evil"],
   ["instagram","http://instagram.com/p/ABC123xyz/"],
   ["tiktok","https://www.tiktok.com/@rubi/video/not-a-number"],
   ["youtube","https://youtube.com.evil.example/watch?v=AbCdEf12345"],
-  ["facebook","https://www.facebook.com/profile.php?id=123"],\n  ["facebook","https://www.facebook.com/watch?v=not_valid!"],
+  ["facebook","https://www.facebook.com/profile.php?id=123"],
+  ["facebook","https://www.facebook.com/watch?v=not_valid!"],
   ["pinterest","https://www.pinterest.com.evil.example/pin/123456789012345678/"],
   ["telegram","https://t.me/rubichannel"],
   ["whatsapp","https://chat.whatsapp.com/InviteCode123"],
