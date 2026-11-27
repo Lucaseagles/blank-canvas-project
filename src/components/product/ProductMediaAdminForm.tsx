@@ -4,6 +4,7 @@ import { GripVertical, ImagePlus, Play, Save, Trash2, Video } from 'lucide-react
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { saveVideo } from '@/lib/video.functions';
+import { updateProductImagesAudited } from '@/lib/product-media.functions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,6 +23,7 @@ function normalizeImages(images: unknown): string[] {
 
 export function ProductMediaAdminForm({ product, onSaved, onClose }: ProductMediaAdminFormProps) {
   const saveVideoFn = useServerFn(saveVideo);
+  const saveProductImagesFn = useServerFn(updateProductImagesAudited);
   const [images, setImages] = useState<string[]>(() => normalizeImages(product?.images));
   const [imageUrl, setImageUrl] = useState('');
   const [video, setVideo] = useState<any>(null);
@@ -69,6 +71,9 @@ export function ProductMediaAdminForm({ product, onSaved, onClose }: ProductMedi
   const addImage = () => {
     const value = imageUrl.trim();
     if (!value) return;
+    try { const parsed = new URL(value); if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error(); }
+    catch { toast.error('Informe uma URL HTTP ou HTTPS válida para a imagem.'); return; }
+    if (images.length >= 30) { toast.error('A galeria aceita no máximo 30 imagens.'); return; }
     if (images.includes(value)) {
       toast.info('Esta imagem já está na galeria.');
       return;
@@ -95,8 +100,8 @@ export function ProductMediaAdminForm({ product, onSaved, onClose }: ProductMedi
     if (!product?.id) return;
     setSaving(true);
     try {
-      const { error } = await supabase.from('products').update({ images }).eq('id', product.id);
-      if (error) throw error;
+      if (!product.updated_at) throw new Error('Não foi possível confirmar a versão atual do produto. Recarregue a página antes de salvar.');
+      await saveProductImagesFn({ data: { productId: product.id, images, expectedUpdatedAt: product.updated_at } });
 
       if (canSaveVideo) {
         await saveVideoFn({
