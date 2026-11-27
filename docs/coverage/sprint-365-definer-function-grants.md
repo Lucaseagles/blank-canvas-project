@@ -18,4 +18,4 @@ This finding is not evidence that all marketplace auditing is missing: the RPC, 
 - Disposable PostgreSQL smoke checks effective privileges for anon, authenticated and service_role.
 - Static contract test ties the migration to the actual server callsite.
 - Never apply to remote/production as part of this PR.
-- This is security/coverage work toward criterion 11.3, but no matrix point is converted until the complete admin mutation inventory and PostgreSQL evidence are reconciled.
+- This is post-closure security hardening. Criterion 11.3 was already accepted at 1.0/1.0 by the Sprint 362 release (#382); this PR does not reopen or add to that score.
