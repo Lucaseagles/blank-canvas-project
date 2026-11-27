@@ -122,3 +122,12 @@ A correção não mexe em dados, não aplica migration no Supabase remoto e não
 - A PR #396 também amplia o próprio catálogo para falhar no E2E se surgir qualquer política de escrita PUBLIC/anon com `USING (true)` ou `WITH CHECK (true)` em tabelas públicas. Assim, o achado vira uma proteção preventiva do pipeline, não só uma correção pontual.
 - PR #396: aberta, base `main` em `612c8b3f3d97be99a8cf9c5de2b8b29c4f9ac02d`, HEAD atual `e8d054c953bef63370638472535457723049e967`. Gates Sprint 33 QA e Hub V1 QA iniciados; E2E local iniciado no HEAD anterior e precisa ser confirmado/reexecutado no HEAD final antes do merge.
 - Pontuação: PR #395 = +0; PR #396 = +0 até os três gates verdes e aceite da rubrica 11.3.
+
+
+### Segunda frente da auditoria: privilégios de SECURITY DEFINER — 27/11
+O catálogo também apontou três funções SECURITY DEFINER executáveis por `anon`: `append_admin_audit`, `audit_marketplace_mutation` e `get_eligible_benefit_popup`. A inspeção das definições e chamadas mostra:
+- `append_admin_audit` é um RPC legado de Owner, com ator derivado de `auth.uid()` e validação de Owner; mantém execução apenas para authenticated (mais nenhum role de API não necessário).
+- `audit_marketplace_mutation` é função de trigger, não um endpoint; acesso direto é revogado para anon/authenticated e mantido para service_role.
+- `get_eligible_benefit_popup` é chamado por `relationships.functions.ts` via supabaseAdmin após resolver o usuário autenticado; como recebe `p_user_id`, a execução direta por authenticated poderia consultar benefícios de outro usuário. A permissão passa a ser exclusiva de service_role.
+
+A branch `sprint/365-security-definer-execute-hardening` acrescenta migration de grants, teste de contrato, smoke PostgreSQL (anon, consumer e Master) e um novo guard no catálogo para impedir que qualquer função SECURITY DEFINER pública volte a ser executável por anon.
