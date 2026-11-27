@@ -61,7 +61,7 @@ jobs:
       - name: Validate approved staging target and disposable fixture contract
         run: node --input-type=module -e "import { resolveRubiStagingTarget } from './scripts/rubi-staging-story-target.mjs'; console.log('Approved Story staging origin:', resolveRubiStagingTarget())"
       - name: Run authenticated Story → same product → official pre-checkout journey
-        run: npm run test:rubi-story-staging
+        run: npx playwright test -c rubi-staging-story-playwright.config.mjs scripts/rubi-local-story-offer.e2e.spec.mjs
       - name: Upload sanitized staging evidence report
         if: always()
         uses: actions/upload-artifact@v4
