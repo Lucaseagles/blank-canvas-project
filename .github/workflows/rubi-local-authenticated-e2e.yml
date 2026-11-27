@@ -241,15 +241,6 @@ jobs:
           -v master_id="$RUBI_QA_MASTER_USER_ID"
           -v non_owner_id="$RUBI_QA_CONSUMER_USER_ID"
           -f scripts/rubi-local-telegram-config-audit-smoke.sql
-      - name: Prove Telegram manual and test send outbox authorization, atomicity and idempotency
-        run: >-
-          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1
-          -v master_id="$RUBI_QA_MASTER_USER_ID"
-          -v non_owner_id="$RUBI_QA_CONSUMER_USER_ID"
-          -v merchant_id="$RUBI_QA_MERCHANT_USER_ID"
-          -v partner_id="$RUBI_QA_PARTNER_USER_ID"
-          -v product_id="$RUBI_QA_APPROVED_STORY_PRODUCT_ID"
-          -f scripts/rubi-local-telegram-send-outbox-smoke.sql
       - name: Prove RUBI Business quote admin audit and rollback on disposable PostgreSQL
         run: >-
           psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1
@@ -275,6 +266,15 @@ jobs:
           bash scripts/rubi-local-admin-audit-concurrency.sh
       - name: Seed disposable supplier, product, reviewed movement and private Story
         run: node scripts/rubi-local-story-fixture.mjs
+      - name: Prove Telegram manual and test send outbox authorization, atomicity and idempotency
+        run: >-
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1
+          -v master_id="$RUBI_QA_MASTER_USER_ID"
+          -v non_owner_id="$RUBI_QA_CONSUMER_USER_ID"
+          -v merchant_id="$RUBI_QA_MERCHANT_USER_ID"
+          -v partner_id="$RUBI_QA_PARTNER_USER_ID"
+          -v product_id="$RUBI_QA_APPROVED_STORY_PRODUCT_ID"
+          -f scripts/rubi-local-telegram-send-outbox-smoke.sql
       - name: Prove product/channel/campaign uniqueness under concurrent PostgreSQL transactions
         run: node scripts/rubi-local-distribution-campaign-concurrency.mjs
       - name: Exercise privileged notification worker against hostile temp relation
