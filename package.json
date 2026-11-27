@@ -65,6 +65,7 @@
     "test:rubi-brand-identity-audit": "node --test src/lib/brand-identity-atomic-audit.test.mjs",
     "test:rubi-admin-audit-fail-closed": "node --test src/lib/admin-audit-fail-closed.test.mjs",
     "test:rubi-customer-coupons-audit": "node --test src/lib/customer-coupons-atomic-audit.test.mjs",
+    "test:rubi-support-faq-audit": "node --test src/lib/support-faq-atomic-audit.test.mjs",
     "test:rubi-affiliate-recruitment-funnel": "node --test src/lib/rubi-affiliate-recruitment-funnel.test.mjs",
     "test:rubi-consumer-conversion": "node --test src/lib/rubi-consumer-conversion-onboarding.test.mjs",
     "test:rubi-premium-hybrid": "node --test src/lib/rubi-premium-hybrid-performance.test.mjs",
