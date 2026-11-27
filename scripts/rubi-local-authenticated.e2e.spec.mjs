@@ -127,7 +127,7 @@ for (const viewport of viewports) {
       const productTitle = process.env.RUBI_QA_AUDIENCE_REVIEW_PRODUCT_TITLE;
       const movementName = process.env.RUBI_QA_AUDIENCE_REVIEW_MOVEMENT_NAME;
       if (!productTitle || !movementName) throw new Error("Missing disposable evidence fixture labels.");
-      await page.getByLabel("Produto").selectOption({ label: productTitle });
+      await page.getByRole("region", { name: "RUBI Movement Engine" }).getByLabel("Produto").selectOption({ label: productTitle });
       const movement = page.getByRole("button", { name: movementName, exact: false });
       await expect(movement).toBeVisible();
       await movement.click();
