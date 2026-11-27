@@ -35,7 +35,7 @@ begin
     or has_column_privilege('authenticated','public.marketplaces','affiliate_link_structure','SELECT')
     or has_column_privilege('anon','public.marketplaces','updated_at','SELECT')
     or has_column_privilege('authenticated','public.marketplaces','updated_at','SELECT') then
-    raise exception 'Marketplace API credentials/status remain visible to browser roles';
+    raise exception 'Marketplace API credentials and private metadata remain visible to browser roles';
   end if;
   if not has_column_privilege('anon','public.marketplaces','id','SELECT')
     or not has_column_privilege('authenticated','public.marketplaces','name','SELECT') then
