@@ -66,7 +66,7 @@ for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",widt
 }
 
 for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",width:1366,height:768}]){
- test.describe("RUBI Story aprovado → produto correspondente → pré-checkout local — "+viewport.name,()=>{
+ test.describe("RUBI Story aprovado → produto correspondente → tentativa de checkout oficial permitida — "+viewport.name,()=>{
   test("Master aprova o Story persistido e consumidor encontra a mesma oferta sem sair para pagamento",async({browser})=>{
    const approvedProductId=process.env.RUBI_QA_APPROVED_STORY_PRODUCT_ID;
    const approvedStoryTitle=process.env.RUBI_QA_APPROVED_STORY_TITLE;
