@@ -85,7 +85,9 @@ export function resolveRubiStagingTarget(env = process.env) {
     throw new Error("RUBI_STAGING_ALLOWED_ORIGIN must exactly match the approved HTTPS origin.");
   }
 
-  resolveRubiCheckoutAllowedHosts(env);\n\n  const missing = [...REQUIRED_CREDENTIAL_ENV, ...REQUIRED_FIXTURE_ENV].filter((key) => !env[key]?.trim());
+  resolveRubiCheckoutAllowedHosts(env);
+
+  const missing = [...REQUIRED_CREDENTIAL_ENV, ...REQUIRED_FIXTURE_ENV].filter((key) => !env[key]?.trim());
   if (missing.length) {
     throw new Error("Staging Story E2E is missing required isolated credentials/fixtures: " + missing.join(", "));
   }
