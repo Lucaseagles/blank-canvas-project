@@ -6,7 +6,7 @@
 
 ## Gap found
 
-The existing hosted Playwright journey approved a Story, found the matching product and verified that the supplier-payment button was enabled. It did not verify what destination the browser attempted to open when the consumer clicked the button. That left a meaningful gap between "button enabled" and "provider checkout navigation requested".
+The existing authenticated local Playwright journey approved a disposable Story, found the matching product and verified that the supplier-payment button was enabled. It did not verify what destination the browser attempted to open when the consumer clicked the button. That left a meaningful gap between "button enabled" and "provider checkout navigation requested".
 
 ## Delivered
 
@@ -27,7 +27,7 @@ It does **not** contact the provider page, create a provider checkout session, p
 
 For full 02.4 acceptance, still required:
 - real isolated HTTPS `rubi-staging` with disposable Story/product fixtures and QA identities;
-- actual official provider sandbox hostname(s) entered in `RUBI_QA_CHECKOUT_ALLOWED_HOSTS`;
+- actual official provider sandbox hostname(s) entered in `RUBI_QA_CHECKOUT_ALLOWED_HOSTS` for the separately gated hosted-staging workflow;
 - provider-approved sandbox integration and a documented, verifiable callback/round-trip test;
 - sanitized run artifact and criterion-owner acceptance against the complete rubric.
 
@@ -46,3 +46,8 @@ Do not use the example test hostnames from unit fixtures as real allowlist value
 **02.4 remains 0.5/1.0.** This PR strengthens redirect-intent evidence but cannot establish provider round-trip. No new point is claimed.
 
 Operational aggregate remains **39.0/48 = 81.3%**. The 39.5/48 = 82.3% target remains conditional on complete hosted and provider acceptance.
+
+
+## Local E2E fixture boundary
+
+The authenticated local E2E uses the reserved synthetic hostname `checkout.example.test` created by `scripts/rubi-local-story-fixture.mjs`. The test asserts that the app itself is served from loopback and accepts only that fixture hostname, then aborts the outbound document request. This local fixture is not a real provider hostname and must never be reused as hosted staging configuration. The hosted staging workflow continues to require its own explicit HTTPS origin, exact provider sandbox allowlist, disposable credentials and confirmation gates.
