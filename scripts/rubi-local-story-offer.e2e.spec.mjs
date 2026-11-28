@@ -130,6 +130,9 @@ for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",widt
    expect(outboundCheckout.password).toBe("");
    // Query values and full destination are deliberately never written to test output.
    expect(outboundCheckout.hostname.length).toBeGreaterThan(0);
+   // The external document navigation was aborted; the consumer must remain on
+   // the RUBI pre-checkout page and must not land on the provider.
+   await expect(consumerPage).toHaveURL(new RegExp("/hub-product/"+approvedProductId+"#rubi-purchase$"));
    await consumerContext.close();
   });
  });
