@@ -1,5 +1,4 @@
 import {test,expect} from "@playwright/test";
-import {resolveRubiCheckoutAllowedHosts} from "./rubi-staging-story-target.mjs";
 
 const productId=process.env.RUBI_QA_STORY_PRODUCT_ID;
 const storyTitle=process.env.RUBI_QA_STORY_TITLE;
@@ -110,12 +109,16 @@ for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",widt
 
    // Capture and abort the outbound request: prove the browser attempts the approved
    // provider redirect without sending a request to a real payment page or creating a session.
-   const stagingOrigin=new URL(process.env.RUBI_STAGING_BASE_URL).origin;
-   const allowedCheckoutHosts=resolveRubiCheckoutAllowedHosts();
+   // This spec runs only against the disposable local Supabase/Vite fixture.
+   // The fixture intentionally uses the reserved .test hostname; never reuse it
+   // as a real provider allowlist or in the separately gated hosted-staging workflow.
+   const appOrigin=new URL(consumerPage.url());
+   if(!["127.0.0.1","localhost","::1"].includes(appOrigin.hostname))throw new Error("Local Story E2E must run against the loopback app origin only.");
+   const allowedCheckoutHosts=["checkout.example.test"];
    let outboundCheckout=null;
    await consumerPage.route("**/*",async route=>{
     const requestUrl=new URL(route.request().url());
-    if(requestUrl.origin===stagingOrigin){await route.continue();return;}
+    if(requestUrl.origin===appOrigin.origin){await route.continue();return;}
     // Only a top-level document navigation proves the consumer is being redirected.
     // A fetch, XHR, image or other subresource to an allowlisted host must not pass.
     const request=route.request();
