@@ -1,4 +1,5 @@
 import {test,expect} from "@playwright/test";
+import {resolveRubiCheckoutAllowedHosts} from "./rubi-staging-story-target.mjs";
 
 const productId=process.env.RUBI_QA_STORY_PRODUCT_ID;
 const storyTitle=process.env.RUBI_QA_STORY_TITLE;
@@ -103,8 +104,29 @@ for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",widt
    await expect(offerLink).toBeVisible();
    await offerLink.click();
    await expect(consumerPage).toHaveURL(new RegExp("/hub-product/"+approvedProductId+"#rubi-purchase$"));
-   await expect(consumerPage.getByRole("button",{name:/Continuar para pagamento no fornecedor/i})).toBeEnabled({timeout:20000});
+   const checkoutButton=consumerPage.getByRole("button",{name:/Continuar para pagamento no fornecedor/i});
+   await expect(checkoutButton).toBeEnabled({timeout:20000});
    await expect(consumerPage.getByText(/A RUBI não coleta dados do cartão nesta página/i)).toBeVisible();
+
+   // Capture and abort the outbound request: prove the browser attempts the approved
+   // provider redirect without sending a request to a real payment page or creating a session.
+   const stagingOrigin=new URL(process.env.RUBI_STAGING_BASE_URL).origin;
+   const allowedCheckoutHosts=resolveRubiCheckoutAllowedHosts();
+   let outboundCheckout=null;
+   await consumerPage.route("**/*",async route=>{
+    const requestUrl=new URL(route.request().url());
+    if(requestUrl.origin===stagingOrigin){await route.continue();return;}
+    if(!outboundCheckout)outboundCheckout=requestUrl;
+    await route.abort();
+   });
+   await checkoutButton.click();
+   await expect.poll(()=>outboundCheckout?.hostname??null,{timeout:10000}).not.toBeNull();
+   expect(outboundCheckout.protocol).toBe("https:");
+   expect(allowedCheckoutHosts).toContain(outboundCheckout.hostname.toLowerCase());
+   expect(outboundCheckout.username).toBe("");
+   expect(outboundCheckout.password).toBe("");
+   // Query values and full destination are deliberately never written to test output.
+   expect(outboundCheckout.hostname.length).toBeGreaterThan(0);
    await consumerContext.close();
   });
  });
