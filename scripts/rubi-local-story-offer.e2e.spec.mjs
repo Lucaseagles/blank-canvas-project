@@ -67,7 +67,7 @@ for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",widt
 
 for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",width:1366,height:768}]){
  test.describe("RUBI Story aprovado → produto correspondente → tentativa de checkout oficial permitida — "+viewport.name,()=>{
-  test("Master aprova o Story persistido e consumidor encontra a mesma oferta sem sair para pagamento",async({browser})=>{
+  test("Master aprova Story e consumidor chega ao limite de navegação HTTPS do checkout autorizado",async({browser})=>{
    const approvedProductId=process.env.RUBI_QA_APPROVED_STORY_PRODUCT_ID;
    const approvedStoryTitle=process.env.RUBI_QA_APPROVED_STORY_TITLE;
    const productTitle=process.env.RUBI_QA_APPROVED_STORY_PRODUCT_TITLE;
@@ -116,7 +116,7 @@ for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",widt
    await consumerPage.route("**/*",async route=>{
     const requestUrl=new URL(route.request().url());
     if(requestUrl.origin===stagingOrigin){await route.continue();return;}
-    if(!outboundCheckout)outboundCheckout=requestUrl;
+    if(requestUrl.protocol==="https:"&&allowedCheckoutHosts.includes(requestUrl.hostname.toLowerCase())&&!outboundCheckout)outboundCheckout=requestUrl;
     await route.abort();
    });
    await checkoutButton.click();
