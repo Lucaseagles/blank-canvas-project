@@ -15,13 +15,13 @@ The existing hosted Playwright journey approved a Story, found the matching prod
 3. Added contract tests for valid, missing, malformed, duplicate and URL-like allowlist entries.
 4. Added the allowlist contract to Sprint 33 QA via `npm run test:rubi-story-staging`.
 5. Extended the hosted Story E2E to click the supplier-payment button and observe the outbound browser navigation.
-6. The test allows the staging app's own origin, captures only an HTTPS destination whose hostname exactly matches the approved allowlist, and aborts external requests before they reach a payment page.
+6. The test allows the staging app's own origin, captures only a top-level HTTPS document navigation whose hostname exactly matches the approved allowlist (not fetch/XHR or other subresources), and aborts external requests before they reach a payment page. It then asserts that the consumer remains on the RUBI pre-checkout page.
 7. The test checks HTTPS and absence of embedded username/password. It deliberately never prints or stores the full destination or query values.
 8. Updated the staging readiness guide with the new variable and precise evidence boundary.
 
 ## What this proves — and does not prove
 
-This is stronger than checking that a button is enabled: it proves the authenticated consumer browser attempted to navigate to an exact, pre-approved HTTPS provider hostname.
+This is stronger than checking that a button is enabled: it proves the authenticated consumer browser attempted a top-level document navigation to an exact, pre-approved HTTPS provider hostname, while the browser remained on the RUBI pre-checkout page because the external request was intentionally aborted.
 
 It does **not** contact the provider page, create a provider checkout session, prove that the provider accepts the session, validate a callback/webhook, complete a payment, or prove a sale. The outbound request is intentionally aborted to avoid accidental interaction with real checkout infrastructure.
 
