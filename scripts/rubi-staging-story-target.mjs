@@ -35,6 +35,18 @@ const REQUIRED_EMAIL_ENV = [
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const CHECKOUT_HOST_PATTERN = /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i;
+
+export function resolveRubiCheckoutAllowedHosts(env = process.env) {
+  const raw = env.RUBI_QA_CHECKOUT_ALLOWED_HOSTS;
+  if (!raw?.trim()) throw new Error("RUBI_QA_CHECKOUT_ALLOWED_HOSTS must list exact approved checkout hostnames.");
+  const hosts = raw.split(",").map((host) => host.trim().toLowerCase());
+  if (hosts.some((host) => !host || !CHECKOUT_HOST_PATTERN.test(host))) {
+    throw new Error("Checkout allowlist must contain exact DNS hostnames only; URLs, ports and wildcards are not allowed.");
+  }
+  if (new Set(hosts).size !== hosts.length) throw new Error("Checkout allowlist must not contain duplicate hostnames.");
+  return hosts;
+}
 
 export function resolveRubiStagingTarget(env = process.env) {
   if (env.RUBI_STAGING_CONFIRMATION !== "I_CONFIRM_DISPOSABLE_STAGING") {
@@ -72,6 +84,8 @@ export function resolveRubiStagingTarget(env = process.env) {
   if (!env.RUBI_STAGING_ALLOWED_ORIGIN || env.RUBI_STAGING_ALLOWED_ORIGIN !== target.origin) {
     throw new Error("RUBI_STAGING_ALLOWED_ORIGIN must exactly match the approved HTTPS origin.");
   }
+
+  resolveRubiCheckoutAllowedHosts(env);
 
   const missing = [...REQUIRED_CREDENTIAL_ENV, ...REQUIRED_FIXTURE_ENV].filter((key) => !env[key]?.trim());
   if (missing.length) {

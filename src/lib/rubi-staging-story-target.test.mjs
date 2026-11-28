@@ -1,12 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { resolveRubiStagingTarget } from "../../scripts/rubi-staging-story-target.mjs";
+import { resolveRubiStagingTarget, resolveRubiCheckoutAllowedHosts } from "../../scripts/rubi-staging-story-target.mjs";
 
 const fixtureEnv = {
   RUBI_STAGING_CONFIRMATION: "I_CONFIRM_DISPOSABLE_STAGING",
   RUBI_STAGING_ALLOW_MUTATING_FIXTURES: "YES_DISPOSABLE_STAGING_FIXTURES_ONLY",
   RUBI_STAGING_BASE_URL: "https://staging.rubieagles.example",
   RUBI_STAGING_ALLOWED_ORIGIN: "https://staging.rubieagles.example",
+  RUBI_QA_CHECKOUT_ALLOWED_HOSTS: "checkout.kairos.example,payments.kairos.example",
   RUBI_QA_MASTER_EMAIL: "master@example.test",
   RUBI_QA_MASTER_PASSWORD: "disposable-password",
   RUBI_QA_CONSUMER_EMAIL: "consumer@example.test",
@@ -119,4 +120,24 @@ test("rejects malformed QA email values before browser login", () => {
     () => resolveRubiStagingTarget({ ...fixtureEnv, RUBI_QA_CONSUMER_EMAIL: "not-an-email" }),
     /invalid QA email values: RUBI_QA_CONSUMER_EMAIL/,
   );
+});
+
+test("accepts exact provider checkout DNS host allowlist", () => {
+  assert.deepEqual(resolveRubiCheckoutAllowedHosts(fixtureEnv), ["checkout.kairos.example", "payments.kairos.example"]);
+});
+
+test("rejects wildcard, URL, port and path entries in provider checkout allowlist", () => {
+  for (const value of ["*.kairos.example", "https://checkout.kairos.example", "checkout.kairos.example:443", "checkout.kairos.example/path", "checkout.kairos.example,"]) {
+    assert.throws(() => resolveRubiCheckoutAllowedHosts({ ...fixtureEnv, RUBI_QA_CHECKOUT_ALLOWED_HOSTS: value }), /exact DNS hostnames only/);
+  }
+});
+
+test("rejects duplicate provider checkout hosts", () => {
+  assert.throws(() => resolveRubiCheckoutAllowedHosts({ ...fixtureEnv, RUBI_QA_CHECKOUT_ALLOWED_HOSTS: "checkout.kairos.example,checkout.kairos.example" }), /duplicate hostnames/);
+});
+
+test("staging target requires an explicit provider checkout allowlist", () => {
+  const env = { ...fixtureEnv };
+  delete env.RUBI_QA_CHECKOUT_ALLOWED_HOSTS;
+  assert.throws(() => resolveRubiStagingTarget(env), /RUBI_QA_CHECKOUT_ALLOWED_HOSTS/);
 });

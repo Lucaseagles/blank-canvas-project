@@ -65,8 +65,8 @@ for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",widt
 }
 
 for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",width:1366,height:768}]){
- test.describe("RUBI Story aprovado → produto correspondente → pré-checkout local — "+viewport.name,()=>{
-  test("Master aprova o Story persistido e consumidor encontra a mesma oferta sem sair para pagamento",async({browser})=>{
+ test.describe("RUBI Story aprovado → produto correspondente → tentativa de checkout oficial permitida — "+viewport.name,()=>{
+  test("Master aprova Story e consumidor chega ao limite de navegação HTTPS do checkout autorizado",async({browser})=>{
    const approvedProductId=process.env.RUBI_QA_APPROVED_STORY_PRODUCT_ID;
    const approvedStoryTitle=process.env.RUBI_QA_APPROVED_STORY_TITLE;
    const productTitle=process.env.RUBI_QA_APPROVED_STORY_PRODUCT_TITLE;
@@ -103,8 +103,39 @@ for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",widt
    await expect(offerLink).toBeVisible();
    await offerLink.click();
    await expect(consumerPage).toHaveURL(new RegExp("/hub-product/"+approvedProductId+"#rubi-purchase$"));
-   await expect(consumerPage.getByRole("button",{name:/Continuar para pagamento no fornecedor/i})).toBeEnabled({timeout:20000});
+   const checkoutButton=consumerPage.getByRole("button",{name:/Continuar para pagamento no fornecedor/i});
+   await expect(checkoutButton).toBeEnabled({timeout:20000});
    await expect(consumerPage.getByText(/A RUBI não coleta dados do cartão nesta página/i)).toBeVisible();
+
+   // Capture and abort the outbound request: prove the browser attempts the approved
+   // provider redirect without sending a request to a real payment page or creating a session.
+   // This spec runs only against the disposable local Supabase/Vite fixture.
+   // The fixture intentionally uses the reserved .test hostname; never reuse it
+   // as a real provider allowlist or in the separately gated hosted-staging workflow.
+   const appOrigin=new URL(consumerPage.url());
+   if(!["127.0.0.1","localhost","::1"].includes(appOrigin.hostname))throw new Error("Local Story E2E must run against the loopback app origin only.");
+   const allowedCheckoutHosts=["checkout.example.test"];
+   let outboundCheckout=null;
+   await consumerPage.route("**/*",async route=>{
+    const requestUrl=new URL(route.request().url());
+    if(requestUrl.origin===appOrigin.origin){await route.continue();return;}
+    // Only a top-level document navigation proves the consumer is being redirected.
+    // A fetch, XHR, image or other subresource to an allowlisted host must not pass.
+    const request=route.request();
+    if(request.isNavigationRequest()&&request.resourceType()==="document"&&requestUrl.protocol==="https:"&&requestUrl.port===""&&requestUrl.username===""&&requestUrl.password===""&&allowedCheckoutHosts.includes(requestUrl.hostname.toLowerCase())&&!outboundCheckout)outboundCheckout=requestUrl;
+    await route.abort();
+   });
+   await checkoutButton.click();
+   await expect.poll(()=>outboundCheckout?.hostname??null,{timeout:10000}).not.toBeNull();
+   expect(outboundCheckout.protocol).toBe("https:");
+   expect(allowedCheckoutHosts).toContain(outboundCheckout.hostname.toLowerCase());
+   expect(outboundCheckout.username).toBe("");
+   expect(outboundCheckout.password).toBe("");
+   // Query values and full destination are deliberately never written to test output.
+   expect(outboundCheckout.hostname.length).toBeGreaterThan(0);
+   // The external document navigation was aborted; the consumer must remain on
+   // the RUBI pre-checkout page and must not land on the provider.
+   await expect(consumerPage).toHaveURL(new RegExp("/hub-product/"+approvedProductId+"#rubi-purchase$"));
    await consumerContext.close();
   });
  });
