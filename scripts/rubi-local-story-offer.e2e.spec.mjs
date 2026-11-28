@@ -116,7 +116,10 @@ for(const viewport of [{name:"mobile",width:390,height:844},{name:"desktop",widt
    await consumerPage.route("**/*",async route=>{
     const requestUrl=new URL(route.request().url());
     if(requestUrl.origin===stagingOrigin){await route.continue();return;}
-    if(requestUrl.protocol==="https:"&&allowedCheckoutHosts.includes(requestUrl.hostname.toLowerCase())&&!outboundCheckout)outboundCheckout=requestUrl;
+    // Only a top-level document navigation proves the consumer is being redirected.
+    // A fetch, XHR, image or other subresource to an allowlisted host must not pass.
+    const request=route.request();
+    if(request.isNavigationRequest()&&request.resourceType()==="document"&&requestUrl.protocol==="https:"&&allowedCheckoutHosts.includes(requestUrl.hostname.toLowerCase())&&!outboundCheckout)outboundCheckout=requestUrl;
     await route.abort();
    });
    await checkoutButton.click();
